@@ -5,65 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>LearnQuest AI - Game Học Vui</title>
 
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+
   <!-- THƯ VIỆN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
-    body { background:linear-gradient(135deg,#ff9a9e,#fad0c4); min-height:100vh; padding:20px; }
-    .container { max-width:900px; margin:auto; background:white; border-radius:20px; overflow:hidden; box-shadow:0 15px 35px rgba(0,0,0,0.15); }
-    header { background:#e11d48; color:white; padding:20px 30px; position:relative; text-align:left; }
-    h1 { font-size:24px; margin-bottom:8px; }
-    .subtitle { font-size:14px; opacity:0.9; margin-left:5px; }
-
-    .user-info { position:absolute; top:15px; right:15px; font-size:13px; background:#ffffff33; padding:5px 10px; border-radius:20px; display:flex; align-items:center; gap:10px; }
-    .logout-btn, .profile-btn { background:#be123c; color:white; border:none; padding:5px 12px; border-radius:20px; font-size:12px; cursor:pointer; margin-left:5px; }
-    .stats { display:flex; gap:15px; font-size:13px; }
-    .stat-item { display:flex; align-items:center; gap:5px; }
-
-    .auth, .quiz, .game-board, .profile { padding:30px; }
-    .auth { text-align:center; }
-    input { width:100%; padding:12px; margin:10px 0; border-radius:10px; border:1px solid #ddd; transition:0.3s; }
-    input:focus { border-color:#e11d48; outline:none; }
-    button.main-btn { background:#e11d48; color:white; border:none; padding:12px 24px; border-radius:50px; margin:5px; cursor:pointer; font-weight:bold; transition:0.3s; position:relative; overflow:hidden; }
-    button.main-btn:disabled { background:#ccc; cursor:not-allowed; }
-    button.main-btn.loading::after { content:''; position:absolute; width:16px; height:16px; border:2px solid #fff; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite; left:50%; top:50%; margin:-8px 0 0 -8px; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-
-    .alert { background:#fee2e2; color:#991b1b; padding:12px; border-radius:10px; margin:15px 0; text-align:center; font-weight:bold; display:none; }
-    .question { margin-bottom:25px; padding:20px; background:#fff5f5; border-radius:15px; border-left:5px solid #e11d48; }
-    .options { display:flex; flex-direction:column; gap:10px; margin-top:10px; }
-    .option { padding:12px; background:white; border:2px solid #fecaca; border-radius:12px; cursor:pointer; transition:0.3s; }
-    .option:hover { border-color:#e11d48; background:#fef2f2; }
-    .option.selected { background:#e11d48; color:white; border-color:#e11d48; }
-    .other-input { margin-top:10px; display:none; }
-    .other-input input { width:100%; padding:10px; border:2px solid #ddd; border-radius:10px; }
-    .hidden { display:none !important; }
-
-    .game-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:20px; margin-top:20px; }
-    .game-card { background:white; border-radius:15px; padding:20px; text-align:center; box-shadow:0 5px 15px rgba(0,0,0,0.1); cursor:pointer; transition:0.3s; position:relative; }
-    .game-card:hover { transform:translateY(-5px); box-shadow:0 10px 25px rgba(0,0,0,0.15); }
-    .game-icon { font-size:40px; margin-bottom:10px; }
-    .game-title { font-weight:bold; font-size:18px; margin-bottom:5px; }
-    .game-level { font-size:14px; color:#e11d48; }
-    .recommended { border:3px solid #e11d48; animation:pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(225,29,72,0.7)} 50%{box-shadow:0 0 0 10px rgba(225,29,72,0)} }
-    .badge { position:absolute; top:-10px; right:-10px; background:#e11d48; color:white; padding:3px 8px; border-radius:12px; font-size:12px; }
-
-    .profile-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-    .radar-container { width:300px; height:300px; margin:20px auto; }
-    .trait-list { display:grid; grid-template-columns:repeat(2,1fr); gap:15px; margin:20px 0; }
-    .trait-item { background:#f8f9fa; padding:12px; border-radius:12px; text-align:center; }
-    .trait-name { font-weight:bold; color:#e11d48; }
-    .trait-bar { height:8px; background:#eee; border-radius:4px; margin-top:5px; overflow:hidden; }
-    .trait-fill { height:100%; background:#e11d48; border-radius:4px; }
-
-    .toast { position:fixed; bottom:20px; right:20px; background:#333; color:white; padding:12px 20px; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.3); z-index:1000; animation:toast 3s forwards; font-size:14px; }
-    @keyframes toast { 0%{opacity:0;transform:translateY(20px)} 10%{opacity:1;transform:translateY(0)} 90%{opacity:1} 100%{opacity:0} }
-  </style>
 </head>
 <body>
   <div class="container">
@@ -84,6 +33,10 @@
         <h1>LearnQuest AI</h1>
         <p class="subtitle">Học vui như chơi game!</p>
         <div class="user-info">
+	
+	<!-- NÚT CHUYỂN THEME -->
+	<button id="themeToggle" class="profile-btn" style="margin-left:10px;">Dark Mode</button>
+
           <div class="stats">
             <div class="stat-item">XP <span id="globalXP">0</span></div>
             <div class="stat-item">Coin <span id="globalCoin">0</span></div>
@@ -100,7 +53,7 @@
         <h2>Khám Phá Tính Cách (1 lần duy nhất)</h2>
         <div class="alert" id="alert">Vui lòng trả lời <span id="missingCount">0</span> câu!</div>
 
-        <!-- 12 CÂU HỎI -->
+        <!-- 12 CÂU HỎI ĐẦY ĐỦ -->
         <div class="question" data-q="1">
           <h3>1. Bạn thích làm gì nhất vào cuối tuần?</h3>
           <div class="options">
@@ -111,16 +64,104 @@
           </div>
           <div class="other-input"><input type="text" placeholder="Bạn thích làm gì?"></div>
         </div>
-        <!-- ... 11 câu còn lại ... -->
-        <div class="question" data-q="12">
-          <h3>12. Bạn muốn trở thành người như thế nào?</h3>
+        <!-- CÂU 2 -->
+        <div class="question" data-q="2">
+          <h3>2. Bạn học tốt nhất khi nào?</h3>
           <div class="options">
-            <div class="option" data-score="creativity:1">Nghệ sĩ sáng tạo</div>
-            <div class="option" data-score="sociability:1">Người kết nối mọi người</div>
-            <div class="option" data-score="playfulness:1">Người vui vẻ, hài hước</div>
+            <div class="option" data-score="perfectionism:1">Lập kế hoạch chi tiết</div>
+            <div class="option" data-score="self_improvement:1">Thử thách bản thân</div>
+            <div class="option" data-score="playfulness:1">Học vui như chơi</div>
+          </div>
+        </div>
+        <!-- CÂU 3 -->
+        <div class="question" data-q="3">
+          <h3>3. Bạn thích làm việc nhóm hay cá nhân?</h3>
+          <div class="options">
+            <div class="option" data-score="sociability:1">Nhóm - năng lượng từ bạn bè</div>
+            <div class="option" data-score="perfectionism:1">Cá nhân - kiểm soát 100%</div>
+          </div>
+        </div>
+        <!-- CÂU 4 -->
+        <div class="question" data-q="4">
+          <h3>4. Bạn có hay đặt mục tiêu dài hạn?</h3>
+          <div class="options">
+            <div class="option" data-score="self_improvement:1">Luôn luôn</div>
+            <div class="option" data-score="playfulness:1">Tùy hứng</div>
+          </div>
+        </div>
+        <!-- CÂU 5 -->
+        <div class="question" data-q="5">
+          <h3>5. Bạn thích môn học nào nhất?</h3>
+          <div class="options">
+            <div class="option" data-score="competitiveness:1">Toán - giải đề khó</div>
+            <div class="option" data-score="creativity:1">Văn - sáng tác</div>
+            <div class="option" data-score="sociability:1">Anh - giao tiếp</div>
+          </div>
+        </div>
+        <!-- CÂU 6 -->
+        <div class="question" data-q="6">
+          <h3>6. Bạn có hay so sánh mình với người khác?</h3>
+          <div class="options">
+            <div class="option" data-score="competitiveness:1">Rất hay</div>
+            <div class="option" data-score="self_improvement:1">Chỉ để cải thiện</div>
+            <div class="option" data-score="playfulness:1">Không quan tâm</div>
+          </div>
+        </div>
+        <!-- CÂU 7 -->
+        <div class="question" data-q="7">
+          <h3>7. Bạn học bằng cách nào hiệu quả nhất?</h3>
+          <div class="options">
+            <div class="option" data-score="creativity:1">Vẽ mindmap, sơ đồ</div>
+            <div class="option" data-score="sociability:1">Thảo luận nhóm</div>
+            <div class="option" data-score="playfulness:1">Game, video</div>
+          </div>
+        </div>
+        <!-- CÂU 8 -->
+        <div class="question" data-q="8">
+          <h3>8. Bạn có kiên trì với việc khó?</h3>
+          <div class="options">
+            <div class="option" data-score="self_improvement:1">Rất kiên trì</div>
+            <div class="option" data-score="perfectionism:1">Chỉ khi hoàn hảo</div>
+            <div class="option" data-score="playfulness:1">Dễ chán</div>
+          </div>
+        </div>
+        <!-- CÂU 9 -->
+        <div class="question" data-q="9">
+          <h3>9. Bạn thích được khen vì gì?</h3>
+          <div class="options">
+            <div class="option" data-score="competitiveness:1">Giỏi nhất lớp</div>
+            <div class="option" data-score="creativity:1">Ý tưởng độc đáo</div>
+            <div class="option" data-score="sociability:1">Vui vẻ, hòa đồng</div>
+          </div>
+        </div>
+        <!-- CÂU 10 -->
+        <div class="question" data-q="10">
+          <h3>10. Bạn có cảm thấy mình có thể làm được mọi thứ?</h3>
+          <div class="options">
+            <div class="option" data-positive="1">Có, nếu cố gắng!</div>
+            <div class="option" data-positive="0.5">Thỉnh thoảng</div>
+            <div class="option" data-positive="0">Không</div>
+          </div>
+        </div>
+        <!-- CÂU 11 -->
+        <div class="question" data-q="11">
+          <h3>11. Bạn có hay chán khi làm 1 việc lâu?</h3>
+          <div class="options">
+            <div class="option" data-negative="1">Rất hay</div>
+            <div class="option" data-negative="0.5">Thỉnh thoảng</div>
+            <div class="option" data-negative="0">Không</div>
+          </div>
+        </div>
+        <!-- CÂU 12 -->
+        <div class="question" data-q="12">
+          <h3>12. Bạn muốn được khen vì điều gì?</h3>
+          <div class="options">
+            <div class="option" data-score="competitiveness:1">Giỏi nhất</div>
+            <div class="option" data-score="creativity:1">Sáng tạo nhất</div>
+            <div class="option" data-score="sociability:1">Vui vẻ nhất</div>
             <div class="option other-trigger">Khác</div>
           </div>
-          <div class="other-input"><input type="text" placeholder="Mơ ước của bạn?"></div>
+          <div class="other-input"><input type="text" placeholder="Bạn muốn được khen vì gì?"></div>
         </div>
 
         <button id="submitBtn" class="main-btn" disabled>HOÀN TẤT → VÀO GAME</button>
@@ -136,7 +177,7 @@
       <!-- HỒ SƠ -->
       <div id="profile" class="profile hidden">
         <div class="profile-header">
-          <h2>Hồ Sơ Cá Nhân</h2>
+          <h2>Hồ SƠ Cá Nhân</h2>
           <button class="main-btn" id="backBtn">Quay lại</button>
         </div>
         <div style="text-align:center; margin:20px 0;">
@@ -152,160 +193,38 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT — ĐÃ SỬA XUNG ĐỘT + CHỈ LOAD 1 LẦN -->
-  <script>
-    const firebaseConfig = { 
-  apiKey: "AIzaSyDm8achECq0QXN34dp3cLflKzS8Ge78R5E",
-  authDomain: "nini-funny.firebaseapp.com",
-  databaseURL: "https://nini-funny-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "nini-funny",
-  storageBucket: "nini-funny.firebasestorage.app",
-  messagingSenderId: "158986131827",
-  appId: "1:158986131827:web:92e9a212747582d83d4d06"
-};
-    firebase.initializeApp(firebaseConfig);
+<script>
+  // === CHUYỂN THEME ===
+  const themeToggle = document.getElementById("themeToggle");
+  const cssLink = document.querySelector("link[rel='stylesheet']");
 
-    let currentUser = null;
-    let answeredCount = 0;
-    const totalQuestions = 12;
-    let lastXP = 0, lastCoin = 0;
-    let radarChart = null;
-
-    // ===>>> HÀM CHUYỂN MÀN HÌNH <<<
-    function showProfile() {
-      document.getElementById("gameBoard").classList.add("hidden");
-      document.getElementById("profile").classList.remove("hidden");
-      loadProfileData(); // CHỈ LOAD DỮ LIỆU HỒ SƠ
+  let isDark = false;
+  themeToggle.onclick = () => {
+    isDark = !isDark;
+    if (isDark) {
+      cssLink.href = "dark.css";
+      themeToggle.textContent = "Light Mode";
+      localStorage.setItem("theme", "dark");
+    } else {
+      cssLink.href = "style.css";
+      themeToggle.textContent = "Dark Mode";
+      localStorage.setItem("theme", "light");
     }
+  };
 
-    function backToGameBoard() {
-      document.getElementById("profile").classList.add("hidden");
-      document.getElementById("gameBoard").classList.remove("hidden");
+  // TỰ ĐỘNG LOAD THEME ĐÃ LƯU
+  window.addEventListener("load", () => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark") {
+      cssLink.href = "dark.css";
+      themeToggle.textContent = "Light Mode";
+      isDark = true;
     }
-
-    // ===>>> DOM READY <<<
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("logoutBtn").onclick = () => firebase.auth().signOut().then(() => location.reload());
-      document.getElementById("profileBtn").onclick = showProfile;
-      document.getElementById("backBtn").onclick = backToGameBoard;
-
-      setupQuiz();
-
-      firebase.auth().onAuthStateChanged(user => {
-        if (user) {
-          currentUser = user;
-          loadUserDataAndShowApp(); // CHỈ GỌI 1 LẦN
-        }
-      });
-    });
-
-    // ===>>> LOAD APP CHỈ 1 LẦN <<<
-    function loadUserDataAndShowApp() {
-      document.getElementById("authScreen").classList.add("hidden");
-      document.getElementById("mainApp").classList.remove("hidden");
-      document.getElementById("userEmail").textContent = currentUser.email.split('@')[0];
-
-      firebase.database().ref('users/' + currentUser.uid).once('value').then(snap => {
-        const data = snap.val() || {};
-        updateGlobalStats(data);
-        if (data.quizDone) renderGameBoard(data); // ĐÃ ĐỔI TÊN → KHÔNG XUNG ĐỘT
-        else document.getElementById("quiz").classList.remove("hidden");
-      });
-
-      // CẬP NHẬT REAL-TIME
-      firebase.database().ref('users/' + currentUser.uid).on('value', snap => {
-        const data = snap.val() || {};
-        updateGlobalStats(data);
-        if (!document.getElementById("profile").classList.contains("hidden")) loadProfileData();
-      });
-    }
-
-    // ===>>> GAME BOARD — ĐÃ ĐỔI TÊN <<<
-    function renderGameBoard(data) {
-      document.getElementById("quiz").classList.add("hidden");
-      document.getElementById("gameBoard").classList.remove("hidden");
-
-      const traits = data.traits || {};
-      const highTrait = Object.keys(traits).reduce((a, b) => traits[a] > traits[b] ? a : b, "creativity");
-      const traitToGame = { creativity: "art", competitiveness: "math", sociability: "english", playfulness: "game", self_improvement: "science", perfectionism: "puzzle" };
-      const recommendedGame = traitToGame[highTrait] || "art";
-
-      const vietnameseNames = { creativity:"Sáng tạo", competitiveness:"Cạnh tranh", sociability:"Xã hội", playfulness:"Vui vẻ", self_improvement:"Tự cải thiện", perfectionism:"Cầu toàn" };
-
-      document.getElementById("welcomeMsg").innerHTML = `Dựa trên <strong>${vietnameseNames[highTrait]}</strong>, gợi ý: <strong style="color:#e11d48">${recommendedGame.toUpperCase()}</strong>`;
-
-      const grid = document.getElementById("gameGrid");
-      grid.innerHTML = "";
-
-      const games = [
-        { id: "art", title: "Vẽ Tranh AI", icon: "Art", level: "Sáng tạo", rec: highTrait === "creativity" },
-        { id: "math", title: "Toán Siêu Tốc", icon: "Math", level: "Cạnh tranh", rec: highTrait === "competitiveness" },
-        { id: "english", title: "Học Từ Vựng", icon: "English", level: "Xã hội", rec: highTrait === "sociability" },
-        { id: "science", title: "Thí Nghiệm", icon: "Science", level: "Tự cải thiện", rec: highTrait === "self_improvement" },
-        { id: "puzzle", title: "Ghép Hình", icon: "Puzzle", level: "Cầu toàn", rec: highTrait === "perfectionism" },
-        { id: "game", title: "Mini Game", icon: "Game", level: "Vui vẻ", rec: highTrait === "playfulness" }
-      ];
-
-      games.forEach(g => {
-        const card = document.createElement("div");
-        card.className = `game-card ${g.rec ? 'recommended' : ''}`;
-        card.innerHTML = `
-          <div class="game-icon">${g.icon}</div>
-          <div class="game-title">${g.title}</div>
-          <div class="game-level">${g.level}</div>
-          ${g.rec ? '<div class="badge">GỢI Ý</div>' : ''}
-        `;
-        card.onclick = () => showToast(`Chơi ${g.title} (sắp có!)`);
-        grid.appendChild(card);
-      });
-    }
-
-    // ===>>> HỒ SƠ — LOAD RIÊNG <<<
-    function loadProfileData() {
-      firebase.database().ref('users/' + currentUser.uid).once('value').then(snap => {
-        renderProfile(snap.val());
-      });
-    }
-
-    function renderProfile(data) {
-      const traits = data.traits || { creativity:0, competitiveness:0, sociability:0, playfulness:0, self_improvement:0, perfectionism:0 };
-      const labels = ["Sáng tạo", "Cạnh tranh", "Xã hội", "Vui vẻ", "Tự cải thiện", "Cầu toàn"];
-      const values = Object.values(traits);
-
-      const ctx = document.getElementById("radarChart").getContext("2d");
-      if (radarChart) radarChart.destroy();
-      radarChart = new Chart(ctx, {
-        type: "radar",
-        data: { labels, datasets: [{ label: "Tính cách", data: values, backgroundColor: "rgba(225, 29, 72, 0.2)", borderColor: "#e11d48", pointBackgroundColor: "#e11d48", borderWidth: 2 }] },
-        options: { scales: { r: { min: 0, max: 12, ticks: { stepSize: 3 } } }, plugins: { legend: { display: false } } }
-      });
-
-      const traitList = document.getElementById("traitList");
-      traitList.innerHTML = "";
-      const names = { creativity:"Sáng tạo", competitiveness:"Cạnh tranh", sociability:"Xã hội", playfulness:"Vui vẻ", self_improvement:"Tự cải thiện", perfectionism:"Cầu toàn" };
-      Object.keys(traits).forEach(t => {
-        const item = document.createElement("div");
-        item.className = "trait-item";
-        item.innerHTML = `<div class="trait-name">${names[t]}</div><div class="trait-bar"><div class="trait-fill" style="width:${(traits[t]/12)*100}%"></div></div><div style="font-size:12px; margin-top:5px;">${traits[t]}/12</div>`;
-        traitList.appendChild(item);
-      });
-
-      const progress = data.gameProgress || {};
-      let totalXP = 0, totalCoin = 0;
-      Object.values(progress).forEach(g => { totalXP += g.xp || 0; totalCoin += g.coin || 0; });
-      const badge = totalXP < 1000 ? 1 : totalXP < 5000 ? 2 : totalXP < 10000 ? 3 : totalXP < 20000 ? 4 : 5;
-      document.getElementById("profileXP").textContent = totalXP;
-      document.getElementById("profileCoin").textContent = totalCoin;
-      document.getElementById("profileBadge").textContent = badge;
-    }
-
-    // ===>>> CÁC HÀM KHÁC <<<
-    function showToast(msg) { /* ... */ }
-    function updateGlobalStats(data) { /* ... */ }
-    function setupQuiz() { /* ... */ }
-    function handleAuth(authFn, button) { /* ... */ }
-    function signup(email, pass) { /* ... */ }
-    function login(email, pass) { /* ... */ }
-  </script>
+  });
+</script>
+  
+<!-- GỌI JS -->
+  <script src="js/firebase.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>
