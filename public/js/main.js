@@ -10,8 +10,15 @@ let radarChart = null;
 
 // === DOM READY ===
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("signupBtn").onclick = () => handleAuth(signup, "signupBtn");
-  document.getElementById("loginBtn").onclick = () => handleAuth(login, "loginBtn");
+  document.getElementById("signupBtn").onclick = () => {
+  console.log("signup clicked");
+  handleAuth(signup, "signupBtn");
+};
+
+  document.getElementById("loginBtn").onclick = () => {
+  console.log("login clicked");
+  handleAuth(login, "loginBtn");
+};
   document.getElementById("logoutBtn").onclick = () => auth.signOut().then(() => location.reload());
   document.getElementById("profileBtn").onclick = showProfile;
   document.getElementById("backBtn").onclick = backToGameBoard;
@@ -259,4 +266,5 @@ function showToast(msg) {
   t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3000);
+
 }
