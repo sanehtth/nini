@@ -49,4 +49,24 @@ button.main-btn.loading::after { content:''; position:absolute; width:16px; heig
 .trait-fill { height:100%; background:#e11d48; border-radius:4px; }
 
 .toast { position:fixed; bottom:20px; right:20px; background:#333; color:white; padding:12px 20px; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.3); z-index:1000; animation:toast 3s forwards; font-size:14px; }
+
 @keyframes toast { 0%{opacity:0;transform:translateY(20px)} 10%{opacity:1;transform:translateY(0)} 90%{opacity:1} 100%{opacity:0} }
+/* LOGO RESPONSIVE */
+header img {
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(255,255,255,0.3);
+  transition: 0.3s;
+}
+header img:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(225,29,72,0.6);
+}
+
+/* MOBILE: nhỏ hơn */
+@media (max-width: 600px) {
+  header img { height: 40px; width: 40px; }
+  header h1 { font-size: 20px; }
+}
