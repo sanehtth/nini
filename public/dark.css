@@ -138,4 +138,27 @@ button.main-btn.loading::after {
   0%{opacity:0;transform:translateY(20px)} 
   10%{opacity:1;transform:translateY(0)} 
   90%{opacity:1} 100%{opacity:0} 
+
+}
+/* LOGO RESPONSIVE */
+header img {
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(255,255,255,0.3);
+  transition: 0.3s;
+}
+header img:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(225,29,72,0.6);
+}
+
+/* MOBILE: nhỏ hơn */
+@media (max-width: 600px) {
+  header img { height: 40px; width: 40px; }
+  header h1 { font-size: 20px; }
+}
+header img:hover {
+  box-shadow: 0 0 15px rgba(233,69,96,0.8);
 }
