@@ -130,14 +130,54 @@ function renderProfile(data) {
   };
 
   const labels = ["Sáng tạo","Cạnh tranh","Xã hội","Vui vẻ","Tự cải thiện","Cầu toàn"];
-  const values = [
-    traits.creativity||0,
-    traits.competitiveness||0,
-    traits.sociability||0,
-    traits.playfulness||0,
-    traits.self_improvement||0,
-    traits.perfectionism||0
-  ];
+  
+  // --- CHUẨN HOÁ VỀ 0..12 TRƯỚC KHI VẼ ---
+function norm(v, max) {
+  if (!max) return 0;
+  // đưa về 0..12 và kẹp biên
+  return Math.max(0, Math.min(12, Math.round(((Number(v) || 0) / max) * 12)));
+}
+
+function pick(obj, keys) {
+  for (const k of keys) {
+    if (obj && k in obj) return Number(obj[k]) || 0;
+  }
+  return 0;
+}
+
+const raw = (data && data.traits) || {};
+const max = (window.TraitConfig && window.TraitConfig.max) || {
+  creativity: 40,
+  competitiveness: 10,
+  sociability: 20,
+  playfulness: 20,
+  self_improvement: 10,
+  perfectionism: 40,
+};
+
+// chấp nhận cả key tiếng Việt/tiếng Anh
+const rawVals = {
+  creativity:       pick(raw, ["creativity", "sáng tạo", "sang_tao"]),
+  competitiveness:  pick(raw, ["competitiveness", "khả năng cạnh tranh", "kha_nang_canh_tranh"]),
+  sociability:      pick(raw, ["sociability", "tính xã hội", "tinh_xa_hoi"]),
+  playfulness:      pick(raw, ["playfulness", "vui tươi", "vui_tuoi"]),
+  self_improvement: pick(raw, ["self_improvement", "tự cải thiện", "tu_cai_thien"]),
+  perfectionism:    pick(raw, ["perfectionism", "cầu toàn", "cau_toan"]),
+};
+
+const values = [
+  norm(rawVals.creativity,       max.creativity),
+  norm(rawVals.competitiveness,  max.competitiveness),
+  norm(rawVals.sociability,      max.sociability),
+  norm(rawVals.playfulness,      max.playfulness),
+  norm(rawVals.self_improvement, max.self_improvement),
+  norm(rawVals.perfectionism,    max.perfectionism),
+];
+
+// (tuỳ chọn) debug xem chuẩn hoá đúng chưa
+console.log("RAW:", rawVals, "MAX:", max);
+console.log("NORMALIZED (0..12):", values);
+//---- het doan vua thay------
 
   const ctx = canvas.getContext("2d");
   if (radarChart && typeof radarChart.destroy === "function") radarChart.destroy();
@@ -213,6 +253,7 @@ function backToGameBoard() {
     });
   });
 })();
+
 
 
 
