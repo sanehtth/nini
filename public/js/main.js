@@ -9,16 +9,33 @@ let lastXP = 0, lastCoin = 0;
 let radarChart = null;
 
 // === DOM READY ===
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("signupBtn").onclick = () => {
-  console.log("signup clicked");
-  handleAuth(signup, "signupBtn");
-};
+window.addEventListener("DOMContentLoaded", () => {
+  const msg = document.getElementById("message");
 
-  document.getElementById("loginBtn").onclick = () => {
-  console.log("login clicked");
-  handleAuth(login, "loginBtn");
-};
+  const bind = (id, fn) => {
+    const el = document.getElementById(id);
+    if (!el) {
+      console.error(`${id} not found`);
+      return;
+    }
+    el.type = "button"; // tránh submit/reload nếu nằm trong <form>
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      console.log(`${id} -> handleAuth`);
+      handleAuth(fn, id);
+    });
+  };
+
+  // gắn sau khi DOM sẵn sàng (khó bị ghi đè/triệt tiêu)
+  bind("loginBtn",  login);
+  bind("signupBtn", signup);
+
+  // debug: kiểm tra Firebase đã nạp chưa
+  if (!window.firebaseAuth) {
+    console.error("firebaseAuth is undefined - check js/firebase.js load order!");
+  }
+});
+
   document.getElementById("logoutBtn").onclick = () => auth.signOut().then(() => location.reload());
   document.getElementById("profileBtn").onclick = showProfile;
   document.getElementById("backBtn").onclick = backToGameBoard;
@@ -268,3 +285,4 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 3000);
 
 }
+
