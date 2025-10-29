@@ -207,7 +207,6 @@ function renderProfile(data) {
   // document.getElementById("profileXP").textContent = ...
   // document.getElementById("profileCoin").textContent = ...
   // document.getElementById("profileBadge").textContent = ...
-}
 
 
   // 6) Thống kê tổng (giữ nguyên logic hiện có)
@@ -262,5 +261,6 @@ function backToGameBoard() {
     });
   });
 })();
+
 
 
