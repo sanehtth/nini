@@ -25,8 +25,8 @@
       <h2>LearnQuest AI</h2>
       <input type="email" id="email" placeholder="Email">
       <input type="password" id="password" placeholder="Mật khẩu">
-      <button class="main-btn" id="signupBtn" type="button">Đăng ký</button>
-	  <button class="main-btn" id="loginBtn" type="button">Đăng nhập</button>
+      <button id="signupBtn" class="main-btn" type="button">Đăng ký</button>
+	  <button id="loginBtn"  class="main-btn" type="button">Đăng nhập</button>
       <p id="authMsg" style="margin-top:10px; min-height:20px; font-weight:bold;"></p>
     </div>
 
@@ -226,14 +226,13 @@
   });
 </script>
   
-<!-- GỌI JS -->
-  <script src="js/firebase.js"></script>
-  <script src="js/main.js" defer ></script>
+<!-- Firebase compat SDK -->
+<script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database-compat.js"></script>
+
+<!-- App scripts (khởi tạo Firebase trước, rồi main) -->
+<script defer src="/js/firebase.js"></script>
+<script defer src="/js/main.js"></script>
 </body>
-
 </html>
-
-
-
-
-
