@@ -1,4 +1,4 @@
-﻿// js/main.js
+// === js/main.js ===
 const auth = window.firebaseAuth;
 const db = window.firebaseDB;
 
@@ -284,5 +284,6 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 3000);
 
 }
+
 
 
