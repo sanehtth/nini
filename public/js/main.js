@@ -117,33 +117,21 @@
 // ====== PROFILE + CHART (RADAR) ======
 let radarChart = null;
 
-// Vẽ hồ sơ từ dữ liệu user
+// === HỒ SƠ (vẽ theo %) ===
 function renderProfile(data) {
-  if (typeof Chart === "undefined") {
-    console.warn("Chart.js chưa sẵn sàng");
-    return;
-  }
-  const canvas = document.getElementById("radarChart");
-  if (!canvas) return;
+  // 1) Lấy traits thô
+  const raw = (data && data.traits) || {
+    creativity: 0,
+    competitiveness: 0,
+    sociability: 0,
+    playfulness: 0,
+    self_improvement: 0,
+    perfectionism: 0,
+  };
 
-  // --- CHUẨN HOÁ VỀ 0..12 TRƯỚC KHI VẼ ---
-  function norm(v, max) {
-    if (!max) return 0;
-    // đưa về 0..12 và kẹp biên
-    return Math.max(0, Math.min(12, Math.round(((Number(v) || 0) / max) * 12)));
-  }
-  function pick(obj, keys) {
-    for (const k of keys) {
-      if (obj && k in obj) return Number(obj[k]) || 0;
-    }
-    return 0;
-  }
-
-  const labels = ["Sáng tạo","Cạnh tranh","Xã hội","Vui vẻ","Tự cải thiện","Cầu toàn"];
-  const raw = (data && data.traits) || {};
-
-  // Max theo tuần/nguồn điểm (bạn có thể đổi ở trait-config.js)
-  const max = (window.TraitConfig && window.TraitConfig.max) || {
+  // 2) Max chuẩn hoá (cùng logic quiz/behavior)
+  // Nếu bạn đã có trait-config.js, có thể import MAX ở đó thay vì hard-code:
+  const MAX = window.TRAIT_MAX || {
     creativity: 40,
     competitiveness: 10,
     sociability: 20,
@@ -152,33 +140,33 @@ function renderProfile(data) {
     perfectionism: 40,
   };
 
-  // Chấp nhận cả key tiếng Việt/tiếng Anh
-  const rawVals = {
-    creativity:       pick(raw, ["creativity", "sáng tạo", "sang_tao"]),
-    competitiveness:  pick(raw, ["competitiveness", "khả năng cạnh tranh", "kha_nang_canh_tranh"]),
-    sociability:      pick(raw, ["sociability", "tính xã hội", "tinh_xa_hoi"]),
-    playfulness:      pick(raw, ["playfulness", "vui tươi", "vui_tuoi"]),
-    self_improvement: pick(raw, ["self_improvement", "tự cải thiện", "tu_cai_thien"]),
-    perfectionism:    pick(raw, ["perfectionism", "cầu toàn", "cau_toan"]),
+  // 3) Chuẩn hoá về % (0..100)
+  const normPercent = (v, m) => {
+    if (!m) return 0;
+    const pct = ((Number(v) || 0) / m) * 100;
+    return Math.max(0, Math.min(100, Math.round(pct)));
   };
 
   const values = [
-    norm(rawVals.creativity,       max.creativity),
-    norm(rawVals.competitiveness,  max.competitiveness),
-    norm(rawVals.sociability,      max.sociability),
-    norm(rawVals.playfulness,      max.playfulness),
-    norm(rawVals.self_improvement, max.self_improvement),
-    norm(rawVals.perfectionism,    max.perfectionism),
+    normPercent(raw.creativity,       MAX.creativity),
+    normPercent(raw.competitiveness,  MAX.competitiveness),
+    normPercent(raw.sociability,      MAX.sociability),
+    normPercent(raw.playfulness,      MAX.playfulness),
+    normPercent(raw.self_improvement, MAX.self_improvement),
+    normPercent(raw.perfectionism,    MAX.perfectionism),
   ];
+  // console.log("NORMALIZED (0..100%):", values);
 
-  // (tùy chọn) debug
-  console.log("RAW:", rawVals, "MAX:", max);
-  console.log("NORMALIZED (0..12):", values);
-
+  // 4) Vẽ chart (0..100, tick mỗi 20%, hiển thị %)
+  const canvas = document.getElementById("radarChart");
+  if (!canvas) return;
   const ctx = canvas.getContext("2d");
-  if (radarChart && typeof radarChart.destroy === "function") radarChart.destroy();
+  if (window.radarChart && typeof window.radarChart.destroy === "function") {
+    window.radarChart.destroy();
+  }
 
-  radarChart = new Chart(ctx, {
+  const labels = ["Sáng tạo", "Cạnh tranh", "Xã hội", "Vui vẻ", "Tự cải thiện", "Cầu toàn"];
+  window.radarChart = new Chart(ctx, {
     type: "radar",
     data: {
       labels,
@@ -191,22 +179,59 @@ function renderProfile(data) {
         borderWidth: 2
       }]
     },
-    options: { scales: { r: { min: 0, max: 12, ticks: { stepSize: 3 } } }, plugins: { legend: { display: false } } }
+    options: {
+      scales: {
+        r: {
+          min: 0,
+          max: 100,
+          ticks: {
+            stepSize: 20,
+            callback: (v) => v + "%"
+          }
+        }
+      },
+      plugins: { legend: { display: false } }
+    }
   });
 
-  // Thống kê tổng
-  const progress = (data && data.gameProgress) || {};
-  const totalXP   = Object.values(progress).reduce((s,g)=>s+(g?.xp||0),0);
-  const totalCoin = Object.values(progress).reduce((s,g)=>s+(g?.coin||0),0);
-  const badge     = totalXP < 1000 ? 1 : totalXP < 5000 ? 2 : totalXP < 10000 ? 3 : totalXP < 20000 ? 4 : 5;
+  // 5) Thanh tiến độ (nếu có phần tử traitList)
+  const traitList = document.getElementById("traitList");
+  if (traitList) {
+    const names = {
+      creativity: "Sáng tạo",
+      competitiveness: "Cạnh tranh",
+      sociability: "Xã hội",
+      playfulness: "Vui vẻ",
+      self_improvement: "Tự cải thiện",
+      perfectionism: "Cầu toàn",
+    };
+    traitList.innerHTML = "";
+    (Object.keys(names)).forEach((k) => {
+      const pct = normPercent(raw[k], MAX[k]);
+      const div = document.createElement("div");
+      div.className = "trait-item";
+      div.innerHTML = `
+        <div class="trait-name">${names[k]}</div>
+        <div class="trait-bar">
+          <div class="trait-fill" style="width:${pct}%"></div>
+        </div>
+        <div style="font-size:12px; margin-top:5px;">${pct}%</div>
+      `;
+      traitList.appendChild(div);
+    });
+  }
 
-  const xpEl   = document.getElementById("profileXP");
-  const coinEl = document.getElementById("profileCoin");
-  const badgeEl= document.getElementById("profileBadge");
-  if (xpEl)   xpEl.textContent   = totalXP;
-  if (coinEl) coinEl.textContent = totalCoin;
-  if (badgeEl)badgeEl.textContent= badge;
+  // 6) Thống kê tổng (giữ nguyên logic hiện có)
+  const progress = (data && data.gameProgress) || {};
+  let totalXP = 0, totalCoin = 0;
+  Object.values(progress).forEach(g => { totalXP += g.xp || 0; totalCoin += g.coin || 0; });
+  const badge = totalXP < 1000 ? 1 : totalXP < 5000 ? 2 : totalXP < 10000 ? 3 : totalXP < 20000 ? 4 : 5;
+  const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setText("profileXP", totalXP);
+  setText("profileCoin", totalCoin);
+  setText("profileBadge", badge);
 }
+
 
 // ===== HIỂN/ẨN HỒ SƠ + NẠP DỮ LIỆU VẼ =====
 function showProfile() {
@@ -248,3 +273,4 @@ function backToGameBoard() {
     });
   });
 })();
+
