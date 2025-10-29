@@ -94,17 +94,19 @@
     });
   }
 
-  // Auth state
-  bindAuthButtons();
+  // --- Auth state ---
+bindAuthButtons();
+
 auth.onAuthStateChanged(user => {
   if (user) {
-    // nếu bạn có biến currentUser thì cập nhật luôn (không bắt buộc)
     currentUser = user;
 
-    // QUAN TRỌNG: báo Behavior để ghi điểm hành vi theo đúng UID
-    if (window.Behavior) Behavior.setUser(user.uid);
+    // ➜ THÊM DÒNG NÀY (ghi UID cho behavior logger)
+    if (window.Behavior && typeof window.Behavior.setUser === "function") {
+      window.Behavior.setUser(user.uid);
+    }
 
-    // logic cũ của bạn: vào app như bình thường
+    // logic cũ của bạn
     onSignedIn(user.uid);
   }
 });
@@ -211,5 +213,6 @@ function backToGameBoard() {
     });
   });
 })();
+
 
 
