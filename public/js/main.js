@@ -1,41 +1,80 @@
+/***********************************************************
+ * main.js — LearnQuest AI (full)
+ * - Auth (login/signup/signout)
+ * - Điều phối UI sau đăng nhập
+ * - Hồ sơ (profile) + Radar Chart (3 vòng 20/40/60, trần 60%)
+ * - Thanh tiến độ hiển thị % thực 0..100
+ ***********************************************************/
+
+/* ========================================================
+   0) GLOBALS & HELPERS
+======================================================== */
+window.App = window.App || {};
+let currentUser = null;
+let radarChart = null;                 // giữ instance chart để destroy khi re-render
+
+const $ = (id) => document.getElementById(id);
+
+/* ========================================================
+   1) AUTH + ROUTING
+======================================================== */
 (() => {
   const auth = window.App.auth;
   const db   = window.App.db;
 
-  const $ = id => document.getElementById(id);
+  // Trợ giúp: gán nhanh vào App để dùng nơi khác
+  window.App._auth = auth;
+  window.App._db   = db;
 
-  // ===== AUTH BUTTONS =====
+  // ===== Nút auth =====
   function bindAuthButtons(){
     const bind = (id, fn) => {
-      const el = $(id); if (!el) return;
+      const el = $(id);
+      if (!el) return;
       el.type = "button";
       el.addEventListener("click",(e)=>{
         e.preventDefault();
         handleAuth(fn, id);
       });
     };
+
     bind("loginBtn",  login);
     bind("signupBtn", signup);
-    const lo = $("logoutBtn"); if (lo) lo.onclick = () => auth.signOut().then(()=>location.reload());
-    const pf = $("profileBtn");if (pf) pf.onclick = showProfile;
-    const bk = $("backBtn");  if (bk) bk.onclick = backToGameBoard;
+
+    const lo = $("logoutBtn");
+    if (lo) lo.onclick = () => auth.signOut().then(()=>location.reload());
+
+    const pf = $("profileBtn");
+    if (pf) pf.onclick = showProfile;
+
+    const bk = $("backBtn");
+    if (bk) bk.onclick = backToGameBoard;
   }
 
   function handleAuth(authFn, btnId){
-    const email = $("email").value.trim();
-    const pass  = $("password").value;
+    const email = $("email")?.value.trim() || "";
+    const pass  = $("password")?.value || "";
     const msgEl = $("authMsg");
     const btn   = $(btnId);
+
     if (!email || !pass){
-      if (msgEl){ msgEl.textContent="Vui lòng nhập email và mật khẩu!"; msgEl.style.color="red"; }
+      if (msgEl){
+        msgEl.textContent = "Vui lòng nhập email và mật khẩu!";
+        msgEl.style.color = "red";
+      }
       return;
     }
-    if (btn){ btn.disabled=true; btn.classList.add("loading"); btn.textContent=""; }
-    if (msgEl){ msgEl.textContent="Đang xử lý..."; msgEl.style.color="#e11d48"; }
+
+    if (btn){ btn.disabled = true; btn.classList.add("loading"); btn.textContent = ""; }
+    if (msgEl){ msgEl.textContent = "Đang xử lý..."; msgEl.style.color = "#e11d48"; }
 
     authFn(email, pass).catch(err=>{
-      if (msgEl){ msgEl.textContent=err.message; msgEl.style.color="red"; }
-      if (btn){ btn.disabled=false; btn.classList.remove("loading"); btn.textContent = (btnId==="signupBtn"?"Đăng ký":"Đăng nhập"); }
+      if (msgEl){ msgEl.textContent = err.message; msgEl.style.color = "red"; }
+      if (btn){
+        btn.disabled = false;
+        btn.classList.remove("loading");
+        btn.textContent = (btnId==="signupBtn" ? "Đăng ký" : "Đăng nhập");
+      }
     });
   }
 
@@ -44,7 +83,8 @@
       .then(m=>{ if (m.length>0) throw new Error("Email đã được sử dụng!"); })
       .then(()=>auth.createUserWithEmailAndPassword(email, pass))
       .then(cred=> db.ref(`users/${cred.user.uid}/profile`).set({
-        email, joined: new Date().toISOString().split("T")[0]
+        email,
+        joined: new Date().toISOString().split("T")[0]
       }));
   }
 
@@ -52,59 +92,50 @@
     return auth.signInWithEmailAndPassword(email, pass);
   }
 
-  // ===== PROFILE VIEW TOGGLE =====
-  function showProfile(){
-    $("gameBoard")?.classList.add("hidden");
-    $("profile")?.classList.remove("hidden");
-  }
-  function backToGameBoard(){
-    $("profile")?.classList.add("hidden");
-    $("gameBoard")?.classList.remove("hidden");
-  }
-
-  // ===== AFTER SIGN-IN: ROUTE + REALTIME =====
+  // ===== Sau khi đăng nhập: điều phối UI + lắng nghe realtime =====
   function onSignedIn(uid){
-    // 1) Lấy snapshot 1 lần để điều phối UI
-    db.ref(`users/${uid}`).once("value").then(snap=>{
+    // 1) Điều phối UI ban đầu
+    window.App._db.ref(`users/${uid}`).once("value").then(snap=>{
       const data = snap.val() || {};
-      // Có thể refresh traits theo tuần
-      window.App.Analytics?.maybeRefreshWeekly(uid, data);
 
-      // Hiển thị app
+      // (Tuỳ chọn) Nếu có cơ chế refresh traits theo tuần
+      window.App.Analytics?.maybeRefreshWeekly?.(uid, data);
+
       $("authScreen")?.classList.add("hidden");
       $("mainApp")?.classList.remove("hidden");
-      if ($("userEmail")) $("userEmail").textContent = (auth.currentUser.email||"").split("@")[0];
+      if ($("userEmail")) $("userEmail").textContent = (window.App._auth.currentUser.email || "").split("@")[0];
 
-      // Nếu đã làm quiz thì vào board; chưa thì hiện quiz
       if (data.quizDone) {
-        window.App.Game?.showGameBoard(data, uid);
+        window.App.Game?.showGameBoard?.(data, uid);
       } else {
         $("quiz")?.classList.remove("hidden");
       }
     });
 
-    // 2) Lắng nghe realtime để cập nhật UI tự động
-    db.ref(`users/${uid}`).on("value", snap=>{
+    // 2) Lắng nghe realtime để cập nhật UI
+    window.App._db.ref(`users/${uid}`).on("value", snap=>{
       const data = snap.val() || {};
-      // Re-render profile nếu tab hồ sơ đang mở
+
+      // Nếu tab hồ sơ đang mở -> re-render
       if (!$("profile")?.classList.contains("hidden")){
-        window.App.Profile?.renderProfile(data);
+        renderProfile(data);
       }
-      // Cập nhật board nếu đang mở
+
+      // Nếu tab game đang mở -> cập nhật
       if (!$("gameBoard")?.classList.contains("hidden")){
-        window.App.Game?.showGameBoard(data, uid);
+        window.App.Game?.showGameBoard?.(data, uid);
       }
     });
   }
 
-  // ===== AUTH STATE =====
+  // ===== Gắn nút, theo dõi auth state =====
   bindAuthButtons();
 
   auth.onAuthStateChanged(user => {
     if (user) {
       currentUser = user;
 
-      // ➜ NOTE: ghi UID cho behavior logger nếu bạn dùng behavior.js
+      // (Tuỳ chọn) logger hành vi
       if (window.Behavior && typeof window.Behavior.setUser === "function") {
         window.Behavior.setUser(user.uid);
       }
@@ -114,19 +145,66 @@
   });
 })();
 
-// ====== PROFILE + CHART (RADAR) ======
-let radarChart = null;
+/* ========================================================
+   2) PROFILE VIEW (HIỆN/ẨN)
+======================================================== */
+function showProfile() {
+  const prof  = $("profile");
+  const board = $("gameBoard");
+  if (board) board.classList.add("hidden");
+  if (prof)  prof.classList.remove("hidden");
 
-// === HỒ SƠ (vẽ theo %) ===
-// Thay THÊM MỚI toàn bộ hàm này
+  const uid = window.App?._auth?.currentUser?.uid;
+  if (!uid) return;
+
+  window.App._db.ref("users/" + uid).once("value").then(snap=>{
+    renderProfile(snap.val() || {});
+  });
+}
+
+function backToGameBoard() {
+  const prof  = $("profile");
+  const board = $("gameBoard");
+  if (prof)  prof.classList.add("hidden");
+  if (board) board.classList.remove("hidden");
+}
+
+// Gắn nhanh 2 nút hồ sơ/quay lại khi DOM sẵn sàng
+(function bindProfileButtons(){
+  const pf = $("profileBtn");
+  const bk = $("backBtn");
+  if (pf) pf.addEventListener("click", (e)=>{ e.preventDefault(); showProfile(); });
+  if (bk) bk.addEventListener("click", (e)=>{ e.preventDefault(); backToGameBoard(); });
+})();
+
+// Lắng nghe realtime riêng cho tab hồ sơ (nếu đang mở)
+(function listenRealtimeForProfile(){
+  window.App?._auth?.onAuthStateChanged(user=>{
+    if (!user) return;
+    window.App._db.ref("users/" + user.uid).on("value", (snap)=>{
+      const data = snap.val() || {};
+      const visible = !$("profile")?.classList.contains("hidden");
+      if (visible) renderProfile(data);
+    });
+  });
+})();
+
+/* ========================================================
+   3) PROFILE RENDER (RADAR + % BARS)
+   - Radar: 3 vòng 20/40/60, giới hạn trần 60% (vòng ngoài cùng)
+   - Thanh tiến độ: dùng % thật 0..100% để theo dõi tuần
+======================================================== */
 function renderProfile(data) {
-  // 1) Lấy điểm thô (raw) từ DB
-  const raw = data.traits || {
-    creativity: 0, competitiveness: 0, sociability: 0,
-    playfulness: 0, self_improvement: 0, perfectionism: 0,
+  /* ---------- 3.1 Lấy điểm thô và tính % ---------- */
+  const raw = (data && data.traits) || {
+    creativity: 0,
+    competitiveness: 0,
+    sociability: 0,
+    playfulness: 0,
+    self_improvement: 0,
+    perfectionism: 0,
   };
 
-  // 2) Tính % thực theo tổng điểm (không ép về bội số 12)
   const rawList = [
     Number(raw.creativity)       || 0,
     Number(raw.competitiveness)  || 0,
@@ -135,61 +213,27 @@ function renderProfile(data) {
     Number(raw.self_improvement) || 0,
     Number(raw.perfectionism)    || 0,
   ];
-  const sum = rawList.reduce((a, b) => a + b, 0);
-  const valuesPct = sum > 0 ? rawList.map(v => (v / sum) * 100) : [0, 0, 0, 0, 0, 0];
+  const sum = rawList.reduce((a, b) => a + b, 0) || 1;
 
-  // 3) Vẽ radar 0–100
-  const labels = ["Sáng tạo", "Cạnh tranh", "Xã hội", "Vui vẻ", "Tự cải thiện", "Cầu toàn"];
-  const canvas = document.getElementById("radarChart");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  if (window.radarChart && typeof window.radarChart.destroy === "function") {
-    window.radarChart.destroy();
-  }
+  // % thật 0..100 để hiển thị thanh tiến độ
+  const pctVals = rawList.map(v => (v / sum) * 100);
 
-  window.radarChart = new Chart(ctx, {
-    type: "radar",
-    data: {
-      labels,
-      datasets: [{
-        label: "Tính cách",
-        data: valuesPct,                        // dùng % thực
-        backgroundColor: "rgba(225, 29, 72, 0.2)",
-        borderColor: "#e11d48",
-        pointBackgroundColor: "#e11d48",
-        borderWidth: 2,
-      }],
-    },
-    options: {
-      scales: {
-        r: {
-          min: 0,
-          max: 100,                              // thang chuẩn 0–100%
-          ticks: {
-            callback: (v) => `${v}%`,
-            stepSize: 20
-          },
-          angleLines: { display: true },
-          grid: { circular: true },
-        },
-      },
-      plugins: { legend: { display: false } }
-    },
-  });
+  // Giá trị vẽ trên radar: cắt trần 60 với 3 vòng 20/40/60
+  const RADAR_MAX  = 60;
+  const RADAR_STEP = 20;
+  const radarVals  = pctVals.map(v => Math.min(v, RADAR_MAX));
 
-  // 4) Thanh tiến độ % (hiện 1 chữ số thập phân)
-  const traitList = document.getElementById("traitList");
+  /* ---------- 3.2 Thanh tiến độ (0..100%) ---------- */
+  const traitList = $("traitList");
   if (traitList) {
-    const keys = ["creativity","competitiveness","sociability",
-                  "playfulness","self_improvement","perfectionism"];
+    const keys  = ["creativity","competitiveness","sociability","playfulness","self_improvement","perfectionism"];
     const names = {
       creativity:"Sáng tạo", competitiveness:"Cạnh tranh", sociability:"Xã hội",
       playfulness:"Vui vẻ", self_improvement:"Tự cải thiện", perfectionism:"Cầu toàn"
     };
-
     traitList.innerHTML = "";
     keys.forEach((k, i) => {
-      const pct = valuesPct[i]; // % thực
+      const pct = pctVals[i]; // 0..100
       const item = document.createElement("div");
       item.className = "trait-item";
       item.innerHTML = `
@@ -203,64 +247,67 @@ function renderProfile(data) {
     });
   }
 
-  // (Tuỳ chọn) Cập nhật thống kê XP/Coin/Huy hiệu nếu bạn đang làm ở chỗ khác thì giữ nguyên
-  // document.getElementById("profileXP").textContent = ...
-  // document.getElementById("profileCoin").textContent = ...
-  // document.getElementById("profileBadge").textContent = ...
+  /* ---------- 3.3 Vẽ Radar (0..60, step 20/40/60) ---------- */
+  const labels = ["Sáng tạo","Cạnh tranh","Xã hội","Vui vẻ","Tự cải thiện","Cầu toàn"];
+  const canvas = $("radarChart");
+  if (!canvas) return;
 
+  const ctx = canvas.getContext("2d");
+  // Hủy chart cũ nếu có
+  if (window.radarChart && typeof window.radarChart.destroy === "function") {
+    window.radarChart.destroy();
+  }
 
-  // 6) Thống kê tổng (giữ nguyên logic hiện có)
+  window.radarChart = new Chart(ctx, {
+    type: "radar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Tính cách",
+        data: radarVals,                           // 0..60 (đã cắt trần)
+        backgroundColor: "rgba(225, 29, 72, 0.18)",
+        borderColor: "#e11d48",
+        pointBackgroundColor: "#e11d48",
+        borderWidth: 2,
+        pointRadius: 2.5,
+        pointHoverRadius: 4
+      }]
+    },
+    options: {
+      scales: {
+        r: {
+          min: 0,
+          max: RADAR_MAX,
+          ticks: {
+            stepSize: RADAR_STEP,                  // 20/40/60
+            callback: (v) => `${v}%`
+          },
+          grid: { circular: true },
+          angleLines: { color: "rgba(0,0,0,0.06)" },
+          pointLabels: { font: { size: 12 } }
+        }
+      },
+      plugins: { legend: { display: false } },
+      elements: { line: { tension: 0.25 } }
+    }
+  });
+
+  /* ---------- 3.4 Thống kê XP/Coin/Huy hiệu ---------- */
   const progress = (data && data.gameProgress) || {};
   let totalXP = 0, totalCoin = 0;
   Object.values(progress).forEach(g => { totalXP += g.xp || 0; totalCoin += g.coin || 0; });
-  const badge = totalXP < 1000 ? 1 : totalXP < 5000 ? 2 : totalXP < 10000 ? 3 : totalXP < 20000 ? 4 : 5;
-  const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+  const badge = totalXP < 1000 ? 1
+              : totalXP < 5000 ? 2
+              : totalXP < 10000 ? 3
+              : totalXP < 20000 ? 4
+              : 5;
+
+  const setText = (id, v) => { const el = $(id); if (el) el.textContent = v; };
   setText("profileXP", totalXP);
   setText("profileCoin", totalCoin);
   setText("profileBadge", badge);
 }
 
-
-// ===== HIỂN/ẨN HỒ SƠ + NẠP DỮ LIỆU VẼ =====
-function showProfile() {
-  const prof  = document.getElementById("profile");
-  const board = document.getElementById("gameBoard");
-  if (board) board.classList.add("hidden");
-  if (prof)  prof.classList.remove("hidden");
-
-  const uid = window.App?.auth?.currentUser?.uid;
-  if (!uid) return;
-  window.App.db.ref("users/" + uid).once("value").then(snap=>{
-    renderProfile(snap.val() || {});
-  });
-}
-
-function backToGameBoard() {
-  const prof  = document.getElementById("profile");
-  const board = document.getElementById("gameBoard");
-  if (prof)  prof.classList.add("hidden");
-  if (board) board.classList.remove("hidden");
-}
-
-// ===== GẮN NÚT HỒ SƠ/QUAY LẠI =====
-(function bindProfileButtons(){
-  const pf = document.getElementById("profileBtn");
-  const bk = document.getElementById("backBtn");
-  if (pf) pf.addEventListener("click", (e)=>{ e.preventDefault(); showProfile(); });
-  if (bk) bk.addEventListener("click", (e)=>{ e.preventDefault(); backToGameBoard(); });
-})();
-
-// ===== LISTEN REALTIME CHO TAB HỒ SƠ (nếu đang mở) =====
-(function listenRealtimeForProfile(){
-  window.App?.auth?.onAuthStateChanged(user=>{
-    if (!user) return;
-    window.App.db.ref("users/" + user.uid).on("value", (snap)=>{
-      const data = snap.val() || {};
-      const profileVisible = !document.getElementById("profile")?.classList.contains("hidden");
-      if (profileVisible) renderProfile(data);
-    });
-  });
-})();
-
-
-
+// Expose để nơi khác có thể gọi
+window.App.Profile = { renderProfile };
