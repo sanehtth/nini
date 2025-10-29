@@ -118,46 +118,28 @@
 let radarChart = null;
 
 // === HỒ SƠ (vẽ theo %) ===
+// Thay THÊM MỚI toàn bộ hàm này
 function renderProfile(data) {
-  // 1) Lấy traits thô
-  const raw = (data && data.traits) || {
-    creativity: 0,
-    competitiveness: 0,
-    sociability: 0,
-    playfulness: 0,
-    self_improvement: 0,
-    perfectionism: 0,
+  // 1) Lấy điểm thô (raw) từ DB
+  const raw = data.traits || {
+    creativity: 0, competitiveness: 0, sociability: 0,
+    playfulness: 0, self_improvement: 0, perfectionism: 0,
   };
 
-  // 2) Max chuẩn hoá (cùng logic quiz/behavior)
-  // Nếu bạn đã có trait-config.js, có thể import MAX ở đó thay vì hard-code:
-  const MAX = window.TRAIT_MAX || {
-    creativity: 40,
-    competitiveness: 10,
-    sociability: 20,
-    playfulness: 20,
-    self_improvement: 10,
-    perfectionism: 40,
-  };
-
-  // 3) Chuẩn hoá về % (0..100)
-  const normPercent = (v, m) => {
-    if (!m) return 0;
-    const pct = ((Number(v) || 0) / m) * 100;
-    return Math.max(0, Math.min(100, Math.round(pct)));
-  };
-
-  const values = [
-    normPercent(raw.creativity,       MAX.creativity),
-    normPercent(raw.competitiveness,  MAX.competitiveness),
-    normPercent(raw.sociability,      MAX.sociability),
-    normPercent(raw.playfulness,      MAX.playfulness),
-    normPercent(raw.self_improvement, MAX.self_improvement),
-    normPercent(raw.perfectionism,    MAX.perfectionism),
+  // 2) Tính % thực theo tổng điểm (không ép về bội số 12)
+  const rawList = [
+    Number(raw.creativity)       || 0,
+    Number(raw.competitiveness)  || 0,
+    Number(raw.sociability)      || 0,
+    Number(raw.playfulness)      || 0,
+    Number(raw.self_improvement) || 0,
+    Number(raw.perfectionism)    || 0,
   ];
-  // console.log("NORMALIZED (0..100%):", values);
+  const sum = rawList.reduce((a, b) => a + b, 0);
+  const valuesPct = sum > 0 ? rawList.map(v => (v / sum) * 100) : [0, 0, 0, 0, 0, 0];
 
-  // 4) Vẽ chart (0..100, tick mỗi 20%, hiển thị %)
+  // 3) Vẽ radar 0–100
+  const labels = ["Sáng tạo", "Cạnh tranh", "Xã hội", "Vui vẻ", "Tự cải thiện", "Cầu toàn"];
   const canvas = document.getElementById("radarChart");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
@@ -165,61 +147,68 @@ function renderProfile(data) {
     window.radarChart.destroy();
   }
 
-  const labels = ["Sáng tạo", "Cạnh tranh", "Xã hội", "Vui vẻ", "Tự cải thiện", "Cầu toàn"];
   window.radarChart = new Chart(ctx, {
     type: "radar",
     data: {
       labels,
       datasets: [{
         label: "Tính cách",
-        data: values,
+        data: valuesPct,                        // dùng % thực
         backgroundColor: "rgba(225, 29, 72, 0.2)",
         borderColor: "#e11d48",
         pointBackgroundColor: "#e11d48",
-        borderWidth: 2
-      }]
+        borderWidth: 2,
+      }],
     },
     options: {
       scales: {
         r: {
           min: 0,
-          max: 100,
+          max: 100,                              // thang chuẩn 0–100%
           ticks: {
-            stepSize: 20,
-            callback: (v) => v + "%"
-          }
-        }
+            callback: (v) => `${v}%`,
+            stepSize: 20
+          },
+          angleLines: { display: true },
+          grid: { circular: true },
+        },
       },
       plugins: { legend: { display: false } }
-    }
+    },
   });
 
-  // 5) Thanh tiến độ (nếu có phần tử traitList)
+  // 4) Thanh tiến độ % (hiện 1 chữ số thập phân)
   const traitList = document.getElementById("traitList");
   if (traitList) {
+    const keys = ["creativity","competitiveness","sociability",
+                  "playfulness","self_improvement","perfectionism"];
     const names = {
-      creativity: "Sáng tạo",
-      competitiveness: "Cạnh tranh",
-      sociability: "Xã hội",
-      playfulness: "Vui vẻ",
-      self_improvement: "Tự cải thiện",
-      perfectionism: "Cầu toàn",
+      creativity:"Sáng tạo", competitiveness:"Cạnh tranh", sociability:"Xã hội",
+      playfulness:"Vui vẻ", self_improvement:"Tự cải thiện", perfectionism:"Cầu toàn"
     };
+
     traitList.innerHTML = "";
-    (Object.keys(names)).forEach((k) => {
-      const pct = normPercent(raw[k], MAX[k]);
-      const div = document.createElement("div");
-      div.className = "trait-item";
-      div.innerHTML = `
+    keys.forEach((k, i) => {
+      const pct = valuesPct[i]; // % thực
+      const item = document.createElement("div");
+      item.className = "trait-item";
+      item.innerHTML = `
         <div class="trait-name">${names[k]}</div>
         <div class="trait-bar">
-          <div class="trait-fill" style="width:${pct}%"></div>
+          <div class="trait-fill" style="width:${pct}%;"></div>
         </div>
-        <div style="font-size:12px; margin-top:5px;">${pct}%</div>
+        <div style="font-size:12px; margin-top:5px;">${pct.toFixed(1)}%</div>
       `;
-      traitList.appendChild(div);
+      traitList.appendChild(item);
     });
   }
+
+  // (Tuỳ chọn) Cập nhật thống kê XP/Coin/Huy hiệu nếu bạn đang làm ở chỗ khác thì giữ nguyên
+  // document.getElementById("profileXP").textContent = ...
+  // document.getElementById("profileCoin").textContent = ...
+  // document.getElementById("profileBadge").textContent = ...
+}
+
 
   // 6) Thống kê tổng (giữ nguyên logic hiện có)
   const progress = (data && data.gameProgress) || {};
@@ -273,4 +262,5 @@ function backToGameBoard() {
     });
   });
 })();
+
 
