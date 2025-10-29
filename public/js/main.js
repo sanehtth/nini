@@ -96,10 +96,20 @@
 
   // Auth state
   bindAuthButtons();
-  auth.onAuthStateChanged(user=>{
-    if (user) onSignedIn(user.uid);
-  });
+auth.onAuthStateChanged(user => {
+  if (user) {
+    // nếu bạn có biến currentUser thì cập nhật luôn (không bắt buộc)
+    currentUser = user;
+
+    // QUAN TRỌNG: báo Behavior để ghi điểm hành vi theo đúng UID
+    if (window.Behavior) Behavior.setUser(user.uid);
+
+    // logic cũ của bạn: vào app như bình thường
+    onSignedIn(user.uid);
+  }
+});
 })();
+
 // ====== PATCH HỒ SƠ & CHART ======
 let radarChart = null;
 
@@ -201,4 +211,5 @@ function backToGameBoard() {
     });
   });
 })();
+
 
