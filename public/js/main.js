@@ -48,7 +48,6 @@ window.addEventListener("DOMContentLoaded", () => {
       loadUserDataAndShowApp();
     }
   });
-});
 
 // === AUTH ===
 function handleAuth(authFn, btnId) {
@@ -285,4 +284,5 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 3000);
 
 }
+
 
