@@ -4,6 +4,7 @@
 
   const $ = id => document.getElementById(id);
 
+  // ===== AUTH BUTTONS =====
   function bindAuthButtons(){
     const bind = (id, fn) => {
       const el = $(id); if (!el) return;
@@ -51,6 +52,7 @@
     return auth.signInWithEmailAndPassword(email, pass);
   }
 
+  // ===== PROFILE VIEW TOGGLE =====
   function showProfile(){
     $("gameBoard")?.classList.add("hidden");
     $("profile")?.classList.remove("hidden");
@@ -60,19 +62,20 @@
     $("gameBoard")?.classList.remove("hidden");
   }
 
+  // ===== AFTER SIGN-IN: ROUTE + REALTIME =====
   function onSignedIn(uid){
-    // 1) lấy snapshot 1 lần để điều phối
+    // 1) Lấy snapshot 1 lần để điều phối UI
     db.ref(`users/${uid}`).once("value").then(snap=>{
       const data = snap.val() || {};
-      // có thể refresh traits theo tuần
+      // Có thể refresh traits theo tuần
       window.App.Analytics?.maybeRefreshWeekly(uid, data);
 
-      // hiển thị app
+      // Hiển thị app
       $("authScreen")?.classList.add("hidden");
       $("mainApp")?.classList.remove("hidden");
       if ($("userEmail")) $("userEmail").textContent = (auth.currentUser.email||"").split("@")[0];
 
-      // nếu đã làm quiz thì vào board; chưa thì hiện quiz của bạn
+      // Nếu đã làm quiz thì vào board; chưa thì hiện quiz
       if (data.quizDone) {
         window.App.Game?.showGameBoard(data, uid);
       } else {
@@ -80,39 +83,38 @@
       }
     });
 
-    // 2) lắng nghe realtime để cập nhật UI tự động
+    // 2) Lắng nghe realtime để cập nhật UI tự động
     db.ref(`users/${uid}`).on("value", snap=>{
       const data = snap.val() || {};
-      // Update board/gợi ý dựa trên traits hiện tại
+      // Re-render profile nếu tab hồ sơ đang mở
       if (!$("profile")?.classList.contains("hidden")){
         window.App.Profile?.renderProfile(data);
       }
-      // Khi traits đổi (do refresh tuần hoặc quiz), board tự cập nhật
+      // Cập nhật board nếu đang mở
       if (!$("gameBoard")?.classList.contains("hidden")){
         window.App.Game?.showGameBoard(data, uid);
       }
     });
   }
 
-  // --- Auth state ---
-bindAuthButtons();
+  // ===== AUTH STATE =====
+  bindAuthButtons();
 
-auth.onAuthStateChanged(user => {
-  if (user) {
-    currentUser = user;
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
 
-    // ➜ THÊM DÒNG NÀY (ghi UID cho behavior logger)
-    if (window.Behavior && typeof window.Behavior.setUser === "function") {
-      window.Behavior.setUser(user.uid);
+      // ➜ NOTE: ghi UID cho behavior logger nếu bạn dùng behavior.js
+      if (window.Behavior && typeof window.Behavior.setUser === "function") {
+        window.Behavior.setUser(user.uid);
+      }
+
+      onSignedIn(user.uid);
     }
-
-    // logic cũ của bạn
-    onSignedIn(user.uid);
-  }
-});
+  });
 })();
 
-// ====== PATCH HỒ SƠ & CHART ======
+// ====== PROFILE + CHART (RADAR) ======
 let radarChart = null;
 
 // Vẽ hồ sơ từ dữ liệu user
@@ -124,60 +126,54 @@ function renderProfile(data) {
   const canvas = document.getElementById("radarChart");
   if (!canvas) return;
 
-  const traits = (data && data.traits) || {
-    creativity:0, competitiveness:0, sociability:0,
-    playfulness:0, self_improvement:0, perfectionism:0
-  };
+  // --- CHUẨN HOÁ VỀ 0..12 TRƯỚC KHI VẼ ---
+  function norm(v, max) {
+    if (!max) return 0;
+    // đưa về 0..12 và kẹp biên
+    return Math.max(0, Math.min(12, Math.round(((Number(v) || 0) / max) * 12)));
+  }
+  function pick(obj, keys) {
+    for (const k of keys) {
+      if (obj && k in obj) return Number(obj[k]) || 0;
+    }
+    return 0;
+  }
 
   const labels = ["Sáng tạo","Cạnh tranh","Xã hội","Vui vẻ","Tự cải thiện","Cầu toàn"];
-  
-  // --- CHUẨN HOÁ VỀ 0..12 TRƯỚC KHI VẼ ---
-function norm(v, max) {
-  if (!max) return 0;
-  // đưa về 0..12 và kẹp biên
-  return Math.max(0, Math.min(12, Math.round(((Number(v) || 0) / max) * 12)));
-}
+  const raw = (data && data.traits) || {};
 
-function pick(obj, keys) {
-  for (const k of keys) {
-    if (obj && k in obj) return Number(obj[k]) || 0;
-  }
-  return 0;
-}
+  // Max theo tuần/nguồn điểm (bạn có thể đổi ở trait-config.js)
+  const max = (window.TraitConfig && window.TraitConfig.max) || {
+    creativity: 40,
+    competitiveness: 10,
+    sociability: 20,
+    playfulness: 20,
+    self_improvement: 10,
+    perfectionism: 40,
+  };
 
-const raw = (data && data.traits) || {};
-const max = (window.TraitConfig && window.TraitConfig.max) || {
-  creativity: 40,
-  competitiveness: 10,
-  sociability: 20,
-  playfulness: 20,
-  self_improvement: 10,
-  perfectionism: 40,
-};
+  // Chấp nhận cả key tiếng Việt/tiếng Anh
+  const rawVals = {
+    creativity:       pick(raw, ["creativity", "sáng tạo", "sang_tao"]),
+    competitiveness:  pick(raw, ["competitiveness", "khả năng cạnh tranh", "kha_nang_canh_tranh"]),
+    sociability:      pick(raw, ["sociability", "tính xã hội", "tinh_xa_hoi"]),
+    playfulness:      pick(raw, ["playfulness", "vui tươi", "vui_tuoi"]),
+    self_improvement: pick(raw, ["self_improvement", "tự cải thiện", "tu_cai_thien"]),
+    perfectionism:    pick(raw, ["perfectionism", "cầu toàn", "cau_toan"]),
+  };
 
-// chấp nhận cả key tiếng Việt/tiếng Anh
-const rawVals = {
-  creativity:       pick(raw, ["creativity", "sáng tạo", "sang_tao"]),
-  competitiveness:  pick(raw, ["competitiveness", "khả năng cạnh tranh", "kha_nang_canh_tranh"]),
-  sociability:      pick(raw, ["sociability", "tính xã hội", "tinh_xa_hoi"]),
-  playfulness:      pick(raw, ["playfulness", "vui tươi", "vui_tuoi"]),
-  self_improvement: pick(raw, ["self_improvement", "tự cải thiện", "tu_cai_thien"]),
-  perfectionism:    pick(raw, ["perfectionism", "cầu toàn", "cau_toan"]),
-};
+  const values = [
+    norm(rawVals.creativity,       max.creativity),
+    norm(rawVals.competitiveness,  max.competitiveness),
+    norm(rawVals.sociability,      max.sociability),
+    norm(rawVals.playfulness,      max.playfulness),
+    norm(rawVals.self_improvement, max.self_improvement),
+    norm(rawVals.perfectionism,    max.perfectionism),
+  ];
 
-const values = [
-  norm(rawVals.creativity,       max.creativity),
-  norm(rawVals.competitiveness,  max.competitiveness),
-  norm(rawVals.sociability,      max.sociability),
-  norm(rawVals.playfulness,      max.playfulness),
-  norm(rawVals.self_improvement, max.self_improvement),
-  norm(rawVals.perfectionism,    max.perfectionism),
-];
-
-// (tuỳ chọn) debug xem chuẩn hoá đúng chưa
-console.log("RAW:", rawVals, "MAX:", max);
-console.log("NORMALIZED (0..12):", values);
-//---- het doan vua thay------
+  // (tùy chọn) debug
+  console.log("RAW:", rawVals, "MAX:", max);
+  console.log("NORMALIZED (0..12):", values);
 
   const ctx = canvas.getContext("2d");
   if (radarChart && typeof radarChart.destroy === "function") radarChart.destroy();
@@ -198,7 +194,7 @@ console.log("NORMALIZED (0..12):", values);
     options: { scales: { r: { min: 0, max: 12, ticks: { stepSize: 3 } } }, plugins: { legend: { display: false } } }
   });
 
-  // cập nhật thống kê
+  // Thống kê tổng
   const progress = (data && data.gameProgress) || {};
   const totalXP   = Object.values(progress).reduce((s,g)=>s+(g?.xp||0),0);
   const totalCoin = Object.values(progress).reduce((s,g)=>s+(g?.coin||0),0);
@@ -212,14 +208,13 @@ console.log("NORMALIZED (0..12):", values);
   if (badgeEl)badgeEl.textContent= badge;
 }
 
-// Hiện hồ sơ rồi mới vẽ (tránh vẽ khi đang hidden)
+// ===== HIỂN/ẨN HỒ SƠ + NẠP DỮ LIỆU VẼ =====
 function showProfile() {
   const prof  = document.getElementById("profile");
   const board = document.getElementById("gameBoard");
   if (board) board.classList.add("hidden");
   if (prof)  prof.classList.remove("hidden");
 
-  // lấy dữ liệu và vẽ
   const uid = window.App?.auth?.currentUser?.uid;
   if (!uid) return;
   window.App.db.ref("users/" + uid).once("value").then(snap=>{
@@ -234,7 +229,7 @@ function backToGameBoard() {
   if (board) board.classList.remove("hidden");
 }
 
-// Gắn nút
+// ===== GẮN NÚT HỒ SƠ/QUAY LẠI =====
 (function bindProfileButtons(){
   const pf = document.getElementById("profileBtn");
   const bk = document.getElementById("backBtn");
@@ -242,7 +237,7 @@ function backToGameBoard() {
   if (bk) bk.addEventListener("click", (e)=>{ e.preventDefault(); backToGameBoard(); });
 })();
 
-// Lắng nghe realtime: chỉ re-render khi tab hồ sơ đang mở
+// ===== LISTEN REALTIME CHO TAB HỒ SƠ (nếu đang mở) =====
 (function listenRealtimeForProfile(){
   window.App?.auth?.onAuthStateChanged(user=>{
     if (!user) return;
@@ -253,7 +248,3 @@ function backToGameBoard() {
     });
   });
 })();
-
-
-
-
