@@ -95,23 +95,32 @@ function hasValidTraits(traits) {
   // NOTE: handleAuth — END
 
   //=========== ham kiem tra dang ky tai khoan va dang nhap =========
-  // NOTE: signup — START
-  function signup(email, pass){
-    return auth.fetchSignInMethodsForEmail(email)
-      .then(m=>{ if (m.length>0) throw new Error("Email đã được sử dụng!"); })
-      .then(()=>auth.createUserWithEmailAndPassword(email, pass))
-      .then(async (cred)=> {
-        // Tạo skeleton ban đầu dưới /users/{uid}
-        const uid = cred.user.uid;
-        await db.ref(`users/${uid}/profile`).set({
-          email,
-          joined: new Date().toISOString().split("T")[0]
-        });
-        await db.ref(`users/${uid}/gameProgress`).set({});
-        await db.ref(`users/${uid}/stats`).set({ xp: 0, coin: 0 });
+ // NOTE: signup — START
+function signup(email, pass){
+  const auth = window.App._auth, db = window.App._db;
+  return auth.fetchSignInMethodsForEmail(email)
+    .then(m=>{ if (m.length>0) throw new Error("Email đã được sử dụng!"); })
+    .then(()=>auth.createUserWithEmailAndPassword(email, pass))
+    .then(async (cred)=> {
+      const uid = cred.user.uid;
+      const joined = new Date().toISOString().split("T")[0];
+
+      // Skeleton đầy đủ ngay từ đầu
+      const zeroTraits = {
+        creativity: 0, competitiveness: 0, sociability: 0,
+        playfulness: 0, self_improvement: 0, perfectionism: 0
+      };
+
+      await db.ref(`users/${uid}`).set({
+        profile: { email, joined },
+        stats:   { xp: 0, coin: 0, badge: 1 },
+        traits:  zeroTraits,
+        gameProgress: {}
       });
-  }
-  // NOTE: signup — END
+    });
+}
+// NOTE: signup — END
+
 
   // NOTE: login — START
   function login(email, pass){
@@ -120,21 +129,26 @@ function hasValidTraits(traits) {
   // NOTE: login — END
 
   // NOTE: ensureUserSkeleton — START
-  // Bổ sung dữ liệu nền cho user nếu thiếu (idempotent)
-  async function ensureUserSkeleton(uid) {
-    const snap = await db.ref(`users/${uid}`).get();
-    const data = snap.val() || {};
-    const updates = {};
-    const email = auth.currentUser?.email || "";
-    const joined = new Date().toISOString().split("T")[0];
+async function ensureUserSkeleton(uid) {
+  const db = window.App._db;
+  const snap = await db.ref(`users/${uid}`).get();
+  const data = snap.val() || {};
+  const updates = {};
+  const email = window.App._auth.currentUser?.email || "";
+  const joined = new Date().toISOString().split("T")[0];
 
-    if (!data.profile)       updates[`users/${uid}/profile`] = { email, joined };
-    if (!data.gameProgress)  updates[`users/${uid}/gameProgress`] = {};
-    if (!data.stats)         updates[`users/${uid}/stats`] = { xp: 0, coin: 0 };
+  if (!data.profile)       updates[`users/${uid}/profile`] = { email, joined };
+  if (!data.stats)         updates[`users/${uid}/stats`]   = { xp: 0, coin: 0, badge: 1 };
+  if (!data.gameProgress)  updates[`users/${uid}/gameProgress`] = {};
+  if (!data.traits) updates[`users/${uid}/traits`] = {
+    creativity: 0, competitiveness: 0, sociability: 0,
+    playfulness: 0, self_improvement: 0, perfectionism: 0
+  };
 
-    if (Object.keys(updates).length) await db.ref().update(updates);
-  }
-  // NOTE: ensureUserSkeleton — END
+  if (Object.keys(updates).length) await db.ref().update(updates);
+}
+// NOTE: ensureUserSkeleton — END
+
 
   /* ========================================================
      Sau đăng nhập: điều hướng theo trạng thái trắc nghiệm (strict: yêu cầu traits > 0)
@@ -187,32 +201,36 @@ function hasValidTraits(traits) {
     }
   }
   // NOTE: routeAfterLogin — END
-
-  // ===== Sau khi đăng nhập: điều phối UI + lắng nghe realtime =====
+/* ========================================================
+   Sau khi đăng nhập: điều phối UI + lắng nghe realtime
+======================================================== */  
   // NOTE: onSignedIn — START
-  function onSignedIn(uid){
-    // 1) Điều phối UI cơ bản
-    $("authScreen")?.classList.add("hidden");
-    $("mainApp")?.classList.remove("hidden");
-    if ($("userEmail")) $("userEmail").textContent = (auth.currentUser.email || "").split("@")[0];
+function onSignedIn(uid){
+  const auth = window.App._auth, db = window.App._db;
 
-    // 2) Bảo đảm có skeleton, rồi route theo trạng thái quiz
-    ensureUserSkeleton(uid).then(()=> routeAfterLogin(uid));
-
-    // 3) Lắng nghe realtime để cập nhật UI
-    db.ref(`users/${uid}`).on("value", snap=>{
-      const data = snap.val() || {};
-      // Tab hồ sơ mở -> re-render
-      if (!$("profile")?.classList.contains("hidden")){
-        renderProfile(data);
-      }
-      // Tab game mở -> cập nhật
-      if (!$("gameBoard")?.classList.contains("hidden")){
-        window.App.Game?.showGameBoard?.(data, uid);
-      }
-    });
+  // Hiện app
+  document.getElementById("authScreen")?.classList.add("hidden");
+  document.getElementById("mainApp")?.classList.remove("hidden");
+  if (document.getElementById("userEmail")) {
+    document.getElementById("userEmail").textContent = (auth.currentUser.email || "").split("@")[0];
   }
-  // NOTE: onSignedIn — END
+
+  // Bảo đảm skeleton cho user cũ rồi hiển thị modal mời làm quiz
+  ensureUserSkeleton(uid).then(()=> showQuizGate(uid));
+
+  // Lắng nghe realtime cập nhật UI
+  db.ref(`users/${uid}`).on("value", snap=>{
+    const data = snap.val() || {};
+    if (!document.getElementById("profile")?.classList.contains("hidden")){
+      renderProfile(data);
+    }
+    if (!document.getElementById("gameBoard")?.classList.contains("hidden")){
+      window.App.Game?.showGameBoard?.(data, uid);
+    }
+  });
+}
+// NOTE: onSignedIn — END
+
 
   // ===== Gắn nút, theo dõi auth state =====
   bindAuthButtons();
@@ -298,6 +316,37 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 // NOTE: App ready — END
+/* ========================================================
+     NOTE: showQuizGate — START
+======================================================== */
+async function showQuizGate(uid) {
+  const db = window.App._db;
+  const modal = document.getElementById("quizGateModal");
+  const text  = document.getElementById("quizGateText");
+  const goBtn = document.getElementById("goQuizBtn");
+  const skip  = document.getElementById("skipQuizBtn");
+
+  if (!modal || !text || !goBtn || !skip) return; // chưa nhúng HTML modal
+
+  const snap = await db.ref(`/users/${uid}/traits`).get();
+  const traits = snap.val() || {};
+  const sum = ["creativity","competitiveness","sociability","playfulness","self_improvement","perfectionism"]
+              .reduce((s,k)=>s + Number(traits[k]||0), 0);
+
+  if (sum > 0) {
+    text.innerHTML = "Bạn đã có kết quả trắc nghiệm. Bạn muốn <b>làm lại</b> hay <b>bỏ qua</b>?";
+  } else {
+    text.innerHTML = "Bạn <b>chưa làm trắc nghiệm</b>. Làm ngay để cá nhân hoá game?";
+  }
+
+  modal.classList.remove("hidden");
+  goBtn.onclick  = () => { window.location.href = "quiz.html"; };
+  skip.onclick   = () => { modal.classList.add("hidden"); };
+}
+
+/* ========================================================
+     NOTE: showQuizGate — END
+======================================================== */
 
 /* ========================================================
     TRAC NGHIEM (Callout nhỏ trên index nếu muốn nhắc)
@@ -495,3 +544,4 @@ function renderProfile(data) {
 
 // Expose để nơi khác có thể gọi
 window.App.Profile = { renderProfile };
+
