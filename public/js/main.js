@@ -1,4 +1,3 @@
-// === ĐIỀU KHIỂN CHÍNH: Auth, UI, Game Board, Profile
 const auth = window.firebaseAuth;
 const db = window.firebaseDB;
 
@@ -261,4 +260,5 @@ function showToast(msg) {
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3000);
 }
+
 
