@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LearnQuest AI — Trắc nghiệm</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <img src="/assets/logonini.webp" alt="Logo Nini" style="height:40px; border-radius:50%; object-fit:cover;" />
+        <h1 style="margin:0; font-size:22px;">LearnQuest AI</h1>
+      </div>
+      <p class="subtitle">Khám phá tính cách — học vui như chơi!</p>
+    </header>
+
+    <main id="quizApp" class="quiz">
+      <h2>Khám Phá Tính Cách</h2>
+      <p class="muted">Mỗi lần sẽ hỏi ngẫu nhiên <span id="questionCount">12</span> câu.</p>
+
+      <div id="questionList"></div>
+
+      <div class="alert" id="alert" style="display:none;">Vui lòng trả lời <span id="missingCount">0</span> câu!</div>
+
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button id="submitBtn" class="main-btn" disabled>HOÀN TẤT</button>
+        <a class="secondary-btn" href="/index.html">Hủy</a>
+      </div>
+    </main>
+  </div>
+
+  <script defer src="/js/trait-config.js"></script>
+  <script defer src="/js/quiz.js"></script>
+</body>
+</html>
