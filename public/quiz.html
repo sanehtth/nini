@@ -7,6 +7,14 @@
   <link rel="stylesheet" href="/style.css" />
   <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
 </head>
+  <!-- Firebase compat SDK -->
+<script defer src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<!-- File cấu hình của bạn (apiKey, projectId, v.v.) -->
+<script defer src="/js/firebase.js"></script>
+
 <body>
   <div class="container">
     <header>
@@ -32,7 +40,9 @@
     </main>
   </div>
 
-  <script defer src="/js/trait-config.js"></script>
-  <script defer src="/js/quiz.js"></script>
+ <!-- Quiz scripts -->
+<script defer src="/js/trait-config.js"></script>
+<script defer src="/js/quiz.js?v=3"></script>
 </body>
+
 </html>
