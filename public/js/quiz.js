@@ -152,39 +152,30 @@ window.addEventListener("DOMContentLoaded", () => {
     return result;
   }
 
-  // Submit (lưu Firebase nếu có đăng nhập, fallback localStorage)
-  const SAFE_XP = 50;
-  submitEl.addEventListener("click", async () => {
-    checkAllAnswered();
-    if (submitEl.disabled) return;
+ // NOTE: quiz submit — START
+submitEl.addEventListener("click", async () => {
+  checkAllAnswered();
+  if (submitEl.disabled) return;
 
-    const res  = score();
-    const meta = { per_group: PER_GROUP, traits: TRAITS, updatedAt: Date.now() };
+  const res  = score();  // {creativity, competitiveness, sociability, playfulness, self_improvement, perfectionism}
+  const meta = {
+    updatedAt: Date.now(),
+    traitKeys: ["creativity","competitiveness","sociability","playfulness","self_improvement","perfectionism"]
+  };
 
-    try {
-      const user = (window.firebase && firebase.auth().currentUser) || null;
-      if (user) {
-        const ref = firebase.database().ref(`/profiles/${user.uid}`);
-        await ref.child("traits").set(res);
-        await ref.child("quizMeta").set(meta);
-        await ref.child("stats/xp").transaction(v => (v || 0) + SAFE_XP);
-      } else {
-        localStorage.setItem("lq_traitScores", JSON.stringify(res));
-        localStorage.setItem("lq_quiz_meta", JSON.stringify(meta));
-        localStorage.setItem("lq_quizDone", "true");
-        const xp = parseInt(localStorage.getItem("lq_xp") || "0", 10) + SAFE_XP;
-        localStorage.setItem("lq_xp", String(xp));
-      }
-    } catch (e) {
-      console.warn("Save quiz error, fallback localStorage", e);
-      localStorage.setItem("lq_traitScores", JSON.stringify(res));
-      localStorage.setItem("lq_quiz_meta", JSON.stringify(meta));
-      localStorage.setItem("lq_quizDone", "true");
-      const xp = parseInt(localStorage.getItem("lq_xp") || "0", 10) + SAFE_XP;
-      localStorage.setItem("lq_xp", String(xp));
-    }
+  const u = firebase.auth().currentUser;
+  if (!u) { alert("Phiên đăng nhập đã hết. Vui lòng đăng nhập lại."); location.href="index.html"; return; }
 
-    // dùng đường dẫn tương đối để tránh lệch webroot
-    window.location.href = "index.html?quiz=done";
-  });
+  const db = firebase.database();
+  await db.ref(`/users/${u.uid}/traits`).set(res);
+  await db.ref(`/users/${u.uid}/quizMeta`).set(meta);
+
+  // thưởng nhẹ tuỳ ý (ví dụ +50XP)
+  await db.ref(`/users/${u.uid}/stats/xp`).transaction(v => (v || 0) + 50);
+
+  // về index
+  window.location.href = "index.html?quiz=done";
 });
+// NOTE: quiz submit — END
+
+
