@@ -152,30 +152,71 @@ window.addEventListener("DOMContentLoaded", () => {
     return result;
   }
 
- // NOTE: quiz submit — START
-submitEl.addEventListener("click", async () => {
-  checkAllAnswered();
-  if (submitEl.disabled) return;
+ // =======================
+// SUBMIT: lưu về /users/{uid}
+// =======================
+(function () {
+  const submitEl = document.getElementById("submitBtn");
+  if (!submitEl) return;
 
-  const res  = score();  // {creativity, competitiveness, sociability, playfulness, self_improvement, perfectionism}
-  const meta = {
-    updatedAt: Date.now(),
-    traitKeys: ["creativity","competitiveness","sociability","playfulness","self_improvement","perfectionism"]
-  };
+  submitEl.addEventListener("click", async (e) => {
+    e.preventDefault();
 
-  const u = firebase.auth().currentUser;
-  if (!u) { alert("Phiên đăng nhập đã hết. Vui lòng đăng nhập lại."); location.href="index.html"; return; }
+    // 1) Kiểm tra đã trả lời đủ chưa
+    checkAllAnswered && checkAllAnswered();
+    if (submitEl.disabled) return;
 
-  const db = firebase.database();
-  await db.ref(`/users/${u.uid}/traits`).set(res);
-  await db.ref(`/users/${u.uid}/quizMeta`).set(meta);
+    try {
+      // 2) Tính điểm traits
+      const res = (typeof score === "function") ? score() : null;
+      if (!res) throw new Error("score() not found");
 
-  // thưởng nhẹ tuỳ ý (ví dụ +50XP)
-  await db.ref(`/users/${u.uid}/stats/xp`).transaction(v => (v || 0) + 50);
+      // 3) Yêu cầu có user đăng nhập
+      const u = (window.firebase && firebase.auth) ? firebase.auth().currentUser : null;
+      if (!u) {
+        alert("Phiên đăng nhập đã hết. Vui lòng đăng nhập lại.");
+        window.location.href = "index.html";
+        return;
+      }
 
-  // về index
-  window.location.href = "index.html?quiz=done";
-});
-// NOTE: quiz submit — END
+      // 4) Ghi vào DB
+      const db = firebase.database();
+      await db.ref(`/users/${u.uid}/traits`).set(res);
+      await db.ref(`/users/${u.uid}/quizMeta`).set({
+        updatedAt: Date.now(),
+        traitKeys: ["creativity","competitiveness","sociability","playfulness","self_improvement","perfectionism"]
+      });
+
+      // 5) Thưởng XP nhẹ
+      await db.ref(`/users/${u.uid}/stats/xp`).transaction(v => (v || 0) + 50);
+
+      // 6) Về index
+      window.location.href = "index.html?quiz=done";
+    } catch (err) {
+      console.error(err);
+      const alertEl = document.getElementById("alert");
+      if (alertEl) {
+        alertEl.style.display = "block";
+        alertEl.textContent = "Lỗi tại quiz: " + (err && err.message ? err.message : String(err));
+      } else {
+        alert("Lỗi tại quiz: " + (err && err.message ? err.message : String(err)));
+      }
+    }
+  });
+})();
+
+// =======================
+// CANCEL (nếu muốn bắt sự kiện bằng JS, nhưng đã có fallback <a>)
+// =======================
+(function () {
+  const cancel = document.getElementById("cancelLink");
+  if (!cancel) return;
+  cancel.addEventListener("click", (e) => {
+    // có thể để mặc định, vì đã có href
+    // e.preventDefault(); window.location.replace("index.html");
+  });
+})();
+
+
 
 
