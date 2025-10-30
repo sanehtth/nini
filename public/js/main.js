@@ -1,9 +1,10 @@
 /***********************************************************
  * main.js — LearnQuest AI (full)
  * - Auth (login/signup/signout)
- * - Điều phối UI sau đăng nhập (ép đăng nhập trước)
- * - Gating quiz: chưa có traits → vào quiz; có rồi → hỏi Làm lại/Bỏ qua
- * - Hồ sơ (profile) + radar (3 vòng 20/40/60) + bars 0..100%
+ * - Điều phối UI sau đăng nhập (ép login)
+ * - Ép làm trắc nghiệm lần đầu: nếu chưa có /users/{uid}/traits -> vào quiz
+ * - Hồ sơ (profile) + Radar Chart (3 vòng 20/40/60, trần 60%)
+ * - Thanh tiến độ hiển thị % thực 0..100
  ***********************************************************/
 
 /* ========================================================
@@ -15,31 +16,29 @@ let radarChart = null;                 // giữ instance chart để destroy khi
 
 const $ = (id) => document.getElementById(id);
 
-// Kiểm tra traits có hợp lệ (tổng điểm > 0)
+// NOTE: Kiểm tra traits có hợp lệ (tổng điểm > 0) — START
 function hasValidTraits(traits) {
   if (!traits || typeof traits !== "object") return false;
-  const keys = [
-    "creativity","competitiveness","sociability",
-    "playfulness","self_improvement","perfectionism"
-  ];
+  const keys = ["creativity","competitiveness","sociability","playfulness","self_improvement","perfectionism"];
   let sum = 0;
   for (const k of keys) sum += Number(traits[k] || 0);
   return sum > 0;
-} // ===== HẾT HÀM =====
-
+}
+// NOTE: Kiểm tra traits có hợp lệ — END
 
 /* ========================================================
    1) AUTH + ROUTING
 ======================================================== */
 (() => {
-  const auth = window.App.auth;         // từ firebase.js
-  const db   = window.App.db;           // từ firebase.js
+  const auth = window.App.auth;
+  const db   = window.App.db;
 
   // Trợ giúp: gán nhanh vào App để dùng nơi khác
   window.App._auth = auth;
   window.App._db   = db;
 
-  // ===== 1.1 Gắn các nút auth/UI =====
+  // ===== gan cho cac Nút auth =====
+  // NOTE: bindAuthButtons — START
   function bindAuthButtons(){
     const bind = (id, fn) => {
       const el = $(id);
@@ -62,9 +61,11 @@ function hasValidTraits(traits) {
 
     const bk = $("backBtn");
     if (bk) bk.onclick = backToGameBoard;
-  } // ===== HẾT HÀM =====
+  }
+  // NOTE: bindAuthButtons — END
 
-  // ===== 1.2 Xử lý click Đăng nhập/Đăng ký (UI + gọi auth) =====
+  // ===== ham handleAuth : lay data dau vao va kiem tra =============
+  // NOTE: handleAuth — START
   function handleAuth(authFn, btnId){
     const email = $("email")?.value.trim() || "";
     const pass  = $("password")?.value || "";
@@ -90,35 +91,36 @@ function hasValidTraits(traits) {
         btn.textContent = (btnId==="signupBtn" ? "Đăng ký" : "Đăng nhập");
       }
     });
-  } // ===== HẾT HÀM =====
+  }
+  // NOTE: handleAuth — END
 
-  // ===== 1.3 Đăng ký (tạo skeleton DB) =====
+  //=========== ham kiem tra dang ky tai khoan va dang nhap =========
+  // NOTE: signup — START
   function signup(email, pass){
     return auth.fetchSignInMethodsForEmail(email)
       .then(m=>{ if (m.length>0) throw new Error("Email đã được sử dụng!"); })
       .then(()=>auth.createUserWithEmailAndPassword(email, pass))
-      .then(async (cred) => {
+      .then(async (cred)=> {
+        // Tạo skeleton ban đầu dưới /users/{uid}
         const uid = cred.user.uid;
-        const joined = new Date().toISOString().split("T")[0];
-        const baseProfile = { email, joined };
-
-        // Khởi tạo lần đầu /users/{uid}
-        await Promise.all([
-          db.ref(`users/${uid}/profile`).set(baseProfile),
-          db.ref(`users/${uid}/gameProgress`).set({}),
-          db.ref(`users/${uid}/stats`).set({ xp: 0, coin: 0 })
-          // KHÔNG tạo traits ở đây → để ép người dùng làm quiz lần đầu
-        ]);
-        return cred;
+        await db.ref(`users/${uid}/profile`).set({
+          email,
+          joined: new Date().toISOString().split("T")[0]
+        });
+        await db.ref(`users/${uid}/gameProgress`).set({});
+        await db.ref(`users/${uid}/stats`).set({ xp: 0, coin: 0 });
       });
-  } // ===== HẾT HÀM =====
+  }
+  // NOTE: signup — END
 
-  // ===== 1.4 Đăng nhập =====
+  // NOTE: login — START
   function login(email, pass){
     return auth.signInWithEmailAndPassword(email, pass);
-  } // ===== HẾT HÀM =====
+  }
+  // NOTE: login — END
 
-  // ===== 1.5 Bổ sung: đảm bảo skeleton nếu thiếu (user cũ) =====
+  // NOTE: ensureUserSkeleton — START
+  // Bổ sung dữ liệu nền cho user nếu thiếu (idempotent)
   async function ensureUserSkeleton(uid) {
     const snap = await db.ref(`users/${uid}`).get();
     const data = snap.val() || {};
@@ -131,100 +133,197 @@ function hasValidTraits(traits) {
     if (!data.stats)         updates[`users/${uid}/stats`] = { xp: 0, coin: 0 };
 
     if (Object.keys(updates).length) await db.ref().update(updates);
-  } // ===== HẾT HÀM =====
+  }
+  // NOTE: ensureUserSkeleton — END
 
-  // ===== 1.6 Sau đăng nhập: quyết định vào quiz hay game =====
+  /* ========================================================
+     Sau đăng nhập: điều hướng theo trạng thái trắc nghiệm (strict: yêu cầu traits > 0)
+     CHỈ kiểm tra /users/{uid}/traits; có kèm migrate 1 lần từ /profiles nếu trước đây đã lưu ở đó
+  ======================================================== */ 
+  // NOTE: routeAfterLogin — START
   async function routeAfterLogin(uid){
-    const snap = await db.ref(`/users/${uid}`).get();
-    const userData = snap.val() || {};
-    const traits = userData.traits || null;
+    try {
+      // Đọc traits ở /users
+      let userSnap = await db.ref(`/users/${uid}`).get();
+      let userData = userSnap.val() || {};
+      const userTraits = userData.traits || null;
 
-    // Có traits → hỏi “Làm lại hay Bỏ qua?”
-    if (hasValidTraits(traits)) {
-      const modal = $("quizGateModal");
-      const text  = $("quizGateText");
-      const redo  = $("redoQuizBtn");
-      const skip  = $("skipQuizBtn");
-
-      if (text)  text.innerHTML = `Bạn đã có kết quả trắc nghiệm. Muốn <b>làm lại</b> hay <b>bỏ qua</b>?`;
-      if (modal) modal.classList.remove("hidden");
-
-      if (redo) redo.onclick = () => { window.location.href = "quiz.html"; };
-      if (skip) skip.onclick = () => {
-        modal?.classList.add("hidden");
-        $("quiz")?.classList.add("hidden");
-        $("profile")?.classList.add("hidden");
+      if (hasValidTraits(userTraits)) {
+        // Có kết quả -> vào game
         $("gameBoard")?.classList.remove("hidden");
+        $("profile")?.classList.add("hidden");
+        $("quiz")?.classList.add("hidden");
         window.App.Game?.showGameBoard?.(userData, uid);
-      };
-      return;
-    }
-
-    // Chưa có traits → đi quiz
-    window.location.replace("quiz.html");
-  } // ===== HẾT HÀM =====
-
-  // ===== 1.7 Theo dõi trạng thái đăng nhập (ép login trước) =====
-  function startAuthFlow(){
-    bindAuthButtons();
-
-    auth.onAuthStateChanged(async (user) => {
-      if (!user) {
-        // Chưa đăng nhập: chỉ hiện màn login
-        $("authScreen")?.classList.remove("hidden");
-        $("mainApp")?.classList.add("hidden");
         return;
       }
 
-      // Đã đăng nhập
+      // Migrate 1 lần từ /profiles (nếu còn dữ liệu cũ)
+      const profTraitsSnap = await db.ref(`/profiles/${uid}/traits`).get();
+      if (hasValidTraits(profTraitsSnap.val())) {
+        const profMetaSnap = await db.ref(`/profiles/${uid}/quizMeta`).get();
+        const profMeta = profMetaSnap.val() || {};
+        await db.ref(`/users/${uid}/traits`).set(profTraitsSnap.val());
+        await db.ref(`/users/${uid}/quizMeta`).set({
+          ...profMeta,
+          migratedFrom: "profiles",
+          migratedAt: Date.now(),
+          ...(Array.isArray(profMeta.traits) ? { traitKeys: profMeta.traits } : {})
+        });
+        // đọc lại user để vào game
+        userSnap = await db.ref(`/users/${uid}`).get();
+        userData = userSnap.val() || {};
+        $("gameBoard")?.classList.remove("hidden");
+        $("profile")?.classList.add("hidden");
+        $("quiz")?.classList.add("hidden");
+        window.App.Game?.showGameBoard?.(userData, uid);
+        return;
+      }
+
+      // Không có traits hợp lệ -> chuyển sang quiz
+      window.location.replace("quiz.html");
+    } catch (e) {
+      console.warn("routeAfterLogin error", e);
+      $("gameBoard")?.classList.remove("hidden"); // không khoá app nếu lỗi mạng
+    }
+  }
+  // NOTE: routeAfterLogin — END
+
+  // ===== Sau khi đăng nhập: điều phối UI + lắng nghe realtime =====
+  // NOTE: onSignedIn — START
+  function onSignedIn(uid){
+    // 1) Điều phối UI cơ bản
+    $("authScreen")?.classList.add("hidden");
+    $("mainApp")?.classList.remove("hidden");
+    if ($("userEmail")) $("userEmail").textContent = (auth.currentUser.email || "").split("@")[0];
+
+    // 2) Bảo đảm có skeleton, rồi route theo trạng thái quiz
+    ensureUserSkeleton(uid).then(()=> routeAfterLogin(uid));
+
+    // 3) Lắng nghe realtime để cập nhật UI
+    db.ref(`users/${uid}`).on("value", snap=>{
+      const data = snap.val() || {};
+      // Tab hồ sơ mở -> re-render
+      if (!$("profile")?.classList.contains("hidden")){
+        renderProfile(data);
+      }
+      // Tab game mở -> cập nhật
+      if (!$("gameBoard")?.classList.contains("hidden")){
+        window.App.Game?.showGameBoard?.(data, uid);
+      }
+    });
+  }
+  // NOTE: onSignedIn — END
+
+  // ===== Gắn nút, theo dõi auth state =====
+  bindAuthButtons();
+
+  // NOTE: onAuthStateChanged (ép login) — START
+  auth.onAuthStateChanged(user => {
+    if (user) {
       currentUser = user;
-      $("authScreen")?.classList.add("hidden");
-      $("mainApp")?.classList.remove("hidden");
-      if ($("userEmail")) $("userEmail").textContent = (user.email || "").split("@")[0];
 
       // (Tuỳ chọn) logger hành vi
       if (window.Behavior && typeof window.Behavior.setUser === "function") {
         window.Behavior.setUser(user.uid);
       }
 
-      await ensureUserSkeleton(user.uid);
-      await routeAfterLogin(user.uid);
-
-      // Lắng nghe realtime để cập nhật UI (game/profile)
-      db.ref(`users/${user.uid}`).on("value", snap=>{
-        const data = snap.val() || {};
-        if (!$("profile")?.classList.contains("hidden")){
-          renderProfile(data);
-        }
-        if (!$("gameBoard")?.classList.contains("hidden")){
-          window.App.Game?.showGameBoard?.(data, user.uid);
-        }
-      });
-    });
-  } // ===== HẾT HÀM =====
-
-  // Khởi động auth flow
-  startAuthFlow();
-})();  // ===== HẾT KHỐI IIFE AUTH + ROUTING =====
-
+      onSignedIn(user.uid);
+    } else {
+      // Chưa đăng nhập -> chỉ hiện màn auth
+      $("authScreen")?.classList.remove("hidden");
+      $("mainApp")?.classList.add("hidden");
+    }
+  });
+  // NOTE: onAuthStateChanged — END
+})();
 
 /* ========================================================
-   2) QUIZ CALLOUT (tuỳ chọn – dựa theo local flag)
+   1.5) GATING BỔ SUNG (tuỳ chọn): nếu trang index muốn tự kiểm tra
+   => Với luồng ép login + routeAfterLogin ở trên, khối dưới có thể giữ để an toàn.
 ======================================================== */
+
+// NOTE: readLocalQuiz (fallback – có thể bỏ nếu không muốn) — START
+function readLocalQuiz() {
+  try {
+    const scores = JSON.parse(localStorage.getItem("lq_traitScores") || "null");
+    const meta   = JSON.parse(localStorage.getItem("lq_quiz_meta") || "null");
+    return scores ? { scores, meta } : null;
+  } catch { return null; }
+}
+// NOTE: readLocalQuiz — END
+
+// NOTE: ensureQuizOrRedirect (an toàn, chỉ chạy khi đã login) — START
+async function ensureQuizOrRedirect() {
+  if (location.pathname.endsWith("/quiz.html")) return true;
+  if (new URL(location.href).searchParams.get("quiz") === "done") return true;
+
+  const user = (window.firebase && firebase.auth && firebase.auth().currentUser) || null;
+  if (!user) return true; // chưa đăng nhập -> không gate ở đây (đã ép login ở trên)
+
+  const goQuiz = () => { window.location.replace("quiz.html"); return false; };
+
+  try {
+    const db = firebase.database();
+    const userTraitsSnap = await db.ref(`/users/${user.uid}/traits`).get();
+    if (hasValidTraits(userTraitsSnap.val())) return true;
+
+    // migrate từ localStorage (nếu từng cho phép làm khi chưa login)
+    const local = JSON.parse(localStorage.getItem("lq_traitScores") || "null");
+    const meta  = JSON.parse(localStorage.getItem("lq_quiz_meta") || "null");
+    if (hasValidTraits(local)) {
+      await db.ref(`/users/${user.uid}/traits`).set(local);
+      await db.ref(`/users/${user.uid}/quizMeta`).set({ ...(meta||{}), migratedFromLocal:true, migratedAt: Date.now() });
+      localStorage.removeItem("lq_traitScores");
+      localStorage.removeItem("lq_quiz_meta");
+      localStorage.setItem("lq_quizDone","true");
+      return true;
+    }
+
+    return goQuiz();
+  } catch (e) {
+    console.warn("ensureQuizOrRedirect error", e);
+    return true;
+  }
+}
+// NOTE: ensureQuizOrRedirect — END
+
+// NOTE: App ready (tuỳ chọn) — START
+window.addEventListener("DOMContentLoaded", () => {
+  if (window.firebase && firebase.auth) {
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (!user) return;           // ép login ở trên rồi
+      await ensureQuizOrRedirect();
+      // ... khởi tạo app/game tiếp nếu cần ...
+    });
+  }
+});
+// NOTE: App ready — END
+
+/* ========================================================
+    TRAC NGHIEM (Callout nhỏ trên index nếu muốn nhắc)
+======================================================== */
+
+// NOTE: checkQuizStatusAndShowCallout — START
 function checkQuizStatusAndShowCallout() {
   const callout = document.getElementById('quizCallout');
   const quizDone = localStorage.getItem('lq_quizDone') === 'true';
-  if (!callout) return;
-  if (!quizDone) callout.classList.remove('hidden');
-  else callout.classList.add('hidden');
-} // ===== HẾT HÀM =====
+  if (!quizDone) {
+    callout?.classList.remove('hidden');
+  } else {
+    callout?.classList.add('hidden');
+  }
+}
+// NOTE: checkQuizStatusAndShowCallout — END
 
-window.addEventListener('load', checkQuizStatusAndShowCallout);
-
+window.addEventListener('load', () => {
+  checkQuizStatusAndShowCallout();
+});
 
 /* ========================================================
-   3) PROFILE VIEW (HIỆN/ẨN)
+   2) PROFILE VIEW (HIỆN/ẨN)
 ======================================================== */
+
+// NOTE: showProfile — START
 function showProfile() {
   const prof  = $("profile");
   const board = $("gameBoard");
@@ -237,24 +336,28 @@ function showProfile() {
   window.App._db.ref("users/" + uid).once("value").then(snap=>{
     renderProfile(snap.val() || {});
   });
-} // ===== HẾT HÀM =====
+}
+// NOTE: showProfile — END
 
+// NOTE: backToGameBoard — START
 function backToGameBoard() {
   const prof  = $("profile");
   const board = $("gameBoard");
   if (prof)  prof.classList.add("hidden");
   if (board) board.classList.remove("hidden");
-} // ===== HẾT HÀM =====
+}
+// NOTE: backToGameBoard — END
 
-// Gắn nhanh 2 nút hồ sơ/quay lại khi DOM sẵn sàng
+// NOTE: bindProfileButtons — START
 (function bindProfileButtons(){
   const pf = $("profileBtn");
   const bk = $("backBtn");
   if (pf) pf.addEventListener("click", (e)=>{ e.preventDefault(); showProfile(); });
   if (bk) bk.addEventListener("click", (e)=>{ e.preventDefault(); backToGameBoard(); });
-})(); // ===== HẾT IIFE =====
+})();
+// NOTE: bindProfileButtons — END
 
-// Lắng nghe realtime riêng cho tab hồ sơ (nếu đang mở)
+// NOTE: listenRealtimeForProfile — START
 (function listenRealtimeForProfile(){
   window.App?._auth?.onAuthStateChanged(user=>{
     if (!user) return;
@@ -264,16 +367,18 @@ function backToGameBoard() {
       if (visible) renderProfile(data);
     });
   });
-})(); // ===== HẾT IIFE =====
-
+})();
+// NOTE: listenRealtimeForProfile — END
 
 /* ========================================================
-   4) PROFILE RENDER (RADAR + % BARS)
+   3) PROFILE RENDER (RADAR + % BARS)
    - Radar: 3 vòng 20/40/60, giới hạn trần 60% (vòng ngoài cùng)
    - Thanh tiến độ: dùng % thật 0..100% để theo dõi tuần
 ======================================================== */
+
+// NOTE: renderProfile — START
 function renderProfile(data) {
-  /* ---------- 4.1 Lấy điểm thô và tính % ---------- */
+  /* ---------- 3.1 Lấy điểm thô và tính % ---------- */
   const raw = (data && data.traits) || {
     creativity: 0,
     competitiveness: 0,
@@ -301,7 +406,7 @@ function renderProfile(data) {
   const RADAR_STEP = 20;
   const radarVals  = pctVals.map(v => Math.min(v, RADAR_MAX));
 
-  /* ---------- 4.2 Thanh tiến độ (0..100%) ---------- */
+  /* ---------- 3.2 Thanh tiến độ (0..100%) ---------- */
   const traitList = $("traitList");
   if (traitList) {
     const keys  = ["creativity","competitiveness","sociability","playfulness","self_improvement","perfectionism"];
@@ -325,7 +430,7 @@ function renderProfile(data) {
     });
   }
 
-  /* ---------- 4.3 Vẽ Radar (0..60, step 20/40/60) ---------- */
+  /* ---------- 3.3 Vẽ Radar (0..60, step 20/40/60) ---------- */
   const labels = ["Sáng tạo","Cạnh tranh","Xã hội","Vui vẻ","Tự cải thiện","Cầu toàn"];
   const canvas = $("radarChart");
   if (!canvas) return;
@@ -370,7 +475,7 @@ function renderProfile(data) {
     }
   });
 
-  /* ---------- 4.4 Thống kê XP/Coin/Huy hiệu ---------- */
+  /* ---------- 3.4 Thống kê XP/Coin/Huy hiệu ---------- */
   const progress = (data && data.gameProgress) || {};
   let totalXP = 0, totalCoin = 0;
   Object.values(progress).forEach(g => { totalXP += g.xp || 0; totalCoin += g.coin || 0; });
@@ -385,7 +490,8 @@ function renderProfile(data) {
   setText("profileXP", totalXP);
   setText("profileCoin", totalCoin);
   setText("profileBadge", badge);
-} // ===== HẾT HÀM =====
+}
+// NOTE: renderProfile — END
 
 // Expose để nơi khác có thể gọi
 window.App.Profile = { renderProfile };
