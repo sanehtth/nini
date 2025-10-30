@@ -15,7 +15,7 @@ let radarChart = null;                 // giữ instance chart để destroy khi
 
 const $ = (id) => document.getElementById(id);
 
-// Kiểm tra traits có hợp lệ (phải tồn tại và tổng điểm > 0)
+// Kiểm tra traits có hợp lệ (tổng điểm > 0)
 function hasValidTraits(traits) {
   if (!traits || typeof traits !== "object") return false;
   const keys = ["creativity","competitiveness","sociability","playfulness","self_improvement","perfectionism"];
@@ -23,6 +23,7 @@ function hasValidTraits(traits) {
   for (const k of keys) sum += Number(traits[k] || 0);
   return sum > 0;
 }
+
 /* ========================================================
    1) AUTH + ROUTING
 ======================================================== */
@@ -103,6 +104,7 @@ function hasValidTraits(traits) {
    Sau đăng nhập: điều hướng theo trạng thái trắc nghiệm (strict: yêu cầu traits > 0)
    ======================================================== */ 
 
+// Sau đăng nhập: điều hướng theo trạng thái trắc nghiệm
 async function routeAfterLogin(uid){
   try {
     const db = window.App._db || firebase.database();
@@ -115,20 +117,35 @@ async function routeAfterLogin(uid){
       db.ref(`/users/${uid}`).get()
     ]);
 
-    const profTraits = profSnap.val() || null;      // traits (mới)
+    const profTraits = profSnap.val() || null;    // traits (mới)
     const userData   = userSnap.val() || {};
-    const userTraits = userData.traits || null;     // traits (cũ, nếu có)
+    const userTraits = userData.traits || null;   // traits (cũ, nếu có)
 
     const validOnDB = hasValidTraits(profTraits) || hasValidTraits(userTraits);
+
+    // ===== Trường hợp ĐÃ có kết quả -> hỏi người dùng muốn làm lại hay vào game
     if (validOnDB) {
-      // Có dữ liệu quiz hợp lệ -> hiển thị game board
-      $("gameBoard")?.classList.remove("hidden");
-      $("profile")?.classList.add("hidden");
-      window.App.Game?.showGameBoard?.(userData, uid);
-      return;
+      // hiện modal hỏi
+      const modal = $("quizGateModal");
+      const text  = $("quizGateText");
+      const redo  = $("redoQuizBtn");
+      const skip  = $("skipQuizBtn");
+
+      if (text) text.innerHTML = `Bạn đã có kết quả trắc nghiệm trước đó. Bạn muốn <b>làm lại</b> hay <b>bỏ qua</b>?`;
+      if (modal) modal.classList.remove("hidden");
+
+      // event
+      if (redo) redo.onclick = () => { window.location.href = "quiz.html"; };
+      if (skip) skip.onclick = () => {
+        modal.classList.add("hidden");
+        $("gameBoard")?.classList.remove("hidden");
+        $("profile")?.classList.add("hidden");
+        window.App.Game?.showGameBoard?.(userData, uid);
+      };
+      return; // dừng tại đây chờ người dùng chọn
     }
 
-    // Thử migrate từ localStorage nếu có
+    // ===== Chưa có traits hợp lệ trên DB -> thử migrate từ localStorage
     try {
       const localScores = JSON.parse(localStorage.getItem("lq_traitScores") || "null");
       const localMeta   = JSON.parse(localStorage.getItem("lq_quiz_meta") || "null");
@@ -140,11 +157,13 @@ async function routeAfterLogin(uid){
           migratedFromLocal: true,
           migratedAt: Date.now(),
         });
-        // KHÔNG set quizDone ở schema cũ để tránh pass nhầm
+
+        // dọn local để tránh migrate lại
         localStorage.removeItem("lq_traitScores");
         localStorage.removeItem("lq_quiz_meta");
         localStorage.setItem("lq_quizDone","true");
 
+        // có dữ liệu rồi -> vào game luôn
         $("gameBoard")?.classList.remove("hidden");
         $("profile")?.classList.add("hidden");
         window.App.Game?.showGameBoard?.(userData, uid);
@@ -154,14 +173,14 @@ async function routeAfterLogin(uid){
       console.warn("Migrate local → Firebase lỗi", e);
     }
 
-    // Không có traits hợp lệ ở đâu cả -> chuyển sang quiz mới
+    // ===== Không có traits hợp lệ ở đâu cả -> chuyển thẳng sang quiz
     window.location.replace("quiz.html");
   } catch (e) {
     console.warn("routeAfterLogin error", e);
-    // Có lỗi mạng thì đừng khóa app; ít nhất mở game board rỗng
-    $("gameBoard")?.classList.remove("hidden");
+    $("gameBoard")?.classList.remove("hidden"); // không khoá app nếu lỗi mạng
   }
 }
+
 //===============het ham routeAfterLogin ==================
 
    // ===== Sau khi đăng nhập: điều phối UI + lắng nghe realtime =====
@@ -458,6 +477,7 @@ function renderProfile(data) {
 
 // Expose để nơi khác có thể gọi
 window.App.Profile = { renderProfile };
+
 
 
 
