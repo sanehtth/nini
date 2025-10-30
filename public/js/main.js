@@ -1,9 +1,11 @@
-// js/main.js - SIÊU GỌN
-const auth = window.firebaseAuth;
-const db = window.firebaseDB;
+// firebase.js
+(() => {
+  const auth = firebase.auth();
+  const db   = firebase.database();
+  window.firebaseAuth = auth;
+  window.firebaseDB   = db;
+})();
 
-let currentUser = null;
-let lastXP = 0, lastCoin = 0;
 
 // === DOM READY ===
 document.addEventListener("DOMContentLoaded", () => {
@@ -163,3 +165,4 @@ function showToast(msg) {
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3000);
 }
+
