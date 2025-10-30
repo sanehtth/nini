@@ -56,3 +56,58 @@
 
   window.App.Profile = { renderProfile };
 })();
+
+//====== Đọc hồ sơ trực tiếp từ Firebase và render =========
+
+window.addEventListener('DOMContentLoaded', () => {
+  // Nếu chưa load SDK Firebase thì render rỗng/fallback
+  if (!window.firebase) {
+    // fallback LocalStorage (nếu muốn)
+    try {
+      const ls = localStorage.getItem('lq_traitScores');
+      const traits = ls ? JSON.parse(ls) : null;
+      const meta = JSON.parse(localStorage.getItem('lq_quiz_meta') || '{}');
+      window.App.Profile.renderProfile(traits ? { traits, quizMeta: meta } : {});
+    } catch {
+      window.App.Profile.renderProfile({});
+    }
+    return;
+  }
+
+  firebase.auth().onAuthStateChanged(async (user) => {
+    if (!user) {
+      // Chưa đăng nhập → fallback localStorage
+      try {
+        const ls = localStorage.getItem('lq_traitScores');
+        const traits = ls ? JSON.parse(ls) : null;
+        const meta = JSON.parse(localStorage.getItem('lq_quiz_meta') || '{}');
+        window.App.Profile.renderProfile(traits ? { traits, quizMeta: meta } : {});
+      } catch {
+        window.App.Profile.renderProfile({});
+      }
+      return;
+    }
+
+    try {
+      const ref = firebase.database().ref(`/profiles/${user.uid}`);
+      const [profileSnap, statsSnap] = await Promise.all([
+        ref.get(),
+        ref.child('stats').get()
+      ]);
+
+      const data = profileSnap.val() || {};
+      const stats = statsSnap.val() || {};
+
+      // Chuẩn hóa shape đúng với renderProfile(data)
+      const payload = {
+        traits: data.traits || null,
+        gameProgress: { __global: { xp: stats.xp || 0, coin: stats.coin || 0 } }
+      };
+
+      window.App.Profile.renderProfile(payload);
+    } catch (e) {
+      console.error('Load profile error', e);
+      window.App.Profile.renderProfile({});
+    }
+  });
+});
