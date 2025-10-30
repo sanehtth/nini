@@ -49,11 +49,22 @@
         </div>
       </header>
 
-      <!-- GỢI Ý LÀM TRẮC NGHIỆM (nếu chưa làm) -->
-  <div id="quizCallout" class="callout hidden" style="margin: 16px 0;">
-    <p><strong>Xin chào!Trước khi mình chơi game hay học tập.</strong> Hãy làm một trắc nghiệm nho nhỏ để mình hiểu nhau hơn nhé!</p>
-    <a class="main-btn" href="/quiz.html">BẮT ĐẦU TRẮC NGHIỆM</a>
+ <!-- Quiz Gate Modal -->
+<div id="quizGateModal" class="hidden" style="
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.35); z-index:50;">
+  <div style="background:#fff; padding:20px 22px; border-radius:16px; width:min(520px,92%); box-shadow:0 10px 30px rgba(0,0,0,.15)">
+    <h3 style="margin:0 0 6px; font-size:20px; font-weight:700;">Trắc nghiệm tính cách</h3>
+    <p id="quizGateText" style="margin:0 0 16px; color:#374151; line-height:1.5;">
+      Bạn đã có kết quả trắc nghiệm trước đó. Bạn muốn <b>làm lại</b> hay <b>bỏ qua</b>?
+    </p>
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button id="redoQuizBtn" class="main-btn">Làm trắc nghiệm</button>
+      <button id="skipQuizBtn" class="secondary-btn">Bỏ qua</button>
+    </div>
   </div>
+</div>
+
 
       <!-- GAME BOARD -->
       <div id="gameBoard" class="game-board hidden">
@@ -128,6 +139,7 @@
 
 </body>
 </html>
+
 
 
 
