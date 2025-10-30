@@ -1,12 +1,12 @@
-// js/main.js - SIÊU GỌN, CHỈ GỌI
+// js/main.js - AN TOÀN, KHÔNG LỖI DOM
 const auth = window.firebaseAuth;
 const db = window.firebaseDB;
 
 let currentUser = null;
 let lastXP = 0, lastCoin = 0;
 
-// === DOM READY ===
 document.addEventListener("DOMContentLoaded", () => {
+  // TẤT CẢ DOM Ở ĐÂY
   document.getElementById("signupBtn").onclick = () => handleAuth(signup, "signupBtn");
   document.getElementById("loginBtn").onclick = () => handleAuth(login, "loginBtn");
   document.getElementById("logoutBtn").onclick = () => auth.signOut().then(() => location.reload());
@@ -123,3 +123,4 @@ function showToast(msg) {
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3000);
 }
+
