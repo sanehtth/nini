@@ -1,386 +1,190 @@
-// LearnQuest — quiz.js (6 trait groups, render sau DOM)
+/* ===== QUIZ BOOTSTRAP (an toàn) ===== */
 "use strict";
-
-console.log("[quiz] file loaded");
+console.log("[quiz] loaded");
 
 window.addEventListener("DOMContentLoaded", () => {
   console.log("[quiz] DOM ready");
 
-  // ===== Cấu hình =====
-  const url = new URL(window.location.href);
-  const PER_GROUP = Math.max(1, parseInt(url.searchParams.get("per") || "2", 10)); // số câu/nhóm
+  const $ = (s) => document.querySelector(s);
+  const listEl   = $("#questionList");
+  const alertEl  = $("#alert");
+  const missEl   = $("#missingCount");
+  const submitEl = $("#submitBtn");
+  const countEl  = $("#questionCount");
 
-  const TRAITS = [
-    "creativity",
-    "sociability",
-    "playfulness",
-    "perfectionism",
-    "self_improvement",
-    "competitiveness",
-  ];
+  if (!listEl || !submitEl) {
+    console.warn("[quiz] Missing required DOM nodes");
+    return;
+  }
 
-  // Cập nhật hiển thị tổng số câu nếu có #questionCount
-  const questionCountEl = document.getElementById("questionCount");
-  if (questionCountEl) questionCountEl.textContent = String(PER_GROUP * TRAITS.length);
+  // ===== 1) LẤY BANK CÂU HỎI =====
+  // Chấp nhận nhiều tên biến global để tránh lệch tên file config
+  const BANK =
+    window.TRAIT_BANK ||
+    window.QUESTION_BANK ||
+    window.QUIZ_BANK ||
+    window.QUESTIONS ||
+    null;
 
-  // ===== Ngân hàng câu hỏi tách theo 6 nhóm =====
-  // Mỗi option chỉ cộng điểm cho đúng trait qua data-score: "trait:1"
-  const BANK = {
-    creativity: [
-      {
-        id: "cr1",
-        text: "Bạn thích tạo nội dung theo dạng nào?",
-        options: [
-          { label: "Vẽ/minh họa", score: "creativity:1" },
-          { label: "Viết truyện/blog", score: "creativity:1" },
-          { label: "Dựng video/podcast", score: "creativity:1" },
-          { label: "Khác", other: true },
-        ],
-      },
-      {
-        id: "cr2",
-        text: "Cách bạn phát triển ý tưởng mới?",
-        options: [
-          { label: "Mindmap/Sơ đồ", score: "creativity:1" },
-          { label: "Lấy cảm hứng nhiều lĩnh vực", score: "creativity:1" },
-          { label: "Thử nghiệm nhanh – làm rồi sửa", score: "creativity:1" },
-        ],
-      },
-      {
-        id: "cr3",
-        text: "Bạn hứng thú nhất với thử thách nào?",
-        options: [
-          { label: "Sáng tác nội dung độc đáo", score: "creativity:1" },
-          { label: "Thiết kế sản phẩm mới", score: "creativity:1" },
-          { label: "Lập trình tạo ứng dụng thú vị", score: "creativity:1" },
-        ],
-      },
-    ],
+  const TRAITS = ["creativity","sociability","playfulness","perfectionism","self_improvement","competitiveness"];
+  const PER_GROUP = 2;  // mỗi nhóm rút ngẫu nhiên 2 câu -> tổng 12
 
-    sociability: [
-      {
-        id: "so1",
-        text: "Bạn thích cách học nào nhất?",
-        options: [
-          { label: "Thảo luận nhóm", score: "sociability:1" },
-          { label: "Workshop/Meetup", score: "sociability:1" },
-          { label: "Kèm cặp/đồng hành", score: "sociability:1" },
-        ],
-      },
-      {
-        id: "so2",
-        text: "Trong project nhóm, bạn thường là…",
-        options: [
-          { label: "Người kết nối & điều phối", score: "sociability:1" },
-          { label: "Người truyền cảm hứng", score: "sociability:1" },
-          { label: "Người hỗ trợ mọi thành viên", score: "sociability:1" },
-        ],
-      },
-      {
-        id: "so3",
-        text: "Điều làm bạn vui nhất khi học cùng người khác?",
-        options: [
-          { label: "Trao đổi ý tưởng liên tục", score: "sociability:1" },
-          { label: "Cảm giác thuộc về một nhóm", score: "sociability:1" },
-          { label: "Cùng nhau ăn mừng tiến bộ", score: "sociability:1" },
-        ],
-      },
-    ],
+  // ===== 2) Nếu không có BANK -> hiển thị thông báo + câu mẫu
+  if (!BANK || typeof BANK !== "object") {
+    console.error("[quiz] Không tìm thấy ngân hàng câu hỏi từ trait-config.js");
+    listEl.innerHTML = `
+      <div class="question">
+        <h3>⚙️ Không tải được ngân hàng câu hỏi</h3>
+        <p>Kiểm tra lại <b>/js/trait-config.js</b> đã load trước <b>/js/quiz.js</b> chưa,
+        và biến global đang export (TRAIT_BANK | QUESTION_BANK | QUIZ_BANK | QUESTIONS).</p>
+        <div class="options">
+          <div class="option">Sanity option A</div>
+          <div class="option">Sanity option B</div>
+        </div>
+      </div>
+    `;
+    if (countEl) countEl.textContent = "0";
+    submitEl.disabled = true;
+    return;
+  }
 
-    playfulness: [
-      {
-        id: "pl1",
-        text: "Bạn duy trì động lực học bằng cách…",
-        options: [
-          { label: "Game hóa mục tiêu/điểm thưởng", score: "playfulness:1" },
-          { label: "Xem video minh họa", score: "playfulness:1" },
-          { label: "Thử điều mới mỗi tuần", score: "playfulness:1" },
-        ],
-      },
-      {
-        id: "pl2",
-        text: "Khi rảnh bạn thường…",
-        options: [
-          { label: "Chơi game", score: "playfulness:1" },
-          { label: "Khám phá nội dung giải trí", score: "playfulness:1" },
-          { label: "Làm mini-project vui vui", score: "playfulness:1" },
-        ],
-      },
-      {
-        id: "pl3",
-        text: "Bạn thích kiểu thử thách nào trong app học?",
-        options: [
-          { label: "Nhiệm vụ ngắn – thưởng nhanh", score: "playfulness:1" },
-          { label: "Combo thử thách đa dạng", score: "playfulness:1" },
-          { label: "Bảng xếp hạng hàng tuần", score: "playfulness:1" },
-        ],
-      },
-    ],
-
-    perfectionism: [
-      {
-        id: "pf1",
-        text: "Khi làm bài khó, bạn sẽ…",
-        options: [
-          { label: "Lập kế hoạch chi tiết", score: "perfectionism:1" },
-          { label: "Chia nhỏ công việc", score: "perfectionism:1" },
-          { label: "Kiểm tra checklist kỹ lưỡng", score: "perfectionism:1" },
-        ],
-      },
-      {
-        id: "pf2",
-        text: "Bạn xử lý lỗi sai như thế nào?",
-        options: [
-          { label: "Sửa cho hoàn hảo", score: "perfectionism:1" },
-          { label: "Viết lesson learned", score: "perfectionism:1" },
-          { label: "Tăng tiêu chuẩn lần sau", score: "perfectionism:1" },
-        ],
-      },
-      {
-        id: "pf3",
-        text: "Bạn thấy khó chịu nhất khi…",
-        options: [
-          { label: "Bị gián đoạn lúc tập trung", score: "perfectionism:1" },
-          { label: "Không có tiêu chí rõ", score: "perfectionism:1" },
-          { label: "Tài liệu/format lộn xộn", score: "perfectionism:1" },
-        ],
-      },
-    ],
-
-    self_improvement: [
-      {
-        id: "si1",
-        text: "Bạn đặt mục tiêu thế nào?",
-        options: [
-          { label: "SMART, đo lường tiến độ", score: "self_improvement:1" },
-          { label: "Tăng độ khó theo thời gian", score: "self_improvement:1" },
-          { label: "Review định kỳ hàng tuần", score: "self_improvement:1" },
-        ],
-      },
-      {
-        id: "si2",
-        text: "Khi thiếu động lực, bạn sẽ…",
-        options: [
-          { label: "Tạo lịch luyện tập đều", score: "self_improvement:1" },
-          { label: "Tìm đồng hành/mentor", score: "self_improvement:1" },
-          { label: "Đặt mini-goal hằng ngày", score: "self_improvement:1" },
-        ],
-      },
-      {
-        id: "si3",
-        text: "Bạn thích đánh giá tiến bộ bằng…",
-        options: [
-          { label: "Biểu đồ/điểm mốc", score: "self_improvement:1" },
-          { label: "Nhật ký học tập", score: "self_improvement:1" },
-          { label: "Bài test định kỳ", score: "self_improvement:1" },
-        ],
-      },
-    ],
-
-    competitiveness: [
-      {
-        id: "cp1",
-        text: "Bạn thấy hứng thú nhất khi…",
-        options: [
-          { label: "Leo bảng xếp hạng", score: "competitiveness:1" },
-          { label: "Đạt top/break kỷ lục", score: "competitiveness:1" },
-          { label: "So kè điểm với bạn bè", score: "competitiveness:1" },
-        ],
-      },
-      {
-        id: "cp2",
-        text: "Môn/kiểu thử thách bạn thích?",
-        options: [
-          { label: "Giải đố/Toán khó", score: "competitiveness:1" },
-          { label: "Thi kỹ năng nhanh", score: "competitiveness:1" },
-          { label: "Đấu đối kháng/hùng biện", score: "competitiveness:1" },
-        ],
-      },
-      {
-        id: "cp3",
-        text: "Điều khiến bạn tự hào nhất là…",
-        options: [
-          { label: "Vượt qua đối thủ mạnh", score: "competitiveness:1" },
-          { label: "Giữ chuỗi thắng dài", score: "competitiveness:1" },
-          { label: "Đạt huy hiệu hiếm", score: "competitiveness:1" },
-        ],
-      },
-    ],
-  };
-
-  // ===== Helpers =====
-  function shuffle(arr) {
-    const a = arr.slice();
+  // ===== 3) RÚT CÂU HỎI NGẪU NHIÊN THEO 6 NHÓM =====
+  function pickRandom(arr, n) {
+    const a = [...arr];
     for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [a[i], a[j]] = [a[j], a[i]];
     }
-    return a;
+    return a.slice(0, Math.min(n, a.length));
   }
 
-  function pickPerGroup(bank, per) {
-    const picked = [];
-    for (const trait of Object.keys(bank)) {
-      const group = bank[trait] || [];
-      const chosen = shuffle(group).slice(0, Math.min(per, group.length));
-      picked.push(...chosen.map((q) => ({ ...q, trait })));
-    }
-    return picked;
+  // Chuẩn hóa BANK về dạng {trait: [{text, options: [{label, score:"trait:1"}]}]}
+  function normalizeGroup(g) {
+    // chấp nhận dạng string[] cũng như object có options
+    return (g || []).map(q => {
+      if (typeof q === "string") {
+        // tạo 2 lựa chọn mặc định
+        return {
+          text: q,
+          options: [
+            { label: "Đồng ý", score: "creativity:1" },
+            { label: "Không",  score: "creativity:0" }
+          ]
+        };
+      }
+      return q;
+    });
   }
 
-  // ===== Render =====
-  const listEl = document.getElementById("questionList");
-  const alertEl = document.getElementById("alert");
-  const missingCountEl = document.getElementById("missingCount");
-  const submitBtn = document.getElementById("submitBtn");
+  const groups = {};
+  TRAITS.forEach(t => {
+    const g = normalizeGroup(BANK[t] || BANK[t.toUpperCase()] || []);
+    groups[t] = pickRandom(g, PER_GROUP);
+  });
 
-  const picked = pickPerGroup(BANK, PER_GROUP);
+  const ALL = TRAITS.flatMap(t => groups[t]);
+  if (countEl) countEl.textContent = String(ALL.length);
 
+  // ===== 4) RENDER =====
   function render() {
     listEl.innerHTML = "";
-    picked.forEach((q, idx) => {
-      const wrap = document.createElement("div");
-      wrap.className = "question";
-      wrap.dataset.q = q.id;
-
-      const title = document.createElement("h3");
-      title.textContent = `${idx + 1}. ${q.text}`;
-      wrap.appendChild(title);
-
-      const opts = document.createElement("div");
-      opts.className = "options";
-
-      q.options.forEach((opt, oi) => {
-        const div = document.createElement("div");
-        div.className = "option";
-        div.tabIndex = 0;
-        div.setAttribute("role", "button");
-        div.dataset.index = String(oi);
-
-        if (opt.other) div.classList.add("other-trigger");
-        if (opt.score) div.dataset.score = opt.score; // "trait:1"
-
-        div.textContent = opt.label;
-        opts.appendChild(div);
+    ALL.forEach((q, idx) => {
+      const qWrap = document.createElement("div");
+      qWrap.className = "question";
+      qWrap.dataset.q = String(idx + 1);
+      qWrap.innerHTML = `
+        <h3>${idx + 1}. ${q.text}</h3>
+        <div class="options"></div>
+      `;
+      const optWrap = qWrap.querySelector(".options");
+      (q.options || []).forEach((op, oi) => {
+        const opt = document.createElement("div");
+        opt.className = "option";
+        if (op.score) opt.dataset.score = op.score;
+        if (op.positive) opt.dataset.positive = op.positive;
+        if (op.negative) opt.dataset.negative = op.negative;
+        opt.textContent = op.label || op.text || `Lựa chọn ${oi + 1}`;
+        opt.addEventListener("click", () => {
+          // toggle chọn trong câu này
+          qWrap.querySelectorAll(".option").forEach(o => o.classList.remove("selected"));
+          opt.classList.add("selected");
+          checkAllAnswered();
+        });
+        optWrap.appendChild(opt);
       });
-      wrap.appendChild(opts);
-
-      // input cho "Khác"
-      const otherWrap = document.createElement("div");
-      otherWrap.className = "other-input";
-      otherWrap.style.display = "none";
-      const input = document.createElement("input");
-      input.type = "text";
-      input.placeholder = "Nhập câu trả lời của bạn";
-      otherWrap.appendChild(input);
-      wrap.appendChild(otherWrap);
-
-      listEl.appendChild(wrap);
+      listEl.appendChild(qWrap);
     });
+  }
+
+  function checkAllAnswered() {
+    const total = ALL.length;
+    const answered = listEl.querySelectorAll(".option.selected").length;
+    const missing = total - answered;
+    if (missEl) missEl.textContent = missing;
+    if (alertEl) alertEl.style.display = missing > 0 ? "block" : "none";
+    submitEl.disabled = missing > 0;
   }
 
   render();
+  checkAllAnswered();
 
-  // ===== Interaction =====
-  listEl.addEventListener("click", (e) => {
-    const option = e.target.closest(".option");
-    if (!option) return;
-    const qBox = option.closest(".question");
-    qBox.querySelectorAll(".option").forEach((o) => o.classList.remove("selected"));
-    option.classList.add("selected");
-
-    const other = option.classList.contains("other-trigger");
-    const otherWrap = qBox.querySelector(".other-input");
-    if (other) {
-      otherWrap.style.display = "block";
-      otherWrap.querySelector("input").focus();
-    } else {
-      otherWrap.style.display = "none";
-    }
-
-    checkAllAnswered();
-  });
-
-  listEl.addEventListener("keydown", (e) => {
-    if ((e.key === "Enter" || e.key === " ") && e.target.classList.contains("option")) {
-      e.preventDefault();
-      e.target.click();
-    }
-  });
-
-  function checkAllAnswered() {
-    const boxes = listEl.querySelectorAll(".question");
-    let missing = 0;
-    boxes.forEach((b) => {
-      if (!b.querySelector(".option.selected")) missing++;
-    });
-
-    submitBtn.disabled = missing > 0;
-    if (missing > 0) {
-      alertEl.style.display = "block";
-      if (missingCountEl) missingCountEl.textContent = String(missing);
-    } else {
-      alertEl.style.display = "none";
-    }
-  }
-
-  // ===== Chấm điểm =====
+  // ===== 5) SCORE + SUBMIT =====
   function score() {
     const result = {
-      creativity: 0,
-      sociability: 0,
-      playfulness: 0,
-      perfectionism: 0,
-      self_improvement: 0,
-      competitiveness: 0,
+      creativity: 0, sociability: 0, playfulness: 0,
+      perfectionism: 0, self_improvement: 0, competitiveness: 0
     };
-
     const boxes = listEl.querySelectorAll(".question");
-    boxes.forEach((b) => {
-      const sel = b.querySelector(".option.selected");
+    boxes.forEach(box => {
+      const sel = box.querySelector(".option.selected");
       if (!sel) return;
-      const scoreStr = sel.dataset.score; // "trait:1"
-      if (!scoreStr) return;
-      const [trait, wStr] = scoreStr.split(":");
-      const w = parseFloat(wStr || "1");
-      if (TRAITS.includes(trait)) result[trait] += w;
+      // Ưu tiên data-score "trait:w", rồi positive/negative
+      const s = sel.dataset.score;
+      if (s) {
+        const [trait, wStr] = s.split(":");
+        const w = parseFloat(wStr || "1");
+        if (TRAITS.includes(trait)) result[trait] += w;
+      } else {
+        if (sel.dataset.positive) result.creativity += Number(sel.dataset.positive);
+        if (sel.dataset.negative) result.playfulness += Number(sel.dataset.negative);
+      }
     });
-
     return result;
   }
-  
-//====== luu ket qua vao firebase =====
-  
-const res = score(); // {creativity:.., sociability:.., ...}
-const meta = { per_group: PER_GROUP, traits: TRAITS, updatedAt: Date.now() };
 
-try {
-  const user = firebase.auth().currentUser;
-  if (user) {
-    const ref = firebase.database().ref(`/profiles/${user.uid}`);
-    // cộng XP an toàn bằng transaction
-    const SAFE_XP = 50;
-    await ref.child('traits').set(res);
-    await ref.child('quizMeta').set(meta);
-    await ref.child('stats/xp').transaction((v) => (v || 0) + SAFE_XP);
-    // coin/huy hiệu nếu có thể cộng ở đây tương tự
-  } else {
-    // fallback nếu chưa đăng nhập
-    localStorage.setItem('lq_traitScores', JSON.stringify(res));
-    localStorage.setItem('lq_quiz_meta', JSON.stringify(meta));
-    localStorage.setItem('lq_quizDone', 'true');
-    const xp = parseInt(localStorage.getItem('lq_xp') || '0', 10) + 50;
-    localStorage.setItem('lq_xp', String(xp));
-  }
-} catch (e) {
-  console.warn('Save quiz error, fallback localStorage', e);
-  localStorage.setItem('lq_traitScores', JSON.stringify(res));
-  localStorage.setItem('lq_quiz_meta', JSON.stringify(meta));
-  localStorage.setItem('lq_quizDone', 'true');
-}
+  // Submit (lưu Firebase nếu có đăng nhập, fallback localStorage)
+  const SAFE_XP = 50;
+  submitEl.addEventListener("click", async () => {
+    checkAllAnswered();
+    if (submitEl.disabled) return;
 
-window.location.href = '/index.html?quiz=done';
+    const res  = score();
+    const meta = { per_group: PER_GROUP, traits: TRAITS, updatedAt: Date.now() };
 
+    try {
+      const user = (window.firebase && firebase.auth().currentUser) || null;
+      if (user) {
+        const ref = firebase.database().ref(`/profiles/${user.uid}`);
+        await ref.child("traits").set(res);
+        await ref.child("quizMeta").set(meta);
+        await ref.child("stats/xp").transaction(v => (v || 0) + SAFE_XP);
+      } else {
+        localStorage.setItem("lq_traitScores", JSON.stringify(res));
+        localStorage.setItem("lq_quiz_meta", JSON.stringify(meta));
+        localStorage.setItem("lq_quizDone", "true");
+        const xp = parseInt(localStorage.getItem("lq_xp") || "0", 10) + SAFE_XP;
+        localStorage.setItem("lq_xp", String(xp));
+      }
+    } catch (e) {
+      console.warn("Save quiz error, fallback localStorage", e);
+      localStorage.setItem("lq_traitScores", JSON.stringify(res));
+      localStorage.setItem("lq_quiz_meta", JSON.stringify(meta));
+      localStorage.setItem("lq_quizDone", "true");
+      const xp = parseInt(localStorage.getItem("lq_xp") || "0", 10) + SAFE_XP;
+      localStorage.setItem("lq_xp", String(xp));
+    }
 
-
-
+    // dùng đường dẫn tương đối để tránh lệch webroot
+    window.location.href = "index.html?quiz=done";
+  });
+});
