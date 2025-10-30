@@ -15,6 +15,14 @@ let radarChart = null;                 // giữ instance chart để destroy khi
 
 const $ = (id) => document.getElementById(id);
 
+function hasValidTraits(traits) {
+  if (!traits) return false;
+  const keys = ["creativity","competitiveness","sociability","playfulness","self_improvement","perfectionism"];
+  let sum = 0;
+  for (const k of keys) sum += Number(traits[k] || 0);
+  return sum > 0;
+}
+
 /* ========================================================
    1) AUTH + ROUTING
 ======================================================== */
@@ -92,24 +100,27 @@ const $ = (id) => document.getElementById(id);
     return auth.signInWithEmailAndPassword(email, pass);
   }
 //============== phan moi them ===========================
+// Sau đăng nhập: điều hướng theo trạng thái trắc nghiệm (schema mới/cũ + migrate local)
 async function routeAfterLogin(uid){
   try {
     const db = window.App._db || firebase.database();
 
     // Đọc cả 2 nơi:
     // - /profiles/{uid}/traits  (schema mới)
-    // - /users/{uid}            (schema cũ: quizDone + data game)
+    // - /users/{uid}            (schema cũ: quizDone + data game + có thể có traits)
     const [profSnap, userSnap] = await Promise.all([
       db.ref(`/profiles/${uid}/traits`).get(),
       db.ref(`/users/${uid}`).get()
     ]);
 
-    const hasProfTraits  = profSnap.exists();          // đã có điểm ở schema mới
-    const userData       = userSnap.val() || {};
-    const hasUserTraits  = !!userData.traits;          // nếu app cũ từng lưu traits ở đây
-    const hasQuizDoneFlg = !!userData.quizDone;        // cờ app cũ
+    const profTraits = profSnap.val() || null;   // traits ở schema mới
+    const userData   = userSnap.val() || {};
+    const userTraits = userData.traits || null;  // traits ở schema cũ (nếu có)
 
-    if (hasProfTraits || hasUserTraits || hasQuizDoneFlg) {
+    // ✅ Chỉ coi là "đã làm quiz" khi có traits HỢP LỆ (tổng > 0)
+    const validOnDB = hasValidTraits(profTraits) || hasValidTraits(userTraits);
+
+    if (validOnDB) {
       // Có dữ liệu quiz -> hiển thị game board
       $("gameBoard")?.classList.remove("hidden");
       $("profile")?.classList.add("hidden");
@@ -117,30 +128,40 @@ async function routeAfterLogin(uid){
       return;
     }
 
-    // Chưa có trên DB -> thử migrate từ localStorage (nếu người dùng từng làm khi chưa login)
+    // ❓ Chưa có traits hợp lệ trên DB -> thử migrate từ localStorage (nếu người dùng làm quiz khi chưa login)
     try {
       const localScores = JSON.parse(localStorage.getItem("lq_traitScores") || "null");
       const localMeta   = JSON.parse(localStorage.getItem("lq_quiz_meta") || "null");
-      if (localScores) {
+
+      if (hasValidTraits(localScores)) {
+        // Ghi về schema mới
         await db.ref(`/profiles/${uid}/traits`).set(localScores);
         await db.ref(`/profiles/${uid}/quizMeta`).set({
           ...(localMeta || {}),
           migratedFromLocal: true,
           migratedAt: Date.now(),
         });
-        await db.ref(`/users/${uid}/quizDone`).set(true);
+
+        // (Không set quizDone nếu bạn muốn chỉ dựa trên traits)
+        // await db.ref(`/users/${uid}/quizDone`).set(true);
+
+        // Dọn local để tránh migrate lại
         localStorage.removeItem("lq_traitScores");
         localStorage.removeItem("lq_quiz_meta");
         localStorage.setItem("lq_quizDone","true");
 
         // Sau migrate -> vào game luôn
         $("gameBoard")?.classList.remove("hidden");
+        $("profile")?.classList.add("hidden");
         window.App.Game?.showGameBoard?.(userData, uid);
         return;
       }
-    } catch(e){ console.warn("Migrate local → Firebase lỗi", e); }
+    } catch(e){
+      console.warn("Migrate local → Firebase lỗi", e);
+      // Không migrate được thì vẫn rẽ qua quiz phía dưới
+    }
 
-    // Không có dữ liệu ở đâu cả -> chuyển sang trang quiz mới
+    // 🚪 Không có traits hợp lệ ở đâu cả -> chuyển sang trang quiz mới
     window.location.replace("quiz.html");
   } catch (e) {
     console.warn("routeAfterLogin error", e);
@@ -148,6 +169,7 @@ async function routeAfterLogin(uid){
     $("gameBoard")?.classList.remove("hidden");
   }
 }
+
    
   // ===== Sau khi đăng nhập: điều phối UI + lắng nghe realtime =====
   function onSignedIn(uid){
@@ -478,6 +500,7 @@ function renderProfile(data) {
 
 // Expose để nơi khác có thể gọi
 window.App.Profile = { renderProfile };
+
 
 
 
