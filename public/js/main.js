@@ -146,6 +146,24 @@ const $ = (id) => document.getElementById(id);
 })();
 
 /* ========================================================
+    TRAC NGHIEM 
+======================================================== */
+
+function checkQuizStatusAndShowCallout() {
+  const callout = document.getElementById('quizCallout');
+  const quizDone = localStorage.getItem('lq_quizDone') === 'true';
+  if (!quizDone) {
+    callout?.classList.remove('hidden');
+  } else {
+    callout?.classList.add('hidden');
+  }
+}
+
+window.addEventListener('load', () => {
+  checkQuizStatusAndShowCallout();
+});
+
+/* ========================================================
    2) PROFILE VIEW (HIỆN/ẨN)
 ======================================================== */
 function showProfile() {
@@ -311,3 +329,4 @@ function renderProfile(data) {
 
 // Expose để nơi khác có thể gọi
 window.App.Profile = { renderProfile };
+
