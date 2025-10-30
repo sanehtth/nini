@@ -15,14 +15,14 @@ let radarChart = null;                 // giữ instance chart để destroy khi
 
 const $ = (id) => document.getElementById(id);
 
+// Kiểm tra traits có hợp lệ (phải tồn tại và tổng điểm > 0)
 function hasValidTraits(traits) {
-  if (!traits) return false;
+  if (!traits || typeof traits !== "object") return false;
   const keys = ["creativity","competitiveness","sociability","playfulness","self_improvement","perfectionism"];
   let sum = 0;
   for (const k of keys) sum += Number(traits[k] || 0);
   return sum > 0;
 }
-
 /* ========================================================
    1) AUTH + ROUTING
 ======================================================== */
@@ -99,69 +99,62 @@ function hasValidTraits(traits) {
   function login(email, pass){
     return auth.signInWithEmailAndPassword(email, pass);
   }
-//============== phan moi them ===========================
-// Sau đăng nhập: điều hướng theo trạng thái trắc nghiệm (schema mới/cũ + migrate local)
+  /* ========================================================
+   Sau đăng nhập: điều hướng theo trạng thái trắc nghiệm (strict: yêu cầu traits > 0)
+   ======================================================== */ 
+
 async function routeAfterLogin(uid){
   try {
     const db = window.App._db || firebase.database();
 
     // Đọc cả 2 nơi:
     // - /profiles/{uid}/traits  (schema mới)
-    // - /users/{uid}            (schema cũ: quizDone + data game + có thể có traits)
+    // - /users/{uid}            (schema cũ: game data; có thể có traits)
     const [profSnap, userSnap] = await Promise.all([
       db.ref(`/profiles/${uid}/traits`).get(),
       db.ref(`/users/${uid}`).get()
     ]);
 
-    const profTraits = profSnap.val() || null;   // traits ở schema mới
+    const profTraits = profSnap.val() || null;      // traits (mới)
     const userData   = userSnap.val() || {};
-    const userTraits = userData.traits || null;  // traits ở schema cũ (nếu có)
+    const userTraits = userData.traits || null;     // traits (cũ, nếu có)
 
-    // ✅ Chỉ coi là "đã làm quiz" khi có traits HỢP LỆ (tổng > 0)
     const validOnDB = hasValidTraits(profTraits) || hasValidTraits(userTraits);
-
     if (validOnDB) {
-      // Có dữ liệu quiz -> hiển thị game board
+      // Có dữ liệu quiz hợp lệ -> hiển thị game board
       $("gameBoard")?.classList.remove("hidden");
       $("profile")?.classList.add("hidden");
       window.App.Game?.showGameBoard?.(userData, uid);
       return;
     }
 
-    // ❓ Chưa có traits hợp lệ trên DB -> thử migrate từ localStorage (nếu người dùng làm quiz khi chưa login)
+    // Thử migrate từ localStorage nếu có
     try {
       const localScores = JSON.parse(localStorage.getItem("lq_traitScores") || "null");
       const localMeta   = JSON.parse(localStorage.getItem("lq_quiz_meta") || "null");
 
       if (hasValidTraits(localScores)) {
-        // Ghi về schema mới
         await db.ref(`/profiles/${uid}/traits`).set(localScores);
         await db.ref(`/profiles/${uid}/quizMeta`).set({
           ...(localMeta || {}),
           migratedFromLocal: true,
           migratedAt: Date.now(),
         });
-
-        // (Không set quizDone nếu bạn muốn chỉ dựa trên traits)
-        // await db.ref(`/users/${uid}/quizDone`).set(true);
-
-        // Dọn local để tránh migrate lại
+        // KHÔNG set quizDone ở schema cũ để tránh pass nhầm
         localStorage.removeItem("lq_traitScores");
         localStorage.removeItem("lq_quiz_meta");
         localStorage.setItem("lq_quizDone","true");
 
-        // Sau migrate -> vào game luôn
         $("gameBoard")?.classList.remove("hidden");
         $("profile")?.classList.add("hidden");
         window.App.Game?.showGameBoard?.(userData, uid);
         return;
       }
-    } catch(e){
+    } catch (e) {
       console.warn("Migrate local → Firebase lỗi", e);
-      // Không migrate được thì vẫn rẽ qua quiz phía dưới
     }
 
-    // 🚪 Không có traits hợp lệ ở đâu cả -> chuyển sang trang quiz mới
+    // Không có traits hợp lệ ở đâu cả -> chuyển sang quiz mới
     window.location.replace("quiz.html");
   } catch (e) {
     console.warn("routeAfterLogin error", e);
@@ -169,9 +162,9 @@ async function routeAfterLogin(uid){
     $("gameBoard")?.classList.remove("hidden");
   }
 }
+//===============het ham routeAfterLogin ==================
 
-   
-  // ===== Sau khi đăng nhập: điều phối UI + lắng nghe realtime =====
+   // ===== Sau khi đăng nhập: điều phối UI + lắng nghe realtime =====
   function onSignedIn(uid){
   // 1) Điều phối UI ban đầu
   $("authScreen")?.classList.add("hidden");
@@ -224,80 +217,46 @@ function readLocalQuiz() {
     return scores ? { scores, meta } : null;
   } catch { return null; }
 }
-
+//========== ensureQuizOrRedirect==============
 async function ensureQuizOrRedirect() {
-  // Đừng chặn nếu đang ở trang quiz
   if (location.pathname.endsWith("/quiz.html")) return true;
-
-  // Nếu vừa làm xong (?quiz=done) thì cho vào luôn
   if (new URL(location.href).searchParams.get("quiz") === "done") return true;
 
-  const goQuiz = () => {
-    // dùng đường dẫn tương đối để tránh sai subpath (/public/..)
-    window.location.replace("quiz.html");
-    return false;
-  };
+  const user = (window.firebase && firebase.auth && firebase.auth().currentUser) || null;
+  if (!user) return true; // chưa đăng nhập -> không gate
 
-  // ⛔ QUAN TRỌNG: nếu CHƯA đăng nhập thì KHÔNG gate (cho vào index để đăng nhập)
+  const goQuiz = () => { window.location.replace("quiz.html"); return false; };
+
   try {
-    const user = (window.firebase && firebase.auth && firebase.auth().currentUser) || null;
-    if (!user) return true;
-
-    // ✅ Đã đăng nhập: kiểm tra có dữ liệu quiz ở DB hay chưa
-    // Hỗ trợ cả 2 schema: /profiles/{uid}/traits (mới) và /users/{uid}/traits | quizDone (cũ)
-    const uid = user.uid;
-    const db  = firebase.database();
-    const profRef = db.ref(`/profiles/${uid}/traits`);
-    const userTraitsRef = db.ref(`/users/${uid}/traits`);
-    const userRootRef   = db.ref(`/users/${uid}`);
-
-    const [profSnap, userTraitsSnap, userRootSnap] = await Promise.all([
-      profRef.get(),
-      userTraitsRef.get(),
-      userRootRef.get()
+    const db = firebase.database();
+    const [profSnap, userTraitsSnap] = await Promise.all([
+      db.ref(`/profiles/${user.uid}/traits`).get(),
+      db.ref(`/users/${user.uid}/traits`).get(),
     ]);
+    const profTraits = profSnap.val() || null;
+    const userTraits = userTraitsSnap.val() || null;
 
-    const hasProfTraits  = profSnap.exists();
-    const hasUserTraits  = userTraitsSnap.exists();
-    const hasQuizDoneFlg = !!(userRootSnap.val() && userRootSnap.val().quizDone);
+    if (hasValidTraits(profTraits) || hasValidTraits(userTraits)) return true;
 
-    if (hasProfTraits || hasUserTraits || hasQuizDoneFlg) {
-      return true; // đã có dữ liệu -> cho vào app
+    const local = JSON.parse(localStorage.getItem("lq_traitScores") || "null");
+    const meta  = JSON.parse(localStorage.getItem("lq_quiz_meta") || "null");
+    if (hasValidTraits(local)) {
+      await db.ref(`/profiles/${user.uid}/traits`).set(local);
+      await db.ref(`/profiles/${user.uid}/quizMeta`).set({ ...(meta||{}), migratedFromLocal:true, migratedAt: Date.now() });
+      localStorage.removeItem("lq_traitScores");
+      localStorage.removeItem("lq_quiz_meta");
+      localStorage.setItem("lq_quizDone","true");
+      return true;
     }
 
-    // Chưa có trên DB → thử migrate từ localStorage (nếu có)
-    const local = readLocalQuiz();
-    if (local) {
-      try {
-        // ghi về schema mới (/profiles)
-        await db.ref(`/profiles/${uid}/traits`).set(local.scores);
-        await db.ref(`/profiles/${uid}/quizMeta`).set({
-          ...(local.meta || {}),
-          migratedFromLocal: true,
-          migratedAt: Date.now(),
-        });
-        // đánh dấu cờ ở schema cũ để UI cũ vẫn chạy
-        await db.ref(`/users/${uid}/quizDone`).set(true);
-
-        // dọn local để tránh lặp
-        localStorage.removeItem("lq_traitScores");
-        localStorage.removeItem("lq_quiz_meta");
-        localStorage.setItem("lq_quizDone", "true");
-        return true;
-      } catch (e) {
-        console.warn("Migrate local → Firebase failed", e);
-        return true; // có local thì vẫn cho vào app, đừng khóa
-      }
-    }
-
-    // Không có gì cả → bắt đi làm quiz
     return goQuiz();
   } catch (e) {
     console.warn("ensureQuizOrRedirect error", e);
-    return true; // có lỗi mạng thì cũng không nên chặn
+    return true;
   }
 }
-// Gọi khi app sẵn sàng
+//========== het ham ensureQuizOrRedirect==============
+// ==============  Gọi khi app sẵn sàng  ================
 window.addEventListener("DOMContentLoaded", () => {
   if (window.firebase && firebase.auth) {
     firebase.auth().onAuthStateChanged(async (user) => {
@@ -314,7 +273,6 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
-
 
 /* ========================================================
     TRAC NGHIEM 
@@ -500,6 +458,7 @@ function renderProfile(data) {
 
 // Expose để nơi khác có thể gọi
 window.App.Profile = { renderProfile };
+
 
 
 
