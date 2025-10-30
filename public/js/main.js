@@ -145,7 +145,10 @@ const $ = (id) => document.getElementById(id);
   });
 })();
 
-// ===== Gating: bắt buộc có kết quả quiz trước khi chơi =====
+/* ========================================================
+     Gating: bắt buộc có kết quả quiz trước khi chơi 
+======================================================== */
+
 function readLocalQuiz() {
   try {
     const scores = JSON.parse(localStorage.getItem("lq_traitScores") || "null");
@@ -167,67 +170,83 @@ async function ensureQuizOrRedirect() {
     return false;
   };
 
-  // Ưu tiên dữ liệu tài khoản (Firebase)
+  // ⛔ QUAN TRỌNG: nếu CHƯA đăng nhập thì KHÔNG gate (cho vào index để đăng nhập)
   try {
-    if (window.firebase && firebase.auth) {
-      const user = firebase.auth().currentUser;
-      if (user) {
-        const ref = firebase.database().ref(`/profiles/${user.uid}`);
-        const traitsSnap = await ref.child("traits").get();
+    const user = (window.firebase && firebase.auth && firebase.auth().currentUser) || null;
+    if (!user) return true;
 
-        if (traitsSnap.exists()) {
-          // đã có quiz trên DB → ok
-          return true;
-        }
+    // ✅ Đã đăng nhập: kiểm tra có dữ liệu quiz ở DB hay chưa
+    // Hỗ trợ cả 2 schema: /profiles/{uid}/traits (mới) và /users/{uid}/traits | quizDone (cũ)
+    const uid = user.uid;
+    const db  = firebase.database();
+    const profRef = db.ref(`/profiles/${uid}/traits`);
+    const userTraitsRef = db.ref(`/users/${uid}/traits`);
+    const userRootRef   = db.ref(`/users/${uid}`);
 
-        // Chưa có trên DB → thử migrate từ localStorage (nếu có)
-        const local = readLocalQuiz();
-        if (local) {
-          try {
-            await ref.child("traits").set(local.scores);
-            await ref.child("quizMeta").set({
-              ...(local.meta || {}),
-              migratedFromLocal: true,
-              migratedAt: Date.now(),
-            });
-            // Xoá local để tránh lặp lại
-            localStorage.removeItem("lq_traitScores");
-            localStorage.removeItem("lq_quiz_meta");
-            localStorage.setItem("lq_quizDone", "true");
-            return true;
-          } catch (e) {
-            console.warn("Migrate local → Firebase failed", e);
-            // vẫn cho vào nếu có local
-            return true;
-          }
-        }
+    const [profSnap, userTraitsSnap, userRootSnap] = await Promise.all([
+      profRef.get(),
+      userTraitsRef.get(),
+      userRootRef.get()
+    ]);
 
-        // Không có gì cả → bắt đi làm quiz
-        return goQuiz();
+    const hasProfTraits  = profSnap.exists();
+    const hasUserTraits  = userTraitsSnap.exists();
+    const hasQuizDoneFlg = !!(userRootSnap.val() && userRootSnap.val().quizDone);
+
+    if (hasProfTraits || hasUserTraits || hasQuizDoneFlg) {
+      return true; // đã có dữ liệu -> cho vào app
+    }
+
+    // Chưa có trên DB → thử migrate từ localStorage (nếu có)
+    const local = readLocalQuiz();
+    if (local) {
+      try {
+        // ghi về schema mới (/profiles)
+        await db.ref(`/profiles/${uid}/traits`).set(local.scores);
+        await db.ref(`/profiles/${uid}/quizMeta`).set({
+          ...(local.meta || {}),
+          migratedFromLocal: true,
+          migratedAt: Date.now(),
+        });
+        // đánh dấu cờ ở schema cũ để UI cũ vẫn chạy
+        await db.ref(`/users/${uid}/quizDone`).set(true);
+
+        // dọn local để tránh lặp
+        localStorage.removeItem("lq_traitScores");
+        localStorage.removeItem("lq_quiz_meta");
+        localStorage.setItem("lq_quizDone", "true");
+        return true;
+      } catch (e) {
+        console.warn("Migrate local → Firebase failed", e);
+        return true; // có local thì vẫn cho vào app, đừng khóa
       }
     }
+
+    // Không có gì cả → bắt đi làm quiz
+    return goQuiz();
   } catch (e) {
-    console.warn("ensureQuizOrRedirect error (firebase)", e);
+    console.warn("ensureQuizOrRedirect error", e);
+    return true; // có lỗi mạng thì cũng không nên chặn
   }
-
-  // Khách/ngoại tuyến → xem localStorage
-  if (readLocalQuiz()) return true;
-  return goQuiz();
 }
-
 // Gọi khi app sẵn sàng
 window.addEventListener("DOMContentLoaded", () => {
   if (window.firebase && firebase.auth) {
-    firebase.auth().onAuthStateChanged(async () => {
+    firebase.auth().onAuthStateChanged(async (user) => {
+      // ⛔ Nếu CHƯA đăng nhập: KHÔNG gọi gate (tránh bị đẩy sang quiz.html)
+      if (!user) return;
       await ensureQuizOrRedirect();
       // ... sau đó mới khởi tạo app/game của bạn ...
     });
   } else {
+    // Không dùng auth → chỉ gate theo localStorage
+    // (nếu bạn luôn dùng auth thì có thể bỏ nhánh này)
     ensureQuizOrRedirect().then(() => {
       // ... khởi tạo app/game khi không dùng auth ...
     });
   }
 });
+
 
 /* ========================================================
     TRAC NGHIEM 
@@ -413,6 +432,7 @@ function renderProfile(data) {
 
 // Expose để nơi khác có thể gọi
 window.App.Profile = { renderProfile };
+
 
 
 
