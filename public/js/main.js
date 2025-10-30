@@ -91,42 +91,88 @@ const $ = (id) => document.getElementById(id);
   function login(email, pass){
     return auth.signInWithEmailAndPassword(email, pass);
   }
+//============== phan moi them ===========================
+async function routeAfterLogin(uid){
+  try {
+    const db = window.App._db || firebase.database();
 
+    // Đọc cả 2 nơi:
+    // - /profiles/{uid}/traits  (schema mới)
+    // - /users/{uid}            (schema cũ: quizDone + data game)
+    const [profSnap, userSnap] = await Promise.all([
+      db.ref(`/profiles/${uid}/traits`).get(),
+      db.ref(`/users/${uid}`).get()
+    ]);
+
+    const hasProfTraits  = profSnap.exists();          // đã có điểm ở schema mới
+    const userData       = userSnap.val() || {};
+    const hasUserTraits  = !!userData.traits;          // nếu app cũ từng lưu traits ở đây
+    const hasQuizDoneFlg = !!userData.quizDone;        // cờ app cũ
+
+    if (hasProfTraits || hasUserTraits || hasQuizDoneFlg) {
+      // Có dữ liệu quiz -> hiển thị game board
+      $("gameBoard")?.classList.remove("hidden");
+      $("profile")?.classList.add("hidden");
+      window.App.Game?.showGameBoard?.(userData, uid);
+      return;
+    }
+
+    // Chưa có trên DB -> thử migrate từ localStorage (nếu người dùng từng làm khi chưa login)
+    try {
+      const localScores = JSON.parse(localStorage.getItem("lq_traitScores") || "null");
+      const localMeta   = JSON.parse(localStorage.getItem("lq_quiz_meta") || "null");
+      if (localScores) {
+        await db.ref(`/profiles/${uid}/traits`).set(localScores);
+        await db.ref(`/profiles/${uid}/quizMeta`).set({
+          ...(localMeta || {}),
+          migratedFromLocal: true,
+          migratedAt: Date.now(),
+        });
+        await db.ref(`/users/${uid}/quizDone`).set(true);
+        localStorage.removeItem("lq_traitScores");
+        localStorage.removeItem("lq_quiz_meta");
+        localStorage.setItem("lq_quizDone","true");
+
+        // Sau migrate -> vào game luôn
+        $("gameBoard")?.classList.remove("hidden");
+        window.App.Game?.showGameBoard?.(userData, uid);
+        return;
+      }
+    } catch(e){ console.warn("Migrate local → Firebase lỗi", e); }
+
+    // Không có dữ liệu ở đâu cả -> chuyển sang trang quiz mới
+    window.location.replace("quiz.html");
+  } catch (e) {
+    console.warn("routeAfterLogin error", e);
+    // Có lỗi mạng thì đừng khóa app; ít nhất mở game board rỗng
+    $("gameBoard")?.classList.remove("hidden");
+  }
+}
+   
   // ===== Sau khi đăng nhập: điều phối UI + lắng nghe realtime =====
   function onSignedIn(uid){
-    // 1) Điều phối UI ban đầu
-    window.App._db.ref(`users/${uid}`).once("value").then(snap=>{
-      const data = snap.val() || {};
+  // 1) Điều phối UI ban đầu
+  $("authScreen")?.classList.add("hidden");
+  $("mainApp")?.classList.remove("hidden");
+  if ($("userEmail")) $("userEmail").textContent = (window.App._auth.currentUser.email || "").split("@")[0];
 
-      // (Tuỳ chọn) Nếu có cơ chế refresh traits theo tuần
-      window.App.Analytics?.maybeRefreshWeekly?.(uid, data);
+  // 2) Route theo trạng thái quiz (ưu tiên schema mới /profiles, fallback schema cũ /users)
+  routeAfterLogin(uid);
 
-      $("authScreen")?.classList.add("hidden");
-      $("mainApp")?.classList.remove("hidden");
-      if ($("userEmail")) $("userEmail").textContent = (window.App._auth.currentUser.email || "").split("@")[0];
+  // 3) Lắng nghe realtime để cập nhật UI
+  window.App._db.ref(`users/${uid}`).on("value", snap=>{
+    const data = snap.val() || {};
+    // Tab hồ sơ mở -> re-render
+    if (!$("profile")?.classList.contains("hidden")){
+      renderProfile(data);
+    }
+    // Tab game mở -> cập nhật
+    if (!$("gameBoard")?.classList.contains("hidden")){
+      window.App.Game?.showGameBoard?.(data, uid);
+    }
+  });
+}
 
-      if (data.quizDone) {
-        window.App.Game?.showGameBoard?.(data, uid);
-      } else {
-        $("quiz")?.classList.remove("hidden");
-      }
-    });
-
-    // 2) Lắng nghe realtime để cập nhật UI
-    window.App._db.ref(`users/${uid}`).on("value", snap=>{
-      const data = snap.val() || {};
-
-      // Nếu tab hồ sơ đang mở -> re-render
-      if (!$("profile")?.classList.contains("hidden")){
-        renderProfile(data);
-      }
-
-      // Nếu tab game đang mở -> cập nhật
-      if (!$("gameBoard")?.classList.contains("hidden")){
-        window.App.Game?.showGameBoard?.(data, uid);
-      }
-    });
-  }
 
   // ===== Gắn nút, theo dõi auth state =====
   bindAuthButtons();
@@ -432,6 +478,7 @@ function renderProfile(data) {
 
 // Expose để nơi khác có thể gọi
 window.App.Profile = { renderProfile };
+
 
 
 
