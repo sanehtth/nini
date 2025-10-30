@@ -41,8 +41,19 @@
   </div>
 
  <!-- Quiz scripts -->
-<script defer src="/js/trait-config.js"></script>
-<script defer src="/js/quiz.js?v=3"></script>
+<script defer src="/js/trait-config.js?v=7"></script>
+<script defer src="/js/quiz.js?v=7"></script>
+  <!-- Hiện lỗi JS ra màn hình nếu có để dễ bắt bệnh -->
+<script>
+  window.onerror = function (msg, url, line, col, err) {
+    const box = document.getElementById('questionList');
+    if (box) {
+      box.innerHTML = '<div style="padding:12px;border-radius:8px;background:#fff3f3;color:#b91c1c">'
+        + '<b>Lỗi tải quiz:</b> ' + (msg || '') + '</div>';
+    }
+  }
+</script>
 </body>
 
 </html>
+
