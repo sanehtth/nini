@@ -145,6 +145,60 @@ const $ = (id) => document.getElementById(id);
   });
 })();
 
+// ===== Gating: bắt buộc làm trắc nghiệm trước khi chơi =====
+function hasLocalQuiz() {
+  try {
+    return !!localStorage.getItem("lq_traitScores");
+  } catch { return false; }
+}
+
+async function ensureQuizOrRedirect() {
+  // Đừng chặn nếu đang ở trang quiz
+  if (location.pathname.endsWith("/quiz.html")) return true;
+
+  // Nếu vừa làm xong (?quiz=done) thì cho vào luôn
+  if (new URL(location.href).searchParams.get("quiz") === "done") return true;
+
+  const goQuiz = () => {
+    // dùng replace để không thêm lịch sử back/forward
+    window.location.replace("/quiz.html");
+    return false;
+  };
+
+  // Ưu tiên dữ liệu tài khoản (Firebase)
+  try {
+    if (window.firebase && firebase.auth) {
+      const user = firebase.auth().currentUser;
+      if (user) {
+        const snap = await firebase.database().ref(`/profiles/${user.uid}/traits`).get();
+        if (!snap.exists()) return goQuiz();
+        return true;
+      }
+    }
+  } catch (e) {
+    console.warn("ensureQuizOrRedirect error (firebase)", e);
+  }
+
+  // Fallback: khách/ngoại tuyến → xem localStorage
+  if (!hasLocalQuiz()) return goQuiz();
+  return true;
+}
+
+// Gọi ngay khi app sẵn sàng
+window.addEventListener("DOMContentLoaded", () => {
+  if (window.firebase && firebase.auth) {
+    // Chờ auth xác định xong rồi mới gate
+    firebase.auth().onAuthStateChanged(async () => {
+      await ensureQuizOrRedirect();
+      // ... phần khởi tạo app/game của bạn ở đây ...
+    });
+  } else {
+    // Không dùng auth → gate theo localStorage
+    ensureQuizOrRedirect().then(() => {
+      // ... phần khởi tạo app/game của bạn ở đây ...
+    });
+  }
+});
 /* ========================================================
     TRAC NGHIEM 
 ======================================================== */
@@ -330,58 +384,6 @@ function renderProfile(data) {
 // Expose để nơi khác có thể gọi
 window.App.Profile = { renderProfile };
 
-// ===== Gating: bắt buộc làm trắc nghiệm trước khi chơi =====
-function hasLocalQuiz() {
-  try {
-    return !!localStorage.getItem("lq_traitScores");
-  } catch { return false; }
-}
 
-async function ensureQuizOrRedirect() {
-  // Đừng chặn nếu đang ở trang quiz
-  if (location.pathname.endsWith("/quiz.html")) return true;
 
-  // Nếu vừa làm xong (?quiz=done) thì cho vào luôn
-  if (new URL(location.href).searchParams.get("quiz") === "done") return true;
-
-  const goQuiz = () => {
-    // dùng replace để không thêm lịch sử back/forward
-    window.location.replace("/quiz.html");
-    return false;
-  };
-
-  // Ưu tiên dữ liệu tài khoản (Firebase)
-  try {
-    if (window.firebase && firebase.auth) {
-      const user = firebase.auth().currentUser;
-      if (user) {
-        const snap = await firebase.database().ref(`/profiles/${user.uid}/traits`).get();
-        if (!snap.exists()) return goQuiz();
-        return true;
-      }
-    }
-  } catch (e) {
-    console.warn("ensureQuizOrRedirect error (firebase)", e);
-  }
-
-  // Fallback: khách/ngoại tuyến → xem localStorage
-  if (!hasLocalQuiz()) return goQuiz();
-  return true;
-}
-
-// Gọi ngay khi app sẵn sàng
-window.addEventListener("DOMContentLoaded", () => {
-  if (window.firebase && firebase.auth) {
-    // Chờ auth xác định xong rồi mới gate
-    firebase.auth().onAuthStateChanged(async () => {
-      await ensureQuizOrRedirect();
-      // ... phần khởi tạo app/game của bạn ở đây ...
-    });
-  } else {
-    // Không dùng auth → gate theo localStorage
-    ensureQuizOrRedirect().then(() => {
-      // ... phần khởi tạo app/game của bạn ở đây ...
-    });
-  }
-});
 
