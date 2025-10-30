@@ -13,6 +13,8 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 // Xuất biến để main.js dùng
-window.firebaseAuth = auth;
-window.firebaseDB = db;
+// firebase.js
+window.firebaseAuth = firebase.auth();
+window.firebaseDB   = firebase.database();
+
 
