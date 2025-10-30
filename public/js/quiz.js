@@ -349,22 +349,24 @@ window.addEventListener("DOMContentLoaded", () => {
     return result;
   }
 
-  // ===== Submit =====
-  const SAFE_XP = 50;
-  submitBtn.addEventListener("click", () => {
-    checkAllAnswered();
-    if (submitBtn.disabled) return;
+ // Submit trong quiz.js
+const SAFE_XP = 50;
+submitBtn.addEventListener("click", () => {
+  checkAllAnswered();
+  if (submitBtn.disabled) return;
 
-    const res = score();
-    try {
-      localStorage.setItem("lq_traitScores", JSON.stringify(res));
-      localStorage.setItem("lq_quizDone", "true");
-      const xp = parseInt(localStorage.getItem("lq_xp") || "0", 10) + SAFE_XP;
-      localStorage.setItem("lq_xp", String(xp));
-    } catch (e) {
-      console.warn("localStorage error", e);
-    }
+  const res = score();
+  try {
+    localStorage.setItem("lq_traitScores", JSON.stringify(res));
+    localStorage.setItem("lq_quizDone", "true");
+    localStorage.setItem("lq_quiz_meta", JSON.stringify({ per_group: PER_GROUP, traits: TRAITS }));
 
-    window.location.href = "/index.html?quiz=done";
-  });
+    const xp = parseInt(localStorage.getItem("lq_xp") || "0", 10) + SAFE_XP;
+    localStorage.setItem("lq_xp", String(xp));
+  } catch (e) {
+    console.warn("localStorage error", e);
+  }
+  window.location.href = "/index.html?quiz=done";
 });
+
+
