@@ -348,25 +348,39 @@ window.addEventListener("DOMContentLoaded", () => {
 
     return result;
   }
+  
+//====== luu ket qua vao firebase =====
+  
+const res = score(); // {creativity:.., sociability:.., ...}
+const meta = { per_group: PER_GROUP, traits: TRAITS, updatedAt: Date.now() };
 
- // Submit trong quiz.js
-const SAFE_XP = 50;
-submitBtn.addEventListener("click", () => {
-  checkAllAnswered();
-  if (submitBtn.disabled) return;
-
-  const res = score();
-  try {
-    localStorage.setItem("lq_traitScores", JSON.stringify(res));
-    localStorage.setItem("lq_quizDone", "true");
-    localStorage.setItem("lq_quiz_meta", JSON.stringify({ per_group: PER_GROUP, traits: TRAITS }));
-
-    const xp = parseInt(localStorage.getItem("lq_xp") || "0", 10) + SAFE_XP;
-    localStorage.setItem("lq_xp", String(xp));
-  } catch (e) {
-    console.warn("localStorage error", e);
+try {
+  const user = firebase.auth().currentUser;
+  if (user) {
+    const ref = firebase.database().ref(`/profiles/${user.uid}`);
+    // cộng XP an toàn bằng transaction
+    const SAFE_XP = 50;
+    await ref.child('traits').set(res);
+    await ref.child('quizMeta').set(meta);
+    await ref.child('stats/xp').transaction((v) => (v || 0) + SAFE_XP);
+    // coin/huy hiệu nếu có thể cộng ở đây tương tự
+  } else {
+    // fallback nếu chưa đăng nhập
+    localStorage.setItem('lq_traitScores', JSON.stringify(res));
+    localStorage.setItem('lq_quiz_meta', JSON.stringify(meta));
+    localStorage.setItem('lq_quizDone', 'true');
+    const xp = parseInt(localStorage.getItem('lq_xp') || '0', 10) + 50;
+    localStorage.setItem('lq_xp', String(xp));
   }
-  window.location.href = "/index.html?quiz=done";
-});
+} catch (e) {
+  console.warn('Save quiz error, fallback localStorage', e);
+  localStorage.setItem('lq_traitScores', JSON.stringify(res));
+  localStorage.setItem('lq_quiz_meta', JSON.stringify(meta));
+  localStorage.setItem('lq_quizDone', 'true');
+}
+
+window.location.href = '/index.html?quiz=done';
+
+
 
 
