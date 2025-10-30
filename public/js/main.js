@@ -145,11 +145,13 @@ const $ = (id) => document.getElementById(id);
   });
 })();
 
-// ===== Gating: bắt buộc làm trắc nghiệm trước khi chơi =====
-function hasLocalQuiz() {
+// ===== Gating: bắt buộc có kết quả quiz trước khi chơi =====
+function readLocalQuiz() {
   try {
-    return !!localStorage.getItem("lq_traitScores");
-  } catch { return false; }
+    const scores = JSON.parse(localStorage.getItem("lq_traitScores") || "null");
+    const meta   = JSON.parse(localStorage.getItem("lq_quiz_meta") || "null");
+    return scores ? { scores, meta } : null;
+  } catch { return null; }
 }
 
 async function ensureQuizOrRedirect() {
@@ -160,8 +162,8 @@ async function ensureQuizOrRedirect() {
   if (new URL(location.href).searchParams.get("quiz") === "done") return true;
 
   const goQuiz = () => {
-    // dùng replace để không thêm lịch sử back/forward
-    window.location.replace("/quiz.html");
+    // dùng đường dẫn tương đối để tránh sai subpath (/public/..)
+    window.location.replace("quiz.html");
     return false;
   };
 
@@ -170,35 +172,63 @@ async function ensureQuizOrRedirect() {
     if (window.firebase && firebase.auth) {
       const user = firebase.auth().currentUser;
       if (user) {
-        const snap = await firebase.database().ref(`/profiles/${user.uid}/traits`).get();
-        if (!snap.exists()) return goQuiz();
-        return true;
+        const ref = firebase.database().ref(`/profiles/${user.uid}`);
+        const traitsSnap = await ref.child("traits").get();
+
+        if (traitsSnap.exists()) {
+          // đã có quiz trên DB → ok
+          return true;
+        }
+
+        // Chưa có trên DB → thử migrate từ localStorage (nếu có)
+        const local = readLocalQuiz();
+        if (local) {
+          try {
+            await ref.child("traits").set(local.scores);
+            await ref.child("quizMeta").set({
+              ...(local.meta || {}),
+              migratedFromLocal: true,
+              migratedAt: Date.now(),
+            });
+            // Xoá local để tránh lặp lại
+            localStorage.removeItem("lq_traitScores");
+            localStorage.removeItem("lq_quiz_meta");
+            localStorage.setItem("lq_quizDone", "true");
+            return true;
+          } catch (e) {
+            console.warn("Migrate local → Firebase failed", e);
+            // vẫn cho vào nếu có local
+            return true;
+          }
+        }
+
+        // Không có gì cả → bắt đi làm quiz
+        return goQuiz();
       }
     }
   } catch (e) {
     console.warn("ensureQuizOrRedirect error (firebase)", e);
   }
 
-  // Fallback: khách/ngoại tuyến → xem localStorage
-  if (!hasLocalQuiz()) return goQuiz();
-  return true;
+  // Khách/ngoại tuyến → xem localStorage
+  if (readLocalQuiz()) return true;
+  return goQuiz();
 }
 
-// Gọi ngay khi app sẵn sàng
+// Gọi khi app sẵn sàng
 window.addEventListener("DOMContentLoaded", () => {
   if (window.firebase && firebase.auth) {
-    // Chờ auth xác định xong rồi mới gate
     firebase.auth().onAuthStateChanged(async () => {
       await ensureQuizOrRedirect();
-      // ... phần khởi tạo app/game của bạn ở đây ...
+      // ... sau đó mới khởi tạo app/game của bạn ...
     });
   } else {
-    // Không dùng auth → gate theo localStorage
     ensureQuizOrRedirect().then(() => {
-      // ... phần khởi tạo app/game của bạn ở đây ...
+      // ... khởi tạo app/game khi không dùng auth ...
     });
   }
 });
+
 /* ========================================================
     TRAC NGHIEM 
 ======================================================== */
@@ -383,6 +413,7 @@ function renderProfile(data) {
 
 // Expose để nơi khác có thể gọi
 window.App.Profile = { renderProfile };
+
 
 
 
