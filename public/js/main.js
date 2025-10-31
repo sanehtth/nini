@@ -1,44 +1,106 @@
-// ===== main.js SAFE BOOTSTRAP =====
+// main.js
+// Điều phối UI, router #quiz, bind sự kiện auth
 (function () {
-  // Helper
+  const db   = firebase.database();
+  const auth = firebase.auth();
+
   const $ = (id) => document.getElementById(id);
 
-  // 1) Guard Firebase đã sẵn sàng
-  if (!window.firebase || !window.firebaseAuth || !window.firebaseDB) {
-    console.error("[main] Firebase chưa sẵn sàng. Kiểm tra thứ tự <script> và bản SDK (8.x, KHÔNG compat).");
-    return;
+  // Hiển thị/ẩn màn hình
+  function showLogin(){
+    $("authScreen")?.classList.remove("hidden");
+    $("appScreen")?.classList.add("hidden");
   }
-  const auth = window.firebaseAuth;
-  const db   = window.firebaseDB;
+  function showApp(){
+    $("authScreen")?.classList.add("hidden");
+    $("appScreen")?.classList.remove("hidden");
+  }
 
-  // 2) Lấy đúng input DÙ dùng ID cũ hay mới
-  const getLoginEmail = () =>
-    ($("loginEmail")?.value ?? $("email")?.value ?? "").trim();
-  const getLoginPass  = () =>
-    ($("loginPassword")?.value ?? $("password")?.value ?? "");
-
-  // 3) Không để nút submit reload trang
-  const patchButtonAsClick = (id, fn) => {
-    const el = $(id);
-    if (!el) return;
-    // ép button thành type=button
-    if (!el.getAttribute("type")) el.setAttribute("type", "button");
-    el.onclick = (e) => { e.preventDefault(); try { fn(e); } catch (err) { console.error(err); } };
-  };
-
-  // 4) Tab chuyển đổi (nếu có trong DOM)
-  const activateTab = (name) => {
+  // Tabs auth
+  function activateTab(name){
     const isLogin = name === "login";
     $("tabLogin")?.classList.toggle("active", isLogin);
     $("tabSignup")?.classList.toggle("active", !isLogin);
     $("loginPanel")?.classList.toggle("hidden", !isLogin);
     $("signupPanel")?.classList.toggle("hidden", isLogin);
-  };
+  }
 
-  // 5) Bind UI một cách chịu lỗi
-  window.addEventListener("DOMContentLoaded", () => {
+  // Progress bars
+  function renderSkillBars(skills){
+    const wrap = $("skillsBars"); if (!wrap) return;
+    wrap.innerHTML = "";
+    const items = [
+      ["Listening", skills.listening||0],
+      ["Speaking",  skills.speaking||0],
+      ["Reading",   skills.reading||0],
+      ["Writing",   skills.writing||0],
+    ];
+    items.forEach(([label, val])=>{
+      const row = document.createElement("div");
+      row.innerHTML =
+        `<div style="display:flex;justify-content:space-between">
+           <strong>${label}</strong><span>${Math.round(val)}%</span>
+         </div>
+         <div class="bar"><span style="width:${val}%;"></span></div>`;
+      wrap.appendChild(row);
+    });
+  }
+
+  // Radar traits (cap 60 cho UI)
+  let radarChart = null;
+  function renderTraitsRadar(traits){
+    const el = document.getElementById("traitsRadar");
+    if (!el) return;
+    const data = [
+      Math.min(60, Number(traits.creativity||0)),
+      Math.min(60, Number(traits.competitiveness||0)),
+      Math.min(60, Number(traits.sociability||0)),
+      Math.min(60, Number(traits.playfulness||0)),
+      Math.min(60, Number(traits.self_improvement||0)),
+      Math.min(60, Number(traits.perfectionism||0)),
+    ];
+    const ctx = el.getContext("2d");
+    if (radarChart) radarChart.destroy();
+    radarChart = new Chart(ctx, {
+      type: "radar",
+      data: {
+        labels: ["Creativity","Competitiveness","Sociability","Playfulness","Self-Improvement","Perfectionism"],
+        datasets: [{ label: "Traits % (capped 60)", data }]
+      },
+      options: { responsive:true, scales:{ r:{ min:0, max:60, ticks:{ stepSize:10 } } } }
+    });
+  }
+
+  // Nhiệm vụ hằng ngày (gợi ý theo trait mạnh)
+  async function refreshDailyMission(uid){
+    const t = (await db.ref("users/"+uid+"/traits").once("value")).val() || {};
+    const top = Object.entries(t).sort((a,b)=>(b[1]||0)-(a[1]||0))[0];
+    const key = top ? top[0] : "self_improvement";
+    const map = {
+      creativity: "Viết lại đoạn hội thoại theo phong cách khác.",
+      competitiveness: "Thử vượt kỷ lục điểm ở mini-game đấu nhanh.",
+      sociability: "Trao đổi 5 câu với bạn học/AI voice.",
+      playfulness: "Chơi game nghe nhạc đoán từ 10 phút.",
+      self_improvement: "Hoàn thành 1 bài đọc nâng cao.",
+      perfectionism: "Sửa lỗi ngữ pháp cho 1 đoạn văn cũ."
+    };
+    $("dailyMission") && ($("dailyMission").textContent = map[key]);
+  }
+
+  // Router: nếu hash = #quiz thì mở quiz trong index (SPA)
+  function handleRoute(){
+    const isQuiz = location.hash === "#quiz";
+    $("appScreen")?.classList.toggle("hidden", isQuiz);
+    if (isQuiz && typeof window.renderQuiz === "function") {
+      // quiz.js phải define window.renderQuiz
+      window.renderQuiz();
+    }
+  }
+
+  // Bind UI
+  window.addEventListener("DOMContentLoaded", ()=>{
     // theme & logout
-    $("themeBtn") && ($("themeBtn").onclick = () => document.body.classList.toggle("dark-theme"));
+    $("themeBtn")  && ($("themeBtn").onclick  = () => document.body.classList.toggle("dark-theme"));
     $("logoutBtn") && ($("logoutBtn").onclick = () => auth.signOut());
 
     // tabs
@@ -46,91 +108,67 @@
     $("tabSignup") && ($("tabSignup").onclick = () => activateTab("signup"));
 
     // login
-    patchButtonAsClick("loginBtn", async () => {
-      const email = getLoginEmail();
-      const pass  = getLoginPass();
-      try {
-        await (window.AuthUI?.login ? window.AuthUI.login(email, pass) : auth.signInWithEmailAndPassword(email, pass));
-        $("authMsg") && ($("authMsg").textContent = "");
-      } catch (e) {
-        $("authMsg") && ($("authMsg").textContent = e?.message || "Đăng nhập thất bại");
-      }
+    $("loginBtn") && ($("loginBtn").type="button");
+    $("loginBtn") && ($("loginBtn").onclick = async ()=>{
+      const email = (document.getElementById("loginEmail")?.value || document.getElementById("email")?.value || "").trim();
+      const pass  = (document.getElementById("loginPassword")?.value || document.getElementById("password")?.value || "");
+      try { await window.AuthUI.login(email, pass); $("authMsg") && ($("authMsg").textContent=""); }
+      catch(e){ $("authMsg") && ($("authMsg").textContent = e?.message || "Đăng nhập thất bại"); }
     });
 
     // forgot
-    patchButtonAsClick("forgotBtn", async () => {
-      const email = getLoginEmail();
-      if (!email) { $("authMsg") && ($("authMsg").textContent = "Nhập email trước."); return; }
-      try {
-        await (window.AuthUI?.resetPassword ? window.AuthUI.resetPassword(email) : auth.sendPasswordResetEmail(email));
-        $("authMsg") && ($("authMsg").textContent = "Đã gửi email đặt lại mật khẩu.");
-      } catch (e) {
-        $("authMsg") && ($("authMsg").textContent = e?.message || "Không gửi được email.");
-      }
+    $("forgotBtn") && ($("forgotBtn").type="button");
+    $("forgotBtn") && ($("forgotBtn").onclick = async ()=>{
+      const email = (document.getElementById("loginEmail")?.value || document.getElementById("email")?.value || "").trim();
+      if (!email) { $("authMsg") && ($("authMsg").textContent="Nhập email trước."); return; }
+      try { await window.AuthUI.resetPassword(email); $("authMsg") && ($("authMsg").textContent="Đã gửi email đặt lại mật khẩu."); }
+      catch(e){ $("authMsg") && ($("authMsg").textContent = e?.message || "Không gửi được email."); }
     });
 
     // signup
-    patchButtonAsClick("signupBtn", async () => {
-      const email = ($("signupEmail")?.value ?? $("email")?.value ?? "").trim();
-      const pass  = ($("signupPassword")?.value ?? $("password")?.value ?? "");
-      try {
-        if (window.AuthUI?.signup) {
-          await AuthUI.signup(email, pass);
-        } else {
-          // fallback nếu chưa tách auth.js
-          const cred = await auth.createUserWithEmailAndPassword(email, pass);
-          const uid = cred.user.uid;
-          const now = new Date().toISOString().split("T")[0];
-          await db.ref("users/" + uid).set({
-            profile: { email, joined: now, consent_insight: false },
-            stats: { xp: 0, coin: 0, badge: 1 },
-            metrics: { pi: 0, fi: 0, pi_star: 0 },
-            skills: { listening: 0, speaking: 0, reading: 0, writing: 0 },
-            traits: { creativity: 0, competitiveness: 0, sociability: 0, playfulness: 0, self_improvement: 0, perfectionism: 0 },
-            weekly: {}, gameProgress: {}
-          });
-        }
-        $("authMsg") && ($("authMsg").textContent = "Tạo tài khoản thành công!");
-      } catch (e) {
-        $("authMsg") && ($("authMsg").textContent = e?.message || "Đăng ký thất bại");
-      }
+    $("signupBtn") && ($("signupBtn").type="button");
+    $("signupBtn") && ($("signupBtn").onclick = async ()=>{
+      const email = (document.getElementById("signupEmail")?.value || document.getElementById("email")?.value || "").trim();
+      const pass  = (document.getElementById("signupPassword")?.value || document.getElementById("password")?.value || "");
+      try { await window.AuthUI.signup(email, pass); }
+      catch(e){ $("authMsg") && ($("authMsg").textContent = e?.message || "Đăng ký thất bại"); }
     });
 
-    // quiz link (nếu có)
-    $("goQuiz") && ($("goQuiz").onclick = (e) => { e.preventDefault(); location.href = "quiz.html"; });
+    // “Làm lại trắc nghiệm”
+    $("goQuiz") && ($("goQuiz").onclick = (e)=>{ e.preventDefault(); location.hash="#quiz"; });
+
+    // SPA router
+    window.addEventListener("hashchange", handleRoute);
+    handleRoute();
   });
 
-  // 6) Điều hướng an toàn (chặn ping–pong)
-  const onIndex = /index\.html?$/.test(location.pathname) || location.pathname === "/" || location.pathname === "";
-  auth.onAuthStateChanged(async (user) => {
-    try {
-      if (!user) { $("authScreen")?.classList.remove("hidden"); $("appScreen")?.classList.add("hidden"); return; }
+  // Auth state
+  auth.onAuthStateChanged(async (user)=>{
+    if (!user) { showLogin(); return; }
+    showApp();
 
-      $("authScreen")?.classList.add("hidden");
-      $("appScreen")?.classList.remove("hidden");
+    // tổng hợp tuần (nếu có)
+    try { window.App?.Analytics?.maybeRefreshWeekly?.(user.uid); } catch {}
 
-      // Tổng hợp tuần (không chặn UI nếu lỗi)
-      try { window.App?.Analytics?.maybeRefreshWeekly?.(user.uid); } catch {}
+    const [traitsSnap, skillsSnap] = await Promise.all([
+      db.ref("users/"+user.uid+"/traits").once("value"),
+      db.ref("users/"+user.uid+"/skills").once("value")
+    ]);
+    const traits = traitsSnap.val() || {};
+    const skills = skillsSnap.val() || {};
 
-      const [traitsSnap, skillsSnap] = await Promise.all([
-        db.ref("users/" + user.uid + "/traits").once("value"),
-        db.ref("users/" + user.uid + "/skills").once("value"),
-      ]);
-      const traits = traitsSnap.val() || {};
-      const skills = skillsSnap.val() || {};
-      const emptyTraits = !traits || Object.values(traits).every(v => (Number(v) || 0) === 0);
+    // nếu vừa đăng ký (đã set ở auth.js) → mở quiz
+    const justSignedUp = localStorage.getItem("justSignedUp") === "1";
+    if (justSignedUp) { localStorage.removeItem("justSignedUp"); location.hash="#quiz"; return; }
 
-      // Chỉ chuyển qua quiz nếu đang ở index và traits rỗng
-      if (emptyTraits && onIndex) { location.href = "quiz.html"; return; }
+    // nếu chưa có traits, để user tự bấm “Làm lại trắc nghiệm” (không auto chuyển trang)
+    renderTraitsRadar(traits);
+    renderSkillBars(skills);
+    refreshDailyMission(user.uid);
 
-      // Nếu có hàm render trong main cũ của bạn, gọi lại ở đây:
-      if (typeof renderTraitsRadar === "function") renderTraitsRadar(traits);
-      if (typeof renderSkillBars === "function")  renderSkillBars(skills);
-      if (typeof refreshDailyMission === "function") refreshDailyMission(user.uid);
-    } catch (err) {
-      console.error("[onAuthStateChanged]", err);
-      $("authScreen")?.classList.remove("hidden");
-      $("appScreen")?.classList.add("hidden");
-    }
+    // demo: gắn logger game nếu có nút
+    const bind = (id, skill) => { const el=$(id); if (!el) return; el.onclick = ()=> App.Analytics?.logActivity?.(user.uid, skill, {value:1, complete:true}); };
+    bind("playListening","listening"); bind("playSpeaking","speaking");
+    bind("playReading","reading");     bind("playWriting","writing");
   });
 })();
