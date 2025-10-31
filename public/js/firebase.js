@@ -12,9 +12,9 @@ const firebaseConfig = {
 // Khởi tạo Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Xuất biến để main.js dùng
 // firebase.js
 window.firebaseAuth = firebase.auth();
 window.firebaseDB   = firebase.database();
-
+window.App = window.App || {};
+window.App.db = window.firebaseDB;  // quan trọng cho unified analytics
 
