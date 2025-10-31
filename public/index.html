@@ -1,111 +1,71 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LearnQuest AI - Game Học Vui</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LearnQuest AI</title>
+<link rel="stylesheet" href="style.css" />
+<!-- Chart.js cho radar & progress -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
 
-  <!-- FAVICON -->
-  <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
 
-  <!-- CSS - CHỈNH THEME QUA ID -->
-  <link rel="stylesheet" href="style.css" id="themeCSS">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js" defer></script>
 
-  <!-- THƯ VIỆN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js" defer></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js" defer></script>
-
+<!-- App scripts (thứ tự QUAN TRỌNG) -->
+<script src="js/firebase.js" defer></script>
+<script src="js/trait-config.js" defer></script>
+<script src="js/analytics.unified.js" defer></script>
+<script src="js/auth.js" defer></script>
+<script src="js/behavior.js" defer></script>
+<script src="js/profile.js" defer></script>
+<script src="js/game.js" defer></script>
+<script src="js/theme.js" defer></script>
+<script src="js/main.js" defer></script>
 </head>
 <body>
-  <div class="container">
+<header class="topbar">
+<h1>LearnQuest AI</h1>
+<div class="top-actions">
+<button id="themeBtn" class="btn" title="Đổi theme">🌓</button>
+<button id="logoutBtn" class="btn">Đăng xuất</button>
+</div>
+</header>
 
-    <!-- MÀN HÌNH ĐĂNG NHẬP -->
-    <div id="authScreen" class="auth">
-      <h2>LearnQuest AI</h2>
-      <input type="email" id="email" placeholder="Email">
-      <input type="password" id="password" placeholder="Mật khẩu">
-      <button class="main-btn" id="signupBtn">Đăng ký</button>
-      <button class="main-btn" id="loginBtn">Đăng nhập</button>
-      <button id="backBtn">Quay lại trò chơi</button>
-      <p id="authMsg" style="margin-top:10px; min-height:20px; font-weight:bold; color:red;"></p>
-    </div>
 
-    <!-- ỨNG DỤNG CHÍNH -->
-    <div id="mainApp" class="hidden">
-      <header>
-        <!-- LOGO + TÊN -->
-        <div style="display:flex; align-items:center; gap:15px;">
-          <img src="assets/logonini.webp" alt="Logo Nini">
-          <h1>LearnQuest AI</h1>
-        </div>
-        <p class="subtitle">Học vui như chơi game!</p>
+<!-- AUTH SCREEN: 2 tab Đăng nhập / Đăng ký -->
+<section id="authScreen" class="card">
+<div class="tabs">
+<button id="tabLogin" class="tab active">Đăng nhập</button>
+<button id="tabSignup" class="tab">Đăng ký</button>
+</div>
 
-        <div class="user-info">
-          <div class="stats">
-            <div class="stat-item">XP <span id="globalXP">0</span></div>
-            <div class="stat-item">Coin <span id="globalCoin">0</span></div>
-            <div class="stat-item">Huy hiệu <span id="globalBadge">1</span></div>
-          </div>
-          <span id="userEmail">user</span>
-          <button class="profile-btn" id="profileBtn">Hồ sơ</button>
-          <button id="themeToggle" class="profile-btn" style="margin-left:10px;">Dark Mode</button>
-          <button class="logout-btn" id="logoutBtn">Đăng xuất</button>
-        </div>
-      </header>
 
-      <!-- TRẮC NGHIỆM (sẽ được quiz.js render) -->
-      <div id="quiz" class="quiz hidden"></div>
+<!-- LOGIN PANEL -->
+<div id="loginPanel" class="panel">
+<input type="email" id="loginEmail" placeholder="Email" />
+<input type="password" id="loginPassword" placeholder="Mật khẩu" />
+<div class="row">
+<button id="loginBtn" class="btn primary">Đăng nhập</button>
+<button id="forgotBtn" class="btn ghost">Quên mật khẩu</button>
+</div>
+<p id="authMsg" class="hint"></p>
+</div>
 
-      <!-- GAME BOARD -->
-      <div id="gameBoard" class="game-board hidden">
-        <h2>Chọn Game Bạn Muốn Chơi!</h2>
-        <p id="welcomeMsg" style="margin:20px 0; font-size:16px; color:#e11d48;"></p>
-        <div class="game-grid" id="gameGrid"></div>
-      </div>
 
-<!-- JS - ĐÚNG THỨ TỰ + defer -->
-<script src="js/firebase.js" defer></script>
-<script src="js/quiz.js" defer></script>
-<script src="js/game.js" defer></script>   <!-- THÊM DÒNG NÀY -->
-<script src="js/profile.js" defer></script>
-<script src="js/main.js" defer></script>
+<!-- SIGNUP PANEL -->
+<div id="signupPanel" class="panel hidden">
+<input type="email" id="signupEmail" placeholder="Email" />
+<input type="password" id="signupPassword" placeholder="Mật khẩu (>=6)" />
+<div class="row">
+<button id="signupBtn" class="btn primary">Đăng ký</button>
+</div>
+<p class="hint">Nếu email đã tồn tại, hệ thống sẽ nhắc bạn đăng nhập hoặc đặt lại mật khẩu.</p>
+</div>
+</section>
 
-  <!-- CHUYỂN THEME + TỰ ĐỘNG LƯU -->
-  <script>
-    const themeToggle = document.getElementById("themeToggle");
-    const cssLink = document.getElementById("themeCSS");
 
-    let isDark = false;
-    themeToggle.onclick = () => {
-      isDark = !isDark;
-      if (isDark) {
-        cssLink.href = "dark.css";
-        themeToggle.textContent = "Light Mode";
-        localStorage.setItem("theme", "dark");
-      } else {
-        cssLink.href = "style.css";
-        themeToggle.textContent = "Dark Mode";
-        localStorage.setItem("theme", "light");
-      }
-    };
-
-    window.addEventListener("load", () => {
-      const saved = localStorage.getItem("theme");
-      if (saved === "dark") {
-        cssLink.href = "dark.css";
-        themeToggle.textContent = "Light Mode";
-        isDark = true;
-      }
-    });
-  </script>
-</body>
+<!-- APP SCREEN -->
 </html>
-
-
-
-
-
-
-
