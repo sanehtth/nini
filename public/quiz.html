@@ -1,38 +1,37 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LearnQuest AI — Trắc nghiệm</title>
-  <link rel="stylesheet" href="/style.css" />
-  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Trắc nghiệm • LearnQuest</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Chart không cần ở trang quiz -->
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="js/firebase.js"></script>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div style="display:flex; align-items:center; gap:12px;">
-        <img src="/assets/logonini.webp" alt="Logo Nini" style="height:40px; border-radius:50%; object-fit:cover;" />
-        <h1 style="margin:0; font-size:22px;">LearnQuest AI</h1>
-      </div>
-      <p class="subtitle">Khám phá tính cách — học vui như chơi!</p>
+  <div class="container" style="max-width:880px">
+    <header class="quiz-header">
+      <h2>Trắc nghiệm sở thích học tập</h2>
+      <p>Đã chọn <strong id="questionCount">—</strong> câu (ngẫu nhiên theo 6 nhóm). Hãy trả lời hết để hoàn tất.</p>
     </header>
 
-    <main id="quizApp" class="quiz">
-      <h2>Khám Phá Tính Cách</h2>
-      <p class="muted">Mỗi lần sẽ hỏi ngẫu nhiên <span id="questionCount">12</span> câu.</p>
+    <div id="alert" class="alert" style="display:none">
+      Còn <span id="missingCount">0</span> câu chưa chọn.
+    </div>
 
-      <div id="questionList"></div>
+    <div id="questionList" class="quiz-list"></div>
 
-      <div class="alert" id="alert" style="display:none;">Vui lòng trả lời <span id="missingCount">0</span> câu!</div>
-
-      <div style="display:flex; gap:10px; margin-top:16px;">
-        <button id="submitBtn" class="main-btn" disabled>HOÀN TẤT</button>
-        <a class="secondary-btn" href="/index.html">Hủy</a>
-      </div>
-    </main>
+    <div style="margin-top:20px">
+      <button id="submitBtn" class="main-btn" disabled>Hoàn tất và lưu</button>
+      <a href="/index.html" class="btn ghost" style="margin-left:8px">Hủy</a>
+    </div>
   </div>
 
-  <script defer src="/js/trait-config.js"></script>
-  <script defer src="/js/quiz.js"></script>
+  <!-- Bộ câu hỏi + render (file tách riêng) -->
+  <script src="js/quiz.js"></script>
 </body>
 </html>
