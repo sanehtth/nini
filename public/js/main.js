@@ -65,6 +65,20 @@ document.addEventListener("DOMContentLoaded", () => {
     // 👉 Mỗi lần vào app: vá schema cho đủ đúng cấu trúc bạn muốn
     await ensureUserSchema(user.uid, user.email);
 
+    // ========Mời làm quiz nếu chưa làm======
+const uref = db.ref("users/"+user.uid);
+const u = (await uref.once("value")).val() || {};
+const invite = document.getElementById("quizInvite");
+const goQuizBtn = document.getElementById("goQuizBtn");
+const skipQuizBtn = document.getElementById("skipQuizBtn");
+
+if (u.quizDone !== true && invite) {
+  invite.classList.remove("hidden");
+  // Số câu/nhóm: ?per=3 (ví dụ mỗi nhóm 3 câu = 18 câu)
+  goQuizBtn.onclick = () => { window.location.href = "/quiz.html?per=3"; };
+  skipQuizBtn.onclick = () => invite.classList.add("hidden");
+}
+//=========== HET DOAN MOI LAM TRAC NGHIEM =====
     // (tuỳ chọn) nếu chưa có traits thì mở quiz trong index (SPA)
     // const t = (await db.ref("users/"+user.uid+"/traits").once("value")).val() || {};
     // const emptyTraits = Object.values(t).every(v => (Number(v)||0) === 0);
@@ -363,6 +377,7 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 3000);
 }
 });
+
 
 
 
