@@ -18,13 +18,66 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setupQuiz();
 
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      currentUser = user;
-      loadUserDataAndShowApp();
+  //======== HAM VA DATA KHI UI CHUA CO DU DATA=============
+  async function ensureUserSchema(uid, emailIfMissing) {
+  const userRef = db.ref("users/" + uid);
+  const snap = await userRef.once("value");
+  const data = snap.val() || {};
+
+  data.profile = Object.assign(
+    { email: emailIfMissing || "", joined: new Date().toISOString().split("T")[0], consent_insight: false },
+    data.profile || {}
+  );
+  data.stats   = Object.assign({ xp: 0, coin: 0, badge: 1 }, data.stats || {});
+  data.metrics = Object.assign({ pi: 0, fi: 0, pi_star: 0 }, data.metrics || {});
+  data.skills  = Object.assign({ listening: 0, speaking: 0, reading: 0, writing: 0 }, data.skills || {});
+  data.traits  = Object.assign({
+    creativity: 0, competitiveness: 0, sociability: 0,
+    playfulness: 0, self_improvement: 0, perfectionism: 0
+  }, data.traits || {});
+  if (typeof data.quizDone !== "boolean") data.quizDone = false;
+  if (!data.weekly)       data.weekly = {};
+  if (!data.gameProgress) data.gameProgress = {};
+
+  await userRef.update(data); // chỉ bổ sung phần thiếu, không ghi đè giá trị đang có
+}
+// ===========  HET HAM VA DATA =========================
+//==========HAM BAT LAI MAN HINH KHI CHUA CO USER ===========
+  function showLoginFallback() {
+  const a = document.getElementById("authScreen");
+  const m = document.getElementById("mainApp") || document.getElementById("appScreen");
+  const q = document.getElementById("quiz") || document.getElementById("quizScreen");
+  a && a.classList.remove("hidden");
+  m && m.classList.add("hidden");
+  q && q.classList.add("hidden");
+}
+// ============= HET HAM ======================
+  
+  auth.onAuthStateChanged(async (user) => {
+  try {
+    if (!user) { 
+      currentUser = null;
+      showLoginFallback();           // hiện form đăng nhập
+      return;
     }
-  });
+    currentUser = user;
+
+    // 👉 Mỗi lần vào app: vá schema cho đủ đúng cấu trúc bạn muốn
+    await ensureUserSchema(user.uid, user.email);
+
+    // (tuỳ chọn) nếu chưa có traits thì mở quiz trong index (SPA)
+    // const t = (await db.ref("users/"+user.uid+"/traits").once("value")).val() || {};
+    // const emptyTraits = Object.values(t).every(v => (Number(v)||0) === 0);
+    // if (emptyTraits && location.hash !== "#quiz") location.hash = "#quiz";
+
+    // Sau khi bảo đảm schema, tải dữ liệu & hiển thị app (hàm bạn đang có)
+    loadUserDataAndShowApp();
+  } catch (e) {
+    console.error("[onAuthStateChanged]", e);
+    showLoginFallback();
+  }
 });
+
 
 // === AUTH ===
 function handleAuth(authFn, btnId) {
@@ -58,17 +111,66 @@ function handleAuth(authFn, btnId) {
       button.textContent = btnId === "signupBtn" ? "Đăng ký" : "Đăng nhập";
     });
 }
-// === DANG KY ===
+// ===== ĐĂNG KÝ =====
 function signup(email, pass) {
-  return auth.fetchSignInMethodsForEmail(email)
-    .then(methods => {
-      if (methods.length > 0) throw new Error("Email đã được sử dụng!");
-      return auth.createUserWithEmailAndPassword(email, pass);
-    })
-    .then(cred => db.ref('users/' + cred.user.uid + '/profile').set({
-      email, joined: new Date().toISOString().split('T')[0]
-    }).then(() => cred));
+  const auth = firebase.auth();
+  const db   = firebase.database();
+
+  // Kiểm tra email đã dùng chưa bằng Auth (khớp với ảnh của bạn)
+  return auth.fetchSignInMethodsForEmail(email).then((methods) => {
+    if (methods.length > 0) throw new Error("Email đã được sử dụng!");
+    return auth.createUserWithEmailAndPassword(email, pass);
+  }).then(async (cred) => {
+    const uid = cred.user.uid;
+    const today = new Date().toISOString().split("T")[0];
+
+    // weekId ISO (thứ 2..CN)
+    const monday = new Date();
+    const d = (monday.getDay() + 6) % 7; // Mon=0
+    monday.setHours(0,0,0,0); monday.setDate(monday.getDate() - d);
+    const weekId = `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,"0")}-${String(monday.getDate()).padStart(2,"0")}`;
+
+    // Tài liệu mặc định theo schema bạn yêu cầu
+    const DEFAULT_DOC = {
+      profile: { email, joined: today, consent_insight: false },
+
+      stats:   { xp: 0, coin: 0, badge: 1 },                     // huy hiệu = badge
+      metrics: { pi: 0, fi: 0, pi_star: 0 },
+
+      // snapshots cho UI
+      skills:  { listening: 0, speaking: 0, reading: 0, writing: 0 },
+      traits:  { creativity: 0, competitiveness: 0, sociability: 0,
+                 playfulness: 0, self_improvement: 0, perfectionism: 0 },
+
+      // cờ tiện lợi
+      quizDone: false,
+
+      // vùng weekly
+      weekly: {
+        [weekId]: {
+          raw: { listening: 0, speaking: 0, reading: 0, writing: 0 },
+          pct: { listening: 0, speaking: 0, reading: 0, writing: 0 },
+          traits_pct: { creativity: 0, competitiveness: 0, sociability: 0,
+                        playfulness: 0, self_improvement: 0, perfectionism: 0 },
+          pi: 0, fi: 0, pi_star: 0
+        }
+      },
+
+      // phần game tuỳ bạn dùng
+      gameProgress: {}
+    };
+
+    // Ghi một lần
+    await db.ref("users/"+uid).set(DEFAULT_DOC);
+
+    // chuyển sang quiz trong index (nếu dùng SPA #quiz)
+    try { localStorage.setItem("justSignedUp", "1"); } catch(e){}
+    location.href = "index.html#quiz";
+
+    return cred;
+  });
 }
+
 
 function login(email, pass) {
   return auth.signInWithEmailAndPassword(email, pass);
@@ -261,5 +363,6 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 3000);
 
 }
+
 
 
