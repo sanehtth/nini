@@ -201,8 +201,22 @@ function loadUserDataAndShowApp() {
   db.ref('users/' + currentUser.uid).once('value').then(snap => {
     const data = snap.val() || {};
     updateGlobalStats(data);
-    if (data.quizDone) showGameBoard(data);
-    else document.getElementById("quiz").classList.remove("hidden");
+    if (data.quizDone) {
+  showGameBoard(data);
+} else {
+  // chưa làm quiz → mời làm hoặc chuyển sang trang quiz
+  const invite = document.getElementById("quizInvite");
+  if (invite) {
+    invite.classList.remove("hidden");
+    const go = document.getElementById("goQuizBtn");
+    const skip = document.getElementById("skipQuizBtn");
+    if (go && !go._bound)  { go._bound  = true; go.onclick  = () => (location.href = "/quiz.html?per=3"); }
+    if (skip && !skip._bd) { skip._bd   = true; skip.onclick = () => invite.classList.add("hidden"); }
+  } else {
+    // không có modal thì chuyển thẳng
+    location.href = "/quiz.html?per=3";
+          }
+        }
   });
 
   db.ref('users/' + currentUser.uid).on('value', snap => {
@@ -382,6 +396,7 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 3000);
 }
 });
+
 
 
 
