@@ -1,96 +1,136 @@
-// js/main.js
-type:'radar', data:{
-labels:['Creativity','Competitiveness','Sociability','Playfulness','Self-Improvement','Perfectionism'],
-datasets:[{ label:'Traits % (capped 60)', data }]
-}, options:{ responsive:true, scales:{ r:{ min:0, max:60, ticks:{ stepSize:10 } } } }
-});
-}
+// ===== main.js SAFE BOOTSTRAP =====
+(function () {
+  // Helper
+  const $ = (id) => document.getElementById(id);
 
+  // 1) Guard Firebase đã sẵn sàng
+  if (!window.firebase || !window.firebaseAuth || !window.firebaseDB) {
+    console.error("[main] Firebase chưa sẵn sàng. Kiểm tra thứ tự <script> và bản SDK (8.x, KHÔNG compat).");
+    return;
+  }
+  const auth = window.firebaseAuth;
+  const db   = window.firebaseDB;
 
-// Nhiệm vụ hằng ngày từ trait mạnh nhất
-async function refreshDailyMission(uid){
-const t = (await db.ref('users/'+uid+'/traits').once('value')).val()||{};
-const top = Object.entries(t).sort((a,b)=> (b[1]||0)-(a[1]||0))[0];
-const topKey = top ? top[0] : 'self_improvement';
-const map = {
-creativity: 'Viết lại đoạn hội thoại theo phong cách khác.',
-competitiveness: 'Thử vượt kỷ lục điểm ở mini-game đấu nhanh.',
-sociability: 'Trao đổi 5 câu với bạn học/AI voice.',
-playfulness: 'Chơi game nghe nhạc đoán từ 10 phút.',
-self_improvement: 'Hoàn thành 1 bài đọc nâng cao.',
-perfectionism: 'Sửa lỗi ngữ pháp cho 1 đoạn văn cũ.'
-};
-$('dailyMission').textContent = map[topKey];
-}
+  // 2) Lấy đúng input DÙ dùng ID cũ hay mới
+  const getLoginEmail = () =>
+    ($("loginEmail")?.value ?? $("email")?.value ?? "").trim();
+  const getLoginPass  = () =>
+    ($("loginPassword")?.value ?? $("password")?.value ?? "");
 
+  // 3) Không để nút submit reload trang
+  const patchButtonAsClick = (id, fn) => {
+    const el = $(id);
+    if (!el) return;
+    // ép button thành type=button
+    if (!el.getAttribute("type")) el.setAttribute("type", "button");
+    el.onclick = (e) => { e.preventDefault(); try { fn(e); } catch (err) { console.error(err); } };
+  };
 
-// === Event bindings ===
-window.addEventListener('DOMContentLoaded', ()=>{
-// theme & logout
-$('themeBtn').onclick = toggleTheme;
-$('logoutBtn').onclick = ()=> auth.signOut();
+  // 4) Tab chuyển đổi (nếu có trong DOM)
+  const activateTab = (name) => {
+    const isLogin = name === "login";
+    $("tabLogin")?.classList.toggle("active", isLogin);
+    $("tabSignup")?.classList.toggle("active", !isLogin);
+    $("loginPanel")?.classList.toggle("hidden", !isLogin);
+    $("signupPanel")?.classList.toggle("hidden", isLogin);
+  };
 
+  // 5) Bind UI một cách chịu lỗi
+  window.addEventListener("DOMContentLoaded", () => {
+    // theme & logout
+    $("themeBtn") && ($("themeBtn").onclick = () => document.body.classList.toggle("dark-theme"));
+    $("logoutBtn") && ($("logoutBtn").onclick = () => auth.signOut());
 
-// auth tabs
-$('tabLogin').onclick = ()=> activateTab('login');
-$('tabSignup').onclick = ()=> activateTab('signup');
+    // tabs
+    $("tabLogin")  && ($("tabLogin").onclick  = () => activateTab("login"));
+    $("tabSignup") && ($("tabSignup").onclick = () => activateTab("signup"));
 
+    // login
+    patchButtonAsClick("loginBtn", async () => {
+      const email = getLoginEmail();
+      const pass  = getLoginPass();
+      try {
+        await (window.AuthUI?.login ? window.AuthUI.login(email, pass) : auth.signInWithEmailAndPassword(email, pass));
+        $("authMsg") && ($("authMsg").textContent = "");
+      } catch (e) {
+        $("authMsg") && ($("authMsg").textContent = e?.message || "Đăng nhập thất bại");
+      }
+    });
 
-// login
-$('loginBtn').onclick = async ()=>{
-const email = $('loginEmail').value.trim(); const pass = $('loginPassword').value;
-try{ await AuthUI.login(email, pass); $('authMsg').textContent=''; }
-catch(e){ $('authMsg').textContent = e.message || 'Đăng nhập thất bại'; }
-};
+    // forgot
+    patchButtonAsClick("forgotBtn", async () => {
+      const email = getLoginEmail();
+      if (!email) { $("authMsg") && ($("authMsg").textContent = "Nhập email trước."); return; }
+      try {
+        await (window.AuthUI?.resetPassword ? window.AuthUI.resetPassword(email) : auth.sendPasswordResetEmail(email));
+        $("authMsg") && ($("authMsg").textContent = "Đã gửi email đặt lại mật khẩu.");
+      } catch (e) {
+        $("authMsg") && ($("authMsg").textContent = e?.message || "Không gửi được email.");
+      }
+    });
 
+    // signup
+    patchButtonAsClick("signupBtn", async () => {
+      const email = ($("signupEmail")?.value ?? $("email")?.value ?? "").trim();
+      const pass  = ($("signupPassword")?.value ?? $("password")?.value ?? "");
+      try {
+        if (window.AuthUI?.signup) {
+          await AuthUI.signup(email, pass);
+        } else {
+          // fallback nếu chưa tách auth.js
+          const cred = await auth.createUserWithEmailAndPassword(email, pass);
+          const uid = cred.user.uid;
+          const now = new Date().toISOString().split("T")[0];
+          await db.ref("users/" + uid).set({
+            profile: { email, joined: now, consent_insight: false },
+            stats: { xp: 0, coin: 0, badge: 1 },
+            metrics: { pi: 0, fi: 0, pi_star: 0 },
+            skills: { listening: 0, speaking: 0, reading: 0, writing: 0 },
+            traits: { creativity: 0, competitiveness: 0, sociability: 0, playfulness: 0, self_improvement: 0, perfectionism: 0 },
+            weekly: {}, gameProgress: {}
+          });
+        }
+        $("authMsg") && ($("authMsg").textContent = "Tạo tài khoản thành công!");
+      } catch (e) {
+        $("authMsg") && ($("authMsg").textContent = e?.message || "Đăng ký thất bại");
+      }
+    });
 
-// forgot
-$('forgotBtn').onclick = async ()=>{
-const email = $('loginEmail').value.trim(); if(!email){ $('authMsg').textContent='Nhập email trước.'; return; }
-try{ await AuthUI.resetPassword(email); $('authMsg').textContent='Đã gửi email đặt lại mật khẩu.'; }
-catch(e){ $('authMsg').textContent = e.message || 'Không gửi được email.'; }
-};
+    // quiz link (nếu có)
+    $("goQuiz") && ($("goQuiz").onclick = (e) => { e.preventDefault(); location.href = "quiz.html"; });
+  });
 
+  // 6) Điều hướng an toàn (chặn ping–pong)
+  const onIndex = /index\.html?$/.test(location.pathname) || location.pathname === "/" || location.pathname === "";
+  auth.onAuthStateChanged(async (user) => {
+    try {
+      if (!user) { $("authScreen")?.classList.remove("hidden"); $("appScreen")?.classList.add("hidden"); return; }
 
-// signup
-$('signupBtn').onclick = async ()=>{
-const email = $('signupEmail').value.trim(); const pass = $('signupPassword').value;
-try{ await AuthUI.signup(email, pass); $('authMsg').textContent='Tạo tài khoản thành công!'; }
-catch(e){ $('authMsg').textContent = e.message || 'Đăng ký thất bại'; }
-};
+      $("authScreen")?.classList.add("hidden");
+      $("appScreen")?.classList.remove("hidden");
 
+      // Tổng hợp tuần (không chặn UI nếu lỗi)
+      try { window.App?.Analytics?.maybeRefreshWeekly?.(user.uid); } catch {}
 
-// đi làm quiz thủ công
-$('goQuiz').onclick = (e)=>{ e.preventDefault(); window.location.href = 'quiz.html'; };
-});
+      const [traitsSnap, skillsSnap] = await Promise.all([
+        db.ref("users/" + user.uid + "/traits").once("value"),
+        db.ref("users/" + user.uid + "/skills").once("value"),
+      ]);
+      const traits = traitsSnap.val() || {};
+      const skills = skillsSnap.val() || {};
+      const emptyTraits = !traits || Object.values(traits).every(v => (Number(v) || 0) === 0);
 
+      // Chỉ chuyển qua quiz nếu đang ở index và traits rỗng
+      if (emptyTraits && onIndex) { location.href = "quiz.html"; return; }
 
-// === Auth state → điều hướng ===
-auth.onAuthStateChanged(async (user)=>{
-if(!user){ showLogin(); return; }
-currentUser = user; showApp();
-// tổng hợp tuần nếu tới hạn
-if(window.App?.Analytics?.maybeRefreshWeekly) window.App.Analytics.maybeRefreshWeekly(user.uid);
-
-
-// nạp snapshots
-const [traitsSnap, skillsSnap] = await Promise.all([
-db.ref('users/'+user.uid+'/traits').once('value'),
-db.ref('users/'+user.uid+'/skills').once('value')
-]);
-const traits = traitsSnap.val()||{}; const skills = skillsSnap.val()||{};
-
-
-// nếu chưa có traits → bắt làm quiz ngay
-if(!traits || Object.values(traits).every(v => (v||0)===0)){
-window.location.href = 'quiz.html'; return;
-}
-
-
-renderTraitsRadar(traits); renderSkillBars(skills); refreshDailyMission(user.uid);
-
-
-// demo: bấm game → log event
-const bind = (id, skill)=> $(id).onclick = ()=> App.Analytics.logActivity(user.uid, skill, { value:1, complete:true });
-bind('playListening','listening'); bind('playSpeaking','speaking'); bind('playReading','reading'); bind('playWriting','writing');
-});
+      // Nếu có hàm render trong main cũ của bạn, gọi lại ở đây:
+      if (typeof renderTraitsRadar === "function") renderTraitsRadar(traits);
+      if (typeof renderSkillBars === "function")  renderSkillBars(skills);
+      if (typeof refreshDailyMission === "function") refreshDailyMission(user.uid);
+    } catch (err) {
+      console.error("[onAuthStateChanged]", err);
+      $("authScreen")?.classList.remove("hidden");
+      $("appScreen")?.classList.add("hidden");
+    }
+  });
+})();
