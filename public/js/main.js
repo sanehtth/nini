@@ -194,13 +194,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    db.ref("users/" + currentUser.uid).on("value", snap => {
-      const data = snap.val() || {};
-      updateGlobalStats(data);
-      const pf = document.getElementById("profile");
-      if (pf && !pf.classList.contains("hidden")) App.Profile.renderProfile(data)
-;
-    });
+    // b) Lắng nghe realtime, nếu đang mở tab Hồ sơ thì vẽ lại
+db.ref('users/' + currentUser.uid).on('value', snap => {
+  const data = snap.val() || {};
+  updateGlobalStats(data);
+  if (!document.getElementById("profile").classList.contains("hidden")) {
+    App.Profile.renderProfile(data);   // <-- dùng App.Profile
+  }
+});
   }
 
   // ====== Global stats ======
@@ -341,7 +342,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const pf = document.getElementById("profile");
     gb && gb.classList.add("hidden");
     pf && pf.classList.remove("hidden");
-    db.ref("users/" + currentUser.uid).once("value").then(snap => renderProfile(snap.val()));
+    // a) Khi bấm 'Hồ sơ'
+db.ref('users/' + currentUser.uid).once('value')
+  .then(snap => App.Profile.renderProfile(snap.val()));
   }
 
   function backToGameBoard() {
@@ -400,4 +403,5 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => t.remove(), 3000);
   }
 });
+
 
