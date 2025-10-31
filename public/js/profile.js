@@ -1,5 +1,4 @@
 <!-- public/js/profile.js -->
-<script>
 /**
  * Vẽ hồ sơ: chuẩn hoá 6 trait thành phần trăm (0..100),
  * radar hiển thị theo mốc 0–60 (tương ứng 0–100% ≈ 0–60).
@@ -112,4 +111,3 @@ window.App = window.App || {};
   // Xuất ra window để main.js gọi
   window.App.Profile = { renderProfile };
 })();
-</script>
