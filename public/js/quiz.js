@@ -1,686 +1,302 @@
-﻿/* =============================================
- * LearnQuest — quiz.js (6 trait groups)
- * - Ngân hàng tách theo 6 nhóm: creativity, sociability, playfulness,
- *   perfectionism, self_improvement, competitiveness
- * - Mặc định rút đều PER_GROUP câu từ mỗi nhóm
- * - Chỉ dùng chấm điểm theo trait (không dùng positive/negative)
- * ============================================= */
-
-(function(){
-  // ===== Cấu hình =====
-  const url = new URL(window.location.href);
-  const PER_GROUP = Math.max(1, parseInt(url.searchParams.get('per') || '2', 10)); // số câu/nhóm
-
-  const traits = [
-    'creativity',
-    'sociability',
-    'playfulness',
-    'perfectionism',
-    'self_improvement',
-    'competitiveness'
-  ];
-
-  // Cập nhật hiển thị tổng số câu nếu có #questionCount
-  const questionCountEl = document.getElementById('questionCount');
-  if (questionCountEl) questionCountEl.textContent = String(PER_GROUP * traits.length);
-
-  // ===== Ngân hàng câu hỏi tách theo nhóm =====
-  // Mỗi câu hỏi chỉ cộng điểm cho trait tương ứng qua data-score: `${trait}:weight`
+// ====== QUIZ – 30 câu chuẩn (6 trait x 5 câu), mỗi option map {trait, score} ======
+(function () {
+  // --- BANK 30 CÂU ---
   const BANK = {
     creativity: [
-      { id: 'cr1', text: 'Bạn thích tạo nội dung theo dạng nào?', options: [
-        { label: 'Vẽ/minh họa', score: 'creativity:1' },
-        { label: 'Viết truyện/blog', score: 'creativity:1' },
-        { label: 'Dựng video/podcast', score: 'creativity:1' },
-        { label: 'Khác', other: true }
-      ]},
-      { id: 'cr2', text: 'Cách bạn phát triển ý tưởng mới?', options: [
-        { label: 'Mindmap/Sơ đồ', score: 'creativity:1' },
-        { label: 'Lấy cảm hứng từ nhiều lĩnh vực', score: 'creativity:1' },
-        { label: 'Thử nghiệm nhanh – làm rồi sửa', score: 'creativity:1' }
-      ]},
-      { id: 'cr3', text: 'Bạn hứng thú nhất với thử thách nào?', options: [
-        { label: 'Sáng tác nội dung độc đáo', score: 'creativity:1' },
-        { label: 'Thiết kế sản phẩm mới', score: 'creativity:1' },
-        { label: 'Lập trình tạo ứng dụng thú vị', score: 'creativity:1' }
-      ]}
-    ],
-
-    sociability: [
-      { id: 'so1', text: 'Bạn thích cách học nào nhất?', options: [
-        { label: 'Thảo luận nhóm', score: 'sociability:1' },
-        { label: 'Workshop/Meetup', score: 'sociability:1' },
-        { label: 'Kèm cặp/đồng hành', score: 'sociability:1' }
-      ]},
-      { id: 'so2', text: 'Trong project nhóm, bạn thường là…', options: [
-        { label: 'Người kết nối và điều phối', score: 'sociability:1' },
-        { label: 'Người truyền cảm hứng', score: 'sociability:1' },
-        { label: 'Người hỗ trợ mọi thành viên', score: 'sociability:1' }
-      ]},
-      { id: 'so3', text: 'Điều làm bạn vui nhất khi học cùng người khác?', options: [
-        { label: 'Trao đổi ý tưởng liên tục', score: 'sociability:1' },
-        { label: 'Cảm giác thuộc về một nhóm', score: 'sociability:1' },
-        { label: 'Cùng nhau ăn mừng tiến bộ', score: 'sociability:1' }
-      ]}
-    ],
-
-    playfulness: [
-      { id: 'pl1', text: 'Bạn duy trì động lực học bằng cách…', options: [
-        { label: 'Game hóa mục tiêu/điểm thưởng', score: 'playfulness:1' },
-        { label: 'Xem video minh họa', score: 'playfulness:1' },
-        { label: 'Thử điều mới mỗi tuần', score: 'playfulness:1' }
-      ]},
-      { id: 'pl2', text: 'Khi rảnh bạn thường…', options: [
-        { label: 'Chơi game', score: 'playfulness:1' },
-        { label: 'Khám phá nội dung giải trí', score: 'playfulness:1' },
-        { label: 'Làm mini-project vui vui', score: 'playfulness:1' }
-      ]},
-      { id: 'pl3', text: 'Bạn thích kiểu thử thách nào trong app học?', options: [
-        { label: 'Nhiệm vụ ngắn – phần thưởng nhanh', score: 'playfulness:1' },
-        { label: 'Combo thử thách đa dạng', score: 'playfulness:1' },
-        { label: 'Bảng xếp hạng hàng tuần', score: 'playfulness:1' }
-      ]}
-    ],
-
-    perfectionism: [
-      { id: 'pf1', text: 'Khi làm bài khó, bạn sẽ…', options: [
-        { label: 'Lập kế hoạch chi tiết', score: 'perfectionism:1' },
-        { label: 'Chia nhỏ công việc', score: 'perfectionism:1' },
-        { label: 'Kiểm tra checklist kỹ lưỡng', score: 'perfectionism:1' }
-      ]},
-      { id: 'pf2', text: 'Bạn xử lý lỗi sai như thế nào?', options: [
-        { label: 'Sửa cho hoàn hảo', score: 'perfectionism:1' },
-        { label: 'Viết lesson learned', score: 'perfectionism:1' },
-        { label: 'Tăng tiêu chuẩn cho lần sau', score: 'perfectionism:1' }
-      ]},
-      { id: 'pf3', text: 'Bạn thấy khó chịu nhất khi…', options: [
-        { label: 'Bị gián đoạn khi đang tập trung', score: 'perfectionism:1' },
-        { label: 'Không có tiêu chí đánh giá rõ', score: 'perfectionism:1' },
-        { label: 'Tài liệu/format lộn xộn', score: 'perfectionism:1' }
-      ]}
-    ],
-
-    self_improvement: [
-      { id: 'si1', text: 'Bạn đặt mục tiêu thế nào?', options: [
-        { label: 'SMART, đo lường tiến độ', score: 'self_improvement:1' },
-        { label: 'Tăng độ khó theo thời gian', score: 'self_improvement:1' },
-        { label: 'Review định kỳ hàng tuần', score: 'self_improvement:1' }
-      ]},
-      { id: 'si2', text: 'Khi thiếu động lực, bạn sẽ…', options: [
-        { label: 'Tạo lịch luyện tập đều đặn', score: 'self_improvement:1' },
-        { label: 'Tìm đồng hành/mentor', score: 'self_improvement:1' },
-        { label: 'Đặt mini-goal hằng ngày', score: 'self_improvement:1' }
-      ]},
-      { id: 'si3', text: 'Bạn thích đánh giá tiến bộ bằng…', options: [
-        { label: 'Biểu đồ/điểm mốc', score: 'self_improvement:1' },
-        { label: 'Nhật ký học tập', score: 'self_improvement:1' },
-        { label: 'Bài test định kỳ', score: 'self_improvement:1' }
-      ]}
+      { text: "Bạn thường biến tấu bài tập theo ý tưởng riêng?",
+        options: [
+          { label: "Luôn luôn", trait: "creativity", score: 2 },
+          { label: "Thỉnh thoảng", trait: "creativity", score: 1 },
+          { label: "Hiếm khi", trait: "creativity", score: 0 },
+        ]},
+      { text: "Khi học, bạn thích vẽ sơ đồ/mindmap hơn là ghi chép dài?",
+        options: [
+          { label: "Đúng vậy", trait: "creativity", score: 2 },
+          { label: "Thỉnh thoảng", trait: "creativity", score: 1 },
+          { label: "Không", trait: "creativity", score: 0 },
+        ]},
+      { text: "Bạn thấy hứng thú khi tạo sản phẩm (video, poster, truyện ngắn…)?",
+        options: [
+          { label: "Rất hứng thú", trait: "creativity", score: 2 },
+          { label: "Bình thường", trait: "creativity", score: 1 },
+          { label: "Ít hứng thú", trait: "creativity", score: 0 },
+        ]},
+      { text: "Bạn hay tìm nhiều cách giải khác nhau cho cùng một vấn đề?",
+        options: [
+          { label: "Thường xuyên", trait: "creativity", score: 2 },
+          { label: "Thỉnh thoảng", trait: "creativity", score: 1 },
+          { label: "Hiếm khi", trait: "creativity", score: 0 },
+        ]},
+      { text: "Bạn thích môn/hoạt động thiên về sáng tạo (Nghệ thuật, Viết, Thiết kế…)?",
+        options: [
+          { label: "Có", trait: "creativity", score: 2 },
+          { label: "Tùy lúc", trait: "creativity", score: 1 },
+          { label: "Không", trait: "creativity", score: 0 },
+        ]},
     ],
 
     competitiveness: [
-      { id: 'cp1', text: 'Bạn thấy hứng thú nhất khi…', options: [
-        { label: 'Leo bảng xếp hạng', score: 'competitiveness:1' },
-        { label: 'Đạt top/break kỷ lục', score: 'competitiveness:1' },
-        { label: 'So kè điểm với bạn bè', score: 'competitiveness:1' }
-      ]},
-      { id: 'cp2', text: 'Môn/kiểu thử thách bạn thích?', options: [
-        { label: 'Giải đố/Toán khó', score: 'competitiveness:1' },
-        { label: 'Thi kỹ năng nhanh', score: 'competitiveness:1' },
-        { label: 'Đấu đối kháng/hùng biện', score: 'competitiveness:1' }
-      ]},
-      { id: 'cp3', text: 'Điều khiến bạn tự hào nhất là…', options: [
-        { label: 'Vượt qua đối thủ mạnh', score: 'competitiveness:1' },
-        { label: 'Giữ chuỗi thắng dài', score: 'competitiveness:1' },
-        { label: 'Đạt huy hiệu hiếm', score: 'competitiveness:1' }
-      ]}
-    ]
+      { text: "Bạn thích thi đua, bảng xếp hạng và phá kỷ lục?",
+        options: [
+          { label: "Rất thích", trait: "competitiveness", score: 2 },
+          { label: "Bình thường", trait: "competitiveness", score: 1 },
+          { label: "Không hứng thú", trait: "competitiveness", score: 0 },
+        ]},
+      { text: "Khi làm bài, bạn hay đặt mục tiêu vượt người khác?",
+        options: [
+          { label: "Thường xuyên", trait: "competitiveness", score: 2 },
+          { label: "Thỉnh thoảng", trait: "competitiveness", score: 1 },
+          { label: "Hiếm khi", trait: "competitiveness", score: 0 },
+        ]},
+      { text: "Bạn thấy có động lực mạnh khi có giải thưởng/huy hiệu?",
+        options: [
+          { label: "Có", trait: "competitiveness", score: 2 },
+          { label: "Tùy lúc", trait: "competitiveness", score: 1 },
+          { label: "Không", trait: "competitiveness", score: 0 },
+        ]},
+      { text: "Bạn thích bài tập dạng thử thách thời gian/điểm số?",
+        options: [
+          { label: "Có", trait: "competitiveness", score: 2 },
+          { label: "Thỉnh thoảng", trait: "competitiveness", score: 1 },
+          { label: "Không", trait: "competitiveness", score: 0 },
+        ]},
+      { text: "Bạn thường so sánh kết quả của mình với bạn bè?",
+        options: [
+          { label: "Thường xuyên", trait: "competitiveness", score: 2 },
+          { label: "Ít khi", trait: "competitiveness", score: 1 },
+          { label: "Hầu như không", trait: "competitiveness", score: 0 },
+        ]},
+    ],
+
+    sociability: [
+      { text: "Bạn học tốt hơn khi được thảo luận nhóm?",
+        options: [
+          { label: "Đúng vậy", trait: "sociability", score: 2 },
+          { label: "Tùy chủ đề", trait: "sociability", score: 1 },
+          { label: "Không", trait: "sociability", score: 0 },
+        ]},
+      { text: "Bạn dễ dàng bắt chuyện và đặt câu hỏi với giáo viên/bạn học?",
+        options: [
+          { label: "Rất dễ", trait: "sociability", score: 2 },
+          { label: "Lúc được lúc không", trait: "sociability", score: 1 },
+          { label: "Khá ngại", trait: "sociability", score: 0 },
+        ]},
+      { text: "Bạn thích làm dự án có phân vai và cộng tác chặt chẽ?",
+        options: [
+          { label: "Rất thích", trait: "sociability", score: 2 },
+          { label: "Tùy nhóm", trait: "sociability", score: 1 },
+          { label: "Không", trait: "sociability", score: 0 },
+        ]},
+      { text: "Hoạt động giao tiếp (thuyết trình, debate) hấp dẫn với bạn?",
+        options: [
+          { label: "Có", trait: "sociability", score: 2 },
+          { label: "Thỉnh thoảng", trait: "sociability", score: 1 },
+          { label: "Ít hứng thú", trait: "sociability", score: 0 },
+        ]},
+      { text: "Bạn thường nhờ bạn bè giải thích lại khi chưa hiểu?",
+        options: [
+          { label: "Thường xuyên", trait: "sociability", score: 2 },
+          { label: "Đôi khi", trait: "sociability", score: 1 },
+          { label: "Hiếm khi", trait: "sociability", score: 0 },
+        ]},
+    ],
+
+    playfulness: [
+      { text: "Bạn thích học qua game/video hơn bài giảng thuần chữ?",
+        options: [
+          { label: "Rất thích", trait: "playfulness", score: 2 },
+          { label: "Tùy nội dung", trait: "playfulness", score: 1 },
+          { label: "Không", trait: "playfulness", score: 0 },
+        ]},
+      { text: "Bạn hay biến việc học thành thử thách nhỏ vui vui?",
+        options: [
+          { label: "Có", trait: "playfulness", score: 2 },
+          { label: "Thỉnh thoảng", trait: "playfulness", score: 1 },
+          { label: "Ít khi", trait: "playfulness", score: 0 },
+        ]},
+      { text: "Bạn hứng thú với nhiệm vụ hằng ngày/chuỗi streak?",
+        options: [
+          { label: "Có", trait: "playfulness", score: 2 },
+          { label: "Tùy lúc", trait: "playfulness", score: 1 },
+          { label: "Không", trait: "playfulness", score: 0 },
+        ]},
+      { text: "Bạn dễ chán nếu hoạt động quá lặp lại và khô khan?",
+        options: [
+          { label: "Đúng vậy", trait: "playfulness", score: 2 },
+          { label: "Tùy mức độ", trait: "playfulness", score: 1 },
+          { label: "Không", trait: "playfulness", score: 0 },
+        ]},
+      { text: "Bạn thích “phần thưởng nhỏ” khi hoàn thành nhiệm vụ?",
+        options: [
+          { label: "Rất thích", trait: "playfulness", score: 2 },
+          { label: "Bình thường", trait: "playfulness", score: 1 },
+          { label: "Không cần", trait: "playfulness", score: 0 },
+        ]},
+    ],
+
+    self_improvement: [
+      { text: "Bạn thường đặt mục tiêu học tập theo tuần/tháng?",
+        options: [
+          { label: "Có kế hoạch rõ", trait: "self_improvement", score: 2 },
+          { label: "Đôi khi", trait: "self_improvement", score: 1 },
+          { label: "Hầu như không", trait: "self_improvement", score: 0 },
+        ]},
+      { text: "Bạn theo dõi tiến bộ (điểm, thời gian học, số bài đã làm)?",
+        options: [
+          { label: "Thường xuyên", trait: "self_improvement", score: 2 },
+          { label: "Lúc có lúc không", trait: "self_improvement", score: 1 },
+          { label: "Không", trait: "self_improvement", score: 0 },
+        ]},
+      { text: "Khi gặp khó, bạn kiên trì thử nhiều cách để hiểu bài?",
+        options: [
+          { label: "Rất kiên trì", trait: "self_improvement", score: 2 },
+          { label: "Tạm được", trait: "self_improvement", score: 1 },
+          { label: "Dễ bỏ qua", trait: "self_improvement", score: 0 },
+        ]},
+      { text: "Bạn tự tìm tài liệu/khóa học bổ sung cho phần yếu?",
+        options: [
+          { label: "Có", trait: "self_improvement", score: 2 },
+          { label: "Thỉnh thoảng", trait: "self_improvement", score: 1 },
+          { label: "Ít khi", trait: "self_improvement", score: 0 },
+        ]},
+      { text: "Bạn thích phản hồi giúp cải thiện hơn là lời khen chung chung?",
+        options: [
+          { label: "Đúng vậy", trait: "self_improvement", score: 2 },
+          { label: "Tùy tình huống", trait: "self_improvement", score: 1 },
+          { label: "Không", trait: "self_improvement", score: 0 },
+        ]},
+    ],
+
+    perfectionism: [
+      { text: "Bạn muốn sản phẩm đạt chuẩn “đã mắt/đẹp/chuẩn chỉnh” trước khi nộp?",
+        options: [
+          { label: "Luôn luôn", trait: "perfectionism", score: 2 },
+          { label: "Thỉnh thoảng", trait: "perfectionism", score: 1 },
+          { label: "Không cần", trait: "perfectionism", score: 0 },
+        ]},
+      { text: "Bạn hay sửa bài nhiều lần cho đến khi thật ưng ý?",
+        options: [
+          { label: "Rất hay", trait: "perfectionism", score: 2 },
+          { label: "Đôi khi", trait: "perfectionism", score: 1 },
+          { label: "Ít khi", trait: "perfectionism", score: 0 },
+        ]},
+      { text: "Bạn thích checklist chi tiết để kiểm soát chất lượng?",
+        options: [
+          { label: "Có", trait: "perfectionism", score: 2 },
+          { label: "Thỉnh thoảng", trait: "perfectionism", score: 1 },
+          { label: "Không", trait: "perfectionism", score: 0 },
+        ]},
+      { text: "Bạn khó chịu khi bài làm chưa ‘đủ đẹp’ dù đã đúng ý?",
+        options: [
+          { label: "Đúng vậy", trait: "perfectionism", score: 2 },
+          { label: "Tùy mức độ", trait: "perfectionism", score: 1 },
+          { label: "Không", trait: "perfectionism", score: 0 },
+        ]},
+      { text: "Bạn thích quy trình chuẩn/tiêu chí rõ ràng để dựa theo?",
+        options: [
+          { label: "Rất thích", trait: "perfectionism", score: 2 },
+          { label: "Bình thường", trait: "perfectionism", score: 1 },
+          { label: "Không cần", trait: "perfectionism", score: 0 },
+        ]},
+    ],
   };
 
-  // ===== Helpers =====
-  function shuffle(arr){
+  // --- Utils ---
+  function pickRandom(arr, n) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [a[i], a[j]] = [a[j], a[i]];
     }
-    return a;
+    return a.slice(0, n);
   }
 
-  function pickPerGroup(bank, per){
-    const picked = [];
-    for (const trait of Object.keys(bank)){
-      const group = bank[trait] || [];
-      const chosen = shuffle(group).slice(0, Math.min(per, group.length));
-      picked.push(...chosen.map(q => ({...q, trait})));
+  // --- Auth guard ---
+  firebase.auth().onAuthStateChanged((user) => {
+    if (!user) window.location.href = "/index.html";
+  });
+
+  // --- Render ---
+  document.addEventListener("DOMContentLoaded", () => {
+    const per = Math.max(1, Number(new URL(location.href).searchParams.get("per") || 3));
+    const traits = ["creativity","competitiveness","sociability","playfulness","self_improvement","perfectionism"];
+
+    // gom câu
+    let questions = [];
+    traits.forEach(t => questions = questions.concat(pickRandom(BANK[t] || [], per)));
+
+    const listEl = document.getElementById("questionList");
+    const submitBtn = document.getElementById("submitBtn");
+    const alertEl = document.getElementById("alert");
+    const missEl  = document.getElementById("missingCount");
+    document.getElementById("questionCount").textContent = `${questions.length}`;
+
+    listEl.innerHTML = "";
+    questions.forEach((q, idx) => {
+      const div = document.createElement("div");
+      div.className = "question";
+      div.innerHTML = `<h3>${idx+1}. ${q.text}</h3>
+        <div class="options">
+          ${q.options.map(op => `
+            <button class="option" data-trait="${op.trait}" data-score="${op.score}">${op.label}</button>
+          `).join("")}
+        </div>`;
+      listEl.appendChild(div);
+    });
+
+    // chọn đáp án
+    function checkFilled(){
+      const total = questions.length;
+      const picked = listEl.querySelectorAll(".option.selected").length;
+      const missing = total - picked;
+      missEl.textContent = missing;
+      alertEl.style.display = missing>0 ? "block" : "none";
+      submitBtn.disabled = missing>0;
     }
-    return picked;
-  }
+    listEl.addEventListener("click",(e)=>{
+      const btn = e.target.closest(".option");
+      if (!btn) return;
+      const wrap = btn.closest(".options");
+      wrap.querySelectorAll(".option").forEach(b=>b.classList.remove("selected"));
+      btn.classList.add("selected");
+      checkFilled();
+    });
+    checkFilled();
 
-  // ===== Render =====
-  const listEl = document.getElementById('questionList');
-  const alertEl = document.getElementById('alert');
-  const missingCountEl = document.getElementById('missingCount');
-  const submitBtn = document.getElementById('submitBtn');
-
-  const picked = pickPerGroup(BANK, PER_GROUP);
-
-  function render(){
-    listEl.innerHTML = '';
-    picked.forEach((q, idx) => {
-      const wrap = document.createElement('div');
-      wrap.className = 'question';
-      wrap.dataset.q = q.id;
-
-      const title = document.createElement('h3');
-      title.textContent = `${idx+1}. ${q.text}`;
-      wrap.appendChild(title);
-
-      const opts = document.createElement('div');
-      opts.className = 'options';
-
-      q.options.forEach((opt, oi) => {
-        const div = document.createElement('div');
-        div.className = 'option';
-        div.tabIndex = 0;
-        div.setAttribute('role','button');
-        div.dataset.index = String(oi);
-
-        if (opt.other) div.classList.add('other-trigger');
-        if (opt.score) div.dataset.score = opt.score; // "trait:1"
-
-        div.textContent = opt.label;
-        opts.appendChild(div);
+    // submit
+    submitBtn.addEventListener("click", async ()=>{
+      const traitScores = {
+        creativity:0, competitiveness:0, sociability:0,
+        playfulness:0, self_improvement:0, perfectionism:0
+      };
+      listEl.querySelectorAll(".option.selected").forEach(btn=>{
+        traitScores[btn.dataset.trait] += Number(btn.dataset.score || 0);
       });
-      wrap.appendChild(opts);
 
-      const otherWrap = document.createElement('div');
-      otherWrap.className = 'other-input';
-      otherWrap.style.display = 'none';
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.placeholder = 'Nhập câu trả lời của bạn';
-      otherWrap.appendChild(input);
-      wrap.appendChild(otherWrap);
+      // chuẩn hoá % 0..100 (mỗi trait có per câu, max điểm/trait = per*2)
+      const max = per * 2;
+      const traitsPct = {};
+      Object.keys(traitScores).forEach(k=>{
+        traitsPct[k] = Math.round((traitScores[k] / max) * 100);
+      });
 
-      listEl.appendChild(wrap);
+      try {
+        const user = firebase.auth().currentUser;
+        if (!user) { alert("Bạn chưa đăng nhập."); return; }
+        const ref = firebase.database().ref("users/"+user.uid);
+        await ref.update({ traits: traitsPct, quizDone: true });
+
+        // thưởng nhẹ
+        const sSnap = await ref.child("stats").once("value");
+        const s = sSnap.val() || { xp:0, coin:0, badge:1 };
+        await ref.child("stats").update({ xp:(s.xp||0)+50, coin:(s.coin||0)+10 });
+
+        alert("Đã lưu kết quả. Quay về trang chính!");
+        location.href = "/index.html?quiz=done";
+      } catch (e) {
+        console.error(e);
+        alert("Có lỗi khi lưu kết quả, vui lòng thử lại.");
+      }
     });
-  }
-
-  render();
-
-  // Interaction
-  listEl.addEventListener('click', (e) => {
-    const option = e.target.closest('.option');
-    if (!option) return;
-    const qBox = option.closest('.question');
-    qBox.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
-    option.classList.add('selected');
-
-    const other = option.classList.contains('other-trigger');
-    const otherWrap = qBox.querySelector('.other-input');
-    if (other) {
-      otherWrap.style.display = 'block';
-      otherWrap.querySelector('input').focus();
-    } else {
-      otherWrap.style.display = 'none';
-    }
-
-    checkAllAnswered();
   });
-
-  listEl.addEventListener('keydown', (e) => {
-    if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('option')){
-      e.preventDefault();
-      e.target.click();
-    }
-  });
-
-  function checkAllAnswered(){
-    const boxes = listEl.querySelectorAll('.question');
-    let missing = 0;
-    boxes.forEach(b => { if (!b.querySelector('.option.selected')) missing++; });
-    submitBtn.disabled = missing > 0;
-    if (missing > 0){
-      alertEl.style.display = 'block';
-      if (missingCountEl) missingCountEl.textContent = String(missing);
-    } else {
-      alertEl.style.display = 'none';
-    }
-  }
-
-  // Scoring — chỉ theo 6 trait
-  function score(){
-    const result = {
-      creativity: 0,
-      sociability: 0,
-      playfulness: 0,
-      perfectionism: 0,
-      self_improvement: 0,
-      competitiveness: 0
-    };
-
-    const boxes = listEl.querySelectorAll('.question');
-    boxes.forEach(b => {
-      const sel = b.querySelector('.option.selected');
-      if (!sel) return;
-      const scoreStr = sel.dataset.score; // e.g. "creativity:1"
-      if (!scoreStr) return;
-      const [trait, wStr] = scoreStr.split(':');
-      const w = parseFloat(wStr || '1');
-      if (traits.includes(trait)) result[trait] += w;
-    });
-
-    return result;
-  }
-
-  // ========== Submit: THEM DATA VAO FIREBASE ===================
-submitBtn.addEventListener('click', async () => {
-  checkAllAnswered();
-  if (submitBtn.disabled) return;
-
-  const res = score(); // (hoặc scoreQuiz() theo tên hàm của bạn)
-  // Chuẩn hóa về % 0..100 nếu muốn (ở đây giữ điểm thô)
-  try {
-    const auth = firebase.auth();
-    const user = auth.currentUser;
-    if (!user) { alert("Bạn chưa đăng nhập!"); return; }
-
-    // Lưu traits + đánh dấu đã làm quiz
-    await firebase.database().ref("users/"+user.uid).update({
-      traits: res,
-      quizDone: true
-    });
-
-    // Thưởng nhẹ (tùy thích)
-    const statsSnap = await firebase.database().ref("users/"+user.uid+"/stats").once("value");
-    const stats = statsSnap.val() || { xp:0, coin:0, badge:1 };
-    await firebase.database().ref("users/"+user.uid+"/stats").update({
-      xp: (stats.xp||0) + 50, coin: (stats.coin||0) + 10
-    });
-  } catch (e) {
-    console.error(e);
-    alert("Có lỗi khi lưu kết quả. Vui lòng thử lại.");
-    return;
-  }
-
-  // Quay về index
-  window.location.href = "/index.html?quiz=done";
-});
-//===========HET SUBMIT ===================
-})();
-
-
-//--- mẫu từ index cũ (có thêm id) ---
-{ id: 1,  type: 'trait',  text: 'Bạn thích làm gì nhất vào cuối tuần?',
-options: [
-{ label: 'Vẽ, viết truyện, làm video', score: 'creativity:1' },
-{ label: 'Gặp bạn bè, đi chơi',       score: 'sociability:1' },
-{ label: 'Chơi game, xem phim',       score: 'playfulness:1' },
-{ label: 'Khác', other: true }
-] },
-{ id: 2,  type: 'trait',  text: 'Bạn học tốt nhất khi nào?',
-options: [
-{ label: 'Lập kế hoạch chi tiết',     score: 'perfectionism:1' },
-{ label: 'Thử thách bản thân',        score: 'self_improvement:1' },
-{ label: 'Học vui như chơi',          score: 'playfulness:1' }
-] },
-{ id: 3,  type: 'trait',  text: 'Bạn thích làm việc nhóm hay cá nhân?',
-options: [
-{ label: 'Nhóm - năng lượng từ bạn bè', score: 'sociability:1' },
-{ label: 'Cá nhân - kiểm soát 100%',    score: 'perfectionism:1' }
-] },
-{ id: 4,  type: 'trait',  text: 'Bạn có hay đặt mục tiêu dài hạn?',
-options: [
-{ label: 'Luôn luôn', score: 'self_improvement:1' },
-{ label: 'Tùy hứng',  score: 'playfulness:1' }
-] },
-{ id: 5,  type: 'trait',  text: 'Bạn thích môn học nào nhất?',
-options: [
-{ label: 'Toán - giải đề khó', score: 'competitiveness:1' },
-{ label: 'Văn - sáng tác',     score: 'creativity:1' },
-{ label: 'Anh - giao tiếp',    score: 'sociability:1' }
-] },
-{ id: 6,  type: 'trait',  text: 'Bạn có hay so sánh mình với người khác?',
-options: [
-{ label: 'Rất hay',         score: 'competitiveness:1' },
-{ label: 'Chỉ để cải thiện',score: 'self_improvement:1' },
-{ label: 'Không quan tâm',  score: 'playfulness:1' }
-] },
-{ id: 7,  type: 'trait',  text: 'Bạn học bằng cách nào hiệu quả nhất?',
-options: [
-{ label: 'Vẽ mindmap, sơ đồ', score: 'creativity:1' },
-{ label: 'Thảo luận nhóm',    score: 'sociability:1' },
-{ label: 'Game, video',       score: 'playfulness:1' }
-] },
-{ id: 8,  type: 'trait',  text: 'Bạn có kiên trì với việc khó?',
-options: [
-{ label: 'Rất kiên trì',        score: 'self_improvement:1' },
-{ label: 'Chỉ khi hoàn hảo',    score: 'perfectionism:1' },
-{ label: 'Dễ chán',             score: 'playfulness:1' }
-] },
-{ id: 9,  type: 'trait',  text: 'Bạn thích được khen vì gì?',
-options: [
-{ label: 'Giỏi nhất lớp',     score: 'competitiveness:1' },
-{ label: 'Ý tưởng độc đáo',   score: 'creativity:1' },
-{ label: 'Vui vẻ, hòa đồng',  score: 'sociability:1' }
-] },
-{ id: 10, type: 'polarity', text: 'Bạn có cảm thấy mình có thể làm được mọi thứ?',
-options: [
-{ label: 'Có, nếu cố gắng!', positive: 1 },
-{ label: 'Thỉnh thoảng',     positive: 0.5 },
-{ label: 'Không',            positive: 0 }
-] },
-{ id: 11, type: 'polarity', text: 'Bạn có hay chán khi làm 1 việc lâu?',
-options: [
-{ label: 'Rất hay',       negative: 1 },
-{ label: 'Thỉnh thoảng',  negative: 0.5 },
-{ label: 'Không',         negative: 0 }
-] },
-{ id: 12, type: 'trait', text: 'Bạn muốn được khen vì điều gì?',
-options: [
-{ label: 'Giỏi nhất',     score: 'competitiveness:1' },
-{ label: 'Sáng tạo nhất', score: 'creativity:1' },
-{ label: 'Vui vẻ nhất',   score: 'sociability:1' },
-{ label: 'Khác', other: true }
-] },
-
-// --- Thêm nhiều câu mới để rút ngẫu nhiên ---
-{ id: 13, type: 'trait', text: 'Khi có bài tập khó, bạn làm gì?',
-  options: [
-    { label: 'Tìm mẹo và shortcut', score: 'playfulness:1' },
-    { label: 'Hỏi bạn bè/nhóm',     score: 'sociability:1' },
-    { label: 'Lập plan chi tiết',   score: 'perfectionism:1' }
-  ] },
-{ id: 14, type: 'trait', text: 'Bạn yêu thích hoạt động nào?',
-  options: [
-    { label: 'Viết blog / dựng video', score: 'creativity:1' },
-    { label: 'Thi đấu, đua top',       score: 'competitiveness:1' },
-    { label: 'Thử cái mới mỗi tuần',   score: 'self_improvement:1' }
-  ] },
-{ id: 15, type: 'polarity', text: 'Bạn có thường hoàn thành công việc đúng hạn?',
-  options: [
-    { label: 'Luôn đúng hạn', positive: 1 },
-    { label: 'Thỉnh thoảng trễ', positive: 0.5 },
-    { label: 'Hay trễ', positive: 0 }
-  ] },
-{ id: 16, type: 'trait', text: 'Khi làm project nhóm, bạn thường là…',
-  options: [
-    { label: 'Người kết nối, hẹn lịch', score: 'sociability:1' },
-    { label: 'Người lo chất lượng',     score: 'perfectionism:1' },
-    { label: 'Người nghĩ ý tưởng',      score: 'creativity:1' }
-  ] },
-{ id: 17, type: 'trait', text: 'Bạn thấy điều gì hấp dẫn ở game?',
-  options: [
-    { label: 'Cạnh tranh top / rank', score: 'competitiveness:1' },
-    { label: 'Tự do khám phá',        score: 'playfulness:1' },
-    { label: 'Xây dựng, sáng tạo',    score: 'creativity:1' }
-  ] },
-{ id: 18, type: 'trait', text: 'Thói quen học tập của bạn là…',
-  options: [
-    { label: 'Nhóm học định kỳ',    score: 'sociability:1' },
-    { label: 'Checklist và review', score: 'perfectionism:1' },
-    { label: 'Bắt đầu ngay lập tức',score: 'self_improvement:1' }
-  ] },
-{ id: 19, type: 'polarity', text: 'Bạn thường trì hoãn công việc?',
-  options: [
-    { label: 'Không bao giờ', negative: 0 },
-    { label: 'Đôi khi',       negative: 0.5 },
-    { label: 'Khá thường xuyên', negative: 1 }
-  ] },
-{ id: 20, type: 'trait', text: 'Bạn thích kiểu thử thách nào?',
-  options: [
-    { label: 'Giải đố khó',      score: 'competitiveness:1' },
-    { label: 'Sáng tạo nội dung',score: 'creativity:1' },
-    { label: 'Hoạt động nhóm',   score: 'sociability:1' }
-  ] },
-{ id: 21, type: 'trait', text: 'Bạn quản lý lỗi sai như thế nào?',
-  options: [
-    { label: 'Sửa cho hoàn hảo', score: 'perfectionism:1' },
-    { label: 'Xem như bài học',  score: 'self_improvement:1' },
-    { label: 'Chơi/đổi hoạt động',score: 'playfulness:1' }
-  ] },
-{ id: 22, type: 'polarity', text: 'Bạn có tin vào việc luyện tập mỗi ngày tạo khác biệt lớn?',
-  options: [
-    { label: 'Rất tin', positive: 1 },
-    { label: 'Bình thường', positive: 0.5 },
-    { label: 'Không hẳn', positive: 0 }
-  ] },
-{ id: 23, type: 'trait', text: 'Nhận xét nào giống bạn nhất?',
-  options: [
-    { label: 'Thích giao lưu',       score: 'sociability:1' },
-    { label: 'Cầu toàn',             score: 'perfectionism:1' },
-    { label: 'Thích sáng tạo',       score: 'creativity:1' }
-  ] },
-{ id: 24, type: 'trait', text: 'Bạn thường đặt mục tiêu như thế nào?',
-  options: [
-    { label: 'SMART và đo lường', score: 'self_improvement:1' },
-    { label: 'Mục tiêu thách thức', score: 'competitiveness:1' },
-    { label: 'Tùy cảm hứng',      score: 'playfulness:1' }
-  ] },
-{ id: 25, type: 'trait', text: 'Kênh học ưa thích?',
-  options: [
-    { label: 'Video/Podcast',      score: 'playfulness:1' },
-    { label: 'Sách/Tài liệu',      score: 'perfectionism:1' },
-    { label: 'Workshop/Meetup',    score: 'sociability:1' }
-  ] },
-{ id: 26, type: 'polarity', text: 'Bạn có hay xin feedback sau mỗi bài/đồ án?',
-  options: [
-    { label: 'Luôn luôn', positive: 1 },
-    { label: 'Thỉnh thoảng', positive: 0.5 },
-    { label: 'Ít khi', positive: 0 }
-  ] },
-{ id: 27, type: 'trait', text: 'Câu nào đúng với bạn?',
-  options: [
-    { label: 'Ghét bị gián đoạn',      score: 'perfectionism:1' },
-    { label: 'Giỏi khuấy động không khí', score: 'sociability:1' },
-    { label: 'Ý tưởng xuất hiện liên tục', score: 'creativity:1' }
-  ] },
-{ id: 28, type: 'trait', text: 'Khi thiếu động lực, bạn sẽ…',
-  options: [
-    { label: 'Thử game hóa mục tiêu', score: 'playfulness:1' },
-    { label: 'Tìm đối tác đồng hành', score: 'sociability:1' },
-    { label: 'Tái thiết kế quy trình', score: 'perfectionism:1' }
-  ] },
-{ id: 29, type: 'polarity', text: 'Bạn có tin “nỗ lực > tài năng”?',
-  options: [
-    { label: 'Đồng ý mạnh', positive: 1 },
-    { label: 'Phân vân',    positive: 0.5 },
-    { label: 'Không đồng ý', positive: 0 }
-  ] },
-{ id: 30, type: 'trait', text: 'Bạn thấy tự hào nhất khi…',
-  options: [
-    { label: 'Vượt qua đối thủ', score: 'competitiveness:1' },
-    { label: 'Tạo ra thứ mới',   score: 'creativity:1' },
-    { label: 'Giúp đỡ mọi người',score: 'sociability:1' }
-  ] }
-
-];
-
-// ====== Render ======
-const listEl = document.getElementById('questionList');
-const alertEl = document.getElementById('alert');
-const missingCountEl = document.getElementById('missingCount');
-const submitBtn = document.getElementById('submitBtn');
-
-const traits = ['creativity','sociability','playfulness','perfectionism','self_improvement','competitiveness'];
-
-// Fisher-Yates shuffle
-function shuffle(arr){
-const a = arr.slice();
-for (let i = a.length - 1; i > 0; i--) {
-const j = Math.floor(Math.random() * (i + 1));
-[a[i], a[j]] = [a[j], a[i]];
-}
-return a;
-}
-
-const picked = shuffle(BANK).slice(0, NUM_QUESTIONS);
-
-function renderQuestions(){
-listEl.innerHTML = '';
-picked.forEach((q, idx) => {
-const qId = `q_${q.id}`;
-const wrapper = document.createElement('div');
-wrapper.className = 'question';
-wrapper.dataset.q = String(q.id);
-
-  const title = document.createElement('h3');
-  title.textContent = `${idx+1}. ${q.text}`;
-  wrapper.appendChild(title);
-
-  const options = document.createElement('div');
-  options.className = 'options';
-
-  q.options.forEach((opt, oi) => {
-    const div = document.createElement('div');
-    div.className = 'option';
-    div.tabIndex = 0;
-    div.setAttribute('role','button');
-    div.dataset.index = String(oi);
-
-    if (opt.other) div.classList.add('other-trigger');
-    if (opt.score) div.dataset.score = opt.score; // trait:weight
-    if (typeof opt.positive !== 'undefined') div.dataset.positive = String(opt.positive);
-    if (typeof opt.negative !== 'undefined') div.dataset.negative = String(opt.negative);
-
-    div.textContent = opt.label;
-    options.appendChild(div);
-  });
-  wrapper.appendChild(options);
-
-  // input cho "Khác"
-  const otherWrap = document.createElement('div');
-  otherWrap.className = 'other-input';
-  otherWrap.style.display = 'none';
-  const otherInput = document.createElement('input');
-  otherInput.type = 'text';
-  otherInput.placeholder = 'Nhập câu trả lời của bạn';
-  otherWrap.appendChild(otherInput);
-  wrapper.appendChild(otherWrap);
-
-  listEl.appendChild(wrapper);
-});
-
-
-}
-
-renderQuestions();
-
-// ====== Interaction ======
-listEl.addEventListener('click', (e) => {
-const option = e.target.closest('.option');
-if (!option) return;
-const qBox = option.closest('.question');
-const options = qBox.querySelectorAll('.option');
-options.forEach(o => o.classList.remove('selected'));
-option.classList.add('selected');
-
-
-// Hiện/ẩn input "Khác"
-const other = option.classList.contains('other-trigger');
-const otherWrap = qBox.querySelector('.other-input');
-if (other) {
-  otherWrap.style.display = 'block';
-  const input = otherWrap.querySelector('input');
-  input.focus();
-} else {
-  otherWrap.style.display = 'none';
-}
-
-checkAllAnswered();
-
-
-});
-
-// keyboard support (Enter/Space)
-listEl.addEventListener('keydown', (e) => {
-if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('option')){
-e.preventDefault();
-e.target.click();
-}
-});
-
-function checkAllAnswered(){
-const boxes = listEl.querySelectorAll('.question');
-let missing = 0;
-boxes.forEach(b => {
-if (!b.querySelector('.option.selected')) missing++;
-});
-
-
-submitBtn.disabled = missing > 0;
-if (missing > 0) {
-  alertEl.style.display = 'block';
-  missingCountEl.textContent = String(missing);
-} else {
-  alertEl.style.display = 'none';
-}
-
-
-}
-
-// ====== Scoring ======
-function scoreQuiz(){
-const result = {
-creativity: 0,
-sociability: 0,
-playfulness: 0,
-perfectionism: 0,
-self_improvement: 0,
-competitiveness: 0,
-positive: 0,
-negative: 0,
-};
-
-
-const boxes = listEl.querySelectorAll('.question');
-boxes.forEach(b => {
-  const sel = b.querySelector('.option.selected');
-  if (!sel) return;
-
-  const score = sel.dataset.score; // e.g. "creativity:1"
-  if (score){
-    const [trait, weightStr] = score.split(':');
-    const weight = parseFloat(weightStr || '1');
-    if (traits.includes(trait)) result[trait] += weight;
-  }
-
-  if (typeof sel.dataset.positive !== 'undefined') {
-    result.positive += parseFloat(sel.dataset.positive || '0');
-  }
-  if (typeof sel.dataset.negative !== 'undefined') {
-    result.negative += parseFloat(sel.dataset.negative || '0');
-  }
-});
-
-return result;
-
-
-}
-
-// ====== Submit ======
-submitBtn.addEventListener('click', () => {
-// đảm bảo đã trả lời đủ
-checkAllAnswered();
-if (submitBtn.disabled) return;
-const res = scoreQuiz();
-
-try {
-  // Lưu localStorage — tùy bạn chuyển sang Firebase tại đây
-  localStorage.setItem('lq_traitScores', JSON.stringify(res));
-  localStorage.setItem('lq_quizDone', 'true');
-  // thưởng XP/coin nhẹ (tuỳ game):
-  const xp = parseInt(localStorage.getItem('lq_xp') || '0', 10) + 50;
-  localStorage.setItem('lq_xp', String(xp));
-} catch(e){
-  console.warn('Cannot access localStorage', e);
-}
-
-// quay về index
-window.location.href = '/index.html?quiz=done';
-
-
-});
-
 })();
