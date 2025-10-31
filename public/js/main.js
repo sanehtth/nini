@@ -307,6 +307,17 @@ function setupQuiz() {
 
 // === GAME BOARD ===
 function showGameBoard(data) {
+  // Ẩn quiz nếu còn ở route cũ
+  if (location.hash === "#quiz") location.hash = "";
+
+  const quizDiv = document.getElementById("quiz");
+  if (quizDiv) quizDiv.classList.add("hidden");           // chỉ ẩn nếu tồn tại
+
+  const board = document.getElementById("gameBoard");
+  if (board) board.classList.remove("hidden");            // chỉ hiện nếu tồn tại
+  else return; // không có gameBoard trên trang thì thoát an toàn
+
+  // ... phần còn lại giữ nguyên (điền welcomeMsg, render thẻ game, v.v.)
   document.getElementById("quiz").classList.add("hidden");
   document.getElementById("gameBoard").classList.remove("hidden");
 
@@ -396,6 +407,7 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 3000);
 }
 });
+
 
 
 
