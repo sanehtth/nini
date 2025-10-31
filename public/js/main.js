@@ -16,7 +16,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("profileBtn").onclick = showProfile;
   document.getElementById("backBtn").onclick = backToGameBoard;
 
+  if (document.getElementById("submitBtn") || document.querySelector(".question")) {
   setupQuiz();
+}
 
   //======== HAM VA DATA KHI UI CHUA CO DU DATA=============
   async function ensureUserSchema(uid, emailIfMissing) {
@@ -230,6 +232,9 @@ function updateGlobalStats(data) {
 function setupQuiz() {
   const questions = document.querySelectorAll(".question");
   const submitBtn = document.getElementById("submitBtn");
+  
+  if (!submitBtn || questions.length === 0) return;
+  
   const alert = document.getElementById("alert");
   const missingCount = document.getElementById("missingCount");
 
@@ -377,6 +382,7 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 3000);
 }
 });
+
 
 
 
