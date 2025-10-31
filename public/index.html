@@ -52,123 +52,18 @@
       </header>
 
       <!-- TRẮC NGHIỆM -->
-      <div id="quiz" class="quiz hidden">
-        <h2>Khám Phá Tính Cách (1 lần duy nhất)</h2>
-        <div class="alert" id="alert">Vui lòng trả lời <span id="missingCount">0</span> câu!</div>
+      <!-- Modal mời làm trắc nghiệm -->
+<div id="quizInvite" class="modal hidden">
+  <div class="modal-card">
+    <h3>Bạn muốn làm trắc nghiệm để cá nhân hóa lộ trình?</h3>
+    <p>Chỉ mất vài phút. Kết quả sẽ hiện ngay trong “Hồ sơ người học”.</p>
+    <div class="row" style="gap:8px; margin-top:12px">
+      <button id="goQuizBtn" class="main-btn">Làm trắc nghiệm</button>
+      <button id="skipQuizBtn" class="btn ghost">Để sau</button>
+    </div>
+  </div>
+</div>
 
-        <!-- 12 CÂU HỎI ĐẦY ĐỦ -->
-        <div class="question" data-q="1">
-          <h3>1. Bạn thích làm gì nhất vào cuối tuần?</h3>
-          <div class="options">
-            <div class="option" data-score="creativity:1">Vẽ, viết truyện, làm video</div>
-            <div class="option" data-score="sociability:1">Gặp bạn bè, đi chơi</div>
-            <div class="option" data-score="playfulness:1">Chơi game, xem phim</div>
-            <div class="option other-trigger">Khác</div>
-          </div>
-          <div class="other-input"><input type="text" placeholder="Bạn thích làm gì?"></div>
-        </div>
-        <!-- CÂU 2 -->
-        <div class="question" data-q="2">
-          <h3>2. Bạn học tốt nhất khi nào?</h3>
-          <div class="options">
-            <div class="option" data-score="perfectionism:1">Lập kế hoạch chi tiết</div>
-            <div class="option" data-score="self_improvement:1">Thử thách bản thân</div>
-            <div class="option" data-score="playfulness:1">Học vui như chơi</div>
-          </div>
-        </div>
-        <!-- CÂU 3 -->
-        <div class="question" data-q="3">
-          <h3>3. Bạn thích làm việc nhóm hay cá nhân?</h3>
-          <div class="options">
-            <div class="option" data-score="sociability:1">Nhóm - năng lượng từ bạn bè</div>
-            <div class="option" data-score="perfectionism:1">Cá nhân - kiểm soát 100%</div>
-          </div>
-        </div>
-        <!-- CÂU 4 -->
-        <div class="question" data-q="4">
-          <h3>4. Bạn có hay đặt mục tiêu dài hạn?</h3>
-          <div class="options">
-            <div class="option" data-score="self_improvement:1">Luôn luôn</div>
-            <div class="option" data-score="playfulness:1">Tùy hứng</div>
-          </div>
-        </div>
-        <!-- CÂU 5 -->
-        <div class="question" data-q="5">
-          <h3>5. Bạn thích môn học nào nhất?</h3>
-          <div class="options">
-            <div class="option" data-score="competitiveness:1">Toán - giải đề khó</div>
-            <div class="option" data-score="creativity:1">Văn - sáng tác</div>
-            <div class="option" data-score="sociability:1">Anh - giao tiếp</div>
-          </div>
-        </div>
-        <!-- CÂU 6 -->
-        <div class="question" data-q="6">
-          <h3>6. Bạn có hay so sánh mình với người khác?</h3>
-          <div class="options">
-            <div class="option" data-score="competitiveness:1">Rất hay</div>
-            <div class="option" data-score="self_improvement:1">Chỉ để cải thiện</div>
-            <div class="option" data-score="playfulness:1">Không quan tâm</div>
-          </div>
-        </div>
-        <!-- CÂU 7 -->
-        <div class="question" data-q="7">
-          <h3>7. Bạn học bằng cách nào hiệu quả nhất?</h3>
-          <div class="options">
-            <div class="option" data-score="creativity:1">Vẽ mindmap, sơ đồ</div>
-            <div class="option" data-score="sociability:1">Thảo luận nhóm</div>
-            <div class="option" data-score="playfulness:1">Game, video</div>
-          </div>
-        </div>
-        <!-- CÂU 8 -->
-        <div class="question" data-q="8">
-          <h3>8. Bạn có kiên trì với việc khó?</h3>
-          <div class="options">
-            <div class="option" data-score="self_improvement:1">Rất kiên trì</div>
-            <div class="option" data-score="perfectionism:1">Chỉ khi hoàn hảo</div>
-            <div class="option" data-score="playfulness:1">Dễ chán</div>
-          </div>
-        </div>
-        <!-- CÂU 9 -->
-        <div class="question" data-q="9">
-          <h3>9. Bạn thích được khen vì gì?</h3>
-          <div class="options">
-            <div class="option" data-score="competitiveness:1">Giỏi nhất lớp</div>
-            <div class="option" data-score="creativity:1">Ý tưởng độc đáo</div>
-            <div class="option" data-score="sociability:1">Vui vẻ, hòa đồng</div>
-          </div>
-        </div>
-        <!-- CÂU 10 -->
-        <div class="question" data-q="10">
-          <h3>10. Bạn có cảm thấy mình có thể làm được mọi thứ?</h3>
-          <div class="options">
-            <div class="option" data-positive="1">Có, nếu cố gắng!</div>
-            <div class="option" data-positive="0.5">Thỉnh thoảng</div>
-            <div class="option" data-positive="0">Không</div>
-          </div>
-        </div>
-        <!-- CÂU 11 -->
-        <div class="question" data-q="11">
-          <h3>11. Bạn có hay chán khi làm 1 việc lâu?</h3>
-          <div class="options">
-            <div class="option" data-negative="1">Rất hay</div>
-            <div class="option" data-negative="0.5">Thỉnh thoảng</div>
-            <div class="option" data-negative="0">Không</div>
-          </div>
-        </div>
-        <!-- CÂU 12 -->
-        <div class="question" data-q="12">
-          <h3>12. Bạn muốn được khen vì điều gì?</h3>
-          <div class="options">
-            <div class="option" data-score="competitiveness:1">Giỏi nhất</div>
-            <div class="option" data-score="creativity:1">Sáng tạo nhất</div>
-            <div class="option" data-score="sociability:1">Vui vẻ nhất</div>
-            <div class="option other-trigger">Khác</div>
-          </div>
-          <div class="other-input"><input type="text" placeholder="Bạn muốn được khen vì gì?"></div>
-        </div>
-
-        <button id="submitBtn" class="main-btn" disabled>HOÀN TẤT → VÀO GAME</button>
-      </div>
 
       <!-- GAME BOARD -->
       <div id="gameBoard" class="game-board hidden">
@@ -232,4 +127,5 @@
 </body>
 
 </html>
+
 
