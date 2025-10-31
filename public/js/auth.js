@@ -34,3 +34,6 @@ async function resetPassword(email) {
   await auth.sendPasswordResetEmail(email);
   alert("Email khôi phục mật khẩu đã được gửi!");
 }
+
+// Gán vào window để main.js dùng
+window.AuthUI = { emailExists, signup, login, resetPassword };
