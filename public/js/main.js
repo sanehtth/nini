@@ -198,7 +198,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = snap.val() || {};
       updateGlobalStats(data);
       const pf = document.getElementById("profile");
-      if (pf && !pf.classList.contains("hidden")) renderProfile(data);
+      if (pf && !pf.classList.contains("hidden")) App.Profile.renderProfile(data)
+;
     });
   }
 
@@ -349,7 +350,7 @@ document.addEventListener("DOMContentLoaded", () => {
     pf && pf.classList.add("hidden");
     gb && gb.classList.remove("hidden");
   }
-
+/*
   function renderProfile(data) {
     const traits = data.traits || { creativity:0, competitiveness:0, sociability:0, playfulness:0, self_improvement:0, perfectionism:0 };
     const labels = ["Sáng tạo", "Cạnh tranh", "Xã hội", "Vui vẻ", "Tự cải thiện", "Cầu toàn"];
@@ -389,7 +390,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (pc) pc.textContent = totalCoin;
     if (pb) pb.textContent = badge;
   }
-
+*/
   // ====== Toast ======
   function showToast(msg) {
     const t = document.createElement("div");
@@ -399,3 +400,4 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => t.remove(), 3000);
   }
 });
+
