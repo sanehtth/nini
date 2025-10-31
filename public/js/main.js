@@ -1,181 +1,262 @@
-// public/js/main.js — FULL
-(function () {
-  const auth = firebase.auth();
-  const db   = firebase.database();
+﻿// js/main.js
+const auth = window.firebaseAuth;
+const db = window.firebaseDB;
 
-  // ==== helpers ====
-  const $ = (id) => document.getElementById(id);
+let currentUser = null;
+let answeredCount = 0;
+const totalQuestions = 12;
+let lastXP = 0, lastCoin = 0;
+let radarChart = null;
 
-  function showLogin(){
-    $("authScreen")?.classList.remove("hidden");
-    $("appScreen")?.classList.add("hidden");
-  }
-  function showApp(user){
-    $("authScreen")?.classList.add("hidden");
-    $("appScreen")?.classList.remove("hidden");
-    // hiển thị email (nếu bạn có span#whoami trong header)
-    const who = $("whoami"); if (who) who.textContent = user?.email ? `Đang đăng nhập: ${user.email}` : "";
-  }
+// === DOM READY ===
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("signupBtn").onclick = () => handleAuth(signup, "signupBtn");
+  document.getElementById("loginBtn").onclick = () => handleAuth(login, "loginBtn");
+  document.getElementById("logoutBtn").onclick = () => auth.signOut().then(() => location.reload());
+  document.getElementById("profileBtn").onclick = showProfile;
+  document.getElementById("backBtn").onclick = backToGameBoard;
 
-  // ==== Tabs đăng nhập / đăng ký ====
-  function activateTab(name){
-    const isLogin = name === "login";
-    $("tabLogin")?.classList.toggle("active", isLogin);
-    $("tabSignup")?.classList.toggle("active", !isLogin);
-    $("loginPanel")?.classList.toggle("hidden", !isLogin);
-    $("signupPanel")?.classList.toggle("hidden", isLogin);
-  }
+  setupQuiz();
 
-  // ==== Progress 4 kỹ năng ====
-  function renderSkillBars(skills){
-    const wrap = $("skillsBars"); if (!wrap) return;
-    wrap.innerHTML = "";
-    const items = [
-      ["Listening", skills.listening||0],
-      ["Speaking",  skills.speaking||0],
-      ["Reading",   skills.reading||0],
-      ["Writing",   skills.writing||0],
-    ];
-    items.forEach(([label, val])=>{
-      const row = document.createElement("div");
-      row.innerHTML =
-        `<div style="display:flex;justify-content:space-between">
-           <strong>${label}</strong><span>${Math.round(val)}%</span>
-         </div>
-         <div class="bar"><span style="width:${val}%;"></span></div>`;
-      wrap.appendChild(row);
-    });
-  }
-
-  // ==== Radar 6 trait (cap 60) ====
-  let radarChart = null;
-  function renderTraitsRadar(traits){
-    const el = $("traitsRadar"); if (!el) return;
-    const data = [
-      Math.min(60, Number(traits.creativity||0)),
-      Math.min(60, Number(traits.competitiveness||0)),
-      Math.min(60, Number(traits.sociability||0)),
-      Math.min(60, Number(traits.playfulness||0)),
-      Math.min(60, Number(traits.self_improvement||0)),
-      Math.min(60, Number(traits.perfectionism||0)),
-    ];
-    const ctx = el.getContext("2d");
-    if (radarChart) radarChart.destroy();
-    radarChart = new Chart(ctx, {
-      type: "radar",
-      data: {
-        labels: ["Creativity","Competitiveness","Sociability","Playfulness","Self-Improvement","Perfectionism"],
-        datasets: [{ label: "Traits % (capped 60)", data }]
-      },
-      options: { responsive:true, scales:{ r:{ min:0, max:60, ticks:{ stepSize:10 } } } }
-    });
-  }
-
-  // ==== Nhiệm vụ hằng ngày ====
-  async function refreshDailyMission(uid){
-    const t = (await db.ref("users/"+uid+"/traits").once("value")).val() || {};
-    const top = Object.entries(t).sort((a,b)=>(b[1]||0)-(a[1]||0))[0];
-    const key = top ? top[0] : "self_improvement";
-    const map = {
-      creativity: "Viết lại đoạn hội thoại theo phong cách khác.",
-      competitiveness: "Thử vượt kỷ lục điểm ở mini-game đấu nhanh.",
-      sociability: "Trao đổi 5 câu với bạn học/AI voice.",
-      playfulness: "Chơi game nghe nhạc đoán từ 10 phút.",
-      self_improvement: "Hoàn thành 1 bài đọc nâng cao.",
-      perfectionism: "Sửa lỗi ngữ pháp cho 1 đoạn văn cũ."
-    };
-    $("dailyMission") && ($("dailyMission").textContent = map[key]);
-  }
-
-  // ==== SPA router: #quiz bật quizScreen, ẩn appScreen ====
-  function handleRoute() {
-    const isQuiz = location.hash === "#quiz";
-    const app  = $("appScreen");
-    const quiz = $("quizScreen");
-    const authS= $("authScreen");
-
-    authS && authS.classList.add("hidden");
-    if (app)  app.classList.toggle("hidden", isQuiz);
-    if (quiz) quiz.classList.toggle("hidden", !isQuiz);
-
-    if (isQuiz && typeof window.renderQuiz === "function") {
-      window.renderQuiz(); // quiz.js vẽ vào #quizRoot
-      const back = $("quizBackBtn");
-      if (back && !back._bound) { back._bound = true; back.onclick = () => { location.hash = ""; }; }
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
+      loadUserDataAndShowApp();
     }
+  });
+});
+
+// === AUTH ===
+function handleAuth(authFn, btnId) {
+  const email = document.getElementById("email").value.trim();
+  const pass = document.getElementById("password").value;
+  const msg = document.getElementById("authMsg");
+  const button = document.getElementById(btnId);
+
+  if (!email || !pass) {
+    msg.textContent = "Vui lòng nhập email và mật khẩu!";
+    msg.style.color = "red";
+    return;
   }
 
-  // ==== Bind nút & khởi động ====
-  window.addEventListener("DOMContentLoaded", ()=>{
-    // theme & logout
-    $("themeBtn")  && ($("themeBtn").onclick  = () => document.body.classList.toggle("dark-theme"));
-    $("logoutBtn") && ($("logoutBtn").onclick = () => auth.signOut().then(()=>location.replace("index.html")));
+  button.disabled = true;
+  button.classList.add("loading");
+  button.textContent = "";
+  msg.textContent = "Đang xử lý...";
+  msg.style.color = "#e11d48";
 
-    // tabs
-    $("tabLogin")  && ($("tabLogin").onclick  = () => activateTab("login"));
-    $("tabSignup") && ($("tabSignup").onclick = () => activateTab("signup"));
+  authFn(email, pass)
+    .then(() => {
+      msg.textContent = "Thành công! Đang tải...";
+      msg.style.color = "green";
+    })
+    .catch(err => {
+      msg.textContent = err.message;
+      msg.style.color = "red";
+      button.disabled = false;
+      button.classList.remove("loading");
+      button.textContent = btnId === "signupBtn" ? "Đăng ký" : "Đăng nhập";
+    });
+}
 
-    // login
-    const loginBtn = $("loginBtn");
-    if (loginBtn){ loginBtn.type = "button"; loginBtn.onclick = async ()=>{
-      const email = ($("loginEmail")?.value || $("email")?.value || "").trim();
-      const pass  = ($("loginPassword")?.value || $("password")?.value || "");
-      try { await window.AuthUI.login(email, pass); $("authMsg") && ($("authMsg").textContent=""); }
-      catch(e){ $("authMsg") && ($("authMsg").textContent = e?.message || "Đăng nhập thất bại"); }
-    };}
+function signup(email, pass) {
+  return auth.fetchSignInMethodsForEmail(email)
+    .then(methods => {
+      if (methods.length > 0) throw new Error("Email đã được sử dụng!");
+      return auth.createUserWithEmailAndPassword(email, pass);
+    })
+    .then(cred => db.ref('users/' + cred.user.uid + '/profile').set({
+      email, joined: new Date().toISOString().split('T')[0]
+    }).then(() => cred));
+}
 
-    // forgot
-    const forgotBtn = $("forgotBtn");
-    if (forgotBtn){ forgotBtn.type = "button"; forgotBtn.onclick = async ()=>{
-      const email = ($("loginEmail")?.value || $("email")?.value || "").trim();
-      if (!email) { $("authMsg") && ($("authMsg").textContent="Nhập email trước."); return; }
-      try { await window.AuthUI.resetPassword(email); $("authMsg") && ($("authMsg").textContent="Đã gửi email đặt lại mật khẩu."); }
-      catch(e){ $("authMsg") && ($("authMsg").textContent = e?.message || "Không gửi được email."); }
-    };}
+function login(email, pass) {
+  return auth.signInWithEmailAndPassword(email, pass);
+}
 
-    // signup
-    const signupBtn = $("signupBtn");
-    if (signupBtn){ signupBtn.type = "button"; signupBtn.onclick = async ()=>{
-      const email = ($("signupEmail")?.value || $("email")?.value || "").trim();
-      const pass  = ($("signupPassword")?.value || $("password")?.value || "");
-      try { await window.AuthUI.signup(email, pass); /* sẽ chuyển #quiz trong auth.js */ }
-      catch(e){ $("authMsg") && ($("authMsg").textContent = e?.message || "Đăng ký thất bại"); }
-    };}
+// === TẢI APP ===
+function loadUserDataAndShowApp() {
+  document.getElementById("authScreen").classList.add("hidden");
+  document.getElementById("mainApp").classList.remove("hidden");
+  document.getElementById("userEmail").textContent = currentUser.email.split('@')[0];
 
-    // link làm lại quiz
-    $("goQuiz") && ($("goQuiz").onclick = (e)=>{ e.preventDefault(); location.hash = "#quiz"; });
-
-    // router
-    window.addEventListener("hashchange", handleRoute);
-    handleRoute();
+  db.ref('users/' + currentUser.uid).once('value').then(snap => {
+    const data = snap.val() || {};
+    updateGlobalStats(data);
+    if (data.quizDone) showGameBoard(data);
+    else document.getElementById("quiz").classList.remove("hidden");
   });
 
-  // ==== Theo dõi trạng thái đăng nhập ====
-  auth.onAuthStateChanged(async (user)=>{
-    if (!user) { showLogin(); return; }
-    showApp(user);
-
-    // tổng hợp tuần (không chặn UI nếu lỗi)
-    try { window.App?.Analytics?.maybeRefreshWeekly?.(user.uid); } catch {}
-
-    // nạp snapshots
-    const [traitsSnap, skillsSnap] = await Promise.all([
-      db.ref("users/"+user.uid+"/traits").once("value"),
-      db.ref("users/"+user.uid+"/skills").once("value")
-    ]);
-    const traits = traitsSnap.val() || {};
-    const skills = skillsSnap.val() || {};
-
-    // nếu vừa signup, auth.js đã set #quiz → router sẽ hiển thị quiz
-    if (location.hash !== "#quiz") {
-      renderTraitsRadar(traits);
-      renderSkillBars(skills);
-      refreshDailyMission(user.uid);
-    }
-
-    // gắn logger mini-game (nếu có nút)
-    const bind = (id, skill) => { const el=$(id); if (!el) return; el.onclick = ()=> App.Analytics?.logActivity?.(user.uid, skill, {value:1, complete:true}); };
-    bind("playListening","listening"); bind("playSpeaking","speaking");
-    bind("playReading","reading");     bind("playWriting","writing");
+  db.ref('users/' + currentUser.uid).on('value', snap => {
+    const data = snap.val() || {};
+    updateGlobalStats(data);
+    if (!document.getElementById("profile").classList.contains("hidden")) renderProfile(data);
   });
-})();
+}
+
+// === CẬP NHẬT XP, COIN ===
+function updateGlobalStats(data) {
+  const progress = data.gameProgress || {};
+  let totalXP = 0, totalCoin = 0;
+  Object.values(progress).forEach(g => { totalXP += g.xp || 0; totalCoin += g.coin || 0; });
+  const badge = totalXP < 1000 ? 1 : totalXP < 5000 ? 2 : totalXP < 10000 ? 3 : totalXP < 20000 ? 4 : 5;
+
+  if (totalXP > lastXP) showToast(`+${totalXP - lastXP} XP!`);
+  if (totalCoin > lastCoin) showToast(`+${totalCoin - lastCoin} Coin!`);
+  lastXP = totalXP; lastCoin = totalCoin;
+
+  document.getElementById("globalXP").textContent = totalXP;
+  document.getElementById("globalCoin").textContent = totalCoin;
+  document.getElementById("globalBadge").textContent = badge;
+}
+
+// === TRẮC NGHIỆM ===
+function setupQuiz() {
+  const questions = document.querySelectorAll(".question");
+  const submitBtn = document.getElementById("submitBtn");
+  const alert = document.getElementById("alert");
+  const missingCount = document.getElementById("missingCount");
+
+  questions.forEach(q => {
+    const options = q.querySelectorAll(".option");
+    const otherInput = q.querySelector(".other-input");
+
+    options.forEach(opt => {
+      opt.onclick = () => {
+        options.forEach(o => o.classList.remove("selected"));
+        opt.classList.add("selected");
+        if (opt.classList.contains("other-trigger") && otherInput) {
+          otherInput.style.display = "block";
+        } else if (otherInput) {
+          otherInput.style.display = "none";
+        }
+        checkAllAnswered();
+      };
+    });
+
+    const input = otherInput?.querySelector("input");
+    if (input) input.oninput = checkAllAnswered;
+  });
+
+  function checkAllAnswered() {
+    answeredCount = 0;
+    questions.forEach(q => {
+      const selected = q.querySelector(".option.selected");
+      const otherVal = q.querySelector(".other-input input")?.value.trim();
+      if (selected || otherVal) answeredCount++;
+    });
+    missingCount.textContent = totalQuestions - answeredCount;
+    alert.style.display = answeredCount === totalQuestions ? "none" : "block";
+    submitBtn.disabled = answeredCount !== totalQuestions;
+  }
+
+  submitBtn.onclick = () => {
+    const traits = { creativity:0, competitiveness:0, sociability:0, playfulness:0, self_improvement:0, perfectionism:0 };
+    questions.forEach(q => {
+      const selected = q.querySelector(".option.selected");
+      if (selected && selected.dataset.score) {
+        const [trait, score] = selected.dataset.score.split(":");
+        traits[trait] += parseInt(score);
+      }
+    });
+
+    db.ref('users/' + currentUser.uid).update({
+      traits,
+      quizDone: true
+    }).then(() => {
+      showToast("Hoàn tất trắc nghiệm! Đang tải game...");
+      loadUserDataAndShowApp();
+    });
+  };
+}
+
+// === GAME BOARD ===
+function showGameBoard(data) {
+  document.getElementById("quiz").classList.add("hidden");
+  document.getElementById("gameBoard").classList.remove("hidden");
+
+  const traits = data.traits || {};
+  const highTrait = Object.keys(traits).reduce((a, b) => traits[a] > traits[b] ? a : b, "creativity");
+  const traitToGame = { creativity: "art", competitiveness: "math", sociability: "english", playfulness: "game", self_improvement: "science", perfectionism: "puzzle" };
+  const recommendedGame = traitToGame[highTrait] || "art";
+
+  const vietnameseNames = { creativity:"Sáng tạo", competitiveness:"Cạnh tranh", sociability:"Xã hội", playfulness:"Vui vẻ", self_improvement:"Tự cải thiện", perfectionism:"Cầu toàn" };
+  document.getElementById("welcomeMsg").innerHTML = `Dựa trên <strong>${vietnameseNames[highTrait]}</strong>, gợi ý: <strong style="color:#e11d48">${recommendedGame.toUpperCase()}</strong>`;
+
+  const grid = document.getElementById("gameGrid");
+  grid.innerHTML = "";
+  const games = [
+    { id: "art", title: "Vẽ Tranh AI", icon: "Art", level: "Sáng tạo", rec: highTrait === "creativity" },
+    { id: "math", title: "Toán Siêu Tốc", icon: "Math", level: "Cạnh tranh", rec: highTrait === "competitiveness" },
+    { id: "english", title: "Học Từ Vựng", icon: "English", level: "Xã hội", rec: highTrait === "sociability" },
+    { id: "science", title: "Thí Nghiệm", icon: "Science", level: "Tự cải thiện", rec: highTrait === "self_improvement" },
+    { id: "puzzle", title: "Ghép Hình", icon: "Puzzle", level: "Cầu toàn", rec: highTrait === "perfectionism" },
+    { id: "game", title: "Mini Game", icon: "Game", level: "Vui vẻ", rec: highTrait === "playfulness" }
+  ];
+
+  games.forEach(g => {
+    const card = document.createElement("div");
+    card.className = `game-card ${g.rec ? 'recommended' : ''}`;
+    card.innerHTML = `
+      <div class="game-icon">${g.icon}</div>
+      <div class="game-title">${g.title}</div>
+      <div class="game-level">${g.level}</div>
+      ${g.rec ? '<div class="badge">GỢI Ý</div>' : ''}
+    `;
+    card.onclick = () => showToast(`Chơi ${g.title} (sắp có!)`);
+    grid.appendChild(card);
+  });
+}
+
+// === HỒ SƠ ===
+function showProfile() {
+  document.getElementById("gameBoard").classList.add("hidden");
+  document.getElementById("profile").classList.remove("hidden");
+  db.ref('users/' + currentUser.uid).once('value').then(snap => renderProfile(snap.val()));
+}
+
+function backToGameBoard() {
+  document.getElementById("profile").classList.add("hidden");
+  document.getElementById("gameBoard").classList.remove("hidden");
+}
+
+function renderProfile(data) {
+  const traits = data.traits || { creativity:0, competitiveness:0, sociability:0, playfulness:0, self_improvement:0, perfectionism:0 };
+  const labels = ["Sáng tạo", "Cạnh tranh", "Xã hội", "Vui vẻ", "Tự cải thiện", "Cầu toàn"];
+  const values = Object.values(traits);
+
+  const ctx = document.getElementById("radarChart").getContext("2d");
+  if (radarChart) radarChart.destroy();
+  radarChart = new Chart(ctx, {
+    type: "radar",
+    data: { labels, datasets: [{ label: "Tính cách", data: values, backgroundColor: "rgba(225, 29, 72, 0.2)", borderColor: "#e11d48", pointBackgroundColor: "#e11d48", borderWidth: 2 }] },
+    options: { scales: { r: { min: 0, max: 12, ticks: { stepSize: 3 } } }, plugins: { legend: { display: false } } }
+  });
+
+  const traitList = document.getElementById("traitList");
+  traitList.innerHTML = "";
+  const names = { creativity:"Sáng tạo", competitiveness:"Cạnh tranh", sociability:"Xã hội", playfulness:"Vui vẻ", self_improvement:"Tự cải thiện", perfectionism:"Cầu toàn" };
+  Object.keys(traits).forEach(t => {
+    const item = document.createElement("div");
+    item.className = "trait-item";
+    item.innerHTML = `<div class="trait-name">${names[t]}</div><div class="trait-bar"><div class="trait-fill" style="width:${(traits[t]/12)*100}%"></div></div><div style="font-size:12px; margin-top:5px;">${traits[t]}/12</div>`;
+    traitList.appendChild(item);
+  });
+
+  const progress = data.gameProgress || {};
+  let totalXP = 0, totalCoin = 0;
+  Object.values(progress).forEach(g => { totalXP += g.xp || 0; totalCoin += g.coin || 0; });
+  const badge = totalXP < 1000 ? 1 : totalXP < 5000 ? 2 : totalXP < 10000 ? 3 : totalXP < 20000 ? 4 : 5;
+  document.getElementById("profileXP").textContent = totalXP;
+  document.getElementById("profileCoin").textContent = totalCoin;
+  document.getElementById("profileBadge").textContent = badge;
+}
+
+// === TOAST ===
+function showToast(msg) {
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
