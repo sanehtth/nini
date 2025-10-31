@@ -1,4 +1,4 @@
-// js/profile.js - HỒ SƠ ĐỘC LẬP
+// js/profile.js - AN TOÀN, KHÔNG LỖI CHART
 class ProfileManager {
   constructor() {
     this.db = window.firebaseDB;
@@ -12,6 +12,23 @@ class ProfileManager {
     auth.onAuthStateChanged(user => {
       if (user) this.currentUser = user;
     });
+
+    // ĐỢI DOM + CHART.JS TẢI XONG
+    document.addEventListener("DOMContentLoaded", () => {
+      if (typeof Chart === "undefined") {
+        console.error("Chart.js chưa tải!");
+        return;
+      }
+      this.checkChartReady();
+    });
+  }
+
+  checkChartReady() {
+    if (document.getElementById("radarChart") && typeof Chart !== "undefined") {
+      // OK → có thể vẽ
+    } else {
+      setTimeout(() => this.checkChartReady(), 100);
+    }
   }
 
   // === HIỂN THỊ HỒ SƠ ===
@@ -19,15 +36,11 @@ class ProfileManager {
     document.getElementById("gameBoard").classList.add("hidden");
     document.getElementById("profile").classList.remove("hidden");
 
-    this.db.ref('users/' + this.currentUser.uid).once('value').then(snap => {
-      this.render(snap.val());
-    });
-  }
+    if (!this.currentUser) return;
 
-  // === QUAY LẠI GAME BOARD ===
-  back() {
-    document.getElementById("profile").classList.add("hidden");
-    document.getElementById("gameBoard").classList.remove("hidden");
+    this.db.ref('users/' + this.currentUser.uid).once('value').then(snap => {
+      this.render(snap.val() || {});
+    });
   }
 
   // === VẼ HỒ SƠ ===
@@ -36,8 +49,11 @@ class ProfileManager {
     const labels = ["Sáng tạo", "Cạnh tranh", "Xã hội", "Vui vẻ", "Tự cải thiện", "Cầu toàn"];
     const values = Object.values(traits);
 
-    const ctx = document.getElementById("radarChart").getContext("2d");
+    const ctx = document.getElementById("radarChart")?.getContext("2d");
+    if (!ctx) return;
+
     if (this.radarChart) this.radarChart.destroy();
+
     this.radarChart = new Chart(ctx, {
       type: "radar",
       data: {
@@ -53,11 +69,15 @@ class ProfileManager {
       },
       options: {
         scales: { r: { min: 0, max: 12, ticks: { stepSize: 3 } } },
-        plugins: { legend: { display: false } }
+        plugins: { legend: { display: false } },
+        responsive: true,
+        maintainAspectRatio: false
       }
     });
 
+    // === VẼ THANH TIẾN TRÌNH ===
     const traitList = document.getElementById("traitList");
+    if (!traitList) return;
     traitList.innerHTML = "";
     const names = { creativity:"Sáng tạo", competitiveness:"Cạnh tranh", sociability:"Xã hội", playfulness:"Vui vẻ", self_improvement:"Tự cải thiện", perfectionism:"Cầu toàn" };
     Object.keys(traits).forEach(t => {
@@ -71,17 +91,25 @@ class ProfileManager {
       traitList.appendChild(item);
     });
 
+    // === THỐNG KÊ ===
     const progress = data.gameProgress || {};
     let totalXP = 0, totalCoin = 0;
     Object.values(progress).forEach(g => { totalXP += g.xp || 0; totalCoin += g.coin || 0; });
     const badge = totalXP < 1000 ? 1 : totalXP < 5000 ? 2 : totalXP < 10000 ? 3 : totalXP < 20000 ? 4 : 5;
-    document.getElementById("profileXP").textContent = totalXP;
-    document.getElementById("profileCoin").textContent = totalCoin;
-    document.getElementById("profileBadge").textContent = badge;
+    const xpEl = document.getElementById("profileXP");
+    const coinEl = document.getElementById("profileCoin");
+    const badgeEl = document.getElementById("profileBadge");
+    if (xpEl) xpEl.textContent = totalXP;
+    if (coinEl) coinEl.textContent = totalCoin;
+    if (badgeEl) badgeEl.textContent = badge;
+  }
+
+  back() {
+    document.getElementById("profile").classList.add("hidden");
+    document.getElementById("gameBoard").classList.remove("hidden");
   }
 }
 
-// GỌI TỪ BÊN NGOÀI
 const profileManager = new ProfileManager();
 window.showProfile = () => profileManager.show();
 window.backToGameBoard = () => profileManager.back();
