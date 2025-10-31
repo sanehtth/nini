@@ -1,10 +1,9 @@
-// quiz.js — render quiz trong index (SPA) vào #quizRoot
+// public/js/quiz.js — render quiz trong index (SPA) vào #quizRoot
 (function () {
   const auth = firebase.auth();
   const db   = firebase.database();
   const BANK = window.TRAIT_BANK || {};
 
-  // Tạo danh sách câu hỏi hợp nhất từ BANK
   function buildPool() {
     const pool = [];
     Object.keys(BANK).forEach(trait => {
@@ -12,10 +11,8 @@
         const options = q.options.map(o => o.label);
         const scores  = {};
         q.options.forEach(o => {
-          // "trait:1" hoặc {trait:1}
           if (typeof o.score === "string") {
-            const [k,v] = o.score.split(":");
-            scores[k] = Number(v);
+            const [k,v] = o.score.split(":"); scores[k] = Number(v);
           } else if (typeof o.score === "object" && o.score) {
             Object.assign(scores, o.score);
           }
@@ -26,7 +23,6 @@
     return pool;
   }
 
-  // Render quiz vào #quizRoot
   function renderQuiz() {
     const root = document.getElementById("quizRoot");
     if (!root) return;
@@ -34,14 +30,9 @@
     if (!user) { location.href = "index.html"; return; }
 
     const pool = buildPool();
-    if (!pool.length) {
-      root.innerHTML = "<p>Không có câu hỏi. Vui lòng thêm trong trait-config.js.</p>";
-      return;
-    }
+    if (!pool.length) { root.innerHTML = "<p>Chưa có câu hỏi trong trait-config.js.</p>"; return; }
 
-    // UI
     const form = document.createElement("form");
-    form.innerHTML = "";
     pool.forEach((it, idx) => {
       const div = document.createElement("div");
       div.style.marginBottom = "12px";
@@ -55,57 +46,42 @@
     });
 
     const submit = document.createElement("button");
-    submit.type = "submit";
-    submit.className = "btn primary";
-    submit.textContent = "Nộp bài";
+    submit.type = "submit"; submit.className = "btn primary"; submit.textContent = "Nộp bài";
     form.appendChild(submit);
 
-    // Xử lý nộp quiz
     form.onsubmit = async (e) => {
       e.preventDefault();
-      const sums = {
-        creativity:0, competitiveness:0, sociability:0,
-        playfulness:0, self_improvement:0, perfectionism:0
-      };
+      const sums = { creativity:0, competitiveness:0, sociability:0, playfulness:0, self_improvement:0, perfectionism:0 };
+      const counts = { creativity:0, competitiveness:0, sociability:0, playfulness:0, self_improvement:0, perfectionism:0 };
 
+      const pool2 = buildPool(); // giữ nguyên thứ tự
       const fd = new FormData(form);
-      pool.forEach((it, idx) => {
+      pool2.forEach((it, idx) => {
         const v = fd.get("q"+idx);
         if (v == null) return;
-        // cộng điểm theo mapping
         Object.keys(it.scores).forEach(k => {
           sums[k] += Number(it.scores[k] || 0);
+          counts[k] += 1;
         });
       });
 
-      // Chuẩn hoá về % (đơn giản: chia theo tổng tối đa từng trait nếu có)
-      // Nếu BANK đều dùng score=1 mỗi lần trait xuất hiện, có thể lấy max = số lần trait đó xuất hiện
-      const counts = { creativity:0, competitiveness:0, sociability:0, playfulness:0, self_improvement:0, perfectionism:0 };
-      pool.forEach(it => {
-        Object.keys(it.scores).forEach(k => { if (counts[k] != null) counts[k]++; });
-      });
-      const toPct = (k) => {
-        const max = Math.max(1, counts[k]);
-        return Math.round(100 * sums[k] / max);
-      };
+      const pct = (k) => Math.round(100 * (sums[k] || 0) / Math.max(1, counts[k] || 0));
       const traits = {
-        creativity:       toPct("creativity"),
-        competitiveness:  toPct("competitiveness"),
-        sociability:      toPct("sociability"),
-        playfulness:      toPct("playfulness"),
-        self_improvement: toPct("self_improvement"),
-        perfectionism:    toPct("perfectionism"),
+        creativity: pct("creativity"),
+        competitiveness: pct("competitiveness"),
+        sociability: pct("sociability"),
+        playfulness: pct("playfulness"),
+        self_improvement: pct("self_improvement"),
+        perfectionism: pct("perfectionism"),
       };
 
       try {
         await db.ref("users/" + user.uid + "/traits").set(traits);
-        // thông báo nhẹ
-        alert("Đã lưu kết quả trắc nghiệm! Quay lại trang chính để xem biểu đồ.");
-        // quay lại trang chính (bỏ #quiz) để hiện dashboard
-        location.hash = "";
+        alert("Đã lưu trắc nghiệm! Quay lại trang chính để xem biểu đồ.");
+        location.hash = ""; // quay về dashboard
       } catch (err) {
         console.error(err);
-        alert("Lưu kết quả thất bại. Vui lòng thử lại.");
+        alert("Lưu kết quả thất bại. Thử lại nhé.");
       }
     };
 
@@ -113,6 +89,6 @@
     root.appendChild(form);
   }
 
-  // Export cho main.js router gọi
+  // export cho router trong main.js gọi
   window.renderQuiz = renderQuiz;
 })();
