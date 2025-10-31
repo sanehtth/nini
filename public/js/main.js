@@ -59,7 +59,7 @@ function handleAuth(authFn, btnId) {
     });
 }
 // === DANG KY ===
-document.getElementById("register")?.addEventListener("click", () => {
+document.getElementById("signup")?.addEventListener("click", () => {
       const email = document.getElementById("email").value;
       const pass = document.getElementById("password").value;
       if (!email || !pass) return alert("Nhập email và mật khẩu!");
@@ -268,3 +268,4 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 3000);
 
 }
+
