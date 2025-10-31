@@ -274,22 +274,40 @@
     return result;
   }
 
-  // Submit
-  const SAFE_XP = 50;
-  submitBtn.addEventListener('click', () => {
-    checkAllAnswered();
-    if (submitBtn.disabled) return;
+  // ========== Submit: THEM DATA VAO FIREBASE ===================
+submitBtn.addEventListener('click', async () => {
+  checkAllAnswered();
+  if (submitBtn.disabled) return;
 
-    const res = score();
-    try {
-      localStorage.setItem('lq_traitScores', JSON.stringify(res));
-      localStorage.setItem('lq_quizDone', 'true');
-      const xp = parseInt(localStorage.getItem('lq_xp') || '0', 10) + SAFE_XP;
-      localStorage.setItem('lq_xp', String(xp));
-    } catch(e) { console.warn('localStorage error', e); }
+  const res = score(); // (hoặc scoreQuiz() theo tên hàm của bạn)
+  // Chuẩn hóa về % 0..100 nếu muốn (ở đây giữ điểm thô)
+  try {
+    const auth = firebase.auth();
+    const user = auth.currentUser;
+    if (!user) { alert("Bạn chưa đăng nhập!"); return; }
 
-    window.location.href = '/index.html?quiz=done';
-  });
+    // Lưu traits + đánh dấu đã làm quiz
+    await firebase.database().ref("users/"+user.uid).update({
+      traits: res,
+      quizDone: true
+    });
+
+    // Thưởng nhẹ (tùy thích)
+    const statsSnap = await firebase.database().ref("users/"+user.uid+"/stats").once("value");
+    const stats = statsSnap.val() || { xp:0, coin:0, badge:1 };
+    await firebase.database().ref("users/"+user.uid+"/stats").update({
+      xp: (stats.xp||0) + 50, coin: (stats.coin||0) + 10
+    });
+  } catch (e) {
+    console.error(e);
+    alert("Có lỗi khi lưu kết quả. Vui lòng thử lại.");
+    return;
+  }
+
+  // Quay về index
+  window.location.href = "/index.html?quiz=done";
+});
+//===========HET SUBMIT ===================
 })();
 
 
@@ -664,4 +682,5 @@ window.location.href = '/index.html?quiz=done';
 
 
 });
+
 })();
