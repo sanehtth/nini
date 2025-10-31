@@ -58,17 +58,24 @@ function handleAuth(authFn, btnId) {
       button.textContent = btnId === "signupBtn" ? "Đăng ký" : "Đăng nhập";
     });
 }
+// === DANG KY ===
+document.getElementById("register")?.addEventListener("click", () => {
+      const email = document.getElementById("email").value;
+      const pass = document.getElementById("password").value;
+      if (!email || !pass) return alert("Nhập email và mật khẩu!");
 
-function signup(email, pass) {
-  return auth.fetchSignInMethodsForEmail(email)
-    .then(methods => {
-      if (methods.length > 0) throw new Error("Email đã được sử dụng!");
-      return auth.createUserWithEmailAndPassword(email, pass);
-    })
-    .then(cred => db.ref('users/' + cred.user.uid + '/profile').set({
-      email, joined: new Date().toISOString().split('T')[0]
-    }).then(() => cred));
-}
+      createUserWithEmailAndPassword(auth, email, pass)
+        .then(cred => {
+          const uid = cred.user.uid;
+          return setDoc(doc(db, "users", uid), {
+            profile: { email, joined: new Date().toISOString(), consent_insight: false },
+            traits: { creativity:0, competitiveness:0, sociability:0, playfulness:0, self_improvement:0, perfectionism:0 },
+            skills: { listening:0, speaking:0, reading:0, writing:0 }
+          });
+        })
+        .then(() => alert("Đăng ký OK! Bây giờ đăng nhập lại."))
+        .catch(err => alert("Lỗi: " + err.message));
+    });
 
 function login(email, pass) {
   return auth.signInWithEmailAndPassword(email, pass);
@@ -259,4 +266,5 @@ function showToast(msg) {
   t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3000);
+
 }
