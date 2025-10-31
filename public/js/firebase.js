@@ -11,9 +11,7 @@ const firebaseConfig = {
 
 // Khởi tạo Firebase
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.database();
 
 // Xuất biến để main.js dùng
-window.firebaseAuth = auth;
-window.firebaseDB = db;
+window.firebaseAuth = firebase.auth();
+window.firebaseDB = firebase.database();
