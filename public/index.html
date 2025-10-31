@@ -67,7 +67,41 @@
 </div>
 </section>
 
+  <!-- APP SCREEN -->
+<main id="appScreen" class="hidden">
+  <section class="grid">
+    <div class="card">
+      <h2>Hồ sơ người học</h2>
+      <canvas id="traitsRadar" height="230"></canvas>
+    </div>
 
-<!-- APP SCREEN -->
+    <div class="card">
+      <h2>Tiến độ kỹ năng</h2>
+      <div id="skillsBars" class="bars"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Nhiệm vụ hằng ngày</h2>
+    <p id="dailyMission">(đang tạo đề xuất...)</p>
+    <div class="row">
+      <button id="playListening"  class="btn">Listening game</button>
+      <button id="playSpeaking"   class="btn">Speaking game</button>
+      <button id="playReading"    class="btn">Reading game</button>
+      <button id="playWriting"    class="btn">Writing game</button>
+    </div>
+  </section>
+</main>
+
+ <!-- QUIZ SCREEN (ẩn mặc định) -->
+<section id="quizScreen" class="card hidden">
+  <h2>Trắc nghiệm sở thích học</h2>
+  <div id="quizRoot"></div>
+  <div class="row" style="margin-top:12px">
+    <button id="quizBackBtn" class="btn">⬅ Về trang chính</button>
+  </div>
+</section>
+ 
 </html>
+
 
