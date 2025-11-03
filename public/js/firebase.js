@@ -17,3 +17,15 @@ firebase.initializeApp(firebaseConfig);
 window.firebaseAuth = firebase.auth();
 window.firebaseDB = firebase.database();
 
+function sendPasswordReset(email) {
+  authMsg.textContent = "Đang gửi email đặt lại...";
+  firebase.auth().sendPasswordResetEmail(email)
+    .then(() => {
+      authMsg.style.color = "green";
+      authMsg.textContent = "Đã gửi email đặt lại mật khẩu!";
+    })
+    .catch((error) => {
+      authMsg.style.color = "#e11d48";
+      authMsg.textContent = error.message;
+    });
+}
