@@ -20,15 +20,31 @@
 <body>
   <div class="container">
 
-    <!-- ĐĂNG NHẬP -->
-    <div id="authScreen" class="auth">
-      <h2>LearnQuest AI</h2>
-      <input type="email" id="email" placeholder="Email">
-      <input type="password" id="password" placeholder="Mật khẩu">
-      <button class="main-btn" id="signupBtn">Đăng ký</button>
-      <button class="main-btn" id="loginBtn">Đăng nhập</button>
-      <p id="authMsg" style="margin-top:10px; min-height:20px; font-weight:bold;"></p>
+    <!-- ĐĂNG NHẬP & ĐĂNG KÝ VỚI TAB -->
+<div id="authScreen" class="auth">
+  <h2>LearnQuest AI</h2>
+  
+  <!-- Tabs -->
+  <div class="auth-tabs">
+    <button class="tab-btn active" id="loginTab">Đăng nhập</button>
+    <button class="tab-btn" id="signupTab">Đăng ký</button>
+  </div>
+
+  <!-- Form chung -->
+  <div id="authForm">
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Mật khẩu" required>
+
+    <!-- Chỉ hiện ở Đăng nhập -->
+    <div id="forgotPassword" class="forgot-link">
+      <a href="#" id="forgotBtn">Quên mật khẩu?</a>
     </div>
+
+    <button class="main-btn" id="actionBtn">Đăng nhập</button>
+  </div>
+
+  <p id="authMsg" style="margin-top:10px; min-height:20px; font-weight:bold; color: #e11d48;"></p>
+</div>
 
     <!-- ỨNG DỤNG CHÍNH -->
     <div id="mainApp" class="hidden">
@@ -129,6 +145,7 @@
 </body>
 
 </html>
+
 
 
 
