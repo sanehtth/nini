@@ -20,7 +20,63 @@ document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById("submitBtn") || document.querySelector(".question")) {
     setupQuiz();
   }
+//========== cac ham xu ly dang nhap ===================
+// === XỬ LÝ TAB ĐĂNG NHẬP / ĐĂNG KÝ ===
+const loginTab = document.getElementById("loginTab");
+const signupTab = document.getElementById("signupTab");
+const actionBtn = document.getElementById("actionBtn");
+const forgotPassword = document.getElementById("forgotPassword");
+const authMsg = document.getElementById("authMsg");
 
+let isLoginMode = true;
+
+// Chuyển tab
+loginTab.onclick = () => {
+  isLoginMode = true;
+  loginTab.classList.add("active");
+  signupTab.classList.remove("active");
+  actionBtn.textContent = "Đăng nhập";
+  forgotPassword.style.display = "block";
+  authMsg.textContent = "";
+};
+
+signupTab.onclick = () => {
+  isLoginMode = false;
+  signupTab.classList.add("active");
+  loginTab.classList.remove("active");
+  actionBtn.textContent = "Đăng ký";
+  forgotPassword.style.display = "none";
+  authMsg.textContent = "";
+};
+
+// Xử lý hành động (gọi hàm từ firebase.js)
+actionBtn.onclick = () => {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!email || !password) {
+    authMsg.textContent = "Vui lòng nhập đầy đủ email và mật khẩu!";
+    return;
+  }
+
+  if (isLoginMode) {
+    loginUser(email, password); // Hàm này phải có trong firebase.js
+  } else {
+    signupUser(email, password); // Hàm này phải có trong firebase.js
+  }
+};
+
+// Quên mật khẩu
+document.getElementById("forgotBtn").onclick = (e) => {
+  e.preventDefault();
+  const email = document.getElementById("email").value.trim();
+  if (!email) {
+    authMsg.textContent = "Vui lòng nhập email trước!";
+    return;
+  }
+  sendPasswordReset(email); // Hàm này cần định nghĩa trong firebase.js
+};
+// ============  het ham xu ly dang nhap ==================
   // ====== Vá schema khi user thiếu trường ======
   async function ensureUserSchema(uid, emailIfMissing) {
     const userRef = db.ref("users/" + uid);
@@ -403,5 +459,6 @@ db.ref('users/' + currentUser.uid).once('value')
     setTimeout(() => t.remove(), 3000);
   }
 });
+
 
 
