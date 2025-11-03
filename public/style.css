@@ -49,4 +49,46 @@ button.main-btn.loading::after { content:''; position:absolute; width:16px; heig
 .trait-fill { height:100%; background:#e11d48; border-radius:4px; }
 
 .toast { position:fixed; bottom:20px; right:20px; background:#333; color:white; padding:12px 20px; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.3); z-index:1000; animation:toast 3s forwards; font-size:14px; }
+
 @keyframes toast { 0%{opacity:0;transform:translateY(20px)} 10%{opacity:1;transform:translateY(0)} 90%{opacity:1} 100%{opacity:0} }
+.auth-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #eee;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 12px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.tab-btn.active {
+  color: #e11d48;
+  border-bottom: 3px solid #e11d48;
+}
+
+.tab-btn:hover:not(.active) {
+  color: #e11d48;
+}
+
+.forgot-link {
+  text-align: right;
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.forgot-link a {
+  color: #e11d48;
+  text-decoration: none;
+}
+
+.forgot-link a:hover {
+  text-decoration: underline;
+}
