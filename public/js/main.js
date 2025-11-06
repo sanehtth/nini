@@ -60,9 +60,9 @@ actionBtn.onclick = () => {
   }
 
   if (isLoginMode) {
-    loginUser(email, password); // Hàm này phải có trong firebase.js
+    login(email, password); // Hàm này co trong auth.js
   } else {
-    signupUser(email, password); // Hàm này phải có trong firebase.js
+    signup(email, password); // Hàm này co trong auth.js
   }
 };
 
@@ -456,6 +456,7 @@ db.ref('users/' + currentUser.uid).once('value')
     setTimeout(() => t.remove(), 3000);
   }
 });
+
 
 
 
