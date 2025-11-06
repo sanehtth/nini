@@ -1,6 +1,6 @@
 // js/main.js
-const auth = window.firebaseAuth;
-const db   = window.firebaseDB;
+//const auth = window.firebaseAuth;
+//const db   = window.firebaseDB;
 
 let currentUser = null;
 let answeredCount = 0;
@@ -456,6 +456,7 @@ db.ref('users/' + currentUser.uid).once('value')
     setTimeout(() => t.remove(), 3000);
   }
 });
+
 
 
 
