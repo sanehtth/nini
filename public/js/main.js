@@ -175,10 +175,7 @@ document.getElementById("forgotBtn").onclick = (e) => {
   }
 
   function signup(email, pass) {
-    const auth = firebase.auth();
-    const db   = firebase.database();
-
-    return auth.fetchSignInMethodsForEmail(email).then((methods) => {
+       return auth.fetchSignInMethodsForEmail(email).then((methods) => {
       if (methods.length > 0) throw new Error("Email đã được sử dụng!");
       return auth.createUserWithEmailAndPassword(email, pass);
     }).then(async (cred) => {
@@ -459,6 +456,7 @@ db.ref('users/' + currentUser.uid).once('value')
     setTimeout(() => t.remove(), 3000);
   }
 });
+
 
 
 
