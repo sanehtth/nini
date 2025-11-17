@@ -1,109 +1,241 @@
-﻿<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MakePromt — 5s Scene Prompt Generator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MakePrompt – 5s Scene Prompt Generator</title>
 
-  <!-- GIỮ ĐÚNG ĐƯỜNG DẪN CSS -->
-  <link rel="stylesheet" href="/test/css/nini-theme.css" />
+  <!-- Dùng chung theme với site chính -->
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="dark.css" />
+  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
 
+  <!-- CSS riêng cho trang MakePrompt -->
   <style>
-    .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    .card{background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.35);
-      border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.18);
-      backdrop-filter:blur(12px) saturate(140%);padding:18px}
-    /* form skin cho input trong .card */
-    .card input[type="text"],.card input[type="number"],.card textarea,.card select{
-      width:100%;padding:10px 12px;border-radius:12px;
-      border:1px solid rgba(255,255,255,.28);
-      background:rgba(255,255,255,.18);outline:none;
-      transition:border-color .12s,box-shadow .12s,background .12s;
-      box-shadow:0 4px 10px rgba(0,0,0,.06) inset;backdrop-filter:blur(6px)
+    .mp-main {
+      padding: 24px 30px 30px;
     }
-    .card textarea{min-height:140px;resize:vertical}
-    .card input:focus,.card textarea:focus,.card select:focus{
-      border-color:color-mix(in oklab,var(--brand) 55%,#fff 0%);
-      box-shadow:0 0 0 3px color-mix(in oklab,var(--brand) 22%,transparent);
-      background:rgba(255,255,255,.22)
+
+    .mp-header-text {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #555;
     }
-    .card label{display:block;font-weight:700;margin:8px 0 6px}
-    pre{white-space:pre-wrap}
-    .small{font-size:12px}
+
+    .mp-layout {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin-top: 24px;
+    }
+
+    .mp-col {
+      flex: 1 1 0;
+      min-width: 260px;
+    }
+
+    .mp-card-label {
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: block;
+      font-size: 14px;
+    }
+
+    .mp-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .mp-row .mp-field {
+      flex: 1;
+    }
+
+    .mp-select,
+    .mp-input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+    }
+
+    .mp-textarea {
+      width: 100%;
+      min-height: 220px;
+      resize: vertical;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .mp-textarea:focus,
+    .mp-input:focus,
+    .mp-select:focus {
+      outline: none;
+      border-color: #e11d48;
+      box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.15);
+    }
+
+    .mp-actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .mp-output-box {
+      width: 100%;
+      min-height: 360px;
+      border-radius: 16px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      padding: 16px 18px;
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow: auto;
+    }
+
+    .mp-output-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .mp-note {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    @media (max-width: 768px) {
+      .mp-main {
+        padding: 20px;
+      }
+    }
   </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <h1>🧠 MakePromt — 5s Scene Prompt Generator</h1>
-    <p class="muted">Nhập ý tưởng/kịch bản → chia thành cảnh 5s → sinh prompt chi tiết (ảnh/video). 100% chạy trong trình duyệt, không cần API.</p>
+  <div class="container">
+    <!-- HEADER giống phong cách LearnQuest -->
+    <header>
+      <h1>MakePrompt – 5s Scene Prompt Generator</h1>
+      <p class="subtitle">Tách ý tưởng / lời bài hát thành các cảnh 5 giây để làm prompt cho Sora, Flow, v.v.</p>
 
-    <div class="grid">
-      <!-- LEFT: form -->
-      <div class="card">
-        <h3>Thiết lập chung</h3>
+      <div class="user-info">
+        <button class="profile-btn" onclick="window.location.href='admin.html'">
+          ⬅ Về trang Admin
+        </button>
 
-        <div class="grid">
-          <label>Tổng thời lượng (giây)
-            <input id="dur" type="number" value="180" min="5" step="5" />
-          </label>
-          <label>Mỗi cảnh (giây)
-            <input id="item" type="number" value="5" min="5" step="5" />
-          </label>
-        </div>
-
-        <div class="grid">
-          <label>Preset phong cách
-            <select id="preset">
-              <option value="3d_cinematic_warm">3D Cinematic • Warm</option>
-              <option value="anime_soft">Anime • Soft film look</option>
-              <option value="pixar_like">Pixar-like stylized 3D</option>
-              <option value="disney_like">Disney-like animation</option>
-              <option value="real_photo">Realistic photo • natural light</option>
-              <option value="vintage_film">Vintage film • grain</option>
-            </select>
-          </label>
-          <label>Máy quay & cảm xúc (luân phiên)
-            <select id="combo">
-              <option value="mix">Mặc định (nhiều góc)</option>
-              <option value="closeup_tender">Cận cảnh + dịu dàng</option>
-              <option value="wide_hopeful">Toàn cảnh + hi vọng</option>
-              <option value="handheld_romance">Cầm tay + lãng mạn</option>
-            </select>
-          </label>
-        </div>
-
-        <label>Khung ảnh / tỉ lệ
-          <select id="aspect">
-            <option value="1792x1024">16:9 (landscape)</option>
-            <option value="1024x1024">1:1 (square)</option>
-            <option value="1024x1792">9:16 (vertical)</option>
-          </select>
-        </label>
-
-        <label>Lời bài hát / Kịch bản
-          <textarea id="lyrics" placeholder="Dán lyric/kịch bản vào đây..."></textarea>
-        </label>
-
-        <div class="row" style="margin-top:10px">
-          <button id="btnMakePrompt">⚙️ Tạo prompt</button>
-          <button id="btnJSON" class="ghost">🧾 Tải JSON</button>
-          <button id="btnTSV"  class="ghost">📄 Tải TSV</button>
-        </div>
-
-        <p class="muted small">Mẹo: bạn có thể copy string prompt dán qua tool tạo ảnh/Video. TSV dùng để import Google Sheets/Excel.</p>
+        <!-- Dùng chung toggle theme -->
+        <button class="profile-btn" onclick="toggleTheme()">
+          Dark / Light
+        </button>
       </div>
+    </header>
 
-      <!-- RIGHT: result -->
-      <div class="card">
-        <h3>Kết quả</h3>
-        <pre id="output"></pre>
+    <!-- MAIN -->
+    <main class="mp-main">
+      <div class="mp-layout">
+        <!-- CỘT TRÁI: CẤU HÌNH & LỜI/LÝRIC -->
+        <section class="mp-col">
+          <h2 style="font-size:18px; margin-bottom:12px;">Thiết lập chung</h2>
+          <p class="mp-header-text">
+            Nhập tổng thời lượng, độ dài mỗi cảnh, preset… rồi dán lời bài hát hoặc kịch bản vào bên dưới.
+          </p>
+
+          <!-- Thời lượng & preset -->
+          <div class="mp-row" style="margin-top:16px;">
+            <div class="mp-field">
+              <label for="dur" class="mp-card-label">Tổng thời lượng (giây)</label>
+              <input id="dur" class="mp-input" type="number" min="5" step="5" value="180" />
+            </div>
+            <div class="mp-field">
+              <label for="item" class="mp-card-label">Mỗi cảnh (giây)</label>
+              <input id="item" class="mp-input" type="number" min="3" step="1" value="5" />
+            </div>
+          </div>
+
+          <div class="mp-row">
+            <div class="mp-field">
+              <label for="preset" class="mp-card-label">Preset phong cách</label>
+              <select id="preset" class="mp-select">
+                <option value="3D cinematic, warm colors, detailed lighting">
+                  3D Cinematic • Warm
+                </option>
+                <option value="anime style, vibrant, dynamic lighting">
+                  Anime • Vibrant
+                </option>
+                <option value="painterly illustration, soft light, storybook style">
+                  Storybook • Soft
+                </option>
+                <option value="">Tự mô tả trong prompt</option>
+              </select>
+            </div>
+            <div class="mp-field">
+              <label for="combo" class="mp-card-label">Máy quay & cảm xúc (luân phiên)</label>
+              <select id="combo" class="mp-select">
+                <option value="default">
+                  Mặc định (nhiều góc)
+                </option>
+                <option value="slow">
+                  Chậm rãi, tập trung cảm xúc
+                </option>
+                <option value="dynamic">
+                  Năng động, nhiều chuyển động camera
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mp-row">
+            <div class="mp-field">
+              <label for="aspect" class="mp-card-label">Khung ảnh / tỉ lệ</label>
+              <select id="aspect" class="mp-select">
+                <option value="16:9">16:9 (landscape)</option>
+                <option value="9:16">9:16 (vertical)</option>
+                <option value="1:1">1:1 (square)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Lyrics / kịch bản -->
+          <div style="margin-top:10px;">
+            <label for="lyrics" class="mp-card-label">Lời bài hát / Kịch bản</label>
+            <textarea id="lyrics" class="mp-textarea" placeholder="Dán lyric hoặc kịch bản vào đây..."></textarea>
+          </div>
+
+          <!-- Nút hành động -->
+          <div class="mp-actions">
+            <button id="btnMakePrompt" class="main-btn">
+              ✨ Tạo prompt
+            </button>
+          </div>
+
+          <p class="mp-note">
+            Mẹo: bạn có thể copy string prompt dán qua các tool tạo ảnh/video.  
+            Hoặc dùng bản JSON/TSV xuất ra để import vào Google Sheets/Excel.
+          </p>
+        </section>
+
+        <!-- CỘT PHẢI: KẾT QUẢ -->
+        <section class="mp-col">
+          <div class="mp-output-box">
+            <div class="mp-output-title">Kết quả</div>
+            <div id="output"></div>
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   </div>
 
-  <!-- JS riêng cho trang này -->
-  <script type="module" src="/admin/tools/makeprompt.js"></script>
+  <!-- SCRIPT -->
+  <script src="js/theme.js"></script>
+  <!-- JS sinh prompt (giữ nguyên file cũ) -->
+  <script src="/admin/tools/makeprompt.js"></script>
 </body>
 </html>
