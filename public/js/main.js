@@ -219,6 +219,17 @@ document.getElementById("forgotBtn").onclick = (e) => {
   function login(email, pass) {
     return auth.signInWithEmailAndPassword(email, pass);
   }
+// =======ham an hien nut admin==========
+  function updateAdminUI(user) {
+  const adminBtn = document.getElementById("adminBtn");
+  if (!adminBtn) return;
+
+  if (user && user.email === ADMIN_EMAIL) {
+    adminBtn.style.display = "inline-flex"; // hiện nút
+  } else {
+    adminBtn.style.display = "none";        // ẩn nút
+  }
+}
 
   // ====== Load app ======
   function loadUserDataAndShowApp() {
@@ -457,6 +468,7 @@ db.ref('users/' + currentUser.uid).once('value')
     setTimeout(() => t.remove(), 3000);
   }
 });
+
 
 
 
