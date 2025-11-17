@@ -1,17 +1,16 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <div style="display:flex; align-items:center; gap:15px;">
-  <img src="/assets/logonini.webp" alt="Logo Nini" style="height:50px; border-radius:50%; object-fit:cover;">
-  <h1 style="margin:0; font-size:24px;">LearnQuest AI</h1>
-</div>
+
+  <title>LearnQuest AI</title>
 
   <!-- CSS -->
   <link rel="stylesheet" href="style.css">
-	<link rel="stylesheet" href="dark.css">
+  <link rel="stylesheet" href="dark.css">
   <link rel="icon" href="/assets/favicon.ico" type="image/x-icon">
+
   <!-- THƯ VIỆN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -22,76 +21,94 @@
   <div class="container">
 
     <!-- ĐĂNG NHẬP & ĐĂNG KÝ VỚI TAB -->
-<div id="authScreen" class="auth">
-  <h2>LearnQuest AI</h2>
-  
-  <!-- Tabs -->
-  <div class="auth-tabs">
-    <button class="tab-btn active" id="loginTab">Đăng nhập</button>
-    <button class="tab-btn" id="signupTab">Đăng ký</button>
-  </div>
+    <div id="authScreen" class="auth">
+      <div style="display:flex; align-items:center; gap:15px; justify-content:center; margin-bottom:10px;">
+        <img src="/assets/logonini.webp" alt="Logo Nini"
+             style="height:50px; border-radius:50%; object-fit:cover;">
+        <h1 style="margin:0; font-size:24px;">LearnQuest AI</h1>
+      </div>
 
-  <!-- Form chung -->
-  <div id="authForm">
-    <input type="email" id="email" placeholder="Email" required>
-    <input type="password" id="password" placeholder="Mật khẩu" required>
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="tab-btn active" id="loginTab">Đăng nhập</button>
+        <button class="tab-btn" id="signupTab">Đăng ký</button>
+      </div>
 
-    <!-- Chỉ hiện ở Đăng nhập -->
-    <div id="forgotPassword" class="forgot-link">
-      <a href="#" id="forgotBtn">Quên mật khẩu?</a>
+      <!-- Form chung -->
+      <div id="authForm">
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Mật khẩu" required>
+
+        <!-- Chỉ hiện ở Đăng nhập -->
+        <div id="forgotPassword" class="forgot-link">
+          <a href="#" id="forgotBtn">Quên mật khẩu?</a>
+        </div>
+
+        <button class="main-btn" id="actionBtn">Đăng nhập</button>
+      </div>
+
+      <p id="authMsg"
+         style="margin-top:10px; min-height:20px; font-weight:bold; color:#e11d48;"></p>
     </div>
-
-    <button class="main-btn" id="actionBtn">Đăng nhập</button>
-  </div>
-
-  <p id="authMsg" style="margin-top:10px; min-height:20px; font-weight:bold; color: #e11d48;"></p>
-</div>
 
     <!-- ỨNG DỤNG CHÍNH -->
     <div id="mainApp" class="hidden">
       <header>
-        <h1>LearnQuest AI</h1>
-        <p class="subtitle">Học vui như chơi game!</p>
+        <div style="display:flex; align-items:center; gap:15px;">
+          <img src="/assets/logonini.webp" alt="Logo Nini"
+               style="height:50px; border-radius:50%; object-fit:cover;">
+          <div>
+            <h1 style="margin:0;">LearnQuest AI</h1>
+            <p class="subtitle">Học vui như chơi game!</p>
+          </div>
+        </div>
+
         <div class="user-info">
-	<!-- nut admin -->
-		<button id="adminBtn"
-          class="main-btn"
-          style="display:none"
-          onclick="window.location.href='admin.html'">
-    Admin Mode
-  		</button>
-	<!-- NÚT CHUYỂN THEME -->
-	<button id="themeToggle" class="profile-btn" style="margin-left:10px;">Dark Mode</button>
+          <!-- Nút Admin -->
+          <button id="adminBtn"
+                  class="main-btn"
+                  style="display:none"
+                  onclick="window.location.href='admin.html'">
+            Admin Mode
+          </button>
+
+          <!-- Nút chuyển theme (dùng chung với admin qua theme.js) -->
+          <button id="themeToggle"
+                  class="profile-btn"
+                  style="margin-left:10px;"
+                  onclick="toggleTheme()">
+            Dark / Light
+          </button>
 
           <div class="stats">
             <div class="stat-item">XP <span id="globalXP">0</span></div>
             <div class="stat-item">Coin <span id="globalCoin">0</span></div>
             <div class="stat-item">Huy hiệu <span id="globalBadge">1</span></div>
           </div>
+
           <span id="userEmail">user</span>
           <button class="profile-btn" id="profileBtn">Hồ sơ</button>
           <button class="logout-btn" id="logoutBtn">Đăng xuất</button>
         </div>
       </header>
 
-      <!-- TRẮC NGHIỆM -->
       <!-- Modal mời làm trắc nghiệm -->
-<div id="quizInvite" class="modal hidden">
-  <div class="modal-card">
-    <h3>Bạn muốn làm trắc nghiệm để cá nhân hóa lộ trình?</h3>
-    <p>Chỉ mất vài phút. Kết quả sẽ hiện ngay trong “Hồ sơ người học”.</p>
-    <div class="row" style="gap:8px; margin-top:12px">
-      <button id="goQuizBtn" class="main-btn">Làm trắc nghiệm</button>
-      <button id="skipQuizBtn" class="btn ghost">Để sau</button>
-    </div>
-  </div>
-</div>
-
+      <div id="quizInvite" class="modal hidden">
+        <div class="modal-card">
+          <h3>Bạn muốn làm trắc nghiệm để cá nhân hóa lộ trình?</h3>
+          <p>Chỉ mất vài phút. Kết quả sẽ hiện ngay trong “Hồ sơ người học”.</p>
+          <div class="row" style="gap:8px; margin-top:12px;">
+            <button id="goQuizBtn" class="main-btn">Làm trắc nghiệm</button>
+            <button id="skipQuizBtn" class="btn ghost">Để sau</button>
+          </div>
+        </div>
+      </div>
 
       <!-- GAME BOARD -->
       <div id="gameBoard" class="game-board hidden">
         <h2>Chọn Game Bạn Muốn Chơi!</h2>
-        <p id="welcomeMsg" style="margin:20px 0; font-size:16px; color:#e11d48;"></p>
+        <p id="welcomeMsg"
+           style="margin:20px 0; font-size:16px; color:#e11d48;"></p>
         <div class="game-grid" id="gameGrid"></div>
       </div>
 
@@ -101,56 +118,34 @@
           <h2>Hồ SƠ Cá Nhân</h2>
           <button class="main-btn" id="backBtn">Quay lại</button>
         </div>
+
         <div style="text-align:center; margin:20px 0;">
           <h3>Vector Tính Cách</h3>
-          <div class="radar-container"><canvas id="radarChart"></canvas></div>
+          <div class="radar-container">
+            <canvas id="radarChart"></canvas>
+          </div>
         </div>
+
         <div class="trait-list" id="traitList"></div>
-        <div style="margin:30px 0; padding:20px; background:#f8f9fa; border-radius:15px; text-align:center;">
+
+        <div style="margin:30px 0; padding:20px; background:#f8f9fa;
+                    border-radius:15px; text-align:center;">
           <h3>Thống Kê</h3>
-          <p>XP: <strong id="profileXP">0</strong> | Coin: <strong id="profileCoin">0</strong> | Huy hiệu: <strong id="profileBadge">1</strong></p>
+          <p>
+            XP: <strong id="profileXP">0</strong> |
+            Coin: <strong id="profileCoin">0</strong> |
+            Huy hiệu: <strong id="profileBadge">1</strong>
+          </p>
         </div>
       </div>
-    </div>
-  </div>
+    </div> <!-- end mainApp -->
+  </div> <!-- end container -->
 
-<script>
-  // === CHUYỂN THEME ===
-  const themeToggle = document.getElementById("themeToggle");
-  const cssLink = document.querySelector("link[rel='stylesheet']");
-
-  let isDark = false;
-  themeToggle.onclick = () => {
-    isDark = !isDark;
-    if (isDark) {
-      cssLink.href = "dark.css";
-      themeToggle.textContent = "Light Mode";
-      localStorage.setItem("theme", "dark");
-    } else {
-      cssLink.href = "style.css";
-      themeToggle.textContent = "Dark Mode";
-      localStorage.setItem("theme", "light");
-    }
-  };
-
-  // TỰ ĐỘNG LOAD THEME ĐÃ LƯU
-  window.addEventListener("load", () => {
-    const saved = localStorage.getItem("theme");
-    if (saved === "dark") {
-      cssLink.href = "dark.css";
-      themeToggle.textContent = "Light Mode";
-      isDark = true;
-    }
-  });
-</script>
-  
-<!-- GỌI JS -->
+  <!-- GỌI JS -->
   <script src="js/firebase.js"></script>
   <script src="js/profile.js"></script>
   <script src="/js/auth.js"></script>   <!-- file định nghĩa loginUser -->
   <script src="/js/main.js"></script>   <!-- file gọi loginUser -->
   <script src="js/theme.js"></script>
-
 </body>
 </html>
-
