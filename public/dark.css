@@ -1,6 +1,6 @@
 /* dark.css - Dark Theme cho LearnQuest AI */
 
-/* Reset + font chung (có thể dùng chung cho cả 2 theme, nên giữ nguyên) */
+/* Reset + font chung */
 * {
   margin: 0;
   padding: 0;
@@ -8,7 +8,8 @@
   font-family: 'Segoe UI', sans-serif;
 }
 
-/* Chỉ áp dụng nền & màu chữ khi body có class .dark-theme */
+/* --------- NỀN & LAYOUT CHUNG --------- */
+
 body.dark-theme {
   background: linear-gradient(135deg, #1a1a2e, #16213e);
   color: #e0e0e0;
@@ -44,6 +45,8 @@ body.dark-theme .subtitle {
   margin-left: 5px;
 }
 
+/* --------- USER INFO + BUTTONS --------- */
+
 body.dark-theme .user-info {
   position: absolute;
   top: 15px;
@@ -69,6 +72,8 @@ body.dark-theme .profile-btn {
   margin-left: 5px;
 }
 
+/* XP / Coin / Huy hiệu */
+
 body.dark-theme .stats {
   display: flex;
   gap: 15px;
@@ -81,6 +86,8 @@ body.dark-theme .stat-item {
   gap: 5px;
 }
 
+/* --------- CÁC KHỐI CHÍNH --------- */
+
 body.dark-theme .auth,
 body.dark-theme .quiz,
 body.dark-theme .game-board,
@@ -92,6 +99,8 @@ body.dark-theme .profile {
 body.dark-theme .auth {
   text-align: center;
 }
+
+/* --------- INPUT & BUTTON CHUNG --------- */
 
 body.dark-theme input {
   width: 100%;
@@ -147,6 +156,8 @@ body.dark-theme button.main-btn.loading::after {
     transform: rotate(360deg);
   }
 }
+
+/* --------- ALERT / QUESTION / OPTION --------- */
 
 body.dark-theme .alert {
   background: #440000;
@@ -212,6 +223,8 @@ body.dark-theme .other-input input {
 body.dark-theme .hidden {
   display: none !important;
 }
+
+/* --------- GAME GRID / CARD --------- */
 
 body.dark-theme .game-grid {
   display: grid;
@@ -279,6 +292,8 @@ body.dark-theme .badge {
   font-size: 12px;
 }
 
+/* --------- HỒ SƠ / TRAIT --------- */
+
 body.dark-theme .profile-header {
   display: flex;
   justify-content: space-between;
@@ -325,6 +340,8 @@ body.dark-theme .trait-fill {
   border-radius: 4px;
 }
 
+/* --------- TOAST --------- */
+
 body.dark-theme .toast {
   position: fixed;
   bottom: 20px;
@@ -356,7 +373,8 @@ body.dark-theme .toast {
   }
 }
 
-/* Tabs & link forgot – version dark */
+/* --------- TAB AUTH & FORGOT LINK --------- */
+
 body.dark-theme .auth-tabs {
   display: flex;
   margin-bottom: 20px;
