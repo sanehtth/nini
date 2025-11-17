@@ -1,16 +1,242 @@
-﻿// /admin/tools/makeprompt.js
-const $  = id => document.getElementById(id);
-const val = (id, d="") => { const el = $(id); return el && "value" in el ? el.value : d; };
+// /admin/tools/makeprompt.js
+// Tool chia lyric / kịch bản thành cảnh 5s và sinh prompt chi tiết.
+// Chạy 100% trên trình duyệt, không gọi API.
+
+/* ========= Helper ========= */
+const $ = id => document.getElementById(id);
+const val = (id, d = "") => {
+  const el = $(id);
+  return el && "value" in el ? el.value : d;
+};
+
+// Lưu lại kết quả lần cuối để export JSON/TSV
+let _lastScenes = [];
+
+/* ========= Preset phong cách ========= */
+const STYLE_PRESETS = {
+  "3d_cinematic_warm":
+    "stylized 3D cinematic animation, warm color grading, volumetric lighting, soft depth of field, highly detailed, rendered in 4K",
+  "anime_soft":
+    "anime style, soft film look, gentle lighting, rich colors, expressive faces, clean line art, high detail",
+  "pixar_like":
+    "Pixar-like 3D animation, charming stylized characters, soft global illumination, bouncy and lively, high quality render",
+  "disney_like":
+    "Disney-like animation, vibrant colors, expressive characters, fairytale atmosphere, cinematic lighting",
+  "real_photo":
+    "realistic cinematic photography, natural lighting, shallow depth of field, detailed textures, 35mm lens look",
+  "vintage_film":
+    "vintage film look, grainy texture, slightly faded colors, soft contrast, 35mm film, nostalgic mood"
+};
+
+/* ========= Preset camera + cảm xúc ========= */
+const COMBO_PRESETS = {
+  mix: [
+    "establishing wide shot, shows the environment clearly, slow dolly movement, hopeful mood",
+    "medium shot focusing on the main character, subtle handheld motion, introspective emotion",
+    "close-up on the character’s face, shallow depth of field, emotional expression",
+    "dynamic tracking shot following the character, energetic and adventurous mood"
+  ],
+  closeup_tender: [
+    "intimate close-up shot, soft focus on the character’s face, very gentle camera movement, tender and emotional mood"
+  ],
+  wide_hopeful: [
+    "wide cinematic shot, environment-focused composition, slow forward dolly, bright and hopeful mood"
+  ],
+  handheld_romance: [
+    "handheld camera, slightly shaky but warm and intimate, medium shot distance, romantic and heartfelt mood"
+  ]
+};
+
+/* ========= Build scene list từ dữ liệu form ========= */
+function buildScenesFromLyrics(data) {
+  const rawText = (data.text || "").trim();
+  const total = isNaN(data.total) || data.total <= 0 ? 60 : data.total;
+  const step = isNaN(data.step) || data.step <= 0 ? 5 : data.step;
+
+  // Tách lyric thành từng dòng có nội dung
+  const lines = rawText
+    .split(/\r?\n/)
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  // Nếu không có lyric -> tạo 1 cảnh mô tả chung
+  if (!lines.length) {
+    return [
+      {
+        index: 1,
+        start: 0,
+        end: total,
+        lyric: "(no lyric, general mood shot)",
+        prompt: buildPromptForScene({
+          idx: 1,
+          lyric: "general wide shot that introduces the world and main character",
+          styleKey: data.preset,
+          comboKey: data.combo,
+          aspect: data.aspect
+        }),
+        preset: data.preset,
+        combo: data.combo,
+        aspect: data.aspect
+      }
+    ];
+  }
+
+  const maxScenes = Math.max(1, Math.floor(total / step));
+  // Số cảnh thực tế không cần nhiều hơn số line, nhưng cũng không ít hơn 1
+  const sceneCount = Math.max(1, Math.min(maxScenes, lines.length));
+
+  // Phân phối line vào từng cảnh cho tương đối đều
+  const base = Math.floor(lines.length / sceneCount);
+  let extra = lines.length % sceneCount;
+
+  const scenes = [];
+  let cursor = 0;
+
+  for (let i = 0; i < sceneCount; i++) {
+    let take = base + (extra > 0 ? 1 : 0);
+    if (extra > 0) extra--;
+
+    const part = lines.slice(cursor, cursor + take);
+    cursor += take;
+
+    const lyricChunk = part.join(" / ");
+
+    const start = i * step;
+    const end = Math.min(total, (i + 1) * step);
+
+    const prompt = buildPromptForScene({
+      idx: i + 1,
+      lyric: lyricChunk,
+      styleKey: data.preset,
+      comboKey: data.combo,
+      aspect: data.aspect
+    });
+
+    scenes.push({
+      index: i + 1,
+      start,
+      end,
+      lyric: lyricChunk,
+      prompt,
+      preset: data.preset,
+      combo: data.combo,
+      aspect: data.aspect
+    });
+  }
+
+  return scenes;
+}
+
+/* ========= Build prompt cho 1 cảnh ========= */
+function buildPromptForScene({ idx, lyric, styleKey, comboKey, aspect }) {
+  const style = STYLE_PRESETS[styleKey] || "";
+  const comboList = COMBO_PRESETS[comboKey] || COMBO_PRESETS.mix;
+  const cameraMood = comboList[(idx - 1) % comboList.length];
+
+  const ratioText =
+    aspect === "1792x1024"
+      ? "16:9 landscape"
+      : aspect === "1024x1792"
+      ? "9:16 vertical"
+      : "1:1 square";
+
+  // Prompt cuối cùng – bạn có thể chỉnh template này theo Sora / Flow / v.v.
+  const prompt = [
+    `scene ${idx}, ${ratioText}`,
+    lyric ? `visualize: ${lyric}` : "",
+    cameraMood,
+    style,
+    "no text, no subtitles, no UI, high quality, detailed, coherent with previous shots"
+  ]
+    .filter(Boolean)
+    .join(". ");
+
+  return prompt;
+}
+
+/* ========= Hiển thị kết quả dạng text dễ copy ========= */
+function renderScenesText(scenes) {
+  if (!scenes.length) {
+    $("output").textContent = "Chưa có dữ liệu cảnh.";
+    return;
+  }
+
+  const lines = scenes.map(scene => {
+    const t = `[${scene.start.toString().padStart(3, "0")}–${scene.end
+      .toString()
+      .padStart(3, "0")}s]  ${scene.prompt}`;
+    return t;
+  });
+
+  $("output").textContent = lines.join("\n\n");
+}
+
+/* ========= Export JSON ========= */
+function downloadJSON(scenes) {
+  if (!scenes.length) return;
+  const blob = new Blob([JSON.stringify(scenes, null, 2)], {
+    type: "application/json;charset=utf-8"
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "story_scenes.json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ========= Export TSV (dễ import Excel / Google Sheets) ========= */
+function downloadTSV(scenes) {
+  if (!scenes.length) return;
+  const header = ["index", "start", "end", "lyric", "prompt"].join("\t");
+  const rows = scenes.map(s => {
+    const lyricClean = (s.lyric || "").replace(/\s+/g, " ");
+    const promptClean = (s.prompt || "").replace(/\s+/g, " ");
+    return [s.index, s.start, s.end, lyricClean, promptClean].join("\t");
+  });
+  const tsv = [header, ...rows].join("\n");
+
+  const blob = new Blob([tsv], { type: "text/tab-separated-values;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "story_scenes.tsv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ========= Gắn event ========= */
 
 $("btnMakePrompt")?.addEventListener("click", () => {
   const data = {
-    text  : val("lyrics",""),
-    total : Number(val("dur",180)),
-    step  : Number(val("item",5)),
-    preset: val("preset",""),
-    combo : val("combo",""),
-    aspect: val("aspect","1792x1024")
+    text: val("lyrics", ""),
+    total: Number(val("dur", 180)),
+    step: Number(val("item", 5)),
+    preset: val("preset", "3d_cinematic_warm"),
+    combo: val("combo", "mix"),
+    aspect: val("aspect", "1792x1024")
   };
-  // TODO: build prompt theo logic của bạn và đổ ra #output
-  $("output").textContent = JSON.stringify(data, null, 2);
+
+  _lastScenes = buildScenesFromLyrics(data);
+  renderScenesText(_lastScenes);
+});
+
+$("btnJSON")?.addEventListener("click", () => {
+  if (!_lastScenes.length) {
+    alert("Chưa có cảnh nào. Hãy bấm 'Tạo prompt' trước.");
+    return;
+  }
+  downloadJSON(_lastScenes);
+});
+
+$("btnTSV")?.addEventListener("click", () => {
+  if (!_lastScenes.length) {
+    alert("Chưa có cảnh nào. Hãy bấm 'Tạo prompt' trước.");
+    return;
+  }
+  downloadTSV(_lastScenes);
 });
