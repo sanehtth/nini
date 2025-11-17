@@ -207,41 +207,56 @@
 
       <!-- ================= PANEL 4: STORYBOARD ================= -->
       <section id="panel-story" class="admin-panel hidden">
-        <h2>🎬 Tạo prompt Storyboard (Sora / Flow...)</h2>
+  <h2>🎬 Tạo prompt Storyboard (Sora / Flow...)</h2>
 
-        <div class="form-row">
-          <label>Bối cảnh / thế giới:</label>
-          <input id="storyWorld" class="input"
-            placeholder="Fantasy forest with floating islands, soft magical light..." />
-        </div>
+  <!-- LIÊN KẾT SANG TRANG makepromt.html -->
+  <div class="form-row" style="margin-bottom: 16px; border-bottom: 1px dashed #e5e5e5; padding-bottom: 10px;">
+    <p style="margin-bottom: 8px;">
+      Nếu bạn muốn dùng <b>tool tách bài hát / ý tưởng thành các cảnh 5s</b> (trang <code>makepromt.html</code>),
+      hãy bấm nút bên dưới:
+    </p>
+    <button type="button" class="main-btn"
+            onclick="window.location.href='makepromt.html'">
+      ➡ Mở tool MakePrompt (lyrics → shots)
+    </button>
+  </div>
+  <!-- HẾT PHẦN LINK SANG makepromt.html -->
 
-        <div class="form-row">
-          <label>Nhân vật chính:</label>
-          <input id="storyChar" class="input"
-            placeholder="Young adventurer boy in red poncho and wide-brim hat..." />
-        </div>
+  <!-- STORYBOARD TOOL NỘI BỘ CŨ VẪN GIỮ LẠI -->
+  <div class="form-row">
+    <label>Bối cảnh / thế giới:</label>
+    <input id="storyWorld" class="input"
+           placeholder="Fantasy forest with floating islands, soft magical light..." />
+  </div>
 
-        <div class="form-row">
-          <label>Tone / cảm xúc:</label>
-          <input id="storyTone" class="input"
-            placeholder="whimsical, adventurous, cinematic, gentle camera movement..." />
-        </div>
+  <div class="form-row">
+    <label>Nhân vật chính:</label>
+    <input id="storyChar" class="input"
+           placeholder="Young adventurer boy in red poncho and wide-brim hat..." />
+  </div>
 
-        <div class="form-row">
-          <label>Số cảnh (shots):</label>
-          <input id="storyShots" class="input" type="number" min="3" max="12" value="6" />
-        </div>
+  <div class="form-row">
+    <label>Tone / cảm xúc:</label>
+    <input id="storyTone" class="input"
+           placeholder="whimsical, adventurous, cinematic, gentle camera movement..." />
+  </div>
 
-        <div class="form-row">
-          <button class="main-btn" id="buildStoryboardBtn">🎞 Tạo storyboard prompt</button>
-          <button class="profile-btn" id="copyStoryboardBtn">📋 Copy</button>
-        </div>
+  <div class="form-row">
+    <label>Số cảnh (shots):</label>
+    <input id="storyShots" class="input" type="number" min="3" max="12" value="6" />
+  </div>
 
-        <div class="form-row">
-          <label>Storyboard prompt (dạng text/liệt kê shots):</label>
-          <textarea id="storyFinal" class="input textarea" rows="10"></textarea>
-        </div>
-      </section>
+  <div class="form-row">
+    <button class="main-btn" id="buildStoryboardBtn">🎞 Tạo storyboard prompt</button>
+    <button class="profile-btn" id="copyStoryboardBtn">📋 Copy</button>
+  </div>
+
+  <div class="form-row">
+    <label>Storyboard prompt (dạng text/liệt kê shots):</label>
+    <textarea id="storyFinal" class="input textarea" rows="10"></textarea>
+  </div>
+</section>
+
     </main>
   </div>
 
@@ -251,3 +266,4 @@
   <script src="js/admin.js"></script>
 </body>
 </html>
+
