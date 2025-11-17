@@ -22,16 +22,25 @@
     <header>
       <h1>Admin Panel</h1>
       <div class="user-info">
+        <!-- Về trang chính (game) -->
         <button class="profile-btn" onclick="window.location.href='index.html'">
           ⬅ Về trang chính
         </button>
 
+        <!-- Nút quản lý người dùng: sau này bạn tạo user-admin.html -->
+        <button class="profile-btn" onclick="window.location.href='user-admin.html'">
+          👥 Quản lý người dùng
+        </button>
+
+        <!-- Đổi theme (dùng chung với theme.js) -->
         <button class="profile-btn" onclick="toggleTheme()">
           Dark / Light
         </button>
 
+        <!-- Email admin đang đăng nhập -->
         <span id="adminEmail">admin</span>
 
+        <!-- Đăng xuất -->
         <button class="logout-btn" id="logoutBtnAdmin">Đăng xuất</button>
       </div>
       <p>Xin chào, <span id="adminEmailText"></span> (admin)</p>
@@ -47,41 +56,82 @@
 
     <!-- PANELS -->
     <main class="admin-main" style="margin-top: 10px;">
-      <!-- PANEL 1: API -->
-<section id="panel-api" class="admin-panel">
-  <h2>🔑 Cấu hình API (LOCAL)</h2>
-  <p><b>Lưu ý:</b> Chỉ dùng chỗ này trên máy cá nhân. Với web public, API key nên để ở server (Vercel env), không để ở client.</p>
 
-  <!-- Thêm ID / tên chủ API -->
-  <div class="form-row">
-    <label>ID / Tên chủ API:</label>
-    <input id="apiProfileId" class="input" placeholder="vd: sane, anhA..." />
-  </div>
+      <!-- ================= PANEL 1: API ================= -->
+      <section id="panel-api" class="admin-panel">
+        <h2>🔑 Cấu hình API</h2>
+        <p>
+          <b>Lưu ý chung:</b> API nên dùng cho mục đích cá nhân. Với web public, tốt nhất dùng
+          server (Vercel env / Cloud Functions) để ẩn key, không để lộ trên client.
+        </p>
 
-  <div class="form-row">
-    <label>Chọn nhà cung cấp:</label>
-    <select id="apiProvider" class="input">
-      <option value="openai">OpenAI</option>
-      <option value="gemini">Google AI</option>
-      <option value="grok">Grok (xAI)</option>
-    </select>
-  </div>
+        <!-- PHẦN A: LOCAL PROFILES (lưu trên máy, dùng cho nhiều tool khác) -->
+        <h3 style="margin-top: 16px;">A. API <u>local</u> theo Profile (lưu trong trình duyệt)</h3>
+        <p style="font-size: 13px;">
+          Mỗi profile có 3 loại API (OpenAI / Google AI / Grok). Dữ liệu chỉ nằm trong
+          <code>localStorage</code> của trình duyệt hiện tại.
+        </p>
 
-  <div class="form-row">
-    <label>API Key (sẽ lưu trong localStorage trên trình duyệt này):</label>
-    <input id="apiKeyInput" class="input" type="password"
-           placeholder="sk-... / AIza... / xai-..." />
-  </div>
+        <!-- ID / tên profile -->
+        <div class="form-row">
+          <label>ID / Tên Profile:</label>
+          <input id="apiProfileId" class="input" placeholder="vd: sane, anhA..." />
+        </div>
 
-  <div class="form-row">
-    <button class="main-btn" id="saveApiBtn">💾 Lưu local</button>
-    <button class="main-btn" id="clearApiBtn">🧹 Xoá local</button>
-    <span id="apiStatus" class="small-text"></span>
-  </div>
-</section>
+        <div class="form-row">
+          <label>Chọn nhà cung cấp:</label>
+          <select id="apiProvider" class="input">
+            <option value="openai">OpenAI</option>
+            <option value="gemini">Google AI</option>
+            <option value="grok">Grok (xAI)</option>
+          </select>
+        </div>
 
+        <div class="form-row">
+          <label>API Key (sẽ lưu trong localStorage trên trình duyệt này):</label>
+          <input id="apiKeyInput" class="input" type="password"
+                 placeholder="sk-... / AIza... / xai-..." />
+        </div>
 
-      <!-- PANEL 2: PROMPT NHÂN VẬT -->
+        <div class="form-row">
+          <button class="main-btn" id="saveApiBtn">💾 Lưu local</button>
+          <button class="main-btn" id="clearApiBtn">🧹 Xoá local</button>
+          <span id="apiStatus" class="small-text"></span>
+        </div>
+
+        <hr style="margin: 24px 0;">
+
+        <!-- PHẦN B: API THEO USER TRÊN FIREBASE -->
+        <h3>B. API theo User (lưu trên Firebase /users/&lt;uid&gt;/api)</h3>
+        <p style="font-size: 13px;">
+          Mỗi tài khoản đăng nhập Firebase sẽ có bộ API riêng ở Realtime Database.
+          Chỉ user đó (và bạn – chủ project trên Firebase Console) mới xem được.
+        </p>
+
+        <!-- 3 input cho từng provider -->
+        <div class="form-row">
+          <label>OpenAI API Key:</label>
+          <input id="userOpenaiApi" class="input" type="password" placeholder="sk-..." />
+        </div>
+
+        <div class="form-row">
+          <label>Google AI (Gemini) API Key:</label>
+          <input id="userGeminiApi" class="input" type="password" placeholder="AIza..." />
+        </div>
+
+        <div class="form-row">
+          <label>Grok (xAI) API Key:</label>
+          <input id="userGrokApi" class="input" type="password" placeholder="xai-..." />
+        </div>
+
+        <div class="form-row">
+          <button class="main-btn" id="saveUserApiBtn">💾 Lưu API user lên Firebase</button>
+          <button class="profile-btn" id="loadUserApiBtn">⬇ Tải API user từ Firebase</button>
+          <span id="userApiStatus" class="small-text"></span>
+        </div>
+      </section>
+
+      <!-- ================= PANEL 2: PROMPT NHÂN VẬT ================= -->
       <section id="panel-char" class="admin-panel hidden">
         <h2>🧑‍🎨 Tạo prompt Nhân Vật</h2>
 
@@ -113,7 +163,7 @@
         </div>
       </section>
 
-      <!-- PANEL 3: PROMPT OUTFIT -->
+      <!-- ================= PANEL 3: PROMPT OUTFIT ================= -->
       <section id="panel-outfit" class="admin-panel hidden">
         <h2>👕 Tạo prompt đổi Outfit</h2>
 
@@ -142,7 +192,7 @@
         <hr style="margin: 16px 0;">
 
         <h3>🔀 Ghép prompt đổi outfit (Character + Outfit)</h3>
-        <p>Dùng character prompt & outfit prompt ở trên để tạo final prompt cho AI vẽ.</p>
+        <p>Dùng character prompt &amp; outfit prompt ở trên để tạo final prompt cho AI vẽ.</p>
 
         <div class="form-row">
           <button class="main-btn" id="buildSwapPromptBtn">🧬 Tạo final prompt</button>
@@ -155,7 +205,7 @@
         </div>
       </section>
 
-      <!-- PANEL 4: STORYBOARD -->
+      <!-- ================= PANEL 4: STORYBOARD ================= -->
       <section id="panel-story" class="admin-panel hidden">
         <h2>🎬 Tạo prompt Storyboard (Sora / Flow...)</h2>
 
@@ -201,4 +251,3 @@
   <script src="js/admin.js"></script>
 </body>
 </html>
-
