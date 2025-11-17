@@ -1,228 +1,248 @@
 // js/admin.js
-// ================== CẤU HÌNH CHUNG ==================
-const ADMIN_EMAIL = "sane.htth@gmail.com"; // email admin thật của bạn
-const auth = firebase.auth();
-const db   = firebase.database();
-
-// ================== PHẦN 1: XỬ LÝ SAU KHI DOM LOAD ==================
+// ================== ADMIN PAGE SCRIPT ==================
 document.addEventListener("DOMContentLoaded", () => {
-  // ---- A. API LOCAL PROFILES (localStorage) ----
-  const profileInput   = document.getElementById("apiProfileId");
-  const providerSelect = document.getElementById("apiProvider");
-  const apiInput       = document.getElementById("apiKeyInput");
-  const saveBtn        = document.getElementById("saveApiBtn");
-  const clearBtn       = document.getElementById("clearApiBtn");
-  const statusSpan     = document.getElementById("apiStatus");
+  // ---- Firebase refs (từ firebase.js) ----
+  const auth = (window.firebase && firebase.auth) ? firebase.auth() : null;
+  const db   = (window.firebase && firebase.database) ? firebase.database() : null;
 
-  const STORAGE_KEY = "nini_api_profiles"; 
-  // Cấu trúc: { sane: { openai: '...', gemini:'...', grok:'...' }, ... }
+  // ---- Cấu hình admin chính ----
+  const ADMIN_EMAIL = "sane.htth@gmail.com";   // chỉnh lại nếu bạn đổi mail admin
 
-  function loadProfiles() {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-    } catch (e) {
-      console.error("Parse profiles error", e);
-      return {};
-    }
-  }
+  // ---- Element cơ bản ----
+  const adminEmailSpan     = document.getElementById("adminEmail");
+  const adminEmailTextSpan = document.getElementById("adminEmailText");
+  const logoutBtnAdmin     = document.getElementById("logoutBtnAdmin");
+  const manageUsersBtn     = document.getElementById("manageUsersBtn"); // nếu có
 
-  function saveProfiles(obj) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
-  }
-
-  function getCurrentProfileId() {
-    const id = (profileInput.value || "").trim();
-    // Nếu chưa nhập gì → dùng ID "default"
-    return id || "default";
-  }
-
-  // Cập nhật ô input API dựa trên ID + provider hiện tại
-  function refreshInput() {
-    const profiles  = loadProfiles();
-    const profileId = getCurrentProfileId();
-    const provider  = providerSelect.value;
-
-    const api = profiles[profileId]?.[provider] || "";
-    apiInput.value = api;
-    statusSpan.textContent = "";
-  }
-
-  if (profileInput) {
-    profileInput.addEventListener("input", refreshInput);
-  }
-  if (providerSelect) {
-    providerSelect.addEventListener("change", refreshInput);
-  }
-
-  if (saveBtn) {
-    saveBtn.addEventListener("click", () => {
-      const key       = apiInput.value.trim();
-      const profileId = getCurrentProfileId();
-      const provider  = providerSelect.value;
-
-      if (!key) {
-        statusSpan.textContent = "Chưa nhập API key...";
-        statusSpan.style.color = "orange";
+  // ================== 1. LOGIN CHECK ==================
+  if (auth) {
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        // chưa đăng nhập -> đá về trang chính
+        window.location.href = "index.html";
         return;
       }
 
-      const profiles = loadProfiles();
-      if (!profiles[profileId]) profiles[profileId] = {};
-      profiles[profileId][provider] = key;
-      saveProfiles(profiles);
+      const email = user.email || "(không rõ)";
 
-      statusSpan.textContent = `Đã lưu API ${provider} cho ID "${profileId}" ở localStorage.`;
-      statusSpan.style.color = "lightgreen";
-    });
-  }
+      if (adminEmailSpan)     adminEmailSpan.textContent     = email;
+      if (adminEmailTextSpan) adminEmailTextSpan.textContent = email;
 
-  if (clearBtn) {
-    clearBtn.addEventListener("click", () => {
-      const profileId = getCurrentProfileId();
-      const provider  = providerSelect.value;
-      const profiles  = loadProfiles();
-
-      if (profiles[profileId]) {
-        delete profiles[profileId][provider];
-        // Nếu profile không còn provider nào → xoá luôn profile
-        if (Object.keys(profiles[profileId]).length === 0) {
-          delete profiles[profileId];
-        }
-        saveProfiles(profiles);
+      // Nếu KHÔNG phải email admin -> ẩn nút quản lý người dùng
+      if (manageUsersBtn && email !== ADMIN_EMAIL) {
+        manageUsersBtn.style.display = "none";
       }
 
-      apiInput.value = "";
-      statusSpan.textContent = `Đã xoá API ${provider} cho ID "${profileId}" trên máy này.`;
-      statusSpan.style.color = "orange";
+      // Sau khi biết UID -> load API theo user từ Realtime DB
+      if (db) {
+        loadUserApiFromFirebase(db, user.uid);
+      }
     });
   }
 
-  // Lần đầu load admin: tự refresh input local
-  if (profileInput && providerSelect) {
-    refreshInput();
+  // Nút Đăng xuất (admin)
+  if (logoutBtnAdmin && auth) {
+    logoutBtnAdmin.addEventListener("click", async () => {
+      try {
+        await auth.signOut();
+        window.location.href = "index.html";
+      } catch (err) {
+        console.error("Lỗi signOut:", err);
+        alert("Đăng xuất thất bại, thử lại.");
+      }
+    });
   }
 
-  // ---- B. API THEO USER TRÊN FIREBASE (/users/<uid>/api) ----
-  const userOpenaiInput = document.getElementById("userOpenaiApi");
-  const userGeminiInput = document.getElementById("userGeminiApi");
-  const userGrokInput   = document.getElementById("userGrokApi");
-  const saveUserApiBtn  = document.getElementById("saveUserApiBtn");
-  const loadUserApiBtn  = document.getElementById("loadUserApiBtn");
-  const userApiStatus   = document.getElementById("userApiStatus");
+  // ================== 2. TABS ADMIN (4 tab) ==================
+  const adminTabs   = document.querySelectorAll(".admin-tab");
+  const adminPanels = document.querySelectorAll(".admin-panel");
 
-  function setUserApiStatus(msg, color = "inherit") {
-    if (!userApiStatus) return;
-    userApiStatus.textContent = msg;
-    userApiStatus.style.color = color;
+  adminTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      // bỏ active ở tất cả tab
+      adminTabs.forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+
+      // ẩn/hiện panel
+      const targetId = tab.dataset.target;  // vd: "panel-story"
+      adminPanels.forEach(panel => {
+        if (panel.id === targetId) {
+          panel.classList.remove("hidden");
+        } else {
+          panel.classList.add("hidden");
+        }
+      });
+    });
+  });
+
+  // Khi mới vào trang: nếu có lưu tab lần trước, mở lại (không bắt buộc)
+  const savedTab = localStorage.getItem("lq_admin_tab");
+  if (savedTab) {
+    const tabToClick = Array.from(adminTabs).find(t => t.dataset.target === savedTab);
+    if (tabToClick) tabToClick.click();
+  } else {
+    // nếu chưa có -> giữ tab đầu (panel-api) là active
+    const firstPanel = document.getElementById("panel-api");
+    if (firstPanel) firstPanel.classList.remove("hidden");
   }
 
-  // Lưu API theo user (lên Firebase)
-  function saveUserApi() {
-    const user = auth.currentUser;
-    if (!user) {
-      setUserApiStatus("Chưa đăng nhập Firebase.", "orange");
-      return;
+  // Lưu tab hiện tại mỗi khi click
+  adminTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      localStorage.setItem("lq_admin_tab", tab.dataset.target || "");
+    });
+  });
+
+  // ================== 3. API LOCAL THEO PROFILE ==================
+  // A. API local theo Profile (lưu trong trình duyệt)
+  const profileIdInput     = document.getElementById("profileIdInput");   // ô: ID / Tên Profile
+  const apiProviderSelect  = document.getElementById("apiProvider");      // select: OpenAI / Gemini / Grok
+  const apiKeyLocalInput   = document.getElementById("apiKeyInput");      // ô: API key
+  const saveLocalBtn       = document.getElementById("saveApiBtn");       // nút "Lưu local"
+  const clearLocalBtn      = document.getElementById("clearApiBtn");      // nút "Xoá local"
+  const apiLocalStatusSpan = document.getElementById("apiStatus");        // span báo trạng thái
+
+  function getLocalStorageKey() {
+    const profileId = (profileIdInput && profileIdInput.value.trim()) || "default";
+    const provider  = (apiProviderSelect && apiProviderSelect.value) || "openai";
+    return `lq_api_${profileId}_${provider}`;
+  }
+
+  // Load sẵn nếu có
+  if (apiKeyLocalInput) {
+    try {
+      const storedKey = localStorage.getItem(getLocalStorageKey());
+      if (storedKey) apiKeyLocalInput.value = storedKey;
+    } catch (e) {
+      console.warn("Không thể đọc localStorage:", e);
     }
+  }
 
-    const uid    = user.uid;
-    const openai = userOpenaiInput?.value.trim() || "";
-    const gemini = userGeminiInput?.value.trim() || "";
-    const grok   = userGrokInput?.value.trim()   || "";
+  // Lưu local
+  if (saveLocalBtn && apiKeyLocalInput) {
+    saveLocalBtn.addEventListener("click", () => {
+      const key = apiKeyLocalInput.value.trim();
+      if (!key) {
+        if (apiLocalStatusSpan) apiLocalStatusSpan.textContent = "Chưa nhập API key.";
+        return;
+      }
+      try {
+        localStorage.setItem(getLocalStorageKey(), key);
+        if (apiLocalStatusSpan) apiLocalStatusSpan.textContent = "Đã lưu API key vào localStorage.";
+      } catch (e) {
+        console.error("Lỗi lưu localStorage:", e);
+        if (apiLocalStatusSpan) apiLocalStatusSpan.textContent = "Lỗi: không lưu được localStorage.";
+      }
+    });
+  }
 
-    db.ref("users/" + uid + "/api")
-      .set({ openai, gemini, grok })
-      .then(() => setUserApiStatus("Đã lưu API theo user lên Firebase.", "lightgreen"))
+  // Xoá local
+  if (clearLocalBtn && apiKeyLocalInput) {
+    clearLocalBtn.addEventListener("click", () => {
+      try {
+        localStorage.removeItem(getLocalStorageKey());
+        apiKeyLocalInput.value = "";
+        if (apiLocalStatusSpan) apiLocalStatusSpan.textContent = "Đã xoá API key local.";
+      } catch (e) {
+        console.error("Lỗi xoá localStorage:", e);
+      }
+    });
+  }
+
+  // Nếu đổi profile ID hoặc provider thì load lại API tương ứng (nếu có)
+  [profileIdInput, apiProviderSelect].forEach(el => {
+    if (!el) return;
+    el.addEventListener("change", () => {
+      if (!apiKeyLocalInput) return;
+      try {
+        const storedKey = localStorage.getItem(getLocalStorageKey());
+        apiKeyLocalInput.value = storedKey || "";
+        if (apiLocalStatusSpan) apiLocalStatusSpan.textContent = storedKey
+          ? "Đã load API key từ localStorage."
+          : "Chưa có API cho profile này.";
+      } catch (e) {
+        console.error("Lỗi khi load localStorage:", e);
+      }
+    });
+  });
+
+  // ================== 4. API THEO USER (LƯU TRÊN FIREBASE) ==================
+  const userOpenAiInput   = document.getElementById("userOpenAiKey");
+  const userGeminiInput   = document.getElementById("userGeminiKey");
+  const userGrokInput     = document.getElementById("userGrokKey");
+  const saveUserApiBtn    = document.getElementById("saveUserApiBtn");
+  const clearUserApiBtn   = document.getElementById("clearUserApiBtn");
+  const userApiStatusSpan = document.getElementById("userApiStatus");
+
+  function loadUserApiFromFirebase(db, uid) {
+    if (!db || !uid) return;
+    const ref = db.ref(`users/${uid}/api`);
+    ref.once("value")
+      .then(snap => {
+        const val = snap.val() || {};
+        if (userOpenAiInput) userOpenAiInput.value = val.openai || "";
+        if (userGeminiInput) userGeminiInput.value = val.gemini || "";
+        if (userGrokInput)   userGrokInput.value   = val.grok   || "";
+      })
       .catch(err => {
-        console.error(err);
-        setUserApiStatus("Lỗi khi lưu API user: " + err.message, "red");
+        console.error("Lỗi load API user từ Firebase:", err);
       });
   }
 
-  // Tải API theo user từ Firebase
-  function loadUserApi() {
+  function saveUserApiToFirebase() {
+    if (!auth || !db) return;
     const user = auth.currentUser;
     if (!user) {
-      setUserApiStatus("Chưa đăng nhập Firebase.", "orange");
+      alert("Chưa đăng nhập.");
       return;
     }
-    const uid = user.uid;
 
-    db.ref("users/" + uid + "/api")
-      .once("value")
-      .then(snap => {
-        const api = snap.val();
-        if (!api) {
-          setUserApiStatus("Chưa có API nào lưu cho user này.", "orange");
-          return;
-        }
-        if (userOpenaiInput) userOpenaiInput.value = api.openai || "";
-        if (userGeminiInput) userGeminiInput.value = api.gemini || "";
-        if (userGrokInput)   userGrokInput.value   = api.grok   || "";
+    const ref = db.ref(`users/${user.uid}/api`);
+    const payload = {
+      openai: userOpenAiInput ? userOpenAiInput.value.trim() : "",
+      gemini: userGeminiInput ? userGeminiInput.value.trim() : "",
+      grok:   userGrokInput   ? userGrokInput.value.trim()   : "",
+      updatedAt: Date.now()
+    };
 
-        setUserApiStatus("Đã tải API user từ Firebase.", "lightgreen");
+    ref.set(payload)
+      .then(() => {
+        if (userApiStatusSpan) userApiStatusSpan.textContent = "Đã lưu API user lên Firebase.";
       })
       .catch(err => {
-        console.error(err);
-        setUserApiStatus("Lỗi khi tải API user: " + err.message, "red");
+        console.error("Lỗi lưu API user:", err);
+        if (userApiStatusSpan) userApiStatusSpan.textContent = "Lỗi khi lưu API user.";
       });
   }
 
   if (saveUserApiBtn) {
-    saveUserApiBtn.addEventListener("click", saveUserApi);
-  }
-  if (loadUserApiBtn) {
-    loadUserApiBtn.addEventListener("click", loadUserApi);
+    saveUserApiBtn.addEventListener("click", saveUserApiToFirebase);
   }
 
-  // ---- C. XỬ LÝ AUTH: CHỈ ADMIN ĐƯỢC VÀO TRANG NÀY ----
-  auth.onAuthStateChanged((user) => {
-    if (!user) {
-      // Chưa login → quay về index
-      window.location.href = "index.html";
-      return;
-    }
+  if (clearUserApiBtn) {
+    clearUserApiBtn.addEventListener("click", () => {
+      if (!auth || !db) return;
+      const user = auth.currentUser;
+      if (!user) return;
 
-    if (user.email !== ADMIN_EMAIL) {
-      // Đúng là user đã login nhưng không phải admin → cũng đuổi về index
-      window.location.href = "index.html";
-      return;
-    }
-
-    // Đúng admin → hiển thị email
-    const span = document.getElementById("adminEmail");
-    const spanText = document.getElementById("adminEmailText");
-    if (span) span.textContent = user.email;
-    if (spanText) spanText.textContent = user.email;
-  });
-
-  // ---- D. NÚT ĐĂNG XUẤT ADMIN ----
-  const logoutBtn = document.getElementById("logoutBtnAdmin");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      auth.signOut().then(() => {
-        window.location.href = "index.html";
-      });
+      const ref = db.ref(`users/${user.uid}/api`);
+      ref.remove()
+        .then(() => {
+          if (userOpenAiInput) userOpenAiInput.value = "";
+          if (userGeminiInput) userGeminiInput.value = "";
+          if (userGrokInput)   userGrokInput.value   = "";
+          if (userApiStatusSpan) userApiStatusSpan.textContent = "Đã xoá API user trên Firebase.";
+        })
+        .catch(err => {
+          console.error("Lỗi xoá API user:", err);
+        });
     });
   }
+
+  // ================== 5. CÁC TOOL PROMPT (CHAR / OUTFIT / STORYBOARD) ==================
+  // Mấy panel prompt nhân vật / outfit bạn đã có sẵn HTML.
+  // Ở đây không bắt buộc, nhưng nếu sau này muốn thêm JS xử lý thì
+  // cứ viết tiếp phía dưới, nhớ luôn luôn:
+  //  - kiểm tra element có tồn tại mới addEventListener
+  //  - bọc trong DOMContentLoaded như file này để tránh lỗi null.
 });
-
-// ================== PHẦN 2: HÀM TIỆN ÍCH DÙNG CHUNG ==================
-// Hàm lấy API local theo profile (nếu bạn muốn dùng ở chỗ khác)
-function getCurrentApiKeyWithProfile() {
-  const STORAGE_KEY     = "nini_api_profiles";
-  const providerSelect  = document.getElementById("apiProvider");
-  const profileInput    = document.getElementById("apiProfileId");
-
-  const provider  = providerSelect ? providerSelect.value : "openai";
-  const profileId = (profileInput?.value || "").trim() || "default";
-
-  try {
-    const profiles = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-    const apiKey   = profiles[profileId]?.[provider] || "";
-    return { profileId, provider, apiKey };
-  } catch {
-    return { profileId, provider, apiKey: "" };
-  }
-}
-// Xuất ra global để file khác có thể dùng
-window.getCurrentApiKeyWithProfile = getCurrentApiKeyWithProfile;
