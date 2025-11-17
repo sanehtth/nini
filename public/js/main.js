@@ -117,11 +117,12 @@ document.getElementById("forgotBtn").onclick = (e) => {
     try {
       if (!user) {
         currentUser = null;
+        updateAdminUI(null); 
         showLoginFallback();
         return;
       }
       currentUser = user;
-
+      updateAdminUI(user);
       // Vá schema mỗi lần vào app
       await ensureUserSchema(user.uid, user.email);
 
@@ -468,6 +469,7 @@ db.ref('users/' + currentUser.uid).once('value')
     setTimeout(() => t.remove(), 3000);
   }
 });
+
 
 
 
