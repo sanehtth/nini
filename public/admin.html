@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
@@ -8,8 +8,7 @@
 
   <!-- CSS chung -->
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="dark.css">  <!-- THÊM DÒNG NÀY -->
-
+  <link rel="stylesheet" href="dark.css">
   <link rel="icon" href="/assets/favicon.ico" type="image/x-icon">
 
   <!-- Firebase -->
@@ -17,18 +16,17 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
-  <body>
-  
+<body>
   <div class="container">
     <!-- HEADER -->
     <header>
       <h1>Admin Panel</h1>
       <div class="user-info">
-        <button id="themeToggle" class="profile-btn" style="margin-left:10px;">Dark Mode</button>
-
-        <button class="profile-btn" onclick="toggleTheme()">
-          Dark / Light
+        <button class="profile-btn" onclick="window.location.href='index.html'">
+          ⬅ Về trang chính
         </button>
+
+       <button id="themeToggle" class="profile-btn" style="margin-left:10px;">Dark Mode</button>
 
         <span id="adminEmail">admin</span>
 
@@ -193,6 +191,3 @@
   <script src="js/admin.js"></script>
 </body>
 </html>
-
-
-
