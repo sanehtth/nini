@@ -13,11 +13,12 @@ function toggleTheme() {
   applyTheme(next);
 }
 
-// Khi trang load, áp dụng theme đã lưu
+// Khi load trang, áp dụng theme đã lưu
 document.addEventListener("DOMContentLoaded", () => {
   const saved = localStorage.getItem(THEME_KEY) || "light";
   applyTheme(saved);
 });
 
-// Để dùng được từ HTML (onclick="toggleTheme()")
+// cho phép gọi từ HTML
+window.applyTheme = applyTheme;
 window.toggleTheme = toggleTheme;
