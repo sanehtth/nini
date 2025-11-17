@@ -48,30 +48,38 @@
     <!-- PANELS -->
     <main class="admin-main" style="margin-top: 10px;">
       <!-- PANEL 1: API -->
-      <section id="panel-api" class="admin-panel">
-        <h2>🔑 Cấu hình API (LOCAL)</h2>
-        <p><b>Lưu ý:</b> Chỉ dùng chỗ này trên máy cá nhân. Với web public, API key nên để ở server (Vercel env), không để ở client.</p>
+<section id="panel-api" class="admin-panel">
+  <h2>🔑 Cấu hình API (LOCAL)</h2>
+  <p><b>Lưu ý:</b> Chỉ dùng chỗ này trên máy cá nhân. Với web public, API key nên để ở server (Vercel env), không để ở client.</p>
 
-        <div class="form-row">
-          <label>Chọn nhà cung cấp:</label>
-          <select id="apiProvider" class="input">
-            <option value="openai">OpenAI</option>
-            <option value="gemini">Google AI</option>
-            <option value="grok">Grok (xAI)</option>
-          </select>
-        </div>
+  <!-- Thêm ID / tên chủ API -->
+  <div class="form-row">
+    <label>ID / Tên chủ API:</label>
+    <input id="apiProfileId" class="input" placeholder="vd: sane, anhA..." />
+  </div>
 
-        <div class="form-row">
-          <label>API Key (sẽ lưu trong localStorage trên trình duyệt này):</label>
-          <input id="apiKeyInput" class="input" type="password" placeholder="sk-... / AIza... / xai-..." />
-        </div>
+  <div class="form-row">
+    <label>Chọn nhà cung cấp:</label>
+    <select id="apiProvider" class="input">
+      <option value="openai">OpenAI</option>
+      <option value="gemini">Google AI</option>
+      <option value="grok">Grok (xAI)</option>
+    </select>
+  </div>
 
-        <div class="form-row">
-          <button class="main-btn" id="saveApiBtn">💾 Lưu local</button>
-          <button class="main-btn" id="clearApiBtn">🧹 Xoá local</button>
-          <span id="apiStatus" class="small-text"></span>
-        </div>
-      </section>
+  <div class="form-row">
+    <label>API Key (sẽ lưu trong localStorage trên trình duyệt này):</label>
+    <input id="apiKeyInput" class="input" type="password"
+           placeholder="sk-... / AIza... / xai-..." />
+  </div>
+
+  <div class="form-row">
+    <button class="main-btn" id="saveApiBtn">💾 Lưu local</button>
+    <button class="main-btn" id="clearApiBtn">🧹 Xoá local</button>
+    <span id="apiStatus" class="small-text"></span>
+  </div>
+</section>
+
 
       <!-- PANEL 2: PROMPT NHÂN VẬT -->
       <section id="panel-char" class="admin-panel hidden">
@@ -193,3 +201,4 @@
   <script src="js/admin.js"></script>
 </body>
 </html>
+
