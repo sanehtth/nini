@@ -1,39 +1,197 @@
 ﻿<!DOCTYPE html>
 <html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <title>LearnQuest AI – Admin</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- Theme -->
-  <link id="theme-style" rel="stylesheet" href="style.css">
-</head>
 <body>
-  <div class="container">
-    <div class="top-bar">
-      <h1>Admin Panel</h1>
-      <div>
-        <button class="main-btn" onclick="window.location.href='index.html'">⬅ Về trang chính</button>
-        <button id="toggleThemeBtn" class="main-btn" onclick="toggleTheme()">Dark / Light</button>
-      </div>
-    </div>
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-    <p>Xin chào, <span id="adminEmail"></span> (admin)</p>
+  <title>LearnQuest AI – Admin</title>
 
-    <!-- Khu vực tool prompt đổi outfit bạn sẽ nhét vào đây -->
-    <div id="toolArea">
-      <!-- TODO: copy UI prompt-builder / swapper ở đây -->
-      <p>Ở đây sẽ là tool prompt (OpenAI / Google AI / Grok)…</p>
-    </div>
-  </div>
+  <!-- CSS chung -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="dark.css">  <!-- THÊM DÒNG NÀY -->
 
-  <!-- Firebase & JS -->
+  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon">
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+  <div class="container">
+    <!-- HEADER -->
+    <header>
+      <h1>Admin Panel</h1>
+      <div class="user-info">
+        <button class="profile-btn" onclick="window.location.href='index.html'">
+          ⬅ Về trang chính
+        </button>
 
+        <button class="profile-btn" onclick="toggleTheme()">
+          Dark / Light
+        </button>
+
+        <span id="adminEmail">admin</span>
+
+        <button class="logout-btn" id="logoutBtnAdmin">Đăng xuất</button>
+      </div>
+      <p>Xin chào, <span id="adminEmailText"></span> (admin)</p>
+    </header>
+
+    <!-- NAV TOOL -->
+    <nav class="admin-nav" style="margin-top: 10px; margin-bottom: 10px;">
+      <button class="tab-btn admin-tab active" data-target="panel-api">🔑 Nhập API</button>
+      <button class="tab-btn admin-tab" data-target="panel-char">🧑‍🎨 Prompt nhân vật</button>
+      <button class="tab-btn admin-tab" data-target="panel-outfit">👕 Prompt đổi outfit</button>
+      <button class="tab-btn admin-tab" data-target="panel-story">🎬 Prompt storyboard</button>
+    </nav>
+
+    <!-- PANELS -->
+    <main class="admin-main" style="margin-top: 10px;">
+      <!-- PANEL 1: API -->
+      <section id="panel-api" class="admin-panel">
+        <h2>🔑 Cấu hình API (LOCAL)</h2>
+        <p><b>Lưu ý:</b> Chỉ dùng chỗ này trên máy cá nhân. Với web public, API key nên để ở server (Vercel env), không để ở client.</p>
+
+        <div class="form-row">
+          <label>Chọn nhà cung cấp:</label>
+          <select id="apiProvider" class="input">
+            <option value="openai">OpenAI</option>
+            <option value="gemini">Google AI</option>
+            <option value="grok">Grok (xAI)</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label>API Key (sẽ lưu trong localStorage trên trình duyệt này):</label>
+          <input id="apiKeyInput" class="input" type="password" placeholder="sk-... / AIza... / xai-..." />
+        </div>
+
+        <div class="form-row">
+          <button class="main-btn" id="saveApiBtn">💾 Lưu local</button>
+          <button class="main-btn" id="clearApiBtn">🧹 Xoá local</button>
+          <span id="apiStatus" class="small-text"></span>
+        </div>
+      </section>
+
+      <!-- PANEL 2: PROMPT NHÂN VẬT -->
+      <section id="panel-char" class="admin-panel hidden">
+        <h2>🧑‍🎨 Tạo prompt Nhân Vật</h2>
+
+        <div class="form-row">
+          <label>Mô tả nhân vật (thô):</label>
+          <textarea id="charRaw" class="input textarea" rows="4"
+            placeholder="Ví dụ: Cậu bé tóc đen, dáng người nhỏ, phong cách fantasy rừng trôi nổi..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <label>Tuổi / dáng người / tính cách (tuỳ chọn):</label>
+          <input id="charDetail" class="input" placeholder="10–12 tuổi, slim, gan dạ, tò mò..." />
+        </div>
+
+        <div class="form-row">
+          <label>Artstyle & ánh sáng:</label>
+          <input id="charStyle" class="input"
+            placeholder="painterly fantasy illustration, soft lighting, full body, 4K" />
+        </div>
+
+        <div class="form-row">
+          <button class="main-btn" id="buildCharPromptBtn">✨ Tạo prompt nhân vật</button>
+          <button class="profile-btn" id="copyCharPromptBtn">📋 Copy</button>
+        </div>
+
+        <div class="form-row">
+          <label>Character prompt (kết quả):</label>
+          <textarea id="charFinal" class="input textarea" rows="6"></textarea>
+        </div>
+      </section>
+
+      <!-- PANEL 3: PROMPT OUTFIT -->
+      <section id="panel-outfit" class="admin-panel hidden">
+        <h2>👕 Tạo prompt đổi Outfit</h2>
+
+        <div class="form-row">
+          <label>Mô tả outfit (thô):</label>
+          <textarea id="outfitRaw" class="input textarea" rows="4"
+            placeholder="Ví dụ: Poncho đỏ hoạ tiết turquoise, mũ rộng vành, thắt lưng da, boots cao..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <label>Kiểu / vibe:</label>
+          <input id="outfitVibe" class="input"
+            placeholder="desert adventurer, tribal patterns, warm earthy colors..." />
+        </div>
+
+        <div class="form-row">
+          <button class="main-btn" id="buildOutfitPromptBtn">✨ Tạo prompt outfit</button>
+          <button class="profile-btn" id="copyOutfitPromptBtn">📋 Copy</button>
+        </div>
+
+        <div class="form-row">
+          <label>Outfit prompt (kết quả):</label>
+          <textarea id="outfitFinal" class="input textarea" rows="6"></textarea>
+        </div>
+
+        <hr style="margin: 16px 0;">
+
+        <h3>🔀 Ghép prompt đổi outfit (Character + Outfit)</h3>
+        <p>Dùng character prompt & outfit prompt ở trên để tạo final prompt cho AI vẽ.</p>
+
+        <div class="form-row">
+          <button class="main-btn" id="buildSwapPromptBtn">🧬 Tạo final prompt</button>
+          <button class="profile-btn" id="copySwapJsonBtn">📋 Copy JSON</button>
+        </div>
+
+        <div class="form-row">
+          <label>JSON kết quả:</label>
+          <textarea id="swapJson" class="input textarea" rows="8" readonly></textarea>
+        </div>
+      </section>
+
+      <!-- PANEL 4: STORYBOARD -->
+      <section id="panel-story" class="admin-panel hidden">
+        <h2>🎬 Tạo prompt Storyboard (Sora / Flow...)</h2>
+
+        <div class="form-row">
+          <label>Bối cảnh / thế giới:</label>
+          <input id="storyWorld" class="input"
+            placeholder="Fantasy forest with floating islands, soft magical light..." />
+        </div>
+
+        <div class="form-row">
+          <label>Nhân vật chính:</label>
+          <input id="storyChar" class="input"
+            placeholder="Young adventurer boy in red poncho and wide-brim hat..." />
+        </div>
+
+        <div class="form-row">
+          <label>Tone / cảm xúc:</label>
+          <input id="storyTone" class="input"
+            placeholder="whimsical, adventurous, cinematic, gentle camera movement..." />
+        </div>
+
+        <div class="form-row">
+          <label>Số cảnh (shots):</label>
+          <input id="storyShots" class="input" type="number" min="3" max="12" value="6" />
+        </div>
+
+        <div class="form-row">
+          <button class="main-btn" id="buildStoryboardBtn">🎞 Tạo storyboard prompt</button>
+          <button class="profile-btn" id="copyStoryboardBtn">📋 Copy</button>
+        </div>
+
+        <div class="form-row">
+          <label>Storyboard prompt (dạng text/liệt kê shots):</label>
+          <textarea id="storyFinal" class="input textarea" rows="10"></textarea>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- SCRIPT cuối trang -->
   <script src="js/firebase.js"></script>
   <script src="js/theme.js"></script>
   <script src="js/admin.js"></script>
 </body>
 </html>
+
