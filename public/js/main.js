@@ -2,6 +2,7 @@
 //const auth = window.firebaseAuth;
 //const db   = window.firebaseDB;
 
+const ADMIN_EMAIL = "sane.htth@gmail.com"; // email admin của bạn
 let currentUser = null;
 let answeredCount = 0;
 const totalQuestions = 12;
@@ -456,6 +457,7 @@ db.ref('users/' + currentUser.uid).once('value')
     setTimeout(() => t.remove(), 3000);
   }
 });
+
 
 
 
