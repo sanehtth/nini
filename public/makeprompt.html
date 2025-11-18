@@ -209,11 +209,13 @@
             <textarea id="lyrics" class="mp-textarea" placeholder="Dán lyric hoặc kịch bản vào đây..."></textarea>
           </div>
 <div class="form-row" style="margin-top:8px;">
-  <label style="font-size:14px;">
-    <input type="checkbox" id="useTranslate" />
-    Dịch lyric / kịch bản sang <b>tiếng Anh bằng OpenAI</b> trước khi tạo prompt
-    (tốn token).
-  </label>
+  <label style="font-size:13px; display:flex; align-items:center; gap:6px; margin-top:8px;">
+  <input type="checkbox" id="useTranslate">
+  <span id="translateLabel">
+    Dịch lyric / kịch bản sang tiếng Anh bằng API đang dùng trước khi tạo prompt (tốn token).
+  </span>
+</label>
+
 </div>
 
 <div class="form-row" id="translateConfig" style="margin-top:6px; display:none;">
@@ -265,5 +267,6 @@
 
 </body>
 </html>
+
 
 
