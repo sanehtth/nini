@@ -1,15 +1,20 @@
-﻿// js/stats.js
-// Đồng bộ XP / Coin / Badge từ Firebase lên header (index, quizEng) và phần Hồ sơ.
+// js/stats.js
+// Đồng bộ XP / Coin / Badge từ Firebase lên các header: index, quizEng, profile.
 
 function initStatsHeader() {
+  console.log("[stats] initStatsHeader called");
+
+  // Chưa có firebase thì chịu
   if (!window.firebase || !firebase.auth) {
-    console.warn("Firebase chưa sẵn sàng, không init stats header được.");
+    console.warn("[stats] firebase chưa sẵn sàng.");
     return;
   }
 
   firebase.auth().onAuthStateChanged((user) => {
-    // Lấy các element có thể có trên trang hiện tại
-    const ids = {
+    console.log("[stats] auth state =", user ? user.uid : "no user");
+
+    // Lấy tất cả element có thể tồn tại trên các trang
+    const nodes = {
       globalXP: document.getElementById("globalXP"),
       globalCoin: document.getElementById("globalCoin"),
       globalBadge: document.getElementById("globalBadge"),
@@ -23,11 +28,11 @@ function initStatsHeader() {
       profileBadge: document.getElementById("profileBadge"),
     };
 
-    // Nếu chưa đăng nhập → reset hết về 0 / 1
+    // Nếu chưa đăng nhập => reset hết
     if (!user) {
-      Object.entries(ids).forEach(([key, el]) => {
+      Object.entries(nodes).forEach(([k, el]) => {
         if (!el) return;
-        if (key.toLowerCase().includes("badge")) {
+        if (k.toLowerCase().includes("badge")) {
           el.textContent = "1";
         } else {
           el.textContent = "0";
@@ -40,24 +45,25 @@ function initStatsHeader() {
       .database()
       .ref("users/" + user.uid + "/stats");
 
-    // Lắng nghe realtime stats
     statsRef.on("value", (snap) => {
       const stats = snap.val() || {};
       const xp = stats.xp != null ? stats.xp : 0;
       const coin = stats.coin != null ? stats.coin : 0;
       const badge = stats.badge != null ? stats.badge : 1;
 
-      if (ids.globalXP) ids.globalXP.textContent = xp;
-      if (ids.globalCoin) ids.globalCoin.textContent = coin;
-      if (ids.globalBadge) ids.globalBadge.textContent = badge;
+      console.log("[stats] got stats:", stats);
 
-      if (ids.quizXP) ids.quizXP.textContent = xp;
-      if (ids.quizCoin) ids.quizCoin.textContent = coin;
-      if (ids.quizBadge) ids.quizBadge.textContent = badge;
+      if (nodes.globalXP) nodes.globalXP.textContent = xp;
+      if (nodes.globalCoin) nodes.globalCoin.textContent = coin;
+      if (nodes.globalBadge) nodes.globalBadge.textContent = badge;
 
-      if (ids.profileXP) ids.profileXP.textContent = xp;
-      if (ids.profileCoin) ids.profileCoin.textContent = coin;
-      if (ids.profileBadge) ids.profileBadge.textContent = badge;
+      if (nodes.quizXP) nodes.quizXP.textContent = xp;
+      if (nodes.quizCoin) nodes.quizCoin.textContent = coin;
+      if (nodes.quizBadge) nodes.quizBadge.textContent = badge;
+
+      if (nodes.profileXP) nodes.profileXP.textContent = xp;
+      if (nodes.profileCoin) nodes.profileCoin.textContent = coin;
+      if (nodes.profileBadge) nodes.profileBadge.textContent = badge;
     });
   });
 }
