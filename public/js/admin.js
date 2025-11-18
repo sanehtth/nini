@@ -273,6 +273,21 @@ function renderActiveProviderUI() {
         });
     });
   }
+// Lắng nghe chọn API đang dùng
+document
+  .querySelectorAll(".active-provider-radio")
+  .forEach(radio => {
+    radio.addEventListener("change", e => {
+      if (e.target.checked) {
+        setActiveProvider(e.target.value);
+      }
+    });
+  });
+
+// Khi load trang admin -> hiển thị API active hiện tại
+window.addEventListener("load", () => {
+  renderActiveProviderUI();
+});
 
   // ================== 5. CÁC TOOL PROMPT (CHAR / OUTFIT / STORYBOARD) ==================
   // Mấy panel prompt nhân vật / outfit bạn đã có sẵn HTML.
@@ -281,4 +296,5 @@ function renderActiveProviderUI() {
   //  - kiểm tra element có tồn tại mới addEventListener
   //  - bọc trong DOMContentLoaded như file này để tránh lỗi null.
 });
+
 
