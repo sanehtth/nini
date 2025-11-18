@@ -1,8 +1,18 @@
-﻿// public/js/quizEng.js
-// Quiz tiếng Anh đọc từ manifest & sections JSON
-// Không đụng gì tới quiz.js cũ (tất cả nằm trong IIFE)
+// public/js/quizEng.js
+// Quiz tiếng Anh đọc từ manifest & sections JSON,
+// chấm điểm và cộng XP / Coin vào Firebase Realtime DB
+// theo luật: lần đầu + lần đạt 100%.
 
 (function () {
+  // ====== CONFIG THƯỞNG ======
+  // Lần đầu đúng 100% => 100 XP + 150 Coin
+  // Lần đầu không 100% => % đúng XP + 50 Coin
+  // Từ lần 2 trở đi: luôn có XP = % đúng, Coin chỉ thưởng 150 khi lần đầu đạt 100%
+  const XP_FULL_FIRST = 100;
+  const COIN_FIRST_NOT_FULL = 50;
+  const COIN_PERFECT = 150;
+
+  // ====== TIỆN ÍCH CHUNG ======
   async function loadJson(url) {
     const res = await fetch(url);
     if (!res.ok) {
@@ -13,7 +23,7 @@
 
   function getTestIdFromQuery() {
     const params = new URLSearchParams(window.location.search);
-    return params.get("test") || "test1"; // mặc định test1
+    return params.get("test") || "test1";
   }
 
   function createEl(tag, className, text) {
@@ -23,9 +33,10 @@
     return el;
   }
 
+  // ====== KHỞI ĐỘNG QUIZ ======
   async function initQuizEng() {
     const root = document.getElementById("quiz-eng-root");
-    if (!root) return; // nếu không có vùng này thì bỏ qua
+    if (!root) return;
 
     root.innerHTML = "Đang tải đề kiểm tra...";
 
@@ -34,7 +45,8 @@
 
       const testsManifest = await loadJson("/content/testsManifest.json");
       const test =
-        testsManifest.tests.find((t) => t.id === testId) || testsManifest.tests[0];
+        testsManifest.tests.find((t) => t.id === testId) ||
+        testsManifest.tests[0];
       if (!test) {
         root.textContent = "Không tìm thấy bài kiểm tra.";
         return;
@@ -68,7 +80,7 @@
     const info = createEl(
       "p",
       "quiz-subtitle",
-      "Làm xong bấm nút 'Nộp bài' ở cuối để xem điểm và những câu cần ôn lại."
+      "Làm xong bấm nút 'Nộp bài' để xem điểm, XP & Coin được cộng."
     );
     root.appendChild(info);
 
@@ -84,7 +96,6 @@
       );
       secBlock.appendChild(secHeader);
 
-      // đoạn văn đọc hiểu nếu có
       if (sec.passage) {
         const p = createEl("div", "quiz-passage");
         p.innerHTML = sec.passage.replace(/\n/g, "<br>");
@@ -228,7 +239,6 @@
   }
 
   function renderSectionDragDrop(parent, section) {
-    // phiên bản đơn giản: nhập từ vào từng chỗ trống (dễ code, vẫn chấm điểm được)
     const info = createEl(
       "p",
       "quiz-hint",
@@ -293,9 +303,91 @@
     });
   }
 
-  // ====== CHẤM ĐIỂM ======
+  // ====== CỘNG XP / COIN VÀO FIREBASE ======
+  // Luật thưởng có dùng trạng thái cũ => cần đọc & ghi DB theo từng test
+  async function awardStats(scorePercent, correctCount) {
+    scorePercent = Math.max(0, Math.min(100, scorePercent || 0));
+    const testId = getTestIdFromQuery();
 
-  function gradeQuiz(root, sections) {
+    if (!window.firebase || !firebase.auth) {
+      console.warn("Firebase chưa sẵn sàng, không cập nhật XP/Coin được.");
+      return { xpGain: 0, coinGain: 0, updated: false };
+    }
+
+    const user = firebase.auth().currentUser;
+    if (!user) {
+      console.warn("Chưa đăng nhập, không cập nhật XP/Coin.");
+      return { xpGain: 0, coinGain: 0, updated: false };
+    }
+
+    const uid = user.uid;
+    const db = firebase.database();
+    const quizRef = db.ref("users/" + uid + "/quizEng/" + testId);
+    const statsRef = db.ref("users/" + uid + "/stats");
+
+    // Lấy thông tin cũ của test này
+    const snap = await quizRef.once("value");
+    const info = snap.val() || {};
+    const attempts = info.attempts || 0;
+    const gotFirstCoin = !!info.gotFirstCoin;
+    const gotPerfectCoin = !!info.gotPerfectCoin;
+
+    let xpGain = 0;
+    let coinGain = 0;
+    let newGotFirstCoin = gotFirstCoin;
+    let newGotPerfectCoin = gotPerfectCoin;
+
+    if (attempts === 0) {
+      // LẦN ĐẦU
+      if (scorePercent === 100) {
+        xpGain = XP_FULL_FIRST;   // 100 XP
+        coinGain = COIN_PERFECT;  // 150 Coin
+        newGotFirstCoin = true;
+        newGotPerfectCoin = true;
+      } else {
+        xpGain = scorePercent;    // % đúng XP
+        coinGain = COIN_FIRST_NOT_FULL;  // 50 Coin khích lệ
+        newGotFirstCoin = true;
+        // perfectCoin vẫn false
+      }
+    } else {
+      // TỪ LẦN 2 TRỞ ĐI
+      xpGain = scorePercent;      // luôn có XP = % đúng
+      if (scorePercent === 100 && !gotPerfectCoin) {
+        coinGain = COIN_PERFECT;  // lần ĐẦU tiên đạt 100% thì +150 Coin
+        newGotPerfectCoin = true;
+      }
+    }
+
+    // Cập nhật info test (attempts, bestScore...)
+    const newAttempts = attempts + 1;
+    const bestScore = Math.max(info.bestScore || 0, scorePercent);
+
+    quizRef.update({
+      attempts: newAttempts,
+      bestScore: bestScore,
+      lastScore: scorePercent,
+      gotFirstCoin: newGotFirstCoin,
+      gotPerfectCoin: newGotPerfectCoin,
+      lastUpdated: Date.now()
+    });
+
+    // Cập nhật stats XP / Coin
+    if (xpGain || coinGain) {
+      await statsRef.transaction((stats) => {
+        stats = stats || {};
+        stats.xp = (stats.xp || 0) + xpGain;
+        stats.coin = (stats.coin || 0) + coinGain;
+        if (stats.badge == null) stats.badge = 1;
+        return stats;
+      });
+    }
+
+    return { xpGain, coinGain, updated: true };
+  }
+
+  // ====== CHẤM ĐIỂM ======
+  async function gradeQuiz(root, sections) {
     let total = 0;
     let correctCount = 0;
     const mistakes = [];
@@ -311,7 +403,8 @@
             total++;
             const qid = section.id + "-" + q.number;
             const chosen =
-              (document.querySelector(`input[name="${qid}"]:checked`) || {}).value;
+              (document.querySelector(`input[name="${qid}"]:checked`) || {})
+                .value;
             if (chosen === String(q.correct)) {
               correctCount++;
             } else {
@@ -394,14 +487,26 @@
     });
 
     const scorePercent = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+
+    // Cộng XP / Coin theo luật mới
+    const reward = await awardStats(scorePercent, correctCount);
+
     const resultBox =
       document.getElementById("quiz-eng-result") ||
       createEl("div", "quiz-result");
-
     resultBox.id = "quiz-eng-result";
+
+    let rewardText = "";
+    if (reward.updated) {
+      rewardText = `<p><b>Thưởng:</b> +${reward.xpGain} XP, +${reward.coinGain} Coin</p>`;
+    } else if (reward.xpGain || reward.coinGain) {
+      rewardText = `<p><b>Thưởng (local):</b> +${reward.xpGain} XP, +${reward.coinGain} Coin (không lưu được lên tài khoản)</p>`;
+    }
+
     resultBox.innerHTML = `
       <h3>Kết quả</h3>
       <p><b>Đúng:</b> ${correctCount}/${total} &nbsp; (~${scorePercent}%)</p>
+      ${rewardText}
       ${
         mistakes.length
           ? `<p><b>Cần ôn lại các câu:</b> ${mistakes.join(", ")}</p>`
@@ -515,6 +620,5 @@
     document.head.appendChild(styleEl);
   })();
 
-  // Khởi động khi DOM sẵn sàng
   document.addEventListener("DOMContentLoaded", initQuizEng);
 })();
