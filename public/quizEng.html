@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>English Quiz – LearnQuest</title>
 
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="dark.css" />
   <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
 
-  <!-- Firebase CDN giống index.html -->
+  <!-- Firebase giống index.html -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -22,9 +23,7 @@
              style="height:50px; border-radius:50%; object-fit:cover;">
         <div>
           <h1 style="margin:0;">English Quiz</h1>
-          <p class="subtitle">
-            Làm bài kiểm tra tiếng Anh, nhận XP &amp; Coin để tăng cấp.
-          </p>
+          <p class="subtitle">Làm bài kiểm tra tiếng Anh, nhận XP &amp; Coin để tăng cấp.</p>
         </div>
       </div>
 
@@ -37,9 +36,8 @@
 
         <span id="quizUserEmail">user</span>
 
-        <button class="profile-btn"
-                onclick="window.location.href='index.html'">
-          ⬅ Về trang chính
+        <button class="profile-btn" onclick="window.location.href='index.html'">
+          Về trang chính
         </button>
 
         <button class="profile-btn" onclick="toggleTheme()">
@@ -53,11 +51,11 @@
     </main>
   </div>
 
-  <!-- Khởi tạo Firebase (dùng chung với index) -->
+  <!-- Firebase config + theme giống index -->
   <script src="js/firebase.js"></script>
   <script src="js/theme.js"></script>
 
-  <!-- Engine quiz tiếng Anh: render + chấm điểm + cộng XP/Coin -->
+  <!-- Engine quiz tiếng Anh -->
   <script src="js/quizEng.js"></script>
 </body>
 </html>
