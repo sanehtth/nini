@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
@@ -8,19 +8,40 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="dark.css" />
   <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
+
+  <!-- Firebase CDN giống index.html -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>English Quiz</h1>
-      <p class="subtitle">
-        Làm bài kiểm tra tiếng Anh. Khi xong bấm "Nộp bài" để xem điểm và những câu cần ôn lại.
-      </p>
+      <div style="display:flex; align-items:center; gap:15px;">
+        <img src="/assets/logonini.webp" alt="Logo Nini"
+             style="height:50px; border-radius:50%; object-fit:cover;">
+        <div>
+          <h1 style="margin:0;">English Quiz</h1>
+          <p class="subtitle">
+            Làm bài kiểm tra tiếng Anh, nhận XP &amp; Coin để tăng cấp.
+          </p>
+        </div>
+      </div>
 
       <div class="user-info">
-        <button class="profile-btn" onclick="window.location.href='index.html'">
+        <div class="stats">
+          <div class="stat-item">XP <span id="quizXP">0</span></div>
+          <div class="stat-item">Coin <span id="quizCoin">0</span></div>
+          <div class="stat-item">Huy hiệu <span id="quizBadge">1</span></div>
+        </div>
+
+        <span id="quizUserEmail">user</span>
+
+        <button class="profile-btn"
+                onclick="window.location.href='index.html'">
           ⬅ Về trang chính
         </button>
+
         <button class="profile-btn" onclick="toggleTheme()">
           Dark / Light
         </button>
@@ -32,8 +53,11 @@
     </main>
   </div>
 
+  <!-- Khởi tạo Firebase (dùng chung với index) -->
+  <script src="js/firebase.js"></script>
   <script src="js/theme.js"></script>
-  <!-- File này là engine render & chấm bài (mình đã gửi code ở tin trước) -->
+
+  <!-- Engine quiz tiếng Anh: render + chấm điểm + cộng XP/Coin -->
   <script src="js/quizEng.js"></script>
 </body>
 </html>
