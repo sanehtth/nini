@@ -659,6 +659,38 @@ async function gradeQuiz(root, sections, autoSubmit = false) {
     document.head.appendChild(styleEl);
   })();
 
-  document.addEventListener("DOMContentLoaded", initQuizEng);
-})();
+  document.addEventListener("DOMContentLoaded", () => {
+  initQuizHeader();
+  initQuizEng();
+});
+function initQuizHeader() {
+  // Nếu chưa có firebase (load lỗi) thì bỏ qua
+  if (!window.firebase || !firebase.auth) return;
+
+  const emailEl = document.getElementById("quizUserEmail");
+  const xpEl    = document.getElementById("quizXP");
+  const coinEl  = document.getElementById("quizCoin");
+  const badgeEl = document.getElementById("quizBadge");
+
+  firebase.auth().onAuthStateChanged((user) => {
+    if (!user) {
+      if (emailEl) emailEl.textContent = "Chưa đăng nhập";
+      return;
+    }
+    if (emailEl) emailEl.textContent = user.email;
+
+    const statsRef = firebase
+      .database()
+      .ref("users/" + user.uid + "/stats");
+
+    statsRef.on("value", (snap) => {
+      const stats = snap.val() || {};
+      if (xpEl) xpEl.textContent = stats.xp != null ? stats.xp : 0;
+      if (coinEl) coinEl.textContent = stats.coin != null ? stats.coin : 0;
+      if (badgeEl) badgeEl.textContent = stats.badge != null ? stats.badge : 1;
+    });
+  });
+}
+
+
 
