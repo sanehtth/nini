@@ -1,10 +1,13 @@
 // js/stats.js
-// Đồng bộ XP / Coin / Badge từ Firebase lên các header: index, quizEng, profile.
+// Đồng bộ XP / Coin / Badge từ Firebase lên header (index, quizEng, profile)
+
+window.XP_DEBUG = function (info) {
+  console.log("[XP-DEBUG]", info);
+};
 
 function initStatsHeader() {
   console.log("[stats] initStatsHeader called");
 
-  // Chưa có firebase thì chịu
   if (!window.firebase || !firebase.auth) {
     console.warn("[stats] firebase chưa sẵn sàng.");
     return;
@@ -28,48 +31,52 @@ function initStatsHeader() {
       profileBadge: document.getElementById("profileBadge"),
     };
 
-    // Nếu chưa đăng nhập => reset hết
+    // Nếu chưa đăng nhập => reset hết về 0 / 1
     if (!user) {
-      Object.entries(nodes).forEach(([k, el]) => {
+      Object.entries(nodes).forEach(([key, el]) => {
         if (!el) return;
-        if (k.toLowerCase().includes("badge")) {
+        if (key.toLowerCase().includes("badge")) {
           el.textContent = "1";
         } else {
           el.textContent = "0";
         }
       });
+
+      XP_DEBUG({ source: "stats.js:noUser", xp: 0, coin: 0, badge: 1 });
       return;
     }
 
-    const statsRef = firebase
-      .database()
-      .ref("users/" + user.uid + "/stats");
+    // Người dùng đã đăng nhập => nghe stats trong /users/{uid}/stats
+    const statsRef = firebase.database().ref(
+      "users/" + user.uid + "/stats"
+    );
 
     statsRef.on("value", (snap) => {
-  console.log("[stats] raw snapshot:", snap.val());
+      const stats = snap.val() || {};
+      const xp = stats.xp != null ? stats.xp : 0;
+      const coin = stats.coin != null ? stats.coin : 0;
+      const badge = stats.badge != null ? stats.badge : 1;
 
-  const stats = snap.val() || {};
-  const xp    = stats.xp    != null ? stats.xp    : 0;
-  const coin  = stats.coin  != null ? stats.coin  : 0;
-  const badge = stats.badge != null ? stats.badge : 1;
+      console.log("[stats] xp/coin/badge:", xp, coin, badge);
+      XP_DEBUG({ source: "stats.js:afterFirebase", xp, coin, badge });
 
-  console.log("[stats] xp/coin/badge:", xp, coin, badge);
+      // Cập nhật header ở index.html
+      if (nodes.globalXP) nodes.globalXP.textContent = xp;
+      if (nodes.globalCoin) nodes.globalCoin.textContent = coin;
+      if (nodes.globalBadge) nodes.globalBadge.textContent = badge;
 
-  if (nodes.globalXP)    nodes.globalXP.textContent    = xp;
-  if (nodes.globalCoin)  nodes.globalCoin.textContent  = coin;
-  if (nodes.globalBadge) nodes.globalBadge.textContent = badge;
+      // Cập nhật header ở quizEng.html (nếu có)
+      if (nodes.quizXP) nodes.quizXP.textContent = xp;
+      if (nodes.quizCoin) nodes.quizCoin.textContent = coin;
+      if (nodes.quizBadge) nodes.quizBadge.textContent = badge;
 
-  if (nodes.quizXP)    nodes.quizXP.textContent    = xp;
-  if (nodes.quizCoin)  nodes.quizCoin.textContent  = coin;
-  if (nodes.quizBadge) nodes.quizBadge.textContent = badge;
-
-  if (nodes.profileXP)    nodes.profileXP.textContent    = xp;
-  if (nodes.profileCoin)  nodes.profileCoin.textContent  = coin;
-  if (nodes.profileBadge) nodes.profileBadge.textContent = badge;
-});
-
+      // Cập nhật khối thống kê trong profile.html (nếu có)
+      if (nodes.profileXP) nodes.profileXP.textContent = xp;
+      if (nodes.profileCoin) nodes.profileCoin.textContent = coin;
+      if (nodes.profileBadge) nodes.profileBadge.textContent = badge;
+    });
   });
 }
 
+// Chờ DOM sẵn rồi mới chạy
 document.addEventListener("DOMContentLoaded", initStatsHeader);
-
