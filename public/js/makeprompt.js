@@ -47,6 +47,43 @@ const COMBO_PRESETS = {
   ]
 };
 
+/* ========= Helper: map aspect → text cho prompt ========= */
+function aspectToText(aspect) {
+  if (!aspect) return "1:1 square";
+
+  const a = String(aspect).toLowerCase().trim();
+
+  // Một loạt trường hợp có thể xảy ra
+  if (
+    a.includes("1792x1024") ||
+    a.includes("16:9") ||
+    a.includes("landscape") ||
+    a.includes("widescreen")
+  ) {
+    return "16:9 widescreen";
+  }
+
+  if (
+    a.includes("1024x1792") ||
+    a.includes("9:16") ||
+    a.includes("vertical") ||
+    a.includes("portrait")
+  ) {
+    return "9:16 vertical";
+  }
+
+  if (
+    a.includes("1:1") ||
+    a.includes("square") ||
+    a.includes("1024x1024")
+  ) {
+    return "1:1 square";
+  }
+
+  // fallback: trả lại raw
+  return aspect;
+}
+
 /* ========= Build scene list từ dữ liệu form ========= */
 function buildScenesFromLyrics(data) {
   const rawText = (data.text || "").trim();
@@ -133,12 +170,8 @@ function buildPromptForScene({ idx, lyric, styleKey, comboKey, aspect }) {
   const comboList = COMBO_PRESETS[comboKey] || COMBO_PRESETS.mix;
   const cameraMood = comboList[(idx - 1) % comboList.length];
 
-  const ratioText =
-    aspect === "1792x1024"
-      ? "16:9 landscape"
-      : aspect === "1024x1792"
-      ? "9:16 vertical"
-      : "1:1 square";
+  // *** ĐÃ SỬA: dùng helper aspectToText() thay vì so sánh cứng ***
+  const ratioText = aspectToText(aspect);
 
   // Prompt cuối cùng – bạn có thể chỉnh template này theo Sora / Flow / v.v.
   const prompt = [
@@ -218,7 +251,7 @@ $("btnMakePrompt")?.addEventListener("click", () => {
     step: Number(val("item", 5)),
     preset: val("preset", "3d_cinematic_warm"),
     combo: val("combo", "mix"),
-    aspect: val("aspect", "1792x1024")
+    aspect: val("aspect", "1792x1024") // value nào cũng được, đã map bằng aspectToText
   };
 
   _lastScenes = buildScenesFromLyrics(data);
