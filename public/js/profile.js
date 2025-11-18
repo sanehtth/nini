@@ -91,7 +91,7 @@ window.App = window.App || {};
       });
     }
 
-    /*  Thống kê XP/Coin/Huy hiệu (nếu có)
+    /* Thống kê XP/Coin/Huy hiệu (nếu có)
     const progress = data?.gameProgress || {};
     const totalXP   = Object.values(progress).reduce((s,g)=>s + (g?.xp||0), 0);
     const totalCoin = Object.values(progress).reduce((s,g)=>s + (g?.coin||0), 0);
@@ -105,10 +105,10 @@ window.App = window.App || {};
     const badgeEl = document.getElementById("profileBadge");
     if (xpEl)   xpEl.textContent = totalXP;
     if (coinEl) coinEl.textContent = totalCoin;
-    if (badgeEl)badgeEl.textContent = badge;
+    if (badgeEl)badgeEl.textContent = badge;*/
   }
-*/
   // Xuất ra window để main.js gọi
   window.App.Profile = { renderProfile };
 })();
+
 
