@@ -1,0 +1,557 @@
+﻿
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Make JSON - Builder 6 phần (Test content)</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 1100px; margin: 20px auto; padding: 0 10px; }
+    h1 { text-align: center; margin-bottom: 10px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .tabs button { padding: 6px 12px; cursor: pointer; border: 1px solid #ccc; background: #eee; border-radius: 4px; }
+    .tabs button.active { background: #4285f4; color: #fff; border-color: #4285f4; }
+    .tab { display: none; border: 1px solid #ddd; padding: 10px; border-radius: 6px; background: #fafafa; }
+    .tab.active { display: block; }
+    textarea { width: 100%; min-height: 200px; font-family: monospace; font-size: 13px; }
+    label { font-weight: bold; margin-top: 6px; display: block; }
+    input[type="text"], select { padding: 4px 6px; width: 100%; box-sizing: border-box; }
+    button.generate { margin-top: 10px; padding: 6px 14px; cursor: pointer; }
+    .hint { font-size: 12px; color: #666; margin-top: 4px; }
+    hr { margin: 12px 0; }
+  </style>
+</head>
+<body>
+<h1>Make JSON - Builder 6 phần</h1>
+
+<label><b>Tên bài test (testName)</b></label>
+<input type="text" id="globalTestName" placeholder="vd: Test 1" />
+<div class="hint">
+  Mỗi section sẽ có testName = giá trị này, ví dụ: "Test 1".<br>
+  Title có thể tự sinh theo mẫu: <code>Test 1 - Phần X - ...</code> nếu bạn để trống.
+</div>
+<hr/>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="tab1">Phần 1 (MCQ)</button>
+  <button class="tab-btn" data-tab="tab2">Phần 2 (MCQ + hình)</button>
+  <button class="tab-btn" data-tab="tab3">Phần 3 (MCQ / reading)</button>
+  <button class="tab-btn" data-tab="tab4">Phần 4 (Drag & drop)</button>
+  <button class="tab-btn" data-tab="tab5">Phần 5 (Word form)</button>
+  <button class="tab-btn" data-tab="tab6">Phần 6 (Reorder / Rewrite)</button>
+</div>
+
+<!-- ========== TAB 1: MCQ ========== -->
+<div id="tab1" class="tab active">
+  <h2>Phần 1 – Trắc nghiệm (mcqOneByOne)</h2>
+  <label>section.id (sẽ tự nhảy P1_001, P1_002, ...)</label>
+  <input type="text" id="p1_id" placeholder="vd: P1_001" />
+  <label>section.title (nếu để trống sẽ tự sinh)</label>
+  <input type="text" id="p1_title" placeholder="vd: Test 1 - Phần 1 - Trắc nghiệm" />
+  <label>Nội dung thô (câu 1–14)</label>
+  <textarea id="p1_raw" placeholder="Câu 1. ....&#10;A. ...&#10;B. ...&#10;C. ...&#10;D. ...&#10;Câu 2. ..."></textarea>
+  <div class="hint">
+    Dòng câu hỏi: <code>Câu 1. ...</code> hoặc <code>1. ...</code><br/>
+    Đáp án: <code>A. ...</code>, <code>B. ...</code>, <code>C. ...</code>, <code>D. ...</code>
+  </div>
+  <button class="generate" onclick="generateMcq('p1')">Tạo JSON phần 1</button>
+  <label>JSON output</label>
+  <textarea id="p1_json"></textarea>
+</div>
+
+<!-- ========== TAB 2: MCQ + IMAGE ========== -->
+<div id="tab2" class="tab">
+  <h2>Phần 2 – Trắc nghiệm có hình (mcqImage)</h2>
+  <label>section.id (P2_001, P2_002, ...)</label>
+  <input type="text" id="p2_id" placeholder="vd: P2_001" />
+  <label>section.title (nếu để trống sẽ tự sinh)</label>
+  <input type="text" id="p2_title" placeholder="vd: Test 1 - Phần 2 - Nhìn hình trả lời câu hỏi" />
+  <label>Nội dung thô (câu 15–16)</label>
+  <textarea id="p2_raw" placeholder="Câu 15. ....&#10;A. ...&#10;B. ...&#10;C. ...&#10;D. ...&#10;Câu 16. ..."></textarea>
+  <div class="hint">
+    Format giống phần 1: Câu n. + A/B/C/D.<br>
+    Tên file hình sẽ tự sinh theo mẫu: <code>test1_P2_sign_15.png</code>, <code>test1_P2_sign_16.png</code>...<br>
+    Trong đó <code>test1</code> lấy từ testName (viết thường, bỏ khoảng trắng).
+  </div>
+  <button class="generate" onclick="generateMcqImage()">Tạo JSON phần 2</button>
+  <label>JSON output</label>
+  <textarea id="p2_json"></textarea>
+</div>
+
+<!-- ========== TAB 3: MCQ / reading ========== -->
+<div id="tab3" class="tab">
+  <h2>Phần 3 – MCQ / Reading (mcqOneByOne cơ bản)</h2>
+  <label>section.id (P3_001, P3_002, ...)</label>
+  <input type="text" id="p3_id" placeholder="vd: P3_001" />
+  <label>section.title (nếu để trống sẽ tự sinh)</label>
+  <input type="text" id="p3_title" placeholder="vd: Test 1 - Phần 3 - Đọc đoạn văn và trả lời câu hỏi" />
+  <label>Nội dung thô (chỉ phần câu hỏi + đáp án)</label>
+  <textarea id="p3_raw" placeholder="Câu 17. ...&#10;A. ...&#10;B. ...&#10;..."></textarea>
+  <div class="hint">
+    Sau khi tạo JSON, nếu bạn dùng type <code>readingMcq</code>, bạn có thể thêm key <code>passage</code> bằng tay.
+  </div>
+  <button class="generate" onclick="generateMcq('p3')">Tạo JSON phần 3</button>
+  <label>JSON output</label>
+  <textarea id="p3_json"></textarea>
+</div>
+
+<!-- ========== TAB 4: Drag & drop ========== -->
+<div id="tab4" class="tab">
+  <h2>Phần 4 – Đọc hiểu & kéo–thả (readingDragDrop)</h2>
+  <label>section.id (P4_001, P4_002, ...)</label>
+  <input type="text" id="p4_id" placeholder="vd: P4_001" />
+  <label>section.title (nếu để trống sẽ tự sinh)</label>
+  <input type="text" id="p4_title" placeholder="vd: Test 1 - Phần 4 - Đọc đoạn văn và điền vào chỗ trống" />
+
+  <label>Đoạn văn (dùng __23__, __24__... để đánh dấu chỗ trống)</label>
+  <textarea id="p4_passage" placeholder="My friend Sarah __23__ on a fantastic trip last summer. She visited the __24__ city of Edinburgh..."></textarea>
+
+  <label>Đáp án (mỗi dòng 1 cặp: số=đáp án)</label>
+  <textarea id="p4_answers" placeholder="23=went&#10;24=beautiful&#10;25=heart&#10;26=walked&#10;27=where&#10;28=performances"></textarea>
+
+  <button class="generate" onclick="generateDrag()">Tạo JSON phần 4</button>
+  <label>JSON output</label>
+  <textarea id="p4_json"></textarea>
+</div>
+
+<!-- ========== TAB 5: Word form ========== -->
+<div id="tab5" class="tab">
+  <h2>Phần 5 – Word form (wordForm)</h2>
+  <label>section.id (P5_001, P5_002, ...)</label>
+  <input type="text" id="p5_id" placeholder="vd: P5_001" />
+  <label>section.title (nếu để trống sẽ tự sinh)</label>
+  <input type="text" id="p5_title" placeholder="vd: Test 1 - Phần 5 - Chọn đúng dạng của từ" />
+
+  <label>Dữ liệu (mỗi dòng: số|câu hỏi|đáp án)</label>
+  <textarea id="p5_raw" placeholder="29|She stared in ________ at the beautiful sunset. [amaze]|amazement&#10;30|He ________ refused to go to the party. [absolute]|absolutely"></textarea>
+  <div class="hint">
+    Ví dụ: <code>29|She stared in ________ at the beautiful sunset. [amaze]|amazement</code>
+  </div>
+
+  <button class="generate" onclick="generateWordForm()">Tạo JSON phần 5</button>
+  <label>JSON output</label>
+  <textarea id="p5_json"></textarea>
+</div>
+
+<!-- ========== TAB 6: Reorder / Rewrite ========== -->
+<div id="tab6" class="tab">
+  <h2>Phần 6 – Reorder / Rewrite (reorderAndRewrite)</h2>
+  <label>section.id (P6_001, P6_002, ...)</label>
+  <input type="text" id="p6_id" placeholder="vd: P6_001" />
+  <label>section.title (nếu để trống sẽ tự sinh)</label>
+  <input type="text" id="p6_title" placeholder="vd: Test 1 - Phần 6 - Ghép câu và viết lại câu" />
+
+  <label>Dữ liệu (mỗi dòng: số|prompt|đáp án đúng)</label>
+  <textarea id="p6_raw" placeholder="35|James Bell / has worked for a / perfume company / for over twenty / years. (hãy sắp xếp thành câu)|James Bell has worked for a perfume company for over twenty years.&#10;36|She can’t / smell anything, even / the fragrances / of roses. (hãy sắp xếp thành câu)|She can't smell anything, even the fragrances of roses.&#10;37|Mary has been studying French for 5 years. Viết lại: Mary started …|Mary started studying French 5 years ago."></textarea>
+  <div class="hint">
+    Format: <code>number|prompt|answer</code>. Bạn có thể mô tả yêu cầu (sắp xếp, viết lại, ...) trong prompt.
+  </div>
+
+  <button class="generate" onclick="generateReorderRewrite()">Tạo JSON phần 6</button>
+  <label>JSON output</label>
+  <textarea id="p6_json"></textarea>
+</div>
+
+<script>
+// ====== AUTO ID COUNTERS ======
+const partCounters = {
+  p1: 1,
+  p2: 1,
+  p3: 1,
+  p4: 1,
+  p5: 1,
+  p6: 1
+};
+
+const basePrefixes = {
+  p1: "P1_",
+  p2: "P2_",
+  p3: "P3_",
+  p4: "P4_",
+  p5: "P5_",
+  p6: "P6_"
+};
+
+const partIndexMap = {
+  p1: 1,
+  p2: 2,
+  p3: 3,
+  p4: 4,
+  p5: 5,
+  p6: 6
+};
+
+function formatId(prefix, index) {
+  return prefix + String(index).padStart(3, '0');
+}
+
+function slugifyTestName(testName) {
+  return testName.toLowerCase().replace(/\s+/g, '');
+}
+
+function autoTitle(testName, partIndex) {
+  const descMap = {
+    1: "Trắc nghiệm",
+    2: "Nhìn hình trả lời câu hỏi",
+    3: "Đọc đoạn văn và trả lời câu hỏi",
+    4: "Đọc đoạn văn và điền vào chỗ trống",
+    5: "Chọn đúng dạng của từ",
+    6: "Ghép câu và viết lại câu"
+  };
+  const desc = descMap[partIndex] || "";
+  return testName + " - Phần " + partIndex + " - " + desc;
+}
+
+function initAutoIds() {
+  document.getElementById('p1_id').value = formatId(basePrefixes.p1, partCounters.p1);
+  document.getElementById('p2_id').value = formatId(basePrefixes.p2, partCounters.p2);
+  document.getElementById('p3_id').value = formatId(basePrefixes.p3, partCounters.p3);
+  document.getElementById('p4_id').value = formatId(basePrefixes.p4, partCounters.p4);
+  document.getElementById('p5_id').value = formatId(basePrefixes.p5, partCounters.p5);
+  document.getElementById('p6_id').value = formatId(basePrefixes.p6, partCounters.p6);
+}
+
+// ========== Tab switching ==========
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.getAttribute('data-tab');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(target).classList.add('active');
+  });
+});
+
+// ========== Common MCQ parser (Phần 1–3, 2 dùng lại) ==========
+function parseMcqText(text) {
+  const lines = text
+    .split(/\\r?\\n/)
+    .map(l => l.trim())
+    .filter(l => l.length > 0);
+
+  const questions = [];
+  let current = null;
+
+  const qRegex = /^(?:Câu\\s*)?(\\d+)[\\.\\)]\\s*(.*)$/i; // "Câu 1. ..." hoặc "1. ..."
+  const oRegex = /^([A-D])[\\.\\)]\\s*(.*)$/;          // "A. ..."
+
+  for (const line of lines) {
+    const qm = line.match(qRegex);
+    const om = line.match(oRegex);
+
+    if (qm) {
+      if (current) questions.push(current);
+      current = {
+        number: parseInt(qm[1], 10),
+        text: qm[2].trim(),
+        options: []
+      };
+    } else if (om && current) {
+      current.options.push(om[2].trim());
+    } else if (current) {
+      current.text += " " + line;
+    }
+  }
+  if (current) questions.push(current);
+  return questions;
+}
+
+// ========== Generate MCQ (Phần 1 & 3) ==========
+function generateMcq(prefix) {
+  const testName = (document.getElementById('globalTestName').value || '').trim();
+  if (!testName) {
+    alert('Bạn chưa nhập tên bài test (vd: "Test 1").');
+    return;
+  }
+
+  const idInput = document.getElementById(prefix + '_id');
+  let id = (idInput.value || "").trim();
+  const partIndex = partIndexMap[prefix] || 1;
+
+  const titleInput = document.getElementById(prefix + '_title');
+  let title = titleInput.value.trim();
+  if (!title) {
+    title = autoTitle(testName, partIndex);
+  }
+
+  const raw = document.getElementById(prefix + '_raw').value.trim();
+  if (!raw) {
+    alert('Chưa có nội dung thô.');
+    return;
+  }
+
+  if (!id) {
+    id = formatId(basePrefixes[prefix], partCounters[prefix]);
+  }
+
+  const qs = parseMcqText(raw);
+  if (!qs.length) {
+    alert('Không parse được câu hỏi. Kiểm tra lại format Câu n. / 1. và A./B./C./D.');
+    return;
+  }
+
+  const section = {
+    id,
+    testName,
+    partIndex,
+    sectionOrder: partCounters[prefix],
+    type: "mcqOneByOne",
+    title,
+    questions: qs.map(q => ({
+      number: q.number,
+      text: q.text,
+      options: q.options,
+      correct: null  // bạn điền sau (0=A,1=B,2=C,3=D)
+    }))
+  };
+
+  document.getElementById(prefix + '_json').value = JSON.stringify(section, null, 2);
+
+  partCounters[prefix]++;
+  idInput.value = formatId(basePrefixes[prefix], partCounters[prefix]);
+}
+
+// ========== Generate MCQ + Image (Phần 2) ==========
+function generateMcqImage() {
+  const testName = (document.getElementById('globalTestName').value || '').trim();
+  if (!testName) {
+    alert('Bạn chưa nhập tên bài test (vd: "Test 1").');
+    return;
+  }
+  const prefix = 'p2';
+  const idInput = document.getElementById('p2_id');
+  let id = (idInput.value || "").trim();
+  const partIndex = 2;
+
+  const titleInput = document.getElementById('p2_title');
+  let title = titleInput.value.trim();
+  if (!title) {
+    title = autoTitle(testName, partIndex);
+  }
+
+  const raw = document.getElementById('p2_raw').value.trim();
+  if (!raw) {
+    alert('Chưa có nội dung thô.');
+    return;
+  }
+
+  if (!id) {
+    id = formatId(basePrefixes[prefix], partCounters[prefix]);
+  }
+
+  const qs = parseMcqText(raw);
+  if (!qs.length) {
+    alert('Không parse được câu hỏi. Kiểm tra lại format Câu n. / 1. và A./B./C./D.');
+    return;
+  }
+
+  const slug = slugifyTestName(testName); // vd: "test1"
+  const questions = qs.map(q => ({
+    number: q.number,
+    imageFile: slug + "_P2_sign_" + q.number + ".png",
+    text: q.text,
+    options: q.options,
+    correct: null
+  }));
+
+  const section = {
+    id,
+    testName,
+    partIndex,
+    sectionOrder: partCounters[prefix],
+    type: "mcqImage",
+    title,
+    questions
+  };
+
+  document.getElementById('p2_json').value = JSON.stringify(section, null, 2);
+
+  partCounters[prefix]++;
+  idInput.value = formatId(basePrefixes[prefix], partCounters[prefix]);
+}
+
+// ========== Phần 4: Drag & drop ==========
+function generateDrag() {
+  const testName = (document.getElementById('globalTestName').value || '').trim();
+  if (!testName) {
+    alert('Bạn chưa nhập tên bài test (vd: "Test 1").');
+    return;
+  }
+  const prefix = 'p4';
+  const idInput = document.getElementById('p4_id');
+  let id = (idInput.value || "").trim();
+  const partIndex = 4;
+
+  const titleInput = document.getElementById('p4_title');
+  let title = titleInput.value.trim();
+  if (!title) {
+    title = autoTitle(testName, partIndex);
+  }
+
+  const passage = document.getElementById('p4_passage').value.trim();
+  const ansRaw = document.getElementById('p4_answers').value.trim();
+
+  if (!passage || !ansRaw) {
+    alert('Cần có cả đoạn văn và đáp án.');
+    return;
+  }
+
+  if (!id) {
+    id = formatId(basePrefixes[prefix], partCounters[prefix]);
+  }
+
+  const blanks = {};
+  ansRaw.split(/\\r?\\n/).forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    const parts = trimmed.split('=');
+    if (parts.length !== 2) return;
+    const num = parts[0].trim();
+    const val = parts[1].trim();
+    if (num) blanks[num] = val;
+  });
+
+  const section = {
+    id,
+    testName,
+    partIndex,
+    sectionOrder: partCounters[prefix],
+    type: "readingDragDrop",
+    title,
+    passage,
+    blanks
+  };
+
+  document.getElementById('p4_json').value = JSON.stringify(section, null, 2);
+
+  partCounters[prefix]++;
+  idInput.value = formatId(basePrefixes[prefix], partCounters[prefix]);
+}
+
+// ========== Phần 5: Word form ==========
+function generateWordForm() {
+  const testName = (document.getElementById('globalTestName').value || '').trim();
+  if (!testName) {
+    alert('Bạn chưa nhập tên bài test (vd: "Test 1").');
+    return;
+  }
+  const prefix = 'p5';
+  const idInput = document.getElementById('p5_id');
+  let id = (idInput.value || "").trim();
+  const partIndex = 5;
+
+  const titleInput = document.getElementById('p5_title');
+  let title = titleInput.value.trim();
+  if (!title) {
+    title = autoTitle(testName, partIndex);
+  }
+
+  const raw = document.getElementById('p5_raw').value.trim();
+  if (!raw) {
+    alert('Chưa có dữ liệu.');
+    return;
+  }
+
+  if (!id) {
+    id = formatId(basePrefixes[prefix], partCounters[prefix]);
+  }
+
+  const lines = raw.split(/\\r?\\n/).map(l => l.trim()).filter(l => l);
+  const questions = [];
+
+  lines.forEach(line => {
+    const parts = line.split('|');
+    if (parts.length < 3) return;
+    const number = parseInt(parts[0].trim(), 10);
+    const text = parts[1].trim();
+    const answer = parts[2].trim();
+    questions.push({ number, text, answer });
+  });
+
+  if (!questions.length) {
+    alert('Không parse được dòng nào. Kiểm tra lại format: số|câu|đáp án');
+    return;
+  }
+
+  const section = {
+    id,
+    testName,
+    partIndex,
+    sectionOrder: partCounters[prefix],
+    type: "wordForm",
+    title,
+    questions
+  };
+
+  document.getElementById('p5_json').value = JSON.stringify(section, null, 2);
+
+  partCounters[prefix]++;
+  idInput.value = formatId(basePrefixes[prefix], partCounters[prefix]);
+}
+
+// ========== Phần 6: Reorder / Rewrite (simple) ==========
+function generateReorderRewrite() {
+  const testName = (document.getElementById('globalTestName').value || '').trim();
+  if (!testName) {
+    alert('Bạn chưa nhập tên bài test (vd: "Test 1").');
+    return;
+  }
+  const prefix = 'p6';
+  const idInput = document.getElementById('p6_id');
+  let id = (idInput.value || "").trim();
+  const partIndex = 6;
+
+  const titleInput = document.getElementById('p6_title');
+  let title = titleInput.value.trim();
+  if (!title) {
+    title = autoTitle(testName, partIndex);
+  }
+
+  const raw = document.getElementById('p6_raw').value.trim();
+  if (!raw) {
+    alert('Chưa có dữ liệu.');
+    return;
+  }
+
+  if (!id) {
+    id = formatId(basePrefixes[prefix], partCounters[prefix]);
+  }
+
+  const lines = raw.split(/\\r?\\n/).map(l => l.trim()).filter(l => l);
+  const items = [];
+
+  lines.forEach(line => {
+    const parts = line.split('|');
+    if (parts.length < 3) return;
+    const number = parseInt(parts[0].trim(), 10);
+    const prompt = parts[1].trim();
+    const answer = parts[2].trim();
+    items.push({ number, prompt, answer });
+  });
+
+  if (!items.length) {
+    alert('Không parse được dòng nào. Kiểm tra lại format: số|prompt|đáp án');
+    return;
+  }
+
+  const section = {
+    id,
+    testName,
+    partIndex,
+    sectionOrder: partCounters[prefix],
+    type: "reorderAndRewrite",
+    title,
+    questions: items
+  };
+
+  document.getElementById('p6_json').value = JSON.stringify(section, null, 2);
+
+  partCounters[prefix]++;
+  idInput.value = formatId(basePrefixes[prefix], partCounters[prefix]);
+}
+
+// Khởi tạo ID gợi ý ban đầu
+initAutoIds();
+</script>
+
+</body>
+</html>
