@@ -242,21 +242,177 @@ function downloadTSV(scenes) {
   URL.revokeObjectURL(url);
 }
 
-/* ========= Gắn event ========= */
+// =============  ham lay API openAI dich van ban =============
 
-$("btnMakePrompt")?.addEventListener("click", () => {
+// ========= Ưu tiên lấy key từ input trên trang, nếu trống thì thử lấy từ localStorage
+function getOpenAIKeyForMakePrompt() {
+  const input = $("mpApiKey");
+  if (input && input.value.trim()) return input.value.trim();
+
+  // Thử lấy từ localStorage theo format bên Admin (đoán tên key)
+  try {
+    const raw =
+      localStorage.getItem("apiProfiles") ||
+      localStorage.getItem("api_profiles") ||
+      "";
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const found = parsed.find(
+          p =>
+            p &&
+            (p.provider === "openai" || p.provider === "OpenAI") &&
+            p.apiKey
+        );
+        if (found) return found.apiKey;
+      } else if (typeof parsed === "object") {
+        for (const k in parsed) {
+          const p = parsed[k];
+          if (
+            p &&
+            (p.provider === "openai" || p.provider === "OpenAI") &&
+            p.apiKey
+          ) {
+            return p.apiKey;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("Không đọc được apiProfiles từ localStorage:", e);
+  }
+  return "";
+}
+// =========Dịch 1 đoạn lyric / kịch bản từ VI -> EN bằng OpenAI ==============
+
+async function translateLyricViToEn(text, apiKey) {
+  const cleaned = (text || "").trim();
+  if (!cleaned) return text;
+
+  try {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + apiKey
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a translator. Translate Vietnamese song lyrics or story fragments " +
+              "into short, natural English descriptions that are suitable as prompts for " +
+              "video scenes. Do NOT add explanation or numbering."
+          },
+          { role: "user", content: cleaned }
+        ],
+        max_tokens: 150,
+        temperature: 0.3
+      })
+    });
+
+    if (!res.ok) {
+      console.error("OpenAI error:", await res.text());
+      return text; // lỗi thì trả về bản gốc tiếng Việt
+    }
+
+    const data = await res.json();
+    const out =
+      data.choices?.[0]?.message?.content?.trim() ||
+      text;
+
+    return out;
+  } catch (err) {
+    console.error("Lỗi gọi OpenAI:", err);
+    return text;
+  }
+}
+
+// ==========  Bản async: nếu useTranslate = true thì dịch lyric từng cảnh sang EN  =======
+//=========================================================================================
+async function buildScenesFromLyricsAsync(data, { useTranslate, apiKey } = {}) {
+  // Dùng logic cũ để chia line + tính thời gian
+  const baseScenes = buildScenesFromLyrics(data);
+
+  if (!useTranslate || !apiKey) {
+    return baseScenes; // giữ nguyên (lyric có thể là tiếng Việt)
+  }
+
+  const out = [];
+  for (const scene of baseScenes) {
+    const lyricVi = scene.lyric || "";
+    const lyricEn = await translateLyricViToEn(lyricVi, apiKey);
+
+    // build lại prompt với lyricEn
+    const promptEn = buildPromptForScene({
+      idx: scene.index,
+      lyric: lyricEn,
+      styleKey: scene.preset,
+      comboKey: scene.combo,
+      aspect: scene.aspect
+    });
+
+    out.push({
+      ...scene,
+      lyric_en: lyricEn,
+      prompt: promptEn
+    });
+  }
+  return out;
+}
+//=================het phan lay API va dich van ban ================
+
+/* ========= Gắn event ========= */
+$("btnMakePrompt")?.addEventListener("click", async () => {
+  const btn = $("btnMakePrompt");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Đang tạo...";
+  }
+
   const data = {
     text: val("lyrics", ""),
     total: Number(val("dur", 180)),
     step: Number(val("item", 5)),
     preset: val("preset", "3d_cinematic_warm"),
     combo: val("combo", "mix"),
-    aspect: val("aspect", "1792x1024") // value nào cũng được, đã map bằng aspectToText
+    aspect: val("aspect", "1792x1024")
   };
 
-  _lastScenes = buildScenesFromLyrics(data);
-  renderScenesText(_lastScenes);
+  const useTranslate = $("useTranslate")?.checked;
+  let apiKey = "";
+  if (useTranslate) {
+    apiKey = getOpenAIKeyForMakePrompt();
+    if (!apiKey) {
+      alert(
+        "Chưa có OpenAI API key.\n" +
+          "- Vào trang Admin > Nhập API để lưu key, HOẶC\n" +
+          "- Nhập key trực tiếp vào ô OpenAI API Key bên dưới."
+      );
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Tạo prompt";
+      }
+      return;
+    }
+  }
+
+  try {
+    _lastScenes = await buildScenesFromLyricsAsync(data, {
+      useTranslate,
+      apiKey
+    });
+    renderScenesText(_lastScenes);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Tạo prompt";
+    }
+  }
 });
+
 
 $("btnJSON")?.addEventListener("click", () => {
   if (!_lastScenes.length) {
