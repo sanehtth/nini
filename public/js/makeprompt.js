@@ -1,6 +1,10 @@
 // /admin/tools/makeprompt.js
 // Tool chia lyric / kịch bản thành cảnh 5s và sinh prompt chi tiết.
 // Chạy 100% trên trình duyệt, không gọi API.
+// Đọc API đang dùng (đã set từ admin)
+function getActiveProvider() {
+  return localStorage.getItem("nini_active_provider") || "openai";
+}
 
 /* ========= Helper ========= */
 const $ = id => document.getElementById(id);
@@ -46,6 +50,28 @@ const COMBO_PRESETS = {
     "handheld camera, slightly shaky but warm and intimate, medium shot distance, romantic and heartfelt mood"
   ]
 };
+//============== ham cap nhat label API active ===================
+function updateTranslateLabel() {
+  const el = document.getElementById("translateLabel");
+  if (!el) return;
+
+  const mapLabel = {
+    openai: "OpenAI",
+    gemini: "Google AI (Gemini)",
+    grok: "Grok (xAI)"
+  };
+
+  const p = getActiveProvider();
+  const name = mapLabel[p] || p;
+
+  el.textContent =
+    "Dịch lyric / kịch bản sang tiếng Anh bằng " +
+    name +
+    " trước khi tạo prompt (tốn token).";
+}
+
+// Gọi 1 lần khi load trang
+updateTranslateLabel();
 
 /* ========= Helper: map aspect → text cho prompt ========= */
 function aspectToText(aspect) {
@@ -429,3 +455,4 @@ $("btnTSV")?.addEventListener("click", () => {
   }
   downloadTSV(_lastScenes);
 });
+
