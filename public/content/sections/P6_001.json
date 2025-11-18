@@ -1,0 +1,40 @@
+﻿{
+  "id": "P6_001",
+  "testName": "Test 1",
+  "partIndex": 6,
+  "sectionOrder": 1,
+  "type": "reorderAndRewrite",
+  "title": "Test 1 - Phần 6 - Ghép câu và viết lại câu",
+  "questions": [
+    {
+      "number": 35,
+      "prompt": "Sắp xếp các cụm từ sau để tạo câu hoàn chỉnh:\nJames Bell / has worked for a / perfume company / for over twenty / years.",
+      "answer": "James Bell has worked for a perfume company for over twenty years."
+    },
+    {
+      "number": 36,
+      "prompt": "Sắp xếp các cụm từ sau để tạo câu hoàn chỉnh:\nShe can't / smell anything, even / the fragrances / of roses.",
+      "answer": "She can't smell anything, even the fragrances of roses."
+    },
+    {
+      "number": 37,
+      "prompt": "Mary has been studying French for 5 years. Viết lại câu bắt đầu bằng: Mary started …",
+      "answer": "Mary started studying French 5 years ago."
+    },
+    {
+      "number": 38,
+      "prompt": "You should always wear a helmet when riding a bike. Viết lại câu bắt đầu bằng: You ought …",
+      "answer": "You ought to wear a helmet when riding a bike."
+    },
+    {
+      "number": 39,
+      "prompt": "How about going for a walk in the park? (we) Viết lại câu bắt đầu bằng: Why don't …",
+      "answer": "Why don't we go for a walk in the park?"
+    },
+    {
+      "number": 40,
+      "prompt": "It's important to turn off the lights when leaving the room. Viết lại câu bắt đầu bằng: Don't forget …",
+      "answer": "Don't forget to turn off the lights when leaving the room."
+    }
+  ]
+}

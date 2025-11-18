@@ -1,0 +1,48 @@
+﻿{
+  "lastGenerated": {
+    "P1": 1,
+    "P2": 1,
+    "P3": 1,
+    "P4": 1,
+    "P5": 1,
+    "P6": 1
+  },
+  "sections": [
+    {
+      "id": "P1_001",
+      "file": "/content/sections/P1_001.json",
+      "partIndex": 1,
+      "label": "Test 1 - Phần 1 - Trắc nghiệm"
+    },
+    {
+      "id": "P2_001",
+      "file": "/content/sections/P2_001.json",
+      "partIndex": 2,
+      "label": "Test 1 - Phần 2 - Nhìn hình trả lời câu hỏi"
+    },
+    {
+      "id": "P3_001",
+      "file": "/content/sections/P3_001.json",
+      "partIndex": 3,
+      "label": "Test 1 - Phần 3 - Đọc đoạn văn và trả lời câu hỏi"
+    },
+    {
+      "id": "P4_001",
+      "file": "/content/sections/P4_001.json",
+      "partIndex": 4,
+      "label": "Test 1 - Phần 4 - Đọc đoạn văn và điền vào chỗ trống"
+    },
+    {
+      "id": "P5_001",
+      "file": "/content/sections/P5_001.json",
+      "partIndex": 5,
+      "label": "Test 1 - Phần 5 - Chọn đúng dạng của từ"
+    },
+    {
+      "id": "P6_001",
+      "file": "/content/sections/P6_001.json",
+      "partIndex": 6,
+      "label": "Test 1 - Phần 6 - Ghép câu và viết lại câu"
+    }
+  ]
+}

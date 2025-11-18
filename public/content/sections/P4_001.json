@@ -1,0 +1,17 @@
+﻿{
+  "id": "P4_001",
+  "testName": "Test 1",
+  "partIndex": 4,
+  "sectionOrder": 1,
+  "type": "readingDragDrop",
+  "title": "Test 1 - Phần 4 - Đọc đoạn văn và điền vào chỗ trống",
+  "passage": "My friend Sarah __23__ on a fantastic trip last summer. She visited the __24__ city of Edinburgh in Scotland. Sarah stayed in a cosy bed and breakfast in the __25__ of the city. During her trip, she explored the historic Edinburgh Castle and __26__ along the famous Royal Mile. Sarah also took a day trip to the stunning Scottish Highlands, __27__ she saw breathtaking landscapes and enjoyed the fresh mountain air. In the evenings, Sarah enjoyed live music __28__ in small pubs and bars.",
+  "blanks": {
+    "23": "went",
+    "24": "beautiful",
+    "25": "heart",
+    "26": "walked",
+    "27": "where",
+    "28": "performances"
+  }
+}

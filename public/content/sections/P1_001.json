@@ -1,0 +1,104 @@
+﻿{
+  "id": "P1_001",
+  "testName": "Test 1",
+  "partIndex": 1,
+  "sectionOrder": 1,
+  "type": "mcqOneByOne",
+  "title": "Test 1 - Phần 1 - Trắc nghiệm",
+  "questions": [
+    {
+      "number": 1,
+      "text": "Which word has the underlined part pronounced differently from that of the others?",
+      "options": ["amazingly", "fad", "apparently", "absolutely"],
+      "correct": 1
+    },
+    {
+      "number": 2,
+      "text": "Which word has the underlined part pronounced differently from that of the others?",
+      "options": ["general", "gadget", "friend", "trend"],
+      "correct": 2
+    },
+    {
+      "number": 3,
+      "text": "Which word has a different stress pattern from that of the others?",
+      "options": ["obvious", "patterned", "amazing", "social"],
+      "correct": 2
+    },
+    {
+      "number": 4,
+      "text": "Which word has a different stress pattern from that of the others?",
+      "options": ["trousers", "hoodie", "design", "alpaca"],
+      "correct": 2
+    },
+    {
+      "number": 5,
+      "text": "Do you have a favourite shoe brand?",
+      "options": [
+        "I hope they will open new branches soon.",
+        "My favourite store is nice, I visit it all the time.",
+        "I have a few shoe brands that I really like, but I wouldn't say I have a favourite.",
+        "I really like my shoe brand."
+      ],
+      "correct": 2
+    },
+    {
+      "number": 6,
+      "text": "___________, the movie is fully booked and we can't get tickets anymore.",
+      "options": ["Unfortunately", "Happily", "Luckily", "Sadness"],
+      "correct": 0
+    },
+    {
+      "number": 7,
+      "text": "The ___________ was packed with people and loud music.",
+      "options": ["library", "park", "museum", "club"],
+      "correct": 3
+    },
+    {
+      "number": 8,
+      "text": "While Mary ___________ in the garden, her husband ___________ her.",
+      "options": ["was working/ called", "work/ called", "worked/ calling", "was working/ calls"],
+      "correct": 0
+    },
+    {
+      "number": 9,
+      "text": "This jacket is so cool, I will try it ___________.",
+      "options": ["at", "on", "with", "for"],
+      "correct": 1
+    },
+    {
+      "number": 10,
+      "text": "50 years ago, only a few people ___________ computers, but most of them were very large.",
+      "options": ["can afford", "can not afford", "could not afford", "could afford"],
+      "correct": 3
+    },
+    {
+      "number": 11,
+      "text": "My grandmother always tells me about how she ___________ to cook for her whole family when she was young.",
+      "options": ["cooks", "cook", "used to cook", "cooking"],
+      "correct": 2
+    },
+    {
+      "number": 12,
+      "text": "What's your go-to outfit for a first date?",
+      "options": [
+        "I like our outfit too.",
+        "I usually wear something casual but nice.",
+        "For a first date, I’m always on time.",
+        "I don’t mind changing clothes."
+      ],
+      "correct": 1
+    },
+    {
+      "number": 13,
+      "text": "Social media and online gaming are some of the recent trends ___________ teenagers.",
+      "options": ["about", "for", "at", "from"],
+      "correct": 1
+    },
+    {
+      "number": 14,
+      "text": "I need to buy a new ___________ for my friend's wedding.",
+      "options": ["presents", "cake", "gifts", "dress"],
+      "correct": 3
+    }
+  ]
+}

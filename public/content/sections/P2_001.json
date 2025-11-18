@@ -1,0 +1,34 @@
+﻿{
+  "id": "P2_001",
+  "testName": "Test 1",
+  "partIndex": 2,
+  "sectionOrder": 1,
+  "type": "mcqImage",
+  "title": "Test 1 - Phần 2 - Nhìn hình trả lời câu hỏi",
+  "questions": [
+    {
+      "number": 15,
+      "imageFile": "Test1_P2_sign_15.webp",
+      "text": "What is the current promotion at the store?",
+      "options": [
+        "10% discount on everything on Saturday",
+        "20% discount on everything on Sunday",
+        "20% discount on everything on Saturday",
+        "50% discount on everything on Saturday"
+      ],
+      "correct": 2
+    },
+    {
+      "number": 16,
+      "imageFile": "Test1_P2_sign_16.webp",
+      "text": "What is the current promotion at the clothes store?",
+      "options": [
+        "Buy one get one free on summer dresses",
+        "10% discount on all clothes",
+        "20% discount on all clothes",
+        "Free T-shirt with every purchase"
+      ],
+      "correct": 1
+    }
+  ]
+}

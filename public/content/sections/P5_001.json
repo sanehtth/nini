@@ -1,0 +1,40 @@
+﻿{
+  "id": "P5_001",
+  "testName": "Test 1",
+  "partIndex": 5,
+  "sectionOrder": 1,
+  "type": "wordForm",
+  "title": "Test 1 - Phần 5 - Chọn đúng dạng của từ",
+  "questions": [
+    {
+      "number": 29,
+      "text": "She stared in ________ at the beautiful sunset. [amaze]",
+      "answer": "amazement"
+    },
+    {
+      "number": 30,
+      "text": "He ________ refused to go to the party. [absolute]",
+      "answer": "absolutely"
+    },
+    {
+      "number": 31,
+      "text": "The dress she wore was beautifully ________ with flowers and leaves. [pattern]",
+      "answer": "patterned"
+    },
+    {
+      "number": 32,
+      "text": "Despite his best efforts, he was ________ in winning the race. [success]",
+      "answer": "unsuccessful"
+    },
+    {
+      "number": 33,
+      "text": "The ________ of the trip was more than he had expected. [expensive]",
+      "answer": "expense"
+    },
+    {
+      "number": 34,
+      "text": "The colours of the old photograph had ________ over time. [fade]",
+      "answer": "faded"
+    }
+  ]
+}

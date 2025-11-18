@@ -1,0 +1,59 @@
+﻿{
+  "id": "P3_001",
+  "testName": "Test 1",
+  "partIndex": 3,
+  "sectionOrder": 1,
+  "type": "readingMcq",
+  "title": "Test 1 - Phần 3 - Đọc đoạn văn và trả lời câu hỏi",
+  "passage": "A lot of people wear jeans. Many people regularly wear jeans. They are cozy and simple to wash.\n\nJeans come in a variety of hues. Blue is the most typical colour. However, you may also buy jeans in green, grey, and black. Strong cotton is used to make jeans. They can be washed frequently because they are made of cotton. Some jeans contain patterns or holes. Young people enjoy these trendy jeans. Simple blue jeans, though, are timeless.\n\nAll ages can wear jeans. They are worn by both young and old people. Jeans can be worn casually at work or on the weekends. They are typical student attire. Jeans are useful. Due to their comfort, affordability, and compatibility with a wide range of tops and shoes, they are among the most often worn types of pants worldwide.",
+  "questions": [
+    {
+      "number": 17,
+      "kind": "tf",
+      "text": "Jeans are difficult to wash.",
+      "correct": false
+    },
+    {
+      "number": 18,
+      "kind": "tf",
+      "text": "Blue is the most common colour for jeans.",
+      "correct": true
+    },
+    {
+      "number": 19,
+      "kind": "tf",
+      "text": "Jeans are only worn by young people.",
+      "correct": false
+    },
+    {
+      "number": 20,
+      "kind": "tf",
+      "text": "Jeans are made of strong cotton.",
+      "correct": true
+    },
+    {
+      "number": 21,
+      "kind": "mcq",
+      "text": "What other colours can jeans come in?",
+      "options": [
+        "Orange, pink, and brown",
+        "Red, yellow, and purple",
+        "Green, grey, and black",
+        "White, silver, and gold"
+      ],
+      "correct": 2
+    },
+    {
+      "number": 22,
+      "kind": "mcq",
+      "text": "Why are jeans popular?",
+      "options": [
+        "They are uncomfortable and expensive",
+        "They are comfortable, affordable, and compatible with a wide range of tops and shoes",
+        "They are only compatible with a few tops and shoes",
+        "They can only be worn on special occasions"
+      ],
+      "correct": 1
+    }
+  ]
+}
