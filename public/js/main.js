@@ -88,7 +88,18 @@ document.getElementById("forgotBtn").onclick = (e) => {
       { email: emailIfMissing || "", joined: new Date().toISOString().split("T")[0], consent_insight: false },
       data.profile || {}
     );
-    data.stats   = Object.assign({ xp: 0, coin: 0, badge: 1 }, data.stats || {});
+    // --- SỬA Ở ĐÂY: đảm bảo luôn có stats mà không reset dữ liệu cũ ---
+if (!data.stats) {
+  // User cũ chưa có stats → tạo mới
+  data.stats = { xp: 0, coin: 0, badge: 1 };
+} else {
+  // User đã có stats → chỉ “vá” cho đủ field, không reset
+  if (typeof data.stats.xp !== "number")   data.stats.xp = 0;
+  if (typeof data.stats.coin !== "number") data.stats.coin = 0;
+  if (typeof data.stats.badge !== "number") data.stats.badge = 1;
+}
+// --- HẾT PHẦN SỬA ---
+
     data.metrics = Object.assign({ pi: 0, fi: 0, pi_star: 0 }, data.metrics || {});
     data.skills  = Object.assign({ listening: 0, speaking: 0, reading: 0, writing: 0 }, data.skills || {});
     data.traits  = Object.assign({
@@ -469,6 +480,7 @@ db.ref('users/' + currentUser.uid).once('value')
     setTimeout(() => t.remove(), 3000);
   }
 });
+
 
 
 
