@@ -46,26 +46,30 @@ function initStatsHeader() {
       .ref("users/" + user.uid + "/stats");
 
     statsRef.on("value", (snap) => {
-      const stats = snap.val() || {};
-      const xp = stats.xp != null ? stats.xp : 0;
-      const coin = stats.coin != null ? stats.coin : 0;
-      const badge = stats.badge != null ? stats.badge : 1;
+  console.log("[stats] raw snapshot:", snap.val());
 
-      console.log("[stats] got stats:", stats);
+  const stats = snap.val() || {};
+  const xp    = stats.xp    != null ? stats.xp    : 0;
+  const coin  = stats.coin  != null ? stats.coin  : 0;
+  const badge = stats.badge != null ? stats.badge : 1;
 
-      if (nodes.globalXP) nodes.globalXP.textContent = xp;
-      if (nodes.globalCoin) nodes.globalCoin.textContent = coin;
-      if (nodes.globalBadge) nodes.globalBadge.textContent = badge;
+  console.log("[stats] xp/coin/badge:", xp, coin, badge);
 
-      if (nodes.quizXP) nodes.quizXP.textContent = xp;
-      if (nodes.quizCoin) nodes.quizCoin.textContent = coin;
-      if (nodes.quizBadge) nodes.quizBadge.textContent = badge;
+  if (nodes.globalXP)    nodes.globalXP.textContent    = xp;
+  if (nodes.globalCoin)  nodes.globalCoin.textContent  = coin;
+  if (nodes.globalBadge) nodes.globalBadge.textContent = badge;
 
-      if (nodes.profileXP) nodes.profileXP.textContent = xp;
-      if (nodes.profileCoin) nodes.profileCoin.textContent = coin;
-      if (nodes.profileBadge) nodes.profileBadge.textContent = badge;
-    });
+  if (nodes.quizXP)    nodes.quizXP.textContent    = xp;
+  if (nodes.quizCoin)  nodes.quizCoin.textContent  = coin;
+  if (nodes.quizBadge) nodes.quizBadge.textContent = badge;
+
+  if (nodes.profileXP)    nodes.profileXP.textContent    = xp;
+  if (nodes.profileCoin)  nodes.profileCoin.textContent  = coin;
+  if (nodes.profileBadge) nodes.profileBadge.textContent = badge;
+});
+
   });
 }
 
 document.addEventListener("DOMContentLoaded", initStatsHeader);
+
