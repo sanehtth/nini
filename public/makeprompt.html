@@ -208,6 +208,21 @@
             <label for="lyrics" class="mp-card-label">Lời bài hát / Kịch bản</label>
             <textarea id="lyrics" class="mp-textarea" placeholder="Dán lyric hoặc kịch bản vào đây..."></textarea>
           </div>
+<div class="form-row" style="margin-top:8px;">
+  <label style="font-size:14px;">
+    <input type="checkbox" id="useTranslate" />
+    Dịch lyric / kịch bản sang <b>tiếng Anh bằng OpenAI</b> trước khi tạo prompt
+    (tốn token).
+  </label>
+</div>
+
+<div class="form-row" id="translateConfig" style="margin-top:6px; display:none;">
+  <label for="mpApiKey">OpenAI API Key (chỉ dùng trên trình duyệt này):</label>
+  <input id="mpApiKey" class="input" type="password" placeholder="sk-proj-..." />
+  <p style="font-size:12px; opacity:0.7; margin-top:4px;">
+    Nếu để trống, tool sẽ thử lấy key từ localStorage (profile OpenAI trong trang Admin).
+  </p>
+</div>
 
           <!-- Nút hành động -->
           <div class="mp-actions">
@@ -237,6 +252,18 @@
   <script src="js/theme.js"></script>
   <!-- JS sinh prompt (giữ nguyên file cũ) -->
   <script src="/js/makeprompt.js"></script>
+  <script>
+  // Ẩn/hiện ô API khi tick dịch
+  const chk = document.getElementById("useTranslate");
+  const cfg = document.getElementById("translateConfig");
+  if (chk && cfg) {
+    chk.addEventListener("change", () => {
+      cfg.style.display = chk.checked ? "block" : "none";
+    });
+  }
+</script>
+
 </body>
 </html>
+
 
