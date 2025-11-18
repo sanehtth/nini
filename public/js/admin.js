@@ -165,6 +165,41 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
+  // ----- API đang dùng (active provider) -----
+const ACTIVE_PROVIDER_KEY = "nini_active_provider";
+
+function getActiveProvider() {
+  // Mặc định là "openai" nếu chưa set
+  return localStorage.getItem(ACTIVE_PROVIDER_KEY) || "openai";
+}
+
+function setActiveProvider(provider) {
+  localStorage.setItem(ACTIVE_PROVIDER_KEY, provider);
+  renderActiveProviderUI();
+}
+
+function renderActiveProviderUI() {
+  const mapLabel = {
+    openai: "OpenAI",
+    gemini: "Google AI (Gemini)",
+    grok: "Grok (xAI)"
+  };
+
+  const active = getActiveProvider();
+
+  // Cập nhật label
+  const label = document.getElementById("activeProviderLabel");
+  if (label) {
+    label.textContent = mapLabel[active] || active;
+  }
+
+  // Cập nhật trạng thái radio
+  document
+    .querySelectorAll(".active-provider-radio")
+    .forEach(radio => {
+      radio.checked = radio.value === active;
+    });
+}
 
   // ================== 4. API THEO USER (LƯU TRÊN FIREBASE) ==================
   const userOpenAiInput   = document.getElementById("userOpenAiKey");
@@ -246,3 +281,4 @@ document.addEventListener("DOMContentLoaded", () => {
   //  - kiểm tra element có tồn tại mới addEventListener
   //  - bọc trong DOMContentLoaded như file này để tránh lỗi null.
 });
+
