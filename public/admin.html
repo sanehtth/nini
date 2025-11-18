@@ -87,6 +87,8 @@
       <button class="tab-btn admin-tab" data-target="panel-char">🧑‍🎨 Prompt nhân vật</button>
       <button class="tab-btn admin-tab" data-target="panel-outfit">👕 Prompt đổi outfit</button>
       <button class="tab-btn admin-tab" data-target="panel-story">🎬 Prompt storyboard</button>
+      <!-- NEW TAB: Quiz / Make JSON -->
+      <button class="tab-btn admin-tab" data-target="panel-json">📚 Quiz / Make JSON</button>
     </nav>
 
     <!-- PANELS -->
@@ -127,39 +129,40 @@
           <button class="main-btn" id="clearApiBtn">🧹 Xoá local</button>
           <span id="apiStatus" class="small-text"></span>
         </div>
-<!-- A.3 API đang dùng cho các tool -->
-<div class="form-row">
-  <label>API đang dùng cho các tool (Active provider):</label>
-  <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
-    <label>
-      <input type="radio"
-             name="activeProvider"
-             value="openai"
-             class="active-provider-radio">
-      OpenAI
-    </label>
 
-    <label>
-      <input type="radio"
-             name="activeProvider"
-             value="gemini"
-             class="active-provider-radio">
-      Google AI (Gemini)
-    </label>
+        <!-- A.3 API đang dùng cho các tool -->
+        <div class="form-row">
+          <label>API đang dùng cho các tool (Active provider):</label>
+          <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+            <label>
+              <input type="radio"
+                     name="activeProvider"
+                     value="openai"
+                     class="active-provider-radio">
+              OpenAI
+            </label>
 
-    <label>
-      <input type="radio"
-             name="activeProvider"
-             value="grok"
-             class="active-provider-radio">
-      Grok (xAI)
-    </label>
+            <label>
+              <input type="radio"
+                     name="activeProvider"
+                     value="gemini"
+                     class="active-provider-radio">
+              Google AI (Gemini)
+            </label>
 
-    <span class="small-text">
-      Đang chọn: <b id="activeProviderLabel">chưa đặt</b>
-    </span>
-  </div>
-</div>
+            <label>
+              <input type="radio"
+                     name="activeProvider"
+                     value="grok"
+                     class="active-provider-radio">
+              Grok (xAI)
+            </label>
+
+            <span class="small-text">
+              Đang chọn: <b id="activeProviderLabel">chưa đặt</b>
+            </span>
+          </div>
+        </div>
 
         <hr style="margin: 20px 0;">
 
@@ -295,6 +298,30 @@
           Gợi ý: Bạn có thể mở tool này trong tab mới của trình duyệt để vừa xem admin vừa chỉnh storyboard.
         </p>
       </section>
+
+      <!-- PANEL 5: QUIZ / MAKE JSON -->
+      <section id="panel-json" class="admin-panel hidden">
+        <h2>📚 Tool tạo JSON đề kiểm tra (MakeJSON)</h2>
+        <p style="margin-bottom: 12px;">
+          Dùng <code>makejson.html</code> để chuyển đề Word hoặc text sang JSON (6 phần:
+          trắc nghiệm, hình ảnh, đọc hiểu, điền chỗ trống, word form, ghép câu / viết lại câu).
+          Hình phần 2 bạn để trong <code>public/assets/content</code> với tên file kiểu
+          <code>test1_P2_sign_15.webp</code>.
+        </p>
+
+        <div class="form-row">
+          <button type="button"
+                  class="main-btn"
+                  onclick="window.open('makejson.html', '_blank')">
+            🧩 Mở tool MakeJSON (tạo đề trắc nghiệm)
+          </button>
+        </div>
+
+        <p style="margin-top: 16px; font-size: 13px; opacity: 0.8;">
+          Gợi ý: Bạn có thể mở tool này trong tab mới, sau đó copy JSON sang project hoặc lên GitHub.
+        </p>
+      </section>
+
     </main>
   </div>
 
@@ -304,4 +331,3 @@
   <script src="js/admin.js"></script>
 </body>
 </html>
-
