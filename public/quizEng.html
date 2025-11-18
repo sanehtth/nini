@@ -1,0 +1,39 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>English Quiz – LearnQuest</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="dark.css" />
+  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>English Quiz</h1>
+      <p class="subtitle">
+        Làm bài kiểm tra tiếng Anh. Khi xong bấm "Nộp bài" để xem điểm và những câu cần ôn lại.
+      </p>
+
+      <div class="user-info">
+        <button class="profile-btn" onclick="window.location.href='index.html'">
+          ⬅ Về trang chính
+        </button>
+        <button class="profile-btn" onclick="toggleTheme()">
+          Dark / Light
+        </button>
+      </div>
+    </header>
+
+    <main style="padding: 24px 30px 30px;">
+      <div id="quiz-eng-root"></div>
+    </main>
+  </div>
+
+  <script src="js/theme.js"></script>
+  <!-- File này là engine render & chấm bài (mình đã gửi code ở tin trước) -->
+  <script src="js/quizEng.js"></script>
+</body>
+</html>
