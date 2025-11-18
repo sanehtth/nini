@@ -1,93 +1,290 @@
-<!-- makeprompt.html (đã thêm chọn API active ngay tại đây) -->
+
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MakePrompt – 5s Scene Prompt Generator</title>
+
+  <!-- Dùng chung theme với site chính -->
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="dark.css" />
+  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
+
+  <!-- CSS riêng cho trang MakePrompt -->
+  <style>
+    .mp-main {
+      padding: 24px 30px 30px;
+    }
+
+    .mp-header-text {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .mp-layout {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin-top: 24px;
+    }
+
+    .mp-col {
+      flex: 1 1 0;
+      min-width: 260px;
+    }
+
+    .mp-card-label {
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: block;
+      font-size: 14px;
+    }
+
+    .mp-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .mp-row .mp-field {
+      flex: 1;
+    }
+
+    .mp-select,
+    .mp-input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+    }
+
+    .mp-textarea {
+      width: 100%;
+      min-height: 220px;
+      resize: vertical;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .mp-textarea:focus,
+    .mp-input:focus,
+    .mp-select:focus {
+      outline: none;
+      border-color: #e11d48;
+      box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.15);
+    }
+
+    .mp-actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .mp-output-box {
+      width: 100%;
+      min-height: 360px;
+      border-radius: 16px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      padding: 16px 18px;
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow: auto;
+    }
+
+    .mp-output-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .mp-note {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    @media (max-width: 768px) {
+      .mp-main {
+        padding: 20px;
+      }
+    }
+  </style>
 </head>
 
 <body>
   <div class="container">
-
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+    <!-- HEADER giống phong cách LearnQuest -->
+    <header>
       <h1>MakePrompt – 5s Scene Prompt Generator</h1>
-      <button onclick="window.location.href='admin.html'" class="btnSmall">↩ Về trang Admin</button>
-    </div>
+      <p class="subtitle">Tách ý tưởng / lời bài hát thành các cảnh 5 giây để làm prompt cho Sora, Flow, v.v.</p>
 
-    <hr>
+      <div class="user-info">
+        <button class="profile-btn" onclick="window.location.href='admin.html'">
+          ⬅ Về trang Admin
+        </button>
 
-    <!-- HIỂN THỊ + CHỌN API ACTIVE -->
-    <div class="api-box">
-      <label><b>API đang sử dụng:</b></label>
-      <select id="activeAPI" onchange="saveActiveAPI()">
-        <option value="openai">OpenAI</option>
-        <option value="google">Google (Gemini)</option>
-        <option value="grok">Grok (xAI)</option>
-      </select>
-
-      <small id="apiKeyPreview" style="color:#777;">(chưa tải API key)</small>
-    </div>
-
-    <hr>
-
-    <div class="grid">
-
-      <!-- LEFT PANEL -->
-      <div class="left">
-
-        <h3>Thiết lập chung</h3>
-
-        <label>Tổng thời lượng (giây)</label>
-        <input id="dur" value="180" type="number">
-
-        <label>Mỗi cảnh (giây)</label>
-        <input id="item" value="5" type="number">
-
-        <label>Preset phong cách</label>
-        <select id="preset">
-          <option value="3d_cinematic_warm">3D Cinematic + Warm</option>
-          <option value="anime_soft">Anime Soft</option>
-          <option value="pixar_like">Pixar-like</option>
-          <option value="disney_like">Disney-like</option>
-          <option value="real_photo">Real Photo</option>
-          <option value="vintage_film">Vintage Film</option>
-        </select>
-
-        <label>Máy quay & cảm xúc</label>
-        <select id="combo">
-          <option value="mix">Mặc định (luân phiên)</option>
-          <option value="closeup_tender">Close-up tender</option>
-          <option value="wide_hopeful">Wide hopeful</option>
-          <option value="handheld_romance">Handheld romance</option>
-        </select>
-
-        <label>Khung hình / tỉ lệ</label>
-        <select id="aspect">
-          <option value="1792x1024">16:9 (landscape)</option>
-          <option value="1024x1792">9:16 (vertical)</option>
-          <option value="1024x1024">1:1 (square)</option>
-        </select>
-
-        <label>Lời bài hát / Kịch bản</label>
-        <textarea id="lyrics" placeholder="Dán lyric hoặc kịch bản vào đây..."></textarea>
-
-        <label style="display:flex;align-items:center;gap:8px;margin-top:10px;">
-          <input type="checkbox" id="chkTranslate">
-          Dịch tiếng Việt sang tiếng Anh bằng API đang chọn trước khi tạo prompt
-        </label>
-
-        <button id="btnMakePrompt" class="btnPrimary">⚙ Tạo prompt</button>
+        <!-- Dùng chung toggle theme -->
+        <button class="profile-btn" onclick="toggleTheme()">
+          Dark / Light
+        </button>
       </div>
+    </header>
 
-      <!-- RIGHT PANEL (OUTPUT) -->
-      <div class="right">
-        <h3>Kết quả</h3>
-        <pre id="output"></pre>
+    <!-- MAIN -->
+    <main class="mp-main">
+      <div class="mp-layout">
+        <!-- CỘT TRÁI: CẤU HÌNH & LỜI/LÝRIC -->
+        <section class="mp-col">
+          <h2 style="font-size:18px; margin-bottom:12px;">Thiết lập chung</h2>
+          <p class="mp-header-text">
+            Nhập tổng thời lượng, độ dài mỗi cảnh, preset… rồi dán lời bài hát hoặc kịch bản vào bên dưới.
+          </p>
+
+          
+          <!-- Chọn API đang dùng -->
+          <div class="mp-row" style="margin-top:12px;">
+            <div class="mp-field">
+              <label for="mpProvider" class="mp-card-label">API đang dùng cho MakePrompt:</label>
+              <select id="mpProvider" class="mp-select">
+                <option value="openai">OpenAI</option>
+                <option value="gemini">Google AI (Gemini)</option>
+                <option value="grok">Grok (xAI)</option>
+              </select>
+              <div style="font-size:12px; margin-top:4px; opacity:0.8;">
+                Lựa chọn này sẽ được lưu trong trình duyệt (localStorage) và dùng chung cho các tool khác đọc cấu hình này.
+              </div>
+            </div>
+          </div>
+
+<!-- Thời lượng & preset -->
+          <div class="mp-row" style="margin-top:16px;">
+            <div class="mp-field">
+              <label for="dur" class="mp-card-label">Tổng thời lượng (giây)</label>
+              <input id="dur" class="mp-input" type="number" min="5" step="5" value="180" />
+            </div>
+            <div class="mp-field">
+              <label for="item" class="mp-card-label">Mỗi cảnh (giây)</label>
+              <input id="item" class="mp-input" type="number" min="3" step="1" value="5" />
+            </div>
+          </div>
+
+          <div class="mp-row">
+            <div class="mp-field">
+              <label for="preset" class="mp-card-label">Preset phong cách</label>
+              <select id="preset" class="mp-select">
+                <option value="3D cinematic, warm colors, detailed lighting">
+                  3D Cinematic • Warm
+                </option>
+                <option value="anime style, vibrant, dynamic lighting">
+                  Anime • Vibrant
+                </option>
+                <option value="painterly illustration, soft light, storybook style">
+                  Storybook • Soft
+                </option>
+                <option value="">Tự mô tả trong prompt</option>
+              </select>
+            </div>
+            <div class="mp-field">
+              <label for="combo" class="mp-card-label">Máy quay & cảm xúc (luân phiên)</label>
+              <select id="combo" class="mp-select">
+                <option value="default">
+                  Mặc định (nhiều góc)
+                </option>
+                <option value="slow">
+                  Chậm rãi, tập trung cảm xúc
+                </option>
+                <option value="dynamic">
+                  Năng động, nhiều chuyển động camera
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mp-row">
+            <div class="mp-field">
+              <label for="aspect" class="mp-card-label">Khung ảnh / tỉ lệ</label>
+              <select id="aspect" class="mp-select">
+                <option value="16:9">16:9 (landscape)</option>
+                <option value="9:16">9:16 (vertical)</option>
+                <option value="1:1">1:1 (square)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Lyrics / kịch bản -->
+          <div style="margin-top:10px;">
+            <label for="lyrics" class="mp-card-label">Lời bài hát / Kịch bản</label>
+            <textarea id="lyrics" class="mp-textarea" placeholder="Dán lyric hoặc kịch bản vào đây..."></textarea>
+          </div>
+<div class="form-row" style="margin-top:8px;">
+  <label style="font-size:13px; display:flex; align-items:center; gap:6px; margin-top:8px;">
+  <input type="checkbox" id="useTranslate">
+  <span id="translateLabel">
+    Dịch lyric / kịch bản sang tiếng Anh bằng API đang dùng trước khi tạo prompt (tốn token).
+  </span>
+</label>
+
+</div>
+
+<div class="form-row" id="translateConfig" style="margin-top:6px; display:none;">
+  <label for="mpApiKey">OpenAI API Key (chỉ dùng trên trình duyệt này):</label>
+  <input id="mpApiKey" class="input" type="password" placeholder="sk-proj-..." />
+  <p style="font-size:12px; opacity:0.7; margin-top:4px;">
+    Nếu để trống, tool sẽ thử lấy key từ localStorage (profile OpenAI trong trang Admin).
+  </p>
+</div>
+
+          <!-- Nút hành động -->
+          <div class="mp-actions">
+            <button id="btnMakePrompt" class="main-btn">
+              ✨ Tạo prompt
+            </button>
+          </div>
+
+          <p class="mp-note">
+            Mẹo: bạn có thể copy string prompt dán qua các tool tạo ảnh/video.  
+            Hoặc dùng bản JSON/TSV xuất ra để import vào Google Sheets/Excel.
+          </p>
+        </section>
+
+        <!-- CỘT PHẢI: KẾT QUẢ -->
+        <section class="mp-col">
+          <div class="mp-output-box">
+            <div class="mp-output-title">Kết quả</div>
+            <div id="output"></div>
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   </div>
 
-  <script src="makeprompt.js"></script>
+  <!-- SCRIPT -->
+  <script src="js/theme.js"></script>
+  <!-- JS sinh prompt (giữ nguyên file cũ) -->
+  <script src="/js/makeprompt.js"></script>
+  <script>
+  // Ẩn/hiện ô API khi tick dịch
+  const chk = document.getElementById("useTranslate");
+  const cfg = document.getElementById("translateConfig");
+  if (chk && cfg) {
+    chk.addEventListener("change", () => {
+      cfg.style.display = chk.checked ? "block" : "none";
+    });
+  }
+</script>
+
 </body>
 </html>
+
+
+
