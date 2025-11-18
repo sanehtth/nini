@@ -127,6 +127,39 @@
           <button class="main-btn" id="clearApiBtn">🧹 Xoá local</button>
           <span id="apiStatus" class="small-text"></span>
         </div>
+<!-- A.3 API đang dùng cho các tool -->
+<div class="form-row">
+  <label>API đang dùng cho các tool (Active provider):</label>
+  <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+    <label>
+      <input type="radio"
+             name="activeProvider"
+             value="openai"
+             class="active-provider-radio">
+      OpenAI
+    </label>
+
+    <label>
+      <input type="radio"
+             name="activeProvider"
+             value="gemini"
+             class="active-provider-radio">
+      Google AI (Gemini)
+    </label>
+
+    <label>
+      <input type="radio"
+             name="activeProvider"
+             value="grok"
+             class="active-provider-radio">
+      Grok (xAI)
+    </label>
+
+    <span class="small-text">
+      Đang chọn: <b id="activeProviderLabel">chưa đặt</b>
+    </span>
+  </div>
+</div>
 
         <hr style="margin: 20px 0;">
 
@@ -271,3 +304,4 @@
   <script src="js/admin.js"></script>
 </body>
 </html>
+
