@@ -1,10 +1,6 @@
-// /admin/tools/makeprompt.js
-// Tool chia lyric / kịch bản thành cảnh 5s và sinh prompt chi tiết.
-// Chạy 100% trên trình duyệt, không gọi API.
-// Đọc API đang dùng (đã set từ admin)
-function getActiveProvider() {
-  return localStorage.getItem("nini_active_provider") || "openai";
-}
+// =====================
+// MakePrompt.js FULL VERSION
+// =====================
 
 /* ========= Helper ========= */
 const $ = id => document.getElementById(id);
@@ -15,6 +11,34 @@ const val = (id, d = "") => {
 
 // Lưu lại kết quả lần cuối để export JSON/TSV
 let _lastScenes = [];
+
+/* ========= API ACTIVE: LOAD & SAVE ========= */
+
+// Load API active khi mở trang
+function loadActiveAPI() {
+  const current = localStorage.getItem("ACTIVE_API") || "openai";
+  $("activeAPI").value = current;
+
+  const key = localStorage.getItem("API_KEY_" + current.toUpperCase());
+  if (key) {
+    $("apiKeyPreview").textContent = "Key: " + key.substring(0, 8) + "...";
+  } else {
+    $("apiKeyPreview").textContent = "(chưa có API key)";
+  }
+}
+
+function saveActiveAPI() {
+  const api = $("activeAPI").value;
+  localStorage.setItem("ACTIVE_API", api);
+
+  const key = localStorage.getItem("API_KEY_" + api.toUpperCase());
+  $("apiKeyPreview").textContent = key
+    ? "Key: " + key.substring(0, 8) + "..."
+    : "(chưa có API key)";
+}
+
+// chạy khi load trang
+window.addEventListener("load", loadActiveAPI);
 
 /* ========= Preset phong cách ========= */
 const STYLE_PRESETS = {
@@ -50,79 +74,18 @@ const COMBO_PRESETS = {
     "handheld camera, slightly shaky but warm and intimate, medium shot distance, romantic and heartfelt mood"
   ]
 };
-//============== ham cap nhat label API active ===================
-function updateTranslateLabel() {
-  const el = document.getElementById("translateLabel");
-  if (!el) return;
 
-  const mapLabel = {
-    openai: "OpenAI",
-    gemini: "Google AI (Gemini)",
-    grok: "Grok (xAI)"
-  };
-
-  const p = getActiveProvider();
-  const name = mapLabel[p] || p;
-
-  el.textContent =
-    "Dịch lyric / kịch bản sang tiếng Anh bằng " +
-    name +
-    " trước khi tạo prompt (tốn token).";
-}
-
-// Gọi 1 lần khi load trang
-updateTranslateLabel();
-
-/* ========= Helper: map aspect → text cho prompt ========= */
-function aspectToText(aspect) {
-  if (!aspect) return "1:1 square";
-
-  const a = String(aspect).toLowerCase().trim();
-
-  // Một loạt trường hợp có thể xảy ra
-  if (
-    a.includes("1792x1024") ||
-    a.includes("16:9") ||
-    a.includes("landscape") ||
-    a.includes("widescreen")
-  ) {
-    return "16:9 widescreen";
-  }
-
-  if (
-    a.includes("1024x1792") ||
-    a.includes("9:16") ||
-    a.includes("vertical") ||
-    a.includes("portrait")
-  ) {
-    return "9:16 vertical";
-  }
-
-  if (
-    a.includes("1:1") ||
-    a.includes("square") ||
-    a.includes("1024x1024")
-  ) {
-    return "1:1 square";
-  }
-
-  // fallback: trả lại raw
-  return aspect;
-}
-
-/* ========= Build scene list từ dữ liệu form ========= */
+/* ========= Build cảnh từ lyric ========= */
 function buildScenesFromLyrics(data) {
   const rawText = (data.text || "").trim();
   const total = isNaN(data.total) || data.total <= 0 ? 60 : data.total;
   const step = isNaN(data.step) || data.step <= 0 ? 5 : data.step;
 
-  // Tách lyric thành từng dòng có nội dung
   const lines = rawText
     .split(/\r?\n/)
     .map(s => s.trim())
     .filter(Boolean);
 
-  // Nếu không có lyric -> tạo 1 cảnh mô tả chung
   if (!lines.length) {
     return [
       {
@@ -145,10 +108,8 @@ function buildScenesFromLyrics(data) {
   }
 
   const maxScenes = Math.max(1, Math.floor(total / step));
-  // Số cảnh thực tế không cần nhiều hơn số line, nhưng cũng không ít hơn 1
   const sceneCount = Math.max(1, Math.min(maxScenes, lines.length));
 
-  // Phân phối line vào từng cảnh cho tương đối đều
   const base = Math.floor(lines.length / sceneCount);
   let extra = lines.length % sceneCount;
 
@@ -163,7 +124,6 @@ function buildScenesFromLyrics(data) {
     cursor += take;
 
     const lyricChunk = part.join(" / ");
-
     const start = i * step;
     const end = Math.min(total, (i + 1) * step);
 
@@ -190,17 +150,20 @@ function buildScenesFromLyrics(data) {
   return scenes;
 }
 
-/* ========= Build prompt cho 1 cảnh ========= */
+/* ========= Tạo prompt cho từng cảnh ========= */
 function buildPromptForScene({ idx, lyric, styleKey, comboKey, aspect }) {
   const style = STYLE_PRESETS[styleKey] || "";
   const comboList = COMBO_PRESETS[comboKey] || COMBO_PRESETS.mix;
   const cameraMood = comboList[(idx - 1) % comboList.length];
 
-  // *** ĐÃ SỬA: dùng helper aspectToText() thay vì so sánh cứng ***
-  const ratioText = aspectToText(aspect);
+  const ratioText =
+    aspect === "1792x1024"
+      ? "16:9 landscape"
+      : aspect === "1024x1792"
+      ? "9:16 vertical"
+      : "1:1 square";
 
-  // Prompt cuối cùng – bạn có thể chỉnh template này theo Sora / Flow / v.v.
-  const prompt = [
+  return [
     `scene ${idx}, ${ratioText}`,
     lyric ? `visualize: ${lyric}` : "",
     cameraMood,
@@ -209,11 +172,9 @@ function buildPromptForScene({ idx, lyric, styleKey, comboKey, aspect }) {
   ]
     .filter(Boolean)
     .join(". ");
-
-  return prompt;
 }
 
-/* ========= Hiển thị kết quả dạng text dễ copy ========= */
+/* ========= Xuất kết quả ra ô text ========= */
 function renderScenesText(scenes) {
   if (!scenes.length) {
     $("output").textContent = "Chưa có dữ liệu cảnh.";
@@ -221,10 +182,9 @@ function renderScenesText(scenes) {
   }
 
   const lines = scenes.map(scene => {
-    const t = `[${scene.start.toString().padStart(3, "0")}–${scene.end
+    return `[${scene.start.toString().padStart(3, "0")}–${scene.end
       .toString()
       .padStart(3, "0")}s]  ${scene.prompt}`;
-    return t;
   });
 
   $("output").textContent = lines.join("\n\n");
@@ -232,227 +192,115 @@ function renderScenesText(scenes) {
 
 /* ========= Export JSON ========= */
 function downloadJSON(scenes) {
-  if (!scenes.length) return;
   const blob = new Blob([JSON.stringify(scenes, null, 2)], {
     type: "application/json;charset=utf-8"
   });
-  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
+  a.href = URL.createObjectURL(blob);
   a.download = "story_scenes.json";
-  document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  URL.revokeObjectURL(a.href);
 }
 
-/* ========= Export TSV (dễ import Excel / Google Sheets) ========= */
+/* ========= Export TSV ========= */
 function downloadTSV(scenes) {
-  if (!scenes.length) return;
   const header = ["index", "start", "end", "lyric", "prompt"].join("\t");
   const rows = scenes.map(s => {
-    const lyricClean = (s.lyric || "").replace(/\s+/g, " ");
-    const promptClean = (s.prompt || "").replace(/\s+/g, " ");
-    return [s.index, s.start, s.end, lyricClean, promptClean].join("\t");
+    return [
+      s.index,
+      s.start,
+      s.end,
+      s.lyric.replace(/\s+/g, " "),
+      s.prompt.replace(/\s+/g, " ")
+    ].join("\t");
   });
-  const tsv = [header, ...rows].join("\n");
-
-  const blob = new Blob([tsv], { type: "text/tab-separated-values;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
+  const blob = new Blob([header + "\n" + rows.join("\n")], {
+    type: "text/tab-separated-values;charset=utf-8"
+  });
   const a = document.createElement("a");
-  a.href = url;
+  a.href = URL.createObjectURL(blob);
   a.download = "story_scenes.tsv";
-  document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  URL.revokeObjectURL(a.href);
 }
 
-// =============  ham lay API openAI dich van ban =============
+/* ========= Dịch bằng API active nếu cần ========= */
+async function translateIfNeeded(text) {
+  if (!$("chkTranslate")?.checked) return text;
 
-// ========= Ưu tiên lấy key từ input trên trang, nếu trống thì thử lấy từ localStorage
-function getOpenAIKeyForMakePrompt() {
-  const input = $("mpApiKey");
-  if (input && input.value.trim()) return input.value.trim();
+  const api = localStorage.getItem("ACTIVE_API") || "openai";
+  const key = localStorage.getItem("API_KEY_" + api.toUpperCase());
 
-  // Thử lấy từ localStorage theo format bên Admin (đoán tên key)
-  try {
-    const raw =
-      localStorage.getItem("apiProfiles") ||
-      localStorage.getItem("api_profiles") ||
-      "";
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        const found = parsed.find(
-          p =>
-            p &&
-            (p.provider === "openai" || p.provider === "OpenAI") &&
-            p.apiKey
-        );
-        if (found) return found.apiKey;
-      } else if (typeof parsed === "object") {
-        for (const k in parsed) {
-          const p = parsed[k];
-          if (
-            p &&
-            (p.provider === "openai" || p.provider === "OpenAI") &&
-            p.apiKey
-          ) {
-            return p.apiKey;
-          }
-        }
-      }
-    }
-  } catch (e) {
-    console.warn("Không đọc được apiProfiles từ localStorage:", e);
-  }
-  return "";
-}
-// =========Dịch 1 đoạn lyric / kịch bản từ VI -> EN bằng OpenAI ==============
-
-async function translateLyricViToEn(text, apiKey) {
-  const cleaned = (text || "").trim();
-  if (!cleaned) return text;
-
-  try {
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + apiKey
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a translator. Translate Vietnamese song lyrics or story fragments " +
-              "into short, natural English descriptions that are suitable as prompts for " +
-              "video scenes. Do NOT add explanation or numbering."
-          },
-          { role: "user", content: cleaned }
-        ],
-        max_tokens: 150,
-        temperature: 0.3
-      })
-    });
-
-    if (!res.ok) {
-      console.error("OpenAI error:", await res.text());
-      return text; // lỗi thì trả về bản gốc tiếng Việt
-    }
-
-    const data = await res.json();
-    const out =
-      data.choices?.[0]?.message?.content?.trim() ||
-      text;
-
-    return out;
-  } catch (err) {
-    console.error("Lỗi gọi OpenAI:", err);
+  if (!key) {
+    alert("Bạn chưa nhập API key cho: " + api);
     return text;
   }
-}
-
-// ==========  Bản async: nếu useTranslate = true thì dịch lyric từng cảnh sang EN  =======
-//=========================================================================================
-async function buildScenesFromLyricsAsync(data, { useTranslate, apiKey } = {}) {
-  // Dùng logic cũ để chia line + tính thời gian
-  const baseScenes = buildScenesFromLyrics(data);
-
-  if (!useTranslate || !apiKey) {
-    return baseScenes; // giữ nguyên (lyric có thể là tiếng Việt)
-  }
-
-  const out = [];
-  for (const scene of baseScenes) {
-    const lyricVi = scene.lyric || "";
-    const lyricEn = await translateLyricViToEn(lyricVi, apiKey);
-
-    // build lại prompt với lyricEn
-    const promptEn = buildPromptForScene({
-      idx: scene.index,
-      lyric: lyricEn,
-      styleKey: scene.preset,
-      comboKey: scene.combo,
-      aspect: scene.aspect
-    });
-
-    out.push({
-      ...scene,
-      lyric_en: lyricEn,
-      prompt: promptEn
-    });
-  }
-  return out;
-}
-//=================het phan lay API va dich van ban ================
-
-/* ========= Gắn event ========= */
-$("btnMakePrompt")?.addEventListener("click", async () => {
-  const btn = $("btnMakePrompt");
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "Đang tạo...";
-  }
-
-  const data = {
-    text: val("lyrics", ""),
-    total: Number(val("dur", 180)),
-    step: Number(val("item", 5)),
-    preset: val("preset", "3d_cinematic_warm"),
-    combo: val("combo", "mix"),
-    aspect: val("aspect", "1792x1024")
-  };
-
-  const useTranslate = $("useTranslate")?.checked;
-  let apiKey = "";
-  if (useTranslate) {
-    apiKey = getOpenAIKeyForMakePrompt();
-    if (!apiKey) {
-      alert(
-        "Chưa có OpenAI API key.\n" +
-          "- Vào trang Admin > Nhập API để lưu key, HOẶC\n" +
-          "- Nhập key trực tiếp vào ô OpenAI API Key bên dưới."
-      );
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "Tạo prompt";
-      }
-      return;
-    }
-  }
 
   try {
-    _lastScenes = await buildScenesFromLyricsAsync(data, {
-      useTranslate,
-      apiKey
-    });
-    renderScenesText(_lastScenes);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "Tạo prompt";
+    if (api === "openai") {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + key
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: "Translate this text to natural English" },
+            { role: "user", content: text }
+          ]
+        })
+      }).then(r => r.json());
+
+      return res.choices?.[0]?.message?.content || text;
     }
+
+    if (api === "google") {
+      alert("Google Gemini chưa hỗ trợ dịch ở chế độ này.");
+      return text;
+    }
+
+    if (api === "grok") {
+      alert("Grok chưa hỗ trợ dịch tốt tiếng Việt.");
+      return text;
+    }
+  } catch (e) {
+    console.error("Translate error:", e);
+    alert("Lỗi dịch văn bản.");
   }
+
+  return text;
+}
+
+/* ========= Nút: TẠO PROMPT ========= */
+$("btnMakePrompt")?.addEventListener("click", async () => {
+  let text = $("lyrics").value.trim();
+
+  text = await translateIfNeeded(text);
+
+  $("lyrics").value = text; // cập nhật lại giao diện
+
+  const data = {
+    text,
+    total: Number(val("dur")),
+    step: Number(val("item")),
+    preset: val("preset"),
+    combo: val("combo"),
+    aspect: val("aspect")
+  };
+
+  _lastScenes = buildScenesFromLyrics(data);
+  renderScenesText(_lastScenes);
 });
 
-
+/* ========= Export Buttons ========= */
 $("btnJSON")?.addEventListener("click", () => {
-  if (!_lastScenes.length) {
-    alert("Chưa có cảnh nào. Hãy bấm 'Tạo prompt' trước.");
-    return;
-  }
+  if (!_lastScenes.length) return alert("Chưa có cảnh.");
   downloadJSON(_lastScenes);
 });
 
 $("btnTSV")?.addEventListener("click", () => {
-  if (!_lastScenes.length) {
-    alert("Chưa có cảnh nào. Hãy bấm 'Tạo prompt' trước.");
-    return;
-  }
+  if (!_lastScenes.length) return alert("Chưa có cảnh.");
   downloadTSV(_lastScenes);
 });
-
