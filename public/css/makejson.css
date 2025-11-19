@@ -1,282 +1,258 @@
-/* ===== RESET NHẸ ===== */
-*,
-*::before,
-*::after {
+/* Trang builder – chỉ style nhẹ, tận dụng style.css có sẵn */
+
+.builder-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #fecaca, #fda4af);
+  padding: 20px 8px 40px;
   box-sizing: border-box;
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-}
-
-/* ===== PAGE ===== */
-body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  background: radial-gradient(circle at top, #ffe1ec 0, #ffb6c8 40%, #fda4af 100%);
-  min-height: 100vh;
-  color: #111827;
 }
 
-.page-wrap {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 20px 16px 40px;
-}
-
-/* ===== HEADER ===== */
-.mj-header {
+.builder-header {
+  max-width: 1040px;
+  margin: 0 auto 20px;
+  padding: 16px 20px;
+  border-radius: 24px;
   background: #be123c;
-  color: #f9fafb;
-  border-radius: 22px;
-  padding: 14px 18px;
+  color: #fff;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  box-shadow: 0 16px 35px rgba(136, 19, 55, 0.45);
+  box-shadow: 0 18px 45px rgba(190, 18, 60, 0.55);
 }
 
-.mj-header-left {
+.builder-header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
-.mj-logo {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
+.builder-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
   object-fit: cover;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.4);
 }
 
-.mj-title {
+.builder-title {
   font-size: 20px;
-  font-weight: 700;
-  margin: 0;
+  margin: 0 0 2px;
 }
 
-.mj-subtitle {
-  margin: 2px 0 0;
+.builder-subtitle {
+  margin: 0;
   font-size: 13px;
   opacity: 0.9;
 }
 
-.mj-header-actions {
+.builder-header-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
 }
 
-/* ===== BUTTONS ===== */
-.mj-btn {
-  border-radius: 999px;
-  border: 1px solid transparent;
-  padding: 6px 12px;
-  font-size: 13px;
-  cursor: pointer;
-  background: #f9fafb;
-  color: #111827;
-  transition: transform 0.05s ease, box-shadow 0.1s ease,
-    background 0.1s ease, color 0.1s ease;
-  white-space: nowrap;
-}
-
-.mj-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.22);
-}
-
-.mj-btn.primary {
-  background: #f97316;
-  color: #ffffff;
-  border-color: #fb923c;
-}
-
-.mj-btn.primary:hover {
-  background: #ea580c;
-}
-
-.mj-btn.ghost {
-  background: rgba(249, 250, 251, 0.15);
-  color: #f9fafb;
-  border-color: rgba(248, 250, 252, 0.4);
-}
-
-/* ===== MAIN CARD ===== */
-.mj-main {
-  margin-top: 18px;
-}
-
-.mj-card {
-  background: #f9fafb;
-  border-radius: 20px;
-  padding: 18px 18px 22px;
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
-  border: 1px solid #e5e7eb;
-}
-
-/* ===== FIELDS ===== */
-.mj-field-row {
-  margin-bottom: 12px;
-}
-
-.mj-field-row.inline {
+.builder-main {
+  max-width: 1040px;
+  margin: 0 auto;
   display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.mj-field-row.inline.align-bottom {
-  align-items: flex-end;
+/* Card chung */
+
+.card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 16px 18px 18px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.25);
 }
 
-.mj-field-col {
-  flex: 0 0 220px;
-}
-
-.mj-field-col-grow {
-  flex: 1 1 auto;
-}
-
-.mj-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: #374151;
-}
-
-.mj-label-note {
-  font-weight: 400;
-  font-size: 12px;
-  color: #6b7280;
-  margin-left: 4px;
-}
-
-.mj-input,
-.mj-textarea {
-  width: 100%;
-  border-radius: 10px;
-  border: 1px solid #d4d4d8;
-  padding: 7px 9px;
-  font-size: 14px;
-  font-family: inherit;
-  resize: vertical;
-}
-
-.mj-input:focus,
-.mj-textarea:focus {
-  outline: 2px solid rgba(248, 113, 113, 0.65);
-  border-color: transparent;
-}
-
-.mj-textarea {
-  min-height: 140px;
-}
-
-.mj-textarea.small {
-  min-height: 70px;
-}
-
-.mj-textarea.readonly {
-  background: #f3f4f6;
-}
-
-.mj-helper {
-  font-size: 13px;
-  color: #6b7280;
+.card-title {
   margin: 0 0 8px;
+  font-size: 18px;
+  color: #111827;
 }
 
-.mj-status {
-  font-size: 13px;
-  padding: 6px 8px;
-  border-radius: 8px;
-  margin-bottom: 14px;
-}
-
-.mj-status-warning {
-  background: #fef3c7;
-  color: #92400e;
-  border: 1px solid #facc15;
-}
-
-/* ===== SECTION BLOCKS ===== */
-.mj-section-block {
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px dashed #e5e7eb;
-}
-
-.mj-section-title {
-  font-size: 16px;
-  font-weight: 700;
-  margin: 0 0 4px;
-  display: flex;
-  gap: 6px;
-  align-items: baseline;
-}
-
-.mj-section-index {
-  font-weight: 700;
-  color: #be123c;
-}
-
-.mj-section-type {
+.card-type {
   margin: 0 0 10px;
   font-size: 13px;
   color: #6b7280;
 }
 
-/* ===== LOG BLOCK ===== */
-.mj-log-block {
-  margin-top: 22px;
-  padding-top: 14px;
-  border-top: 1px solid #e5e7eb;
+/* Fields */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
 }
 
-.mj-log-title {
-  margin: 0 0 6px;
-  font-size: 14px;
-  font-weight: 600;
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.mj-textarea.log {
-  min-height: 120px;
+.field-row .field {
+  flex: 1 1 220px;
+}
+
+.field label {
   font-size: 13px;
-  background: #111827;
-  color: #e5e7eb;
-  font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
+  margin-bottom: 4px;
+  font-weight: 500;
+  color: #374151;
 }
 
-/* ===== RESPONSIVE ===== */
+.input {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  outline: none;
+  background: #f9fafb;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease,
+    background 0.14s ease;
+}
+
+.input:focus {
+  border-color: #fb7185;
+  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.38);
+  background: #ffffff;
+}
+
+.textarea {
+  min-height: 70px;
+  resize: vertical;
+}
+
+.mono {
+  font-family: "JetBrains Mono", "SF Mono", Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+}
+
+.output {
+  min-height: 80px;
+}
+
+/* Buttons */
+
+.btn {
+  border: none;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: transform 0.08s ease, box-shadow 0.08s ease,
+    background 0.12s ease, color 0.12s ease, opacity 0.12s ease;
+}
+
+.btn.small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn.primary {
+  background: #f97373;
+  color: #fff;
+  box-shadow: 0 8px 16px rgba(248, 113, 113, 0.45);
+}
+
+.btn.primary:hover {
+  background: #fb7185;
+  transform: translateY(-1px);
+}
+
+.btn.secondary {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.btn.secondary:hover {
+  background: #fecaca;
+}
+
+.btn.ghost {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fee2e2;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.btn.ghost:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+  box-shadow: none;
+}
+
+/* Footer bên trong mỗi phần */
+
+.section-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* Hint & status */
+
+.hint {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 4px 0 10px;
+}
+
+.hint-inline {
+  font-size: 12px;
+  color: #6b7280;
+  margin-left: 4px;
+}
+
+.status-bar {
+  margin-top: 10px;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  display: inline-block;
+}
+
+/* Responsive */
+
 @media (max-width: 768px) {
-  .page-wrap {
-    padding: 12px 10px 28px;
+  .builder-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .mj-header {
-    border-radius: 0 0 18px 18px;
-  }
-
-  .mj-header-actions {
+  .builder-header-actions {
+    width: 100%;
     justify-content: flex-start;
   }
 
-  .mj-field-row.inline {
+  .section-footer {
     flex-direction: column;
   }
 
-  .mj-field-col,
-  .mj-field-col-grow {
-    flex: 1 1 100%;
+  .section-footer .output {
+    width: 100%;
   }
 }
