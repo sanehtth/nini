@@ -1,1005 +1,158 @@
 <!DOCTYPE html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Make JSON - Builder 6 phần</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-    <style>
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-          sans-serif;
-        background: linear-gradient(135deg, #fecaca, #fee2e2, #fce7f3);
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-        padding: 24px 12px;
-        color: #111827;
-      }
-      .page {
-        width: 100%;
-        max-width: 1040px;
-        background: #ffffff;
-        border-radius: 24px;
-        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
-        padding: 20px 22px 24px;
-      }
-      .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 14px;
-      }
-      .page-title {
-        font-size: 20px;
-        font-weight: 700;
-      }
-      .page-subtitle {
-        font-size: 13px;
-        color: #6b7280;
-      }
-      .btn {
-        border-radius: 999px;
-        border: none;
-        padding: 7px 16px;
-        font-size: 13px;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        cursor: pointer;
-        transition: transform 0.05s ease, box-shadow 0.05s ease,
-          background 0.1s ease;
-        white-space: nowrap;
-      }
-      .btn:active {
-        transform: translateY(1px);
-        box-shadow: none;
-      }
-      .main-btn {
-        background: #ec4899;
-        color: white;
-        box-shadow: 0 10px 24px rgba(236, 72, 153, 0.4);
-      }
-      .main-btn:hover {
-        background: #db2777;
-      }
-      .ghost {
-        background: #f9fafb;
-        color: #111827;
-        border: 1px solid #e5e7eb;
-      }
-      .ghost:hover {
-        background: #f3f4f6;
-      }
-      .danger {
-        background: #fee2e2;
-        color: #b91c1c;
-        border: 1px solid #fecaca;
-      }
-      .danger:hover {
-        background: #fecaca;
-      }
-      .row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-      }
-      .row.gap-8 {
-        gap: 8px;
-      }
-      .row.gap-10 {
-        gap: 10px;
-      }
-      .field {
-        margin-bottom: 10px;
-      }
-      .field label {
-        display: block;
-        font-size: 13px;
-        font-weight: 500;
-        margin-bottom: 4px;
-      }
-      .input,
-      textarea {
-        width: 100%;
-        border-radius: 10px;
-        border: 1px solid #d4d4d8;
-        padding: 7px 9px;
-        font-size: 14px;
-      }
-      textarea {
-        resize: vertical;
-        min-height: 90px;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-          "Liberation Mono", "Courier New", monospace;
-      }
-      .tabs {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin: 12px 0;
-      }
-      .tab-btn {
-        border-radius: 999px;
-        border: 1px solid #e5e7eb;
-        padding: 5px 14px;
-        font-size: 13px;
-        background: #f9fafb;
-        cursor: pointer;
-      }
-      .tab-btn.active {
-        background: #e11d48;
-        color: #ffffff;
-        border-color: #e11d48;
-      }
-      .section-card {
-        border-radius: 18px;
-        border: 1px solid #e5e7eb;
-        background: #f9fafb;
-        padding: 16px 14px 16px;
-        margin-top: 6px;
-      }
-      .section-title {
-        font-size: 16px;
-        font-weight: 600;
-        margin-bottom: 8px;
-      }
-      .section-help {
-        font-size: 12px;
-        color: #6b7280;
-        margin-bottom: 10px;
-      }
-      .output-box {
-        margin-top: 10px;
-        border-radius: 12px;
-        background: #111827;
-        color: #e5e7eb;
-        padding: 10px 10px 8px;
-        font-size: 12px;
-      }
-      .output-box pre {
-        white-space: pre-wrap;
-        word-break: break-word;
-        margin: 4px 0 0;
-      }
-      .pill {
-        display: inline-flex;
-        align-items: center;
-        padding: 3px 10px;
-        border-radius: 999px;
-        font-size: 11px;
-        background: #fef3c7;
-        color: #92400e;
-      }
-      .manifest-status {
-        font-size: 12px;
-        color: #6b7280;
-      }
-      .manifest-status.ok {
-        color: #16a34a;
-      }
-      .manifest-status.err {
-        color: #b91c1c;
-      }
-      @media (max-width: 640px) {
-        .page {
-          padding: 16px 14px 18px;
-        }
-        .page-header {
-          flex-direction: column;
-          align-items: flex-start;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="page">
-      <!-- HEADER -->
-      <div class="page-header">
-        <div>
-          <div class="page-title">Make JSON – Builder 6 phần</div>
-          <div class="page-subtitle">
-            Dùng để tạo các file section JSON & cập nhật manifest cho Tiếng Anh.
-          </div>
-        </div>
-        <div class="row gap-8">
-          <button class="ghost btn" onclick="window.location.href='index.html'">
-            ⬅ Về trang chính
-          </button>
-        </div>
-      </div>
+  <title>Make JSON – Nini Editor</title>
 
-      <!-- TÊN BÀI TEST & MANIFEST -->
-      <div class="field">
-        <label for="testName">Tên bài test (testName)</label>
-        <input
-          id="testName"
-          class="input"
-          placeholder="vd: Test 1"
-          autocomplete="off"
-        />
-        <div class="page-subtitle" style="margin-top: 4px">
-          Mỗi section sẽ có testName = giá trị này, ví dụ “Test1”. Bạn dùng để
-          tạo prefix ID: Test1_1, Test1_2, ...
-        </div>
-      </div>
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/makejson.css">
+</head>
 
-      <div class="row gap-8" style="margin-bottom: 10px">
-        <button id="btnLoadSectionsManifest" class="btn ghost">
-          📥 Nạp sectionsManifest.json
-        </button>
-        <button id="btnSaveSectionsManifest" class="btn main-btn">
-          💾 Cập nhật manifest lên GitHub
-        </button>
-        <button id="btnNewSectionMeta" class="btn ghost">
-          ➕ Tạo section mới
-        </button>
-        <span id="manifestStatus" class="manifest-status">
-          Chưa nạp manifest.
-        </span>
-      </div>
+<body>
+  <div class="container">
+    <h1>📦 Trình tạo JSON & Manifest</h1>
+    <p class="subtitle">Hệ thống build nội dung cho Nini • 6 phần • Đồng bộ GitHub</p>
 
-      <div class="page-subtitle" id="sectionHint">
-        Đã tải 0 section từ manifest.
-      </div>
-
-      <!-- TABS -->
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="p1">Phần 1 (MCQ)</button>
-        <button class="tab-btn" data-tab="p2">Phần 2 (MCQ + hình)</button>
-        <button class="tab-btn" data-tab="p3">Phần 3 (MCQ / reading)</button>
-        <button class="tab-btn" data-tab="p4">Phần 4 (Drag & drop)</button>
-        <button class="tab-btn" data-tab="p5">Phần 5 (Word form)</button>
-        <button class="tab-btn" data-tab="p6">Phần 6 (Reorder / Rewrite)</button>
-      </div>
-
-      <!-- PHẦN 1 -->
-      <div class="section-card" data-panel="p1">
-        <div class="section-title">
-          Phần 1 – Trắc nghiệm (mcqOneByOne)
-          <span class="pill">type: "mcqOneByOne"</span>
-        </div>
-        <p class="section-help">
-          Mỗi câu 4 đáp án A, B, C, D. Bạn nhập nội dung thô, builder sẽ sinh
-          JSON cho phần này.
-        </p>
-
-        <div class="row gap-10" style="margin-bottom: 10px">
-          <div class="field" style="flex: 1 1 180px">
-            <label for="p1_id">section.id (P1_001, P1_002,...)</label>
-            <input
-              id="p1_id"
-              class="input"
-              placeholder="vd: P1_001"
-              autocomplete="off"
-            />
-          </div>
-          <div class="field" style="flex: 2 1 260px">
-            <label for="p1_title">section.title (nếu để trống sẽ tự sinh)</label>
-            <input
-              id="p1_title"
-              class="input"
-              placeholder="vd: Test 1 - Phần 1 - Trắc nghiệm"
-            />
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="p1_raw">Nội dung thô (câu 1–14)</label>
-          <textarea
-            id="p1_raw"
-            placeholder="Câu 1. ...
-Câu 2. ...
-Câu 3. ..."
-          ></textarea>
-          <div class="section-help">
-            Dòng câu hỏi dạng: <code>Câu 1. Nội dung ...</code> Mỗi câu 4 dòng
-            đáp án ngay sau: <code>A. ...</code>, <code>B. ...</code>, ...
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="p1_answers"
-            >Đáp án (1 dòng / 1 câu, ví dụ: A, B, C, D,...)</label
-          >
-          <textarea
-            id="p1_answers"
-            placeholder="1: A
-2: C
-3: B ..."
-          ></textarea>
-        </div>
-
-        <button id="btnBuildP1" class="btn main-btn">
-          ⚙️ Tạo JSON phần 1
-        </button>
-
-        <div class="output-box">
-          <div>JSON output (Phần 1)</div>
-          <pre id="p1_output">// Kết quả sẽ hiện ở đây...</pre>
-        </div>
-      </div>
-
-      <!-- PHẦN 2 -->
-      <div class="section-card" data-panel="p2" style="display: none">
-        <div class="section-title">
-          Phần 2 – MCQ + Hình (mcqImage)
-          <span class="pill">type: "mcqImage"</span>
-        </div>
-        <p class="section-help">
-          Phiên bản đơn giản: builder chỉ đóng gói dữ liệu thô, bạn có thể chỉnh
-          tay thêm <code>imageFile</code>, <code>options</code> sau.
-        </p>
-
-        <div class="row gap-10" style="margin-bottom: 10px">
-          <div class="field" style="flex: 1 1 180px">
-            <label for="p2_id">section.id</label>
-            <input id="p2_id" class="input" placeholder="P2_001" />
-          </div>
-          <div class="field" style="flex: 2 1 260px">
-            <label for="p2_title">section.title</label>
-            <input
-              id="p2_title"
-              class="input"
-              placeholder="vd: Test 1 - Phần 2 - MCQ hình"
-            />
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="p2_raw">Nội dung thô</label>
-          <textarea
-            id="p2_raw"
-            placeholder="Bạn có thể ghi chú cấu trúc ở đây..."
-          ></textarea>
-        </div>
-
-        <button id="btnBuildP2" class="btn main-btn">
-          ⚙️ Tạo JSON phần 2 (thô)
-        </button>
-
-        <div class="output-box">
-          <div>JSON output (Phần 2)</div>
-          <pre id="p2_output">// Kết quả thô sẽ hiện ở đây...</pre>
-        </div>
-      </div>
-
-      <!-- PHẦN 3 -->
-      <div class="section-card" data-panel="p3" style="display: none">
-        <div class="section-title">
-          Phần 3 – Reading MCQ (readingMcq)
-          <span class="pill">type: "readingMcq"</span>
-        </div>
-        <p class="section-help">
-          Builder đóng gói passage + note, bạn bổ sung chi tiết câu hỏi sau.
-        </p>
-
-        <div class="row gap-10" style="margin-bottom: 10px">
-          <div class="field" style="flex: 1 1 180px">
-            <label for="p3_id">section.id</label>
-            <input id="p3_id" class="input" placeholder="P3_001" />
-          </div>
-          <div class="field" style="flex: 2 1 260px">
-            <label for="p3_title">section.title</label>
-            <input
-              id="p3_title"
-              class="input"
-              placeholder="vd: Test 1 - Phần 3 - Đọc hiểu"
-            />
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="p3_passage">Passage</label>
-          <textarea id="p3_passage" placeholder="Đoạn văn..."></textarea>
-        </div>
-
-        <div class="field">
-          <label for="p3_note">Ghi chú / cấu trúc câu hỏi</label>
-          <textarea
-            id="p3_note"
-            placeholder="Bạn mô tả cách chia câu hỏi ở đây..."
-          ></textarea>
-        </div>
-
-        <button id="btnBuildP3" class="btn main-btn">
-          ⚙️ Tạo JSON phần 3 (thô)
-        </button>
-
-        <div class="output-box">
-          <div>JSON output (Phần 3)</div>
-          <pre id="p3_output">// Kết quả thô sẽ hiện ở đây...</pre>
-        </div>
-      </div>
-
-      <!-- PHẦN 4 -->
-      <div class="section-card" data-panel="p4" style="display: none">
-        <div class="section-title">
-          Phần 4 – Drag & Drop (readingDragDrop)
-          <span class="pill">type: "readingDragDrop"</span>
-        </div>
-        <p class="section-help">
-          Đánh dấu chỗ trống bằng __1__, __2__... Builder chỉ gói passage +
-          wordBank + blanks dạng text.
-        </p>
-
-        <div class="row gap-10" style="margin-bottom: 10px">
-          <div class="field" style="flex: 1 1 180px">
-            <label for="p4_id">section.id</label>
-            <input id="p4_id" class="input" placeholder="P4_001" />
-          </div>
-          <div class="field" style="flex: 2 1 260px">
-            <label for="p4_title">section.title</label>
-            <input
-              id="p4_title"
-              class="input"
-              placeholder="vd: Test 1 - Phần 4 - Điền từ"
-            />
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="p4_passage">Passage (dùng __1__, __2__ cho chỗ trống)</label>
-          <textarea id="p4_passage"></textarea>
-        </div>
-
-        <div class="field">
-          <label for="p4_wordbank">WordBank (1 từ / dòng)</label>
-          <textarea
-            id="p4_wordbank"
-            placeholder="từ1
-từ2
-từ3"
-          ></textarea>
-        </div>
-
-        <div class="field">
-          <label for="p4_blanks">Đáp án blanks (1 dòng: số: từ)</label>
-          <textarea
-            id="p4_blanks"
-            placeholder="1: từ1
-2: từ2"
-          ></textarea>
-        </div>
-
-        <button id="btnBuildP4" class="btn main-btn">
-          ⚙️ Tạo JSON phần 4
-        </button>
-
-        <div class="output-box">
-          <div>JSON output (Phần 4)</div>
-          <pre id="p4_output">// Kết quả sẽ hiện ở đây...</pre>
-        </div>
-      </div>
-
-      <!-- PHẦN 5 -->
-      <div class="section-card" data-panel="p5" style="display: none">
-        <div class="section-title">
-          Phần 5 – Word Form (wordForm)
-          <span class="pill">type: "wordForm"</span>
-        </div>
-        <p class="section-help">
-          Mỗi dòng: câu với từ gốc trong ngoặc vuông + đáp án. Builder gói
-          thành list câu.
-        </p>
-
-        <div class="row gap-10" style="margin-bottom: 10px">
-          <div class="field" style="flex: 1 1 180px">
-            <label for="p5_id">section.id</label>
-            <input id="p5_id" class="input" placeholder="P5_001" />
-          </div>
-          <div class="field" style="flex: 2 1 260px">
-            <label for="p5_title">section.title</label>
-            <input
-              id="p5_title"
-              class="input"
-              placeholder="vd: Test 1 - Phần 5 - Word form"
-            />
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="p5_raw">Nội dung thô (1 dòng / 1 câu)</label>
-          <textarea
-            id="p5_raw"
-            placeholder="Câu 1 ... (WORD) ... | đáp án
-Câu 2 ... (WORD) ... | đáp án"
-          ></textarea>
-        </div>
-
-        <button id="btnBuildP5" class="btn main-btn">
-          ⚙️ Tạo JSON phần 5 (thô)
-        </button>
-
-        <div class="output-box">
-          <div>JSON output (Phần 5)</div>
-          <pre id="p5_output">// Kết quả sẽ hiện ở đây...</pre>
-        </div>
-      </div>
-
-      <!-- PHẦN 6 -->
-      <div class="section-card" data-panel="p6" style="display: none">
-        <div class="section-title">
-          Phần 6 – Reorder / Rewrite (reorderAndRewrite)
-          <span class="pill">type: "reorderAndRewrite"</span>
-        </div>
-        <p class="section-help">
-          Bạn có thể nhập từng câu, builder gói thành danh sách để dùng trong
-          quizEng.
-        </p>
-
-        <div class="row gap-10" style="margin-bottom: 10px">
-          <div class="field" style="flex: 1 1 180px">
-            <label for="p6_id">section.id</label>
-            <input id="p6_id" class="input" placeholder="P6_001" />
-          </div>
-          <div class="field" style="flex: 2 1 260px">
-            <label for="p6_title">section.title</label>
-            <input
-              id="p6_title"
-              class="input"
-              placeholder="vd: Test 1 - Phần 6 - Viết lại câu"
-            />
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="p6_raw">Mỗi dòng 1 câu (mô tả | đáp án)</label>
-          <textarea
-            id="p6_raw"
-            placeholder="Sắp xếp từ: ... | câu chuẩn
-Viết lại câu: ... | câu chuẩn"
-          ></textarea>
-        </div>
-
-        <button id="btnBuildP6" class="btn main-btn">
-          ⚙️ Tạo JSON phần 6 (thô)
-        </button>
-
-        <div class="output-box">
-          <div>JSON output (Phần 6)</div>
-          <pre id="p6_output">// Kết quả sẽ hiện ở đây...</pre>
-        </div>
-      </div>
+    <!-- ================== 5 NÚT CHÍNH ================== -->
+    <div class="top-buttons">
+      <button id="btnLoadManifest">Nạp sectionsManifest</button>
+      <button id="btnGenerateSectionsManifest">Tạo sectionsManifest</button>
+      <button id="btnGenerateTestsManifest">Tạo testsManifest</button>
+      <button id="btnSyncGithub">Đồng bộ lên GitHub</button>
+      <button id="btnExportAll">Xuất toàn bộ dữ liệu</button>
     </div>
 
-    <script>
-      // ====== TAB ======
-      const tabButtons = document.querySelectorAll(".tab-btn");
-      const panels = document.querySelectorAll("[data-panel]");
+    <hr>
 
-      tabButtons.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const tab = btn.dataset.tab;
-          tabButtons.forEach((b) => b.classList.remove("active"));
-          btn.classList.add("active");
-          panels.forEach((p) => {
-            p.style.display = p.dataset.panel === tab ? "block" : "none";
-          });
-        });
-      });
+    <!-- ================== 6 KHỐI SECTION ================== -->
+    <div id="sectionsContainer">
 
-      // ====== MANIFEST STATE ======
-      const SECTIONS_MANIFEST_PUBLIC_PATH = "/content/sectionsManifest.json";
-      const manifestStatusEl = document.getElementById("manifestStatus");
-      const sectionHintEl = document.getElementById("sectionHint");
-      const loadBtn = document.getElementById("btnLoadSectionsManifest");
-      const saveBtn = document.getElementById("btnSaveSectionsManifest");
-      const newSectionMetaBtn = document.getElementById("btnNewSectionMeta");
-      const testNameInput = document.getElementById("testName");
+      <!-- TEMPLATE CHUNG: tự copy 6 lần -->
+      <!-- Section 1 -->
+      <div class="section-block">
+        <h2>📘 Phần 1: Vocabulary</h2>
 
-      let currentSectionsManifest = { sections: [] };
+        <label>ID (tự nạp từ manifest):</label>
+        <input type="text" id="sec1_id" disabled>
 
-      function setManifestStatus(text, type) {
-        manifestStatusEl.textContent = text;
-        manifestStatusEl.classList.remove("ok", "err");
-        if (type === "ok") manifestStatusEl.classList.add("ok");
-        if (type === "err") manifestStatusEl.classList.add("err");
-      }
+        <label>Title:</label>
+        <input type="text" id="sec1_title" placeholder="Nhập tiêu đề">
 
-      async function loadSectionsManifest() {
-        try {
-          setManifestStatus("Đang nạp sectionsManifest.json...", "");
-          const res = await fetch(
-            SECTIONS_MANIFEST_PUBLIC_PATH + "?v=" + Date.now()
-          );
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          const json = await res.json();
-          currentSectionsManifest = json || { sections: [] };
-          const len = currentSectionsManifest.sections
-            ? currentSectionsManifest.sections.length
-            : 0;
-          setManifestStatus("Đã nạp manifest (" + len + " section).", "ok");
-          sectionHintEl.textContent =
-            "Đã tải " + len + " section từ manifest hiện tại.";
-        } catch (e) {
-          console.error(e);
-          setManifestStatus("Lỗi nạp manifest: " + e.message, "err");
-        }
-      }
+        <label>Description:</label>
+        <textarea id="sec1_desc"></textarea>
 
-      async function saveSectionsManifestToGitHub() {
-        try {
-          if (
-            !currentSectionsManifest ||
-            !Array.isArray(currentSectionsManifest.sections)
-          ) {
-            alert(
-              "Chưa có dữ liệu manifest hợp lệ. Hãy bấm “Nạp sectionsManifest.json” trước."
-            );
-            return;
-          }
+        <label>Content JSON:</label>
+        <textarea id="sec1_json" class="json-box" placeholder='[{"question": "...", "answer": "..."}]'></textarea>
 
-          setManifestStatus("Đang gửi manifest lên GitHub...", "");
-          saveBtn.disabled = true;
+        <button class="save-btn" data-sec="1">💾 Tạo JSON phần 1</button>
+      </div>
 
-          const res = await fetch("/api/updateSectionsManifest", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              path: "public/content/sectionsManifest.json",
-              contentJson: currentSectionsManifest,
-              message: "Update sectionsManifest from makejson.html",
-            }),
-          });
+      <!-- Section 2 -->
+      <div class="section-block">
+        <h2>📘 Phần 2: Grammar</h2>
 
-          const data = await res.json();
-          if (!res.ok || !data.ok) {
-            console.error("saveSectionsManifest error:", data);
-            setManifestStatus(
-              "Lỗi cập nhật GitHub: " + (data.error || res.status),
-              "err"
-            );
-            alert(
-              "Lưu lên GitHub thất bại.\n" + (data.detail || data.error || "")
-            );
-          } else {
-            setManifestStatus(
-              "Đã cập nhật manifest lên GitHub (commit " +
-                data.commit.slice(0, 7) +
-                "…).",
-              "ok"
-            );
-            alert("Đã lưu sectionsManifest.json lên GitHub!");
-          }
-        } catch (e) {
-          console.error(e);
-          setManifestStatus("Lỗi mạng khi gọi API.", "err");
-          alert("Có lỗi mạng khi gọi API: " + e.message);
-        } finally {
-          saveBtn.disabled = false;
-        }
-      }
+        <label>ID:</label>
+        <input type="text" id="sec2_id" disabled>
 
-      function slugify(str) {
-        return (str || "")
-          .toString()
-          .trim()
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-+|-+$/g, "")
-          .substring(0, 40);
-      }
+        <label>Title:</label>
+        <input type="text" id="sec2_title">
 
-      function getActiveSectionMeta() {
-        const activeTab = document.querySelector(".tab-btn.active")?.dataset
-          .tab;
-        if (!activeTab) return null;
+        <label>Description:</label>
+        <textarea id="sec2_desc"></textarea>
 
-        const perTest = testNameInput.value.trim() || "testX";
+        <label>Content JSON:</label>
+        <textarea id="sec2_json" class="json-box"></textarea>
 
-        switch (activeTab) {
-          case "p1":
-            return {
-              id: document.getElementById("p1_id").value.trim() || "P1_001",
-              title:
-                document.getElementById("p1_title").value.trim() ||
-                "Phần 1 - MCQ",
-              type: "mcqOneByOne",
-              testName: perTest,
-            };
-          case "p2":
-            return {
-              id: document.getElementById("p2_id").value.trim() || "P2_001",
-              title:
-                document.getElementById("p2_title").value.trim() ||
-                "Phần 2 - MCQ hình",
-              type: "mcqImage",
-              testName: perTest,
-            };
-          case "p3":
-            return {
-              id: document.getElementById("p3_id").value.trim() || "P3_001",
-              title:
-                document.getElementById("p3_title").value.trim() ||
-                "Phần 3 - Reading",
-              type: "readingMcq",
-              testName: perTest,
-            };
-          case "p4":
-            return {
-              id: document.getElementById("p4_id").value.trim() || "P4_001",
-              title:
-                document.getElementById("p4_title").value.trim() ||
-                "Phần 4 - DragDrop",
-              type: "readingDragDrop",
-              testName: perTest,
-            };
-          case "p5":
-            return {
-              id: document.getElementById("p5_id").value.trim() || "P5_001",
-              title:
-                document.getElementById("p5_title").value.trim() ||
-                "Phần 5 - WordForm",
-              type: "wordForm",
-              testName: perTest,
-            };
-          case "p6":
-            return {
-              id: document.getElementById("p6_id").value.trim() || "P6_001",
-              title:
-                document.getElementById("p6_title").value.trim() ||
-                "Phần 6 - Reorder",
-              type: "reorderAndRewrite",
-              testName: perTest,
-            };
-          default:
-            return null;
-        }
-      }
+        <button class="save-btn" data-sec="2">💾 Tạo JSON phần 2</button>
+      </div>
 
-      function handleAddSectionMeta() {
-        if (!currentSectionsManifest.sections) {
-          currentSectionsManifest.sections = [];
-        }
-        const meta = getActiveSectionMeta();
-        if (!meta) {
-          alert("Không xác định được phần đang chọn.");
-          return;
-        }
-        const slug = slugify(meta.testName);
-        const filePath = `/content/${slug}/${meta.id}.json`;
+      <!-- Section 3 -->
+      <div class="section-block">
+        <h2>📘 Phần 3: Reading</h2>
 
-        const entry = {
-          id: meta.id,
-          title: meta.title,
-          type: meta.type,
-          testName: meta.testName,
-          file: filePath,
-        };
+        <label>ID:</label>
+        <input type="text" id="sec3_id" disabled>
 
-        currentSectionsManifest.sections.push(entry);
-        const len = currentSectionsManifest.sections.length;
-        sectionHintEl.textContent =
-          "Đã thêm section " + meta.id + " (" + len + " mục trong manifest).";
+        <label>Title:</label>
+        <input type="text" id="sec3_title">
 
-        setManifestStatus(
-          "Đã thêm meta mới (chưa lưu lên GitHub).",
-          "ok"
-        );
-        console.log("currentSectionsManifest", currentSectionsManifest);
-      }
+        <label>Description:</label>
+        <textarea id="sec3_desc"></textarea>
 
-      if (loadBtn) loadBtn.onclick = loadSectionsManifest;
-      if (saveBtn) saveBtn.onclick = saveSectionsManifestToGitHub;
-      if (newSectionMetaBtn) newSectionMetaBtn.onclick = handleAddSectionMeta;
+        <label>Content JSON:</label>
+        <textarea id="sec3_json" class="json-box"></textarea>
 
-      // ====== BUILDER PHẦN 1 – MCQ ======
-      function parseAnswers(text) {
-        const result = {};
-        const lines = (text || "")
-          .split("\n")
-          .map((l) => l.trim())
-          .filter(Boolean);
-        lines.forEach((line) => {
-          const m = line.match(/^(\d+)\s*[:\-]?\s*([A-D])/i);
-          if (m) {
-            result[m[1]] = m[2].toUpperCase();
-          }
-        });
-        return result;
-      }
+        <button class="save-btn" data-sec="3">💾 Tạo JSON phần 3</button>
+      </div>
 
-      function buildP1() {
-        const sectionId =
-          document.getElementById("p1_id").value.trim() || "P1_001";
-        const sectionTitle =
-          document.getElementById("p1_title").value.trim() ||
-          "Phần 1 - Trắc nghiệm";
-        const raw = document.getElementById("p1_raw").value || "";
-        const answerText = document.getElementById("p1_answers").value || "";
-        const outEl = document.getElementById("p1_output");
+      <!-- Section 4 -->
+      <div class="section-block">
+        <h2>📘 Phần 4: Listening</h2>
 
-        // tách dòng
-        const lines = raw.split("\n");
-        const questions = [];
-        let i = 0;
-        let qNumber = 0;
+        <label>ID:</label>
+        <input type="text" id="sec4_id" disabled>
 
-        while (i < lines.length) {
-          let line = lines[i].trim();
-          if (!line) {
-            i++;
-            continue;
-          }
-          const m = line.match(/^Câu\s+(\d+)\.\s*(.+)$/i);
-          if (!m) {
-            i++;
-            continue;
-          }
-          qNumber++;
-          const number = parseInt(m[1], 10);
-          const text = m[2].trim();
+        <label>Title:</label>
+        <input type="text" id="sec4_title">
 
-          const opts = [];
-          for (let k = 0; k < 4 && i + 1 + k < lines.length; k++) {
-            const optLine = lines[i + 1 + k].trim();
-            const mo = optLine.match(/^([A-D])\.\s*(.+)$/i);
-            if (mo) {
-              opts.push(mo[2].trim());
-            }
-          }
-          i += 1 + opts.length;
+        <label>Description:</label>
+        <textarea id="sec4_desc"></textarea>
 
-          if (opts.length < 2) continue;
+        <label>Content JSON:</label>
+        <textarea id="sec4_json" class="json-box"></textarea>
 
-          questions.push({
-            number: number,
-            text: text,
-            options: opts,
-          });
-        }
+        <button class="save-btn" data-sec="4">💾 Tạo JSON phần 4</button>
+      </div>
 
-        const ansMap = parseAnswers(answerText);
-        questions.forEach((q) => {
-          const key = String(q.number);
-          const ansLetter = ansMap[key];
-          if (!ansLetter) return;
-          const index = { A: 0, B: 1, C: 2, D: 3 }[ansLetter];
-          if (index != null) q.correct = index;
-        });
+      <!-- Section 5 -->
+      <div class="section-block">
+        <h2>📘 Phần 5: Speaking</h2>
 
-        const sectionJson = {
-          id: sectionId,
-          type: "mcqOneByOne",
-          title: sectionTitle,
-          questions,
-        };
+        <label>ID:</label>
+        <input type="text" id="sec5_id" disabled>
 
-        outEl.textContent = JSON.stringify(sectionJson, null, 2);
-      }
+        <label>Title:</label>
+        <input type="text" id="sec5_title">
 
-      document.getElementById("btnBuildP1").onclick = buildP1;
+        <label>Description:</label>
+        <textarea id="sec5_desc"></textarea>
 
-      // ====== PHẦN 2–6: builder đơn giản gói thô ======
-      document.getElementById("btnBuildP2").onclick = () => {
-        const obj = {
-          id: document.getElementById("p2_id").value.trim() || "P2_001",
-          type: "mcqImage",
-          title:
-            document.getElementById("p2_title").value.trim() ||
-            "Phần 2 - MCQ hình",
-          note: document.getElementById("p2_raw").value || "",
-        };
-        document.getElementById("p2_output").textContent = JSON.stringify(
-          obj,
-          null,
-          2
-        );
-      };
+        <label>Content JSON:</label>
+        <textarea id="sec5_json" class="json-box"></textarea>
 
-      document.getElementById("btnBuildP3").onclick = () => {
-        const obj = {
-          id: document.getElementById("p3_id").value.trim() || "P3_001",
-          type: "readingMcq",
-          title:
-            document.getElementById("p3_title").value.trim() ||
-            "Phần 3 - Reading",
-          passage: document.getElementById("p3_passage").value || "",
-          note: document.getElementById("p3_note").value || "",
-          questions: [],
-        };
-        document.getElementById("p3_output").textContent = JSON.stringify(
-          obj,
-          null,
-          2
-        );
-      };
+        <button class="save-btn" data-sec="5">💾 Tạo JSON phần 5</button>
+      </div>
 
-      document.getElementById("btnBuildP4").onclick = () => {
-        const blanks = {};
-        (document.getElementById("p4_blanks").value || "")
-          .split("\n")
-          .map((l) => l.trim())
-          .filter(Boolean)
-          .forEach((line) => {
-            const m = line.match(/^(\d+)\s*[:\-]?\s*(.+)$/);
-            if (m) blanks[m[1]] = m[2].trim();
-          });
+      <!-- Section 6 -->
+      <div class="section-block">
+        <h2>📘 Phần 6: Writing</h2>
 
-        const obj = {
-          id: document.getElementById("p4_id").value.trim() || "P4_001",
-          type: "readingDragDrop",
-          title:
-            document.getElementById("p4_title").value.trim() ||
-            "Phần 4 - Điền từ",
-          passage: document.getElementById("p4_passage").value || "",
-          wordBank: (document.getElementById("p4_wordbank").value || "")
-            .split("\n")
-            .map((l) => l.trim())
-            .filter(Boolean),
-          blanks,
-        };
-        document.getElementById("p4_output").textContent = JSON.stringify(
-          obj,
-          null,
-          2
-        );
-      };
+        <label>ID:</label>
+        <input type="text" id="sec6_id" disabled>
 
-      document.getElementById("btnBuildP5").onclick = () => {
-        const lines = (document.getElementById("p5_raw").value || "")
-          .split("\n")
-          .map((l) => l.trim())
-          .filter(Boolean);
-        const questions = lines.map((line, idx) => {
-          const parts = line.split("|");
-          return {
-            number: idx + 1,
-            raw: parts[0].trim(),
-            answer: (parts[1] || "").trim(),
-          };
-        });
-        const obj = {
-          id: document.getElementById("p5_id").value.trim() || "P5_001",
-          type: "wordForm",
-          title:
-            document.getElementById("p5_title").value.trim() ||
-            "Phần 5 - WordForm",
-          questions,
-        };
-        document.getElementById("p5_output").textContent = JSON.stringify(
-          obj,
-          null,
-          2
-        );
-      };
+        <label>Title:</label>
+        <input type="text" id="sec6_title">
 
-      document.getElementById("btnBuildP6").onclick = () => {
-        const lines = (document.getElementById("p6_raw").value || "")
-          .split("\n")
-          .map((l) => l.trim())
-          .filter(Boolean);
-        const items = lines.map((line, idx) => {
-          const parts = line.split("|");
-          return {
-            number: idx + 1,
-            prompt: parts[0].trim(),
-            answer: (parts[1] || "").trim(),
-          };
-        });
-        const obj = {
-          id: document.getElementById("p6_id").value.trim() || "P6_001",
-          type: "reorderAndRewrite",
-          title:
-            document.getElementById("p6_title").value.trim() ||
-            "Phần 6 - Reorder",
-          questions: items,
-        };
-        document.getElementById("p6_output").textContent = JSON.stringify(
-          obj,
-          null,
-          2
-        );
-      };
-    </script>
-  </body>
+        <label>Description:</label>
+        <textarea id="sec6_desc"></textarea>
+
+        <label>Content JSON:</label>
+        <textarea id="sec6_json" class="json-box"></textarea>
+
+        <button class="save-btn" data-sec="6">💾 Tạo JSON phần 6</button>
+      </div>
+
+    </div>
+
+    <hr>
+
+    <pre id="logBox"></pre>
+
+  </div>
+
+  <!-- JS -->
+  <script src="/js/makejson.js"></script>
+</body>
 </html>
