@@ -1,21 +1,32 @@
 // js/stats.js
 // Đồng bộ XP / Coin / Badge từ Firebase lên các chỗ: header, quizEng, profile
 
-(function () {
-  function applyStatsToDom(xp, coin, badge) {
-    const map = {
-      globalXP: xp,
-      globalCoin: coin,
-      globalBadge: badge,
+(function applyStatsToDom(xp, coin, badge) {
+  const globalXpEl = document.getElementById("globalXP");
+  const globalCoinEl = document.getElementById("globalCoin");
+  const globalBadgeEl = document.getElementById("globalBadge");
 
-      quizXP: xp,
-      quizCoin: coin,
-      quizBadge: badge,
+  if (globalXpEl) globalXpEl.textContent = xp;
+  if (globalCoinEl) globalCoinEl.textContent = coin;
+  if (globalBadgeEl) globalBadgeEl.textContent = badge;
 
-      profileXP: xp,
-      profileCoin: coin,
-      profileBadge: badge,
-    };
+  const profileXpEl = document.getElementById("profileXP");
+  const profileCoinEl = document.getElementById("profileCoin");
+  const profileBadgeEl = document.getElementById("profileBadge");
+
+  if (profileXpEl) profileXpEl.textContent = xp;
+  if (profileCoinEl) profileCoinEl.textContent = coin;
+  if (profileBadgeEl) profileBadgeEl.textContent = badge;
+
+  const quizXpEl = document.getElementById("quizXP");
+  const quizCoinEl = document.getElementById("quizCoin");
+  const quizBadgeEl = document.getElementById("quizBadge");
+
+  if (quizXpEl) quizXpEl.textContent = xp;
+  if (quizCoinEl) quizCoinEl.textContent = coin;
+  if (quizBadgeEl) quizBadgeEl.textContent = badge;
+}
+
 
     Object.entries(map).forEach(([id, value]) => {
       const el = document.getElementById(id);
@@ -65,3 +76,4 @@
     initStatsHeader();
   }
 })();
+
