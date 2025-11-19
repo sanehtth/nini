@@ -286,11 +286,7 @@
         const ref = firebase.database().ref("users/"+user.uid);
         await ref.update({ traits: traitsPct, quizDone: true });
 
-        // thưởng nhẹ
-        const sSnap = await ref.child("stats").once("value");
-        const s = sSnap.val() || { xp:0, coin:0, badge:1 };
-        await ref.child("stats").update({ xp:(s.xp||0)+50, coin:(s.coin||0)+10 });
-
+ 
         alert("Đã lưu kết quả. Quay về trang chính!");
         location.href = "/index.html?quiz=done";
       } catch (e) {
@@ -300,3 +296,4 @@
     });
   });
 })();
+
