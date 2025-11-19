@@ -1,531 +1,264 @@
-﻿// js/makejson.js
-// Builder 6 phần + 5 nút: nạp manifest, tạo sectionsManifest, tạo testsManifest,
-// đồng bộ lên GitHub (gọi /api/updateSectionsManifest), xuất data local.
+// makejson.js
+// Logic cho 6 phần + nạp / build manifest
 
-(function () {
-  // ====== STATE ======
-  let sectionsManifestLoaded = null;   // từ server (/content/sectionsManifest.json)
-  let testsManifestLoaded = null;      // từ server (/content/testsManifest.json)
+const LOAD_MANIFEST_URL = "/content/sectionsManifest.json";
+// Nếu sau này có API GitHub, bạn có thể dùng: const LOAD_MANIFEST_URL = "/api/load-sections-manifest";
 
-  let sectionsManifestLocal = null;    // bản mới sau khi bấm "Tạo sectionManifest"
-  let testsManifestLocal = null;       // bản mới sau khi bấm "Tạo testsManifest"
+let currentSectionsManifest = [];
 
-  // JSON 6 phần (tạo bằng nút "Tạo JSON phần x")
-  const partJson = {
-    p1: null,
-    p2: null,
-    p3: null,
-    p4: null,
-    p5: null,
-    p6: null,
-  };
+// ===== Utils chung =====
+function $(id) {
+  return document.getElementById(id);
+}
 
-  // ====== HELPERS ======
-  function $(id) {
-    return document.getElementById(id);
-  }
+function showToast(msg) {
+  // dùng alert đơn giản cho dễ debug
+  alert(msg);
+}
 
-  function slugify(str) {
-    return (str || "")
-      .toString()
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .substring(0, 40);
-  }
+// Lấy text từ 6 form phần
+function collectPartData() {
+  return [
+    {
+      part: 1,
+      id: $("#part1Id").value.trim(),
+      title: $("#part1Title").value.trim(),
+      desc: $("#part1Desc").value.trim(),
+      jsonText: $("#part1Json").value.trim()
+    },
+    {
+      part: 2,
+      id: $("#part2Id").value.trim(),
+      title: $("#part2Title").value.trim(),
+      desc: $("#part2Desc").value.trim(),
+      jsonText: $("#part2Json").value.trim()
+    },
+    {
+      part: 3,
+      id: $("#part3Id").value.trim(),
+      title: $("#part3Title").value.trim(),
+      desc: $("#part3Desc").value.trim(),
+      jsonText: $("#part3Json").value.trim()
+    },
+    {
+      part: 4,
+      id: $("#part4Id").value.trim(),
+      title: $("#part4Title").value.trim(),
+      desc: $("#part4Desc").value.trim(),
+      jsonText: $("#part4Json").value.trim()
+    },
+    {
+      part: 5,
+      id: $("#part5Id").value.trim(),
+      title: $("#part5Title").value.trim(),
+      desc: $("#part5Desc").value.trim(),
+      jsonText: $("#part5Json").value.trim()
+    },
+    {
+      part: 6,
+      id: $("#part6Id").value.trim(),
+      title: $("#part6Title").value.trim(),
+      desc: $("#part6Desc").value.trim(),
+      jsonText: $("#part6Json").value.trim()
+    }
+  ];
+}
 
-  function setStatus(text, type) {
-    const el = $("manifestStatus");
-    if (!el) return;
-    el.textContent = text;
-    el.style.color = type === "error" ? "#b91c1c" : type === "ok" ? "#16a34a" : "#6b7280";
-  }
+// ===== 1. NẠP sectionsManifest & TỰ NHẢY ID =====
+async function loadSectionsManifest() {
+  const info = $("#manifestInfo");
+  info.textContent = "Đang nạp manifest...";
+  try {
+    const res = await fetch(LOAD_MANIFEST_URL, { cache: "no-store" });
+    if (!res.ok) {
+      throw new Error("HTTP " + res.status);
+    }
+    const data = await res.json();
+    if (!Array.isArray(data)) {
+      throw new Error("sectionsManifest.json phải là mảng JSON");
+    }
+    currentSectionsManifest = data;
 
-  function downloadFile(filename, content) {
-    const blob = new Blob([content], { type: "application/json;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
+    const testName = $("#testName").value.trim();
+    // Nếu có testName -> chỉ xét những section của test đó
+    const filtered = testName
+      ? data.filter((s) => (s.testName || "").trim() === testName)
+      : data;
 
-  // ====== TAB UI ======
-  function setupTabs() {
-    const tabs = document.querySelectorAll(".builder-tab");
-    tabs.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const tab = btn.dataset.tab;
-        tabs.forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
+    // Tính ID lớn nhất cho mỗi part P1..P6
+    const maxByPart = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
 
-        for (let i = 1; i <= 6; i++) {
-          const sec = $("tab-p" + i);
-          if (!sec) continue;
-          sec.style.display = tab === "p" + i ? "block" : "none";
-        }
-      });
+    filtered.forEach((sec) => {
+      const id = (sec.id || "").toUpperCase(); // ví dụ: "P1_003"
+      const m = /^P([1-6])_(\d+)$/.exec(id);
+      if (!m) return;
+      const part = Number(m[1]);
+      const num = Number(m[2]);
+      if (!Number.isFinite(num)) return;
+      if (num > maxByPart[part]) maxByPart[part] = num;
     });
-  }
 
-  // ====== 1. NẠP sectionsManifest/testsManifest ======
-  async function loadSectionsManifest() {
-    try {
-      setStatus("Đang nạp sectionsManifest.json...", "");
-      const secRes = await fetch("/content/sectionsManifest.json?_=" + Date.now());
-      if (secRes.ok) {
-        sectionsManifestLoaded = await secRes.json();
-      } else {
-        sectionsManifestLoaded = { sections: [] };
+    // Gán ID mới cho 6 input
+    for (let part = 1; part <= 6; part++) {
+      const nextNum = maxByPart[part] + 1;
+      const nextId = `P${part}_` + String(nextNum).padStart(3, "0");
+      const input = $(`part${part}Id`);
+      if (input && !input.value) {
+        input.value = nextId;
       }
-
-      let testsCount = 0;
-      try {
-        const testsRes = await fetch("/content/testsManifest.json?_=" + Date.now());
-        if (testsRes.ok) {
-          testsManifestLoaded = await testsRes.json();
-          testsCount = (testsManifestLoaded.tests || []).length;
-        } else {
-          testsManifestLoaded = { tests: [] };
-        }
-      } catch {
-        testsManifestLoaded = { tests: [] };
-      }
-
-      const sectionCount = (sectionsManifestLoaded.sections || []).length;
-      setStatus(
-        `Đã nạp sectionsManifest (${sectionCount} section), testsManifest (${testsCount} test).`,
-        "ok"
-      );
-
-      $("sectionsManifestOutput").value = JSON.stringify(
-        sectionsManifestLoaded,
-        null,
-        2
-      );
-      $("testsManifestOutput").value = JSON.stringify(
-        testsManifestLoaded,
-        null,
-        2
-      );
-    } catch (e) {
-      console.error(e);
-      setStatus("Lỗi khi nạp manifest: " + e.message, "error");
     }
+
+    info.textContent = `Đã nạp manifest: ${
+      data.length
+    } section (filter theo testName: ${
+      testName || "tất cả"
+    }). Đã auto điền ID nếu trống.`;
+  } catch (err) {
+    console.error(err);
+    info.textContent = "Lỗi khi nạp manifest. Xem console.";
+    showToast("Không nạp được sectionsManifest. Kiểm tra đường dẫn /content/sectionsManifest.json nhé.");
   }
+}
 
-  // ====== 2. TẠO sectionsManifest (LOCAL) ======
-  function buildSectionsManifest() {
-    const testId = $("testId").value.trim() || "test1";
-    const testName = $("testName").value.trim() || "Test 1";
+// ===== 2. Tạo JSON từng phần =====
+function bindPartButtons() {
+  const map = [
+    { btn: "btnGenPart1", input: "part1Json", out: "part1Output" },
+    { btn: "btnGenPart2", input: "part2Json", out: "part2Output" },
+    { btn: "btnGenPart3", input: "part3Json", out: "part3Output" },
+    { btn: "btnGenPart4", input: "part4Json", out: "part4Output" },
+    { btn: "btnGenPart5", input: "part5Json", out: "part5Output" },
+    { btn: "btnGenPart6", input: "part6Json", out: "part6Output" }
+  ];
 
-    const base =
-      sectionsManifestLoaded && Array.isArray(sectionsManifestLoaded.sections)
-        ? JSON.parse(JSON.stringify(sectionsManifestLoaded))
-        : { sections: [] };
-
-    const sections = base.sections || [];
-
-    // helper: push meta nếu có ID
-    function addSection(partId, titleId, fileId, type) {
-      const secId = $(partId).value.trim();
-      const secTitle = $(titleId).value.trim();
-      const secFile = $(fileId).value.trim();
-
-      if (!secId) return;
-
-      const filePath =
-        secFile || `/content/${slugify(testId)}/${secId}.json`;
-
-      sections.push({
-        id: secId,
-        title: secTitle || `${testName} - ${type}`,
-        type,
-        testName: testName,
-        file: filePath,
-      });
-    }
-
-    addSection("p1Id", "p1Title", "p1File", "mcqOneByOne");
-    addSection("p2Id", "p2Title", "p2File", "mcqImage");
-    addSection("p3Id", "p3Title", "p3File", "readingMcq");
-    addSection("p4Id", "p4Title", "p4File", "readingDragDrop");
-    addSection("p5Id", "p5Title", "p5File", "wordForm");
-    addSection("p6Id", "p6Title", "p6File", "reorderAndRewrite");
-
-    sectionsManifestLocal = { sections };
-    $("sectionsManifestOutput").value = JSON.stringify(
-      sectionsManifestLocal,
-      null,
-      2
-    );
-    setStatus("Đã tạo sectionsManifest (local). Chưa đẩy GitHub.", "ok");
-  }
-
-  // ====== 3. TẠO testsManifest (LOCAL) ======
-  function buildTestsManifest() {
-    const testId = $("testId").value.trim() || "test1";
-    const testName = $("testName").value.trim() || "Test 1";
-    const testTitle = $("testTitle").value.trim() || `${testName}`;
-    const testDesc = $("testDesc").value.trim();
-
-    const base =
-      testsManifestLoaded && Array.isArray(testsManifestLoaded.tests)
-        ? JSON.parse(JSON.stringify(testsManifestLoaded))
-        : { tests: [] };
-
-    const tests = base.tests || [];
-
-    // gather section IDs
-    const sectionIds = [
-      $("p1Id").value.trim(),
-      $("p2Id").value.trim(),
-      $("p3Id").value.trim(),
-      $("p4Id").value.trim(),
-      $("p5Id").value.trim(),
-      $("p6Id").value.trim(),
-    ].filter(Boolean);
-
-    // tìm test cũ cùng id → update, không phải push trùng
-    let target = tests.find((t) => t.id === testId);
-    if (!target) {
-      target = {
-        id: testId,
-        title: testTitle,
-        description: testDesc,
-        sections: sectionIds,
-      };
-      tests.push(target);
-    } else {
-      target.title = testTitle;
-      target.description = testDesc;
-      target.sections = sectionIds;
-    }
-
-    testsManifestLocal = { tests };
-    $("testsManifestOutput").value = JSON.stringify(
-      testsManifestLocal,
-      null,
-      2
-    );
-    setStatus("Đã tạo testsManifest (local). Chưa đẩy GitHub.", "ok");
-  }
-
-  // ====== 4. ĐỒNG BỘ LÊN GITHUB (chỉ sectionsManifest) ======
-  async function syncGithub() {
-    if (!sectionsManifestLocal) {
-      alert("Chưa có sectionsManifestLocal. Hãy bấm 'Tạo sectionManifest' trước.");
-      return;
-    }
-
-    try {
-      setStatus("Đang gửi sectionsManifest lên GitHub...", "");
-      const res = await fetch("/api/updateSectionsManifest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: JSON.stringify(sectionsManifestLocal, null, 2),
-          message: "Update sectionsManifest via makejson.html",
-        }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok || data.error) {
-        console.error("syncGithub error:", data);
-        setStatus("Lỗi đồng bộ GitHub (xem console).", "error");
-        alert(
-          "Lỗi khi cập nhật sectionsManifest lên GitHub.\n" +
-            (data.error || res.status)
-        );
+  map.forEach((cfg) => {
+    const btn = $(cfg.btn);
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      const raw = $(cfg.input).value.trim();
+      if (!raw) {
+        showToast("Bạn chưa nhập nội dung JSON phần này.");
         return;
       }
-
-      setStatus("Đã cập nhật sectionsManifest lên GitHub!", "ok");
-      alert("Đã cập nhật sectionsManifest.json lên GitHub ✅");
-    } catch (e) {
-      console.error(e);
-      setStatus("Lỗi mạng khi gọi API.", "error");
-      alert("Lỗi mạng khi gọi API /api/updateSectionsManifest.");
-    }
-  }
-
-  // ====== 5. XUẤT DATA (LOCAL) ======
-  function exportData() {
-    const testId = $("testId").value.trim() || "test";
-    const bundle = {
-      testId,
-      parts: partJson,
-      sectionsManifest: sectionsManifestLocal,
-      testsManifest: testsManifestLocal,
-    };
-    downloadFile(`${testId}_bundle.json`, JSON.stringify(bundle, null, 2));
-  }
-
-  // ====== BUILD JSON PHẦN 1–6 ======
-
-  // P1: MCQ
-  function parseAnswers(text) {
-    const result = {};
-    const lines = (text || "")
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .filter(Boolean);
-    lines.forEach((line) => {
-      const m = line.match(/^(\d+)\s*[:\-]?\s*([A-D])/i);
-      if (m) {
-        result[m[1]] = m[2].toUpperCase();
+      try {
+        // Thử parse để đảm bảo JSON hợp lệ, rồi format đẹp
+        const parsed = JSON.parse(raw);
+        $(cfg.out).value = JSON.stringify(parsed, null, 2);
+        showToast("Đã format JSON cho phần này.");
+      } catch (err) {
+        console.error(err);
+        showToast("JSON không hợp lệ. Hãy kiểm tra dấu phẩy, ngoặc, ...");
       }
     });
-    return result;
-  }
-
-  function buildP1() {
-    const secId = $("p1Id").value.trim() || "P1_001";
-    const secTitle =
-      $("p1Title").value.trim() || "Phần 1 - Trắc nghiệm";
-    const testName = $("testName").value.trim() || "Test 1";
-
-    const raw = $("p1Raw").value || "";
-    const answers = $("p1Answers").value || "";
-    const out = $("p1JsonOutput");
-    const statusEl = $("p1Status");
-
-    const lines = raw.split(/\r?\n/);
-    const questions = [];
-    let i = 0;
-
-    while (i < lines.length) {
-      let line = lines[i].trim();
-      if (!line) {
-        i++;
-        continue;
-      }
-      const m = line.match(/^Câu\s+(\d+)\.\s*(.+)$/i);
-      if (!m) {
-        i++;
-        continue;
-      }
-      const number = parseInt(m[1], 10);
-      const text = m[2].trim();
-
-      const opts = [];
-      for (let k = 0; k < 4 && i + 1 + k < lines.length; k++) {
-        const optLine = lines[i + 1 + k].trim();
-        const mo = optLine.match(/^([A-D])\.\s*(.+)$/i);
-        if (mo) {
-          opts.push(mo[2].trim());
-        }
-      }
-      i += 1 + opts.length;
-      if (opts.length < 2) continue;
-
-      questions.push({ number, text, options: opts });
-    }
-
-    const ansMap = parseAnswers(answers);
-    questions.forEach((q) => {
-      const letter = ansMap[String(q.number)];
-      if (!letter) return;
-      const idxMap = { A: 0, B: 1, C: 2, D: 3 };
-      const idx = idxMap[letter.toUpperCase()];
-      if (idx != null) q.correct = idx;
-    });
-
-    const sectionJson = {
-      id: secId,
-      type: "mcqOneByOne",
-      title: secTitle,
-      testName,
-      questions,
-    };
-
-    partJson.p1 = sectionJson;
-    out.value = JSON.stringify(sectionJson, null, 2);
-    statusEl.textContent = `Đã tạo JSON (${questions.length} câu).`;
-  }
-
-  // P2: thô
-  function buildP2() {
-    const secId = $("p2Id").value.trim() || "P2_001";
-    const secTitle =
-      $("p2Title").value.trim() || "Phần 2 - MCQ + hình";
-    const testName = $("testName").value.trim() || "Test 1";
-
-    const note = $("p2Raw").value || "";
-    const obj = {
-      id: secId,
-      type: "mcqImage",
-      title: secTitle,
-      testName,
-      note,
-      questions: [],
-    };
-    partJson.p2 = obj;
-    $("p2JsonOutput").value = JSON.stringify(obj, null, 2);
-    $("p2Status").textContent = "Đã tạo JSON (thô).";
-  }
-
-  // P3: thô
-  function buildP3() {
-    const secId = $("p3Id").value.trim() || "P3_001";
-    const secTitle =
-      $("p3Title").value.trim() || "Phần 3 - Reading";
-    const testName = $("testName").value.trim() || "Test 1";
-
-    const passage = $("p3Passage").value || "";
-    const note = $("p3Note").value || "";
-
-    const obj = {
-      id: secId,
-      type: "readingMcq",
-      title: secTitle,
-      testName,
-      passage,
-      note,
-      questions: [],
-    };
-    partJson.p3 = obj;
-    $("p3JsonOutput").value = JSON.stringify(obj, null, 2);
-    $("p3Status").textContent = "Đã tạo JSON (thô).";
-  }
-
-  // P4: dragdrop
-  function buildP4() {
-    const secId = $("p4Id").value.trim() || "P4_001";
-    const secTitle =
-      $("p4Title").value.trim() || "Phần 4 - Điền từ";
-    const testName = $("testName").value.trim() || "Test 1";
-
-    const passage = $("p4Passage").value || "";
-    const wb = $("p4Wordbank").value || "";
-    const blanksRaw = $("p4Blanks").value || "";
-
-    const wordBank = wb
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .filter(Boolean);
-
-    const blanks = {};
-    blanksRaw
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .filter(Boolean)
-      .forEach((line) => {
-        const m = line.match(/^(\d+)\s*[:\-]?\s*(.+)$/);
-        if (m) blanks[m[1]] = m[2].trim();
-      });
-
-    const obj = {
-      id: secId,
-      type: "readingDragDrop",
-      title: secTitle,
-      testName,
-      passage,
-      wordBank,
-      blanks,
-    };
-    partJson.p4 = obj;
-    $("p4JsonOutput").value = JSON.stringify(obj, null, 2);
-    $("p4Status").textContent = "Đã tạo JSON.";
-  }
-
-  // P5: wordForm
-  function buildP5() {
-    const secId = $("p5Id").value.trim() || "P5_001";
-    const secTitle =
-      $("p5Title").value.trim() || "Phần 5 - Word form";
-    const testName = $("testName").value.trim() || "Test 1";
-
-    const raw = $("p5Raw").value || "";
-    const lines = raw
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .filter(Boolean);
-
-    const questions = lines.map((line, idx) => {
-      const parts = line.split("|");
-      return {
-        number: idx + 1,
-        raw: (parts[0] || "").trim(),
-        answer: (parts[1] || "").trim(),
-      };
-    });
-
-    const obj = {
-      id: secId,
-      type: "wordForm",
-      title: secTitle,
-      testName,
-      questions,
-    };
-    partJson.p5 = obj;
-    $("p5JsonOutput").value = JSON.stringify(obj, null, 2);
-    $("p5Status").textContent = `Đã tạo JSON (${questions.length} câu).`;
-  }
-
-  // P6: reorder / rewrite
-  function buildP6() {
-    const secId = $("p6Id").value.trim() || "P6_001";
-    const secTitle =
-      $("p6Title").value.trim() || "Phần 6 - Viết lại câu";
-    const testName = $("testName").value.trim() || "Test 1";
-
-    const raw = $("p6Raw").value || "";
-    const lines = raw
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .filter(Boolean);
-
-    const questions = lines.map((line, idx) => {
-      const parts = line.split("|");
-      return {
-        number: idx + 1,
-        prompt: (parts[0] || "").trim(),
-        answer: (parts[1] || "").trim(),
-      };
-    });
-
-    const obj = {
-      id: secId,
-      type: "reorderAndRewrite",
-      title: secTitle,
-      testName,
-      questions,
-    };
-    partJson.p6 = obj;
-    $("p6JsonOutput").value = JSON.stringify(obj, null, 2);
-    $("p6Status").textContent = `Đã tạo JSON (${questions.length} câu).`;
-  }
-
-  // ====== EVENT BINDING ======
-  document.addEventListener("DOMContentLoaded", () => {
-    // back
-    $("btnBackHome")?.addEventListener("click", () => {
-      window.location.href = "/index.html";
-    });
-
-    setupTabs();
-
-    // 5 nút trên
-    $("btnLoadSectionsManifest")?.addEventListener("click", loadSectionsManifest);
-    $("btnBuildSectionsManifest")?.addEventListener("click", buildSectionsManifest);
-    $("btnBuildTestsManifest")?.addEventListener("click", buildTestsManifest);
-    $("btnSyncGithub")?.addEventListener("click", syncGithub);
-    $("btnExportData")?.addEventListener("click", exportData);
-
-    // 6 nút tạo JSON phần
-    $("btnBuildP1")?.addEventListener("click", buildP1);
-    $("btnBuildP2")?.addEventListener("click", buildP2);
-    $("btnBuildP3")?.addEventListener("click", buildP3);
-    $("btnBuildP4")?.addEventListener("click", buildP4);
-    $("btnBuildP5")?.addEventListener("click", buildP5);
-    $("btnBuildP6")?.addEventListener("click", buildP6);
   });
-})();
+}
+
+// ===== 3. Tạo sectionsManifest từ form hiện tại =====
+function buildSectionsManifestFromForm() {
+  const testName = $("#testName").value.trim();
+  if (!testName) {
+    showToast("Nhập testName trước khi tạo sectionsManifest.");
+    return;
+  }
+  const parts = collectPartData();
+
+  const sections = [];
+  parts.forEach((p) => {
+    if (!p.id || !p.jsonText) return; // bỏ qua phần trống
+    sections.push({
+      id: p.id,
+      title: p.title || `Part ${p.part}`,
+      description: p.desc || "",
+      testName,
+      partIndex: p.part,
+      // type chỉ ví dụ: bạn có thể chỉnh cho đúng tùy part
+      type:
+        p.part === 1
+          ? "mcqOneByOne"
+          : p.part === 2
+          ? "mcqImage"
+          : p.part === 3
+          ? "readingMcq"
+          : p.part === 4
+          ? "readingDragDrop"
+          : p.part === 5
+          ? "wordForm"
+          : "reorderAndRewrite",
+      // đường dẫn file JSON đề xuất
+      file: `/content/${testName.replace(/\s+/g, "_")}_${p.id}.json`
+    });
+  });
+
+  if (sections.length === 0) {
+    showToast("Không có phần nào có ID + JSON để tạo manifest.");
+    return;
+  }
+
+  // Ghép với manifest cũ, bạn có thể tùy ý logic merge (ở đây chỉ log ra)
+  console.log("sectionsManifest mới (chưa ghi ra file):", sections);
+  showToast("Đã build xong sectionsManifest (xem console). Khi có API, ta sẽ gửi lên GitHub.");
+}
+
+// ===== 4. Tạo testsManifest (đơn giản) =====
+function buildTestsManifest() {
+  const testName = $("#testName").value.trim();
+  if (!testName) {
+    showToast("Nhập testName trước khi tạo testsManifest.");
+    return;
+  }
+  const parts = collectPartData().filter((p) => p.id);
+  const testId = testName.replace(/\s+/g, "_");
+
+  const testObj = {
+    id: testId,
+    title: testName,
+    sections: parts.map((p) => p.id)
+  };
+
+  console.log("testsManifest entry cho test này:", testObj);
+  showToast("Đã build testsManifest entry (xem console).");
+}
+
+// ===== 5. Đồng bộ GitHub (stub – cần API backend) =====
+async function syncToGithub() {
+  showToast(
+    "Stub: Ở bước này cần một API backend để ghi files lên GitHub. Hiện mình chỉ log dữ liệu ra console."
+  );
+  const parts = collectPartData();
+  console.log("Dữ liệu tất cả phần:", parts);
+}
+
+// ===== 6. Xuất toàn bộ (download JSON) =====
+function exportAll() {
+  const testName = $("#testName").value.trim() || "untitled-test";
+  const payload = {
+    testName,
+    sections: collectPartData(),
+    sectionsManifest: currentSectionsManifest
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: "application/json"
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${testName.replace(/\s+/g, "_")}_builder_export.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// ===== BIND SỰ KIỆN =====
+document.addEventListener("DOMContentLoaded", () => {
+  $("#btnLoadManifest").addEventListener("click", loadSectionsManifest);
+  $("#btnBuildSectionsManifest").addEventListener(
+    "click",
+    buildSectionsManifestFromForm
+  );
+  $("#btnBuildTestsManifest").addEventListener("click", buildTestsManifest);
+  $("#btnSyncGithub").addEventListener("click", syncToGithub);
+  $("#btnExportAll").addEventListener("click", exportAll);
+
+  bindPartButtons();
+});
