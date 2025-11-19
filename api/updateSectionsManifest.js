@@ -1,83 +1,82 @@
 // api/updateSectionsManifest.js
-// Vercel Serverless Function: cập nhật sectionsManifest.json trên GitHub
-
-const OWNER  = "sanehtth";   // tài khoản GitHub
-const REPO   = "nini";       // tên repo
-const BRANCH = "main";       // nhánh chính
-
+// Vercel serverless function – cập nhật 1 file sectionsManifest.json trên GitHub
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Only POST allowed" });
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    const token = process.env.GITHUB_TOKEN;
-    if (!token) {
-      return res.status(500).json({ error: "Missing GITHUB_TOKEN on server" });
+    const token = process.env.GIFHUB_TOKEN;
+    const repo = process.env.GIFHUB_REPO;            // vd: "sanehtth/nini"
+    const filePath = process.env.GIFHUB_FILE_PATH;   // vd: "public/content/sectionsManifest.json"
+
+    if (!token || !repo || !filePath) {
+      return res.status(500).json({ error: "Missing GIFHUB_* env vars" });
     }
 
-    const { path, contentJson, message } = req.body || {};
-    if (!path || !contentJson) {
-      return res.status(400).json({ error: "Missing path or contentJson" });
+    const { content, message } = req.body || {};
+
+    if (!content) {
+      return res.status(400).json({ error: "Missing content in body" });
     }
 
-    const apiBase = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(
-      path
-    )}`;
+    const [owner, repoName] = repo.split("/");
+    const apiBase = "https://api.github.com";
+    const url = `${apiBase}/repos/${owner}/${repoName}/contents/${filePath}`;
 
-    // 1) Lấy file hiện tại để biết sha
-    const getResp = await fetch(`${apiBase}?ref=${BRANCH}`);
+    const headers = {
+      Authorization: `token ${token}`,
+      "User-Agent": "nini-vercel-fn",
+      Accept: "application/vnd.github+json",
+    };
+
+    // 1) Lấy sha hiện tại (nếu file đã tồn tại)
     let sha = undefined;
+    const getResp = await fetch(url, { headers });
 
     if (getResp.status === 200) {
-      const info = await getResp.json();
-      sha = info.sha;
+      const data = await getResp.json();
+      sha = data.sha;
     } else if (getResp.status !== 404) {
       const txt = await getResp.text();
       return res
         .status(500)
-        .json({ error: "Fail to read file from GitHub", detail: txt });
+        .json({ error: "GitHub GET failed", status: getResp.status, body: txt });
     }
 
-    // 2) Encode nội dung mới -> base64
-    const contentStr =
-      typeof contentJson === "string"
-        ? contentJson
-        : JSON.stringify(contentJson, null, 2);
+    // 2) PUT nội dung mới (base64-encoded)
+    const encoded = Buffer.from(content, "utf8").toString("base64");
 
-    const base64 = Buffer.from(contentStr, "utf8").toString("base64");
+    const putBody = {
+      message: message || "Update sectionsManifest.json from builder",
+      content: encoded,
+    };
+    if (sha) putBody.sha = sha;
 
-    // 3) Gọi GitHub API để cập nhật
-    const putResp = await fetch(apiBase, {
+    const putResp = await fetch(url, {
       method: "PUT",
       headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github+json",
+        ...headers,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        message: message || "Update sectionsManifest via makejson tool",
-        content: base64,
-        sha,
-        branch: BRANCH,
-      }),
+      body: JSON.stringify(putBody),
     });
 
+    const putJson = await putResp.json();
+
     if (!putResp.ok) {
-      const txt = await putResp.text();
       return res
         .status(500)
-        .json({ error: "GitHub update failed", detail: txt });
+        .json({ error: "GitHub PUT failed", status: putResp.status, body: putJson });
     }
 
-    const data = await putResp.json();
-    return res
-      .status(200)
-      .json({ ok: true, commit: data.commit && data.commit.sha });
-  } catch (err) {
-    console.error("updateSectionsManifest error", err);
-    return res
-      .status(500)
-      .json({ error: "Server error", detail: String(err) });
+    return res.status(200).json({
+      ok: true,
+      path: filePath,
+      commit: putJson.commit?.sha || null,
+    });
+  } catch (e) {
+    console.error("[updateSectionsManifest] error", e);
+    return res.status(500).json({ error: e.message || "Unknown error" });
   }
 }
