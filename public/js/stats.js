@@ -31,43 +31,7 @@
     });
   }
 
-  function initStatsHeader() {
-    console.log("[stats] initStatsHeader called");
-
-    // Kiểm tra Firebase đã load chưa
-    if (!window.firebase || !firebase.auth || !firebase.database) {
-      console.warn("[stats] Firebase chưa sẵn sàng.");
-      return;
-    }
-
-    firebase.auth().onAuthStateChanged((user) => {
-      if (!user) {
-        // Chưa đăng nhập -> reset về mặc định
-        applyStatsToDom(0, 0, 1);
-        return;
-      }
-
-      const statsRef = firebase
-        .database()
-        .ref("users/" + user.uid + "/stats");
-
-      statsRef.on("value", (snap) => {
-        const stats = snap.val() || {};
-
-        const xp = Number.isFinite(stats.xp) ? stats.xp : 0;
-        const coin = Number.isFinite(stats.coin) ? stats.coin : 0;
-        const badge = Number.isFinite(stats.badge) ? stats.badge : 1;
-
-        if (XP_DEBUG) {
-          console.log("[stats] raw snapshot:", stats);
-          console.log("[stats] xp/coin/badge:", xp, coin, badge);
-        }
-
-        applyStatsToDom(xp, coin, badge);
-      });
-    });
-  }
-
-  // Chờ DOM ready rồi mới chạy
+   // Chờ DOM ready rồi mới chạy
   document.addEventListener("DOMContentLoaded", initStatsHeader);
 })();
+
