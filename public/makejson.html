@@ -3,206 +3,392 @@
 <head>
   <meta charset="UTF-8" />
   <title>NINI – Trình tạo JSON & Manifest</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/makejson.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- CSS chung của site (đang dùng ở index.html) -->
   <link rel="stylesheet" href="style.css" />
+  <!-- CSS riêng cho trang builder -->
+  <link rel="stylesheet" href="makejson.css" />
+
   <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
 </head>
 <body>
-  <div class="page-wrap">
+  <div class="builder-page">
+
     <!-- HEADER -->
-    <header class="mj-header">
-      <div class="mj-header-left">
-        <img src="/assets/logonini.webp" alt="Nini logo" class="mj-logo" />
+    <header class="builder-header">
+      <div class="builder-header-left">
+        <img src="/assets/logonini.webp" alt="NINI logo" class="builder-logo" />
         <div>
-          <h1 class="mj-title">Trình tạo JSON & Manifest</h1>
-          <p class="mj-subtitle">
-            Hệ thống build nội dung cho Nini – 6 phần / bài test • Đồng bộ GitHub
+          <h1 class="builder-title">Trình tạo JSON & Manifest</h1>
+          <p class="builder-subtitle">
+            Hệ thống build nội dung cho Nini – 6 phần / bài test – Đồng bộ GitHub
           </p>
         </div>
       </div>
 
-      <div class="mj-header-actions">
-        <button id="btnLoadSections"
-                class="mj-btn ghost">Nạp sectionsManifest</button>
-        <button id="btnBuildSectionsManifest"
-                class="mj-btn ghost">Tạo sectionsManifest</button>
-        <button id="btnBuildTestsManifest"
-                class="mj-btn ghost">Tạo testsManifest</button>
-        <button id="btnSyncGithub"
-                class="mj-btn primary">Đồng bộ lên GitHub</button>
-        <button id="btnExportAll"
-                class="mj-btn ghost">Xuất toàn bộ dữ liệu</button>
+      <div class="builder-header-actions">
+        <button id="btnLoadSectionsManifest" class="btn secondary">
+          Nạp sectionsManifest
+        </button>
+        <button id="btnCreateSectionsManifest" class="btn secondary">
+          Tạo sectionsManifest
+        </button>
+        <button id="btnCreateTestsManifest" class="btn secondary">
+          Tạo testsManifest
+        </button>
+        <button id="btnSyncGithub" class="btn primary">
+          Đồng bộ lên GitHub
+        </button>
+        <button id="btnExportAll" class="btn ghost">
+          Xuất toàn bộ dữ liệu
+        </button>
       </div>
     </header>
 
-    <!-- MAIN CARD -->
-    <main class="mj-main">
-      <section class="mj-card">
-        <!-- Test name -->
-        <div class="mj-field-row">
-          <label for="testName" class="mj-label">Tên bài test (testName)</label>
-          <input id="testName"
-                 type="text"
-                 class="mj-input"
-                 placeholder="vd: FP8 - REVIEW 1 - TEST 2" />
-        </div>
-
-        <p class="mj-helper">
-          Mỗi section sẽ có chung <strong>testName</strong>. Bạn dùng để nhận diện test trong
-          <code>testsManifest</code> (Test1, Test2, FP8 – Review 1 – Test 2, ...).
+    <main class="builder-main">
+      <!-- ====== Thông tin test ====== -->
+      <section class="card">
+        <h2 class="card-title">Tên bài test (testName)</h2>
+        <p class="hint">
+          Mỗi section sẽ có chung <strong>testName</strong>. Ví dụ:
+          <code>FP8 - REVIEW 1 - TEST 2</code>. Bạn dùng để nhận diện test
+          trong <code>testsManifest</code>.
         </p>
+        <input
+          id="testName"
+          type="text"
+          class="input"
+          placeholder="vd: FP8 - REVIEW 1 - TEST 2"
+        />
+        <p id="statusBar" class="status-bar">Chưa nạp manifest.</p>
+      </section>
 
-        <p id="manifestStatus" class="mj-status mj-status-warning">
-          Chưa nạp manifest.
-        </p>
+      <!-- ====== 6 PHẦN ====== -->
 
-        <!-- =============== PHẦN 1: VOCAB =============== -->
-        <div class="mj-section-block">
-          <h2 class="mj-section-title">
-            <span class="mj-section-index">Phần 1:</span> Vocabulary
-          </h2>
-          <p class="mj-section-type">type: <code>mcqOneByOne</code></p>
+      <!-- Phần 1 -->
+      <section class="card" data-part="1">
+        <h2 class="card-title">Phần 1: Vocabulary</h2>
+        <p class="card-type">type: <code>mcqOneByOne</code></p>
 
-          <div class="mj-field-row inline">
-            <div class="mj-field-col">
-              <label class="mj-label" for="p1Id">
-                ID (tự nạp từ manifest):
-              </label>
-              <input id="p1Id"
-                     type="text"
-                     class="mj-input"
-                     placeholder="vd: P1_001" />
-            </div>
-            <div class="mj-field-col">
-              <label class="mj-label" for="p1Type">
-                section.type
-              </label>
-              <input id="p1Type"
-                     type="text"
-                     class="mj-input"
-                     value="mcqOneByOne"
-                     readonly />
-            </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="sec1Id">ID (tự nạp từ manifest):</label>
+            <input id="sec1Id" type="text" class="input" placeholder="vd: P1_001" />
           </div>
-
-          <div class="mj-field-row">
-            <label class="mj-label" for="p1Title">Title:</label>
-            <input id="p1Title"
-                   type="text"
-                   class="mj-input"
-                   placeholder="vd: Test 1 – Part 1 – Vocabulary" />
-          </div>
-
-          <div class="mj-field-row">
-            <label class="mj-label" for="p1Desc">
-              Description (mô tả ngắn – optional):
-            </label>
-            <textarea id="p1Desc"
-                      class="mj-textarea small"
-                      placeholder="Mô tả ngắn optional..."></textarea>
-          </div>
-
-          <div class="mj-field-row">
-            <label class="mj-label" for="p1Content">
-              Content JSON:
-              <span class="mj-label-note">
-                (Nhập nội dung thô, mỗi câu 1 object: {"question": "...", "answer": "..."} ...)
-              </span>
-            </label>
-            <textarea id="p1Content"
-                      class="mj-textarea"
-                      placeholder='[{"question": "...", "answer": "..."}, ...]'></textarea>
-          </div>
-
-          <div class="mj-field-row inline align-bottom">
-            <button id="btnBuildP1"
-                    class="mj-btn primary">Tạo JSON phần 1</button>
-            <div class="mj-field-col-grow">
-              <label class="mj-label" for="p1Output">JSON output (Phần 1):</label>
-              <textarea id="p1Output"
-                        class="mj-textarea readonly"
-                        readonly
-                        placeholder="// Kết quả sẽ hiện ở đây..."></textarea>
-            </div>
+          <div class="field">
+            <label for="sec1Type">section.type</label>
+            <input id="sec1Type" type="text" class="input" value="mcqOneByOne" />
           </div>
         </div>
 
-        <!-- =============== PHẦN 2: GRAMMAR =============== -->
-        <div class="mj-section-block">
-          <h2 class="mj-section-title">
-            <span class="mj-section-index">Phần 2:</span> Grammar
-          </h2>
-          <p class="mj-section-type">type: <code>mcqImage</code></p>
-
-          <div class="mj-field-row inline">
-            <div class="mj-field-col">
-              <label class="mj-label" for="p2Id">ID:</label>
-              <input id="p2Id"
-                     type="text"
-                     class="mj-input"
-                     placeholder="vd: P2_001" />
-            </div>
-            <div class="mj-field-col">
-              <label class="mj-label" for="p2Type">section.type</label>
-              <input id="p2Type"
-                     type="text"
-                     class="mj-input"
-                     value="mcqImage"
-                     readonly />
-            </div>
-          </div>
-
-          <div class="mj-field-row">
-            <label class="mj-label" for="p2Title">Title:</label>
-            <input id="p2Title"
-                   type="text"
-                   class="mj-input"
-                   placeholder="vd: Test 1 – Part 2 – Grammar" />
-          </div>
-
-          <div class="mj-field-row">
-            <label class="mj-label" for="p2Desc">Description:</label>
-            <textarea id="p2Desc"
-                      class="mj-textarea small"></textarea>
-          </div>
-
-          <div class="mj-field-row">
-            <label class="mj-label" for="p2Content">Content JSON:</label>
-            <textarea id="p2Content"
-                      class="mj-textarea"></textarea>
-          </div>
-
-          <div class="mj-field-row inline align-bottom">
-            <button id="btnBuildP2"
-                    class="mj-btn primary">Tạo JSON phần 2</button>
-            <div class="mj-field-col-grow">
-              <label class="mj-label" for="p2Output">JSON output (Phần 2):</label>
-              <textarea id="p2Output"
-                        class="mj-textarea readonly"
-                        readonly></textarea>
-            </div>
-          </div>
+        <div class="field">
+          <label for="sec1Title">Title:</label>
+          <input
+            id="sec1Title"
+            type="text"
+            class="input"
+            placeholder="vd: Test 1 – Part 1 – Vocabulary"
+          />
         </div>
 
-        <!-- =============== PHẦN 3–6 =============== -->
-        <!-- Bạn có thể copy block trên và đổi id: p3Id/p3Title/... cho tới p6 -->
-        <!-- hoặc giữ nguyên JS hiện tại nếu đã viết xong -->
+        <div class="field">
+          <label for="sec1Desc">Description (mô tả ngắn – optional):</label>
+          <textarea
+            id="sec1Desc"
+            class="input textarea"
+            placeholder="Mô tả ngắn optional..."
+          ></textarea>
+        </div>
 
-        <!-- KHU VỰC LOG / STATUS CHUNG -->
-        <div class="mj-log-block">
-          <h3 class="mj-log-title">Log & trạng thái</h3>
-          <textarea id="logArea"
-                    class="mj-textarea log"
-                    readonly
-                    placeholder="// Log thao tác sẽ hiển thị ở đây..."></textarea>
+        <div class="field">
+          <label for="sec1Content">
+            Content JSON:
+            <span class="hint-inline">
+              (Mỗi nội dung thô, mỗi câu 1 object:
+              <code>{"question": "...", "answer": "...", ...}</code> )
+            </span>
+          </label>
+          <textarea
+            id="sec1Content"
+            class="input textarea mono"
+            placeholder='[{"question": "...", "answer": "..."}]'
+          ></textarea>
+        </div>
+
+        <div class="section-footer">
+          <button id="btnCreateJson1" class="btn small primary">
+            Tạo JSON phần 1
+          </button>
+          <textarea
+            id="sec1Output"
+            class="input textarea mono output"
+            readonly
+            placeholder="// JSON output (Phần 1) sẽ hiện ở đây..."
+          ></textarea>
         </div>
       </section>
+
+      <!-- Phần 2 -->
+      <section class="card" data-part="2">
+        <h2 class="card-title">Phần 2: Grammar</h2>
+        <p class="card-type">type: <code>mcqImage</code></p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="sec2Id">ID:</label>
+            <input id="sec2Id" type="text" class="input" placeholder="vd: P2_001" />
+          </div>
+          <div class="field">
+            <label for="sec2Type">section.type</label>
+            <input id="sec2Type" type="text" class="input" value="mcqImage" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="sec2Title">Title:</label>
+          <input
+            id="sec2Title"
+            type="text"
+            class="input"
+            placeholder="vd: Test 1 – Part 2 – Grammar"
+          />
+        </div>
+
+        <div class="field">
+          <label for="sec2Desc">Description:</label>
+          <textarea id="sec2Desc" class="input textarea"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="sec2Content">Content JSON:</label>
+          <textarea
+            id="sec2Content"
+            class="input textarea mono"
+            placeholder='[{"question": "...", "answer": "..."}]'
+          ></textarea>
+        </div>
+
+        <div class="section-footer">
+          <button id="btnCreateJson2" class="btn small primary">
+            Tạo JSON phần 2
+          </button>
+          <textarea
+            id="sec2Output"
+            class="input textarea mono output"
+            readonly
+            placeholder="// JSON output (Phần 2) sẽ hiện ở đây..."
+          ></textarea>
+        </div>
+      </section>
+
+      <!-- Phần 3 -->
+      <section class="card" data-part="3">
+        <h2 class="card-title">Phần 3: Reading</h2>
+        <p class="card-type">type: <code>mcqReading</code></p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="sec3Id">ID:</label>
+            <input id="sec3Id" type="text" class="input" placeholder="vd: P3_001" />
+          </div>
+          <div class="field">
+            <label for="sec3Type">section.type</label>
+            <input id="sec3Type" type="text" class="input" value="mcqReading" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="sec3Title">Title:</label>
+          <input
+            id="sec3Title"
+            type="text"
+            class="input"
+            placeholder="vd: Test 1 – Part 3 – Reading"
+          />
+        </div>
+
+        <div class="field">
+          <label for="sec3Desc">Description:</label>
+          <textarea id="sec3Desc" class="input textarea"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="sec3Content">Content JSON:</label>
+          <textarea
+            id="sec3Content"
+            class="input textarea mono"
+            placeholder='[{"passage": "...", "questions":[...]}]'
+          ></textarea>
+        </div>
+
+        <div class="section-footer">
+          <button id="btnCreateJson3" class="btn small primary">
+            Tạo JSON phần 3
+          </button>
+          <textarea
+            id="sec3Output"
+            class="input textarea mono output"
+            readonly
+            placeholder="// JSON output (Phần 3) sẽ hiện ở đây..."
+          ></textarea>
+        </div>
+      </section>
+
+      <!-- Phần 4 -->
+      <section class="card" data-part="4">
+        <h2 class="card-title">Phần 4: Drag &amp; Drop</h2>
+        <p class="card-type">type: <code>dragDrop</code></p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="sec4Id">ID:</label>
+            <input id="sec4Id" type="text" class="input" placeholder="vd: P4_001" />
+          </div>
+          <div class="field">
+            <label for="sec4Type">section.type</label>
+            <input id="sec4Type" type="text" class="input" value="dragDrop" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="sec4Title">Title:</label>
+          <input id="sec4Title" type="text" class="input" />
+        </div>
+
+        <div class="field">
+          <label for="sec4Desc">Description:</label>
+          <textarea id="sec4Desc" class="input textarea"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="sec4Content">Content JSON:</label>
+          <textarea
+            id="sec4Content"
+            class="input textarea mono"
+            placeholder='[{"sentence": "...", "answer": "..."}]'
+          ></textarea>
+        </div>
+
+        <div class="section-footer">
+          <button id="btnCreateJson4" class="btn small primary">
+            Tạo JSON phần 4
+          </button>
+          <textarea
+            id="sec4Output"
+            class="input textarea mono output"
+            readonly
+            placeholder="// JSON output (Phần 4) sẽ hiện ở đây..."
+          ></textarea>
+        </div>
+      </section>
+
+      <!-- Phần 5 -->
+      <section class="card" data-part="5">
+        <h2 class="card-title">Phần 5: Word form</h2>
+        <p class="card-type">type: <code>wordForm</code></p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="sec5Id">ID:</label>
+            <input id="sec5Id" type="text" class="input" placeholder="vd: P5_001" />
+          </div>
+          <div class="field">
+            <label for="sec5Type">section.type</label>
+            <input id="sec5Type" type="text" class="input" value="wordForm" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="sec5Title">Title:</label>
+          <input id="sec5Title" type="text" class="input" />
+        </div>
+
+        <div class="field">
+          <label for="sec5Desc">Description:</label>
+          <textarea id="sec5Desc" class="input textarea"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="sec5Content">Content JSON:</label>
+          <textarea
+            id="sec5Content"
+            class="input textarea mono"
+            placeholder='[{"sentence": "...", "answer": "..."}]'
+          ></textarea>
+        </div>
+
+        <div class="section-footer">
+          <button id="btnCreateJson5" class="btn small primary">
+            Tạo JSON phần 5
+          </button>
+          <textarea
+            id="sec5Output"
+            class="input textarea mono output"
+            readonly
+            placeholder="// JSON output (Phần 5) sẽ hiện ở đây..."
+          ></textarea>
+        </div>
+      </section>
+
+      <!-- Phần 6 -->
+      <section class="card" data-part="6">
+        <h2 class="card-title">Phần 6: Reorder / Rewrite</h2>
+        <p class="card-type">type: <code>reorderRewrite</code></p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="sec6Id">ID:</label>
+            <input id="sec6Id" type="text" class="input" placeholder="vd: P6_001" />
+          </div>
+          <div class="field">
+            <label for="sec6Type">section.type</label>
+            <input id="sec6Type" type="text" class="input" value="reorderRewrite" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="sec6Title">Title:</label>
+          <input id="sec6Title" type="text" class="input" />
+        </div>
+
+        <div class="field">
+          <label for="sec6Desc">Description:</label>
+          <textarea id="sec6Desc" class="input textarea"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="sec6Content">Content JSON:</label>
+          <textarea
+            id="sec6Content"
+            class="input textarea mono"
+            placeholder='[{"sentence": "...", "answer": "..."}]'
+          ></textarea>
+        </div>
+
+        <div class="section-footer">
+          <button id="btnCreateJson6" class="btn small primary">
+            Tạo JSON phần 6
+          </button>
+          <textarea
+            id="sec6Output"
+            class="input textarea mono output"
+            readonly
+            placeholder="// JSON output (Phần 6) sẽ hiện ở đây..."
+          ></textarea>
+        </div>
+      </section>
+
+      <!-- hidden input dùng để nạp sectionsManifest từ file -->
+      <input
+        id="sectionsManifestFile"
+        type="file"
+        accept="application/json"
+        style="display:none"
+      />
     </main>
   </div>
 
-  <!-- JS: dùng file JS hiện tại của bạn -->
-  <script src="js/makejson.js"></script>
+  <script src="makejson.js" defer></script>
 </body>
 </html>
-
