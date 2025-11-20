@@ -1,4 +1,4 @@
-﻿{
+{
   "id": "P2_001",
   "testName": "Test 1",
   "partIndex": 2,
@@ -14,9 +14,10 @@
         "10% discount on everything on Saturday",
         "20% discount on everything on Sunday",
         "20% discount on everything on Saturday",
-        "50% discount on everything on Saturday"
+        "5% discount on everything on Saturday"
       ],
-      "correct": 2
+      "correct": 2,
+      "explanation": "Trên biển hiệu ghi \"20% OFF EVERYTHING THIS SATURDAY\" nên khuyến mãi là giảm 20% cho mọi mặt hàng vào thứ Bảy. Đáp án đúng là lựa chọn thứ 3."
     },
     {
       "number": 16,
@@ -24,11 +25,12 @@
       "text": "What is the current promotion at the clothes store?",
       "options": [
         "Buy one get one free on summer dresses",
-        "10% discount on all clothes",
+        "15% discount on all clothes",
         "20% discount on all clothes",
         "Free T-shirt with every purchase"
       ],
-      "correct": 1
+      "correct": 1,
+      "explanation": "Biển hiệu ghi \"15% OFF ALL CLOTHES\", nghĩa là giảm 15% cho tất cả quần áo. Đáp án đúng là lựa chọn thứ 2."
     }
   ]
 }
