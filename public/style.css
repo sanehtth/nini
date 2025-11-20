@@ -429,5 +429,18 @@ button.main-btn.loading::after { content:''; position:absolute; width:16px; heig
   display: flex;
   justify-content: flex-end;
 }
+/* Khung trang quiz – canh giữa */
+#quizPage,
+#quiz-eng-root {
+  max-width: 900px;      /* hoặc 880px tuỳ bạn */
+  margin: 24px auto;     /* auto 2 bên => ở giữa */
+  padding: 0 16px;       /* cho đỡ sát mép trên mobile */
+}
+
+/* Thẻ card của quiz full chiều rộng trong khung */
+#quiz-eng-root .quiz-card {
+  width: 100%;
+}
+
 
 
