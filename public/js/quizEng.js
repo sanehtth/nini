@@ -2,7 +2,9 @@
 // Render bài test tiếng Anh từ JSON, chấm điểm và cộng XP/Coin vào Firebase.
 
 (function () {
-  // ===== Helper chung =====
+  // ============================================================
+  // 1. Helper chung
+  // ============================================================
   function getTestIdFromQuery() {
     const params = new URLSearchParams(window.location.search);
     return params.get("test") || "test1";
@@ -23,7 +25,21 @@
     return el;
   }
 
-  // ===== Header: đọc XP/Coin từ Firebase =====
+  // ============================================================
+  // 2. State riêng cho phần mcqOneByOne (làm từng câu)
+  // ============================================================
+  // Mỗi section.id sẽ có state:
+  // {
+  //   questions: [...],
+  //   current: 0,
+  //   userAnswers: [null | index],
+  //   correctCount: number
+  // }
+  const mcqOneByOneState = {};
+
+  // ============================================================
+  // 3. Header quiz: đọc XP/Coin từ Firebase
+  // ============================================================
   function initQuizHeader() {
     if (!window.firebase || !firebase.auth) return;
 
@@ -52,7 +68,9 @@
     });
   }
 
-  // ===== Khởi động quiz =====
+  // ============================================================
+  // 4. Khởi động quiz: load manifest + sections
+  // ============================================================
   async function initQuizEng() {
     const root = document.getElementById("quiz-eng-root");
     if (!root) return;
@@ -96,7 +114,9 @@
     }
   }
 
-  // ===== Render quiz =====
+  // ============================================================
+  // 5. Render quiz tổng
+  // ============================================================
   function renderQuiz(root, test, sections) {
     root.innerHTML = "";
 
@@ -137,9 +157,11 @@
         secBlock.appendChild(p);
       }
 
+      // === NHÁNH THEO KIỂU PHẦN (type) ===
       switch (sec.type) {
         case "mcqOneByOne":
-          renderSectionMcq(secBlock, sec);
+          // *** MỚI: phần 1 trắc nghiệm từng câu ***
+          renderSectionMcqOneByOne(secBlock, sec);
           break;
         case "mcqImage":
           renderSectionMcqImage(secBlock, sec);
@@ -172,7 +194,9 @@
     container.appendChild(submitRow);
   }
 
-  // Đọc nhanh progress để hiển thị “lần làm & bestScore”
+  // ============================================================
+  // 6. “Chỉ số chăm chỉ” – đọc progress từ Firebase
+  // ============================================================
   function loadQuizProgressForHeader(container) {
     if (!window.firebase || !firebase.auth) return;
     const testId = getTestIdFromQuery();
@@ -220,7 +244,11 @@
     });
   }
 
-  // ===== Render từng loại phần =====
+  // ============================================================
+  // 7. Render từng loại phần
+  // ============================================================
+
+  // 7.1. MCQ thường: hiện cả bài (dùng cho phần khác)
   function renderSectionMcq(parent, section) {
     (section.questions || []).forEach((q) => {
       const qid = section.id + "-" + q.number;
@@ -247,6 +275,7 @@
     });
   }
 
+  // 7.2. MCQ có hình
   function renderSectionMcqImage(parent, section) {
     const IMAGE_BASE = "/assets/content";
 
@@ -284,6 +313,7 @@
     });
   }
 
+  // 7.3. Reading + MCQ / True-False
   function renderSectionReadingMcq(parent, section) {
     (section.questions || []).forEach((q) => {
       const qid = section.id + "-" + q.number;
@@ -323,6 +353,7 @@
     });
   }
 
+  // 7.4. Cloze – điền từ vào đoạn văn
   function renderSectionDragDrop(parent, section) {
     const info = createEl(
       "p",
@@ -382,6 +413,7 @@
     }
   }
 
+  // 7.5. Word form – chia từ loại, chia thì
   function renderSectionWordForm(parent, section) {
     (section.questions || []).forEach((q) => {
       const qid = section.id + "-" + q.number;
@@ -403,6 +435,7 @@
     });
   }
 
+  // 7.6. Reorder / Rewrite – sắp xếp cụm từ, viết lại câu
   function renderSectionReorder(parent, section) {
     (section.questions || []).forEach((q) => {
       const qid = section.id + "-" + q.number;
@@ -490,7 +523,177 @@
     });
   }
 
-  // ===== Thưởng XP / Coin =====
+  // 7.x. *** MỚI *** – Phần 1: MCQ từng câu một (mcqOneByOne)
+  // ------------------------------------------------------------
+  // - Hiện 1 câu / lần
+  // - Chọn đáp án -> hiện ngay đúng/sai + giải thích
+  // - Ghi điểm tạm trong mcqOneByOneState
+  // - Không cập nhật Firebase ở đây, chỉ khi bấm "Nộp bài"
+  function renderSectionMcqOneByOne(parent, section) {
+    const questions = section.questions || [];
+    if (!questions.length) {
+      parent.appendChild(createEl("p", null, "Không có câu hỏi trong phần này."));
+      return;
+    }
+
+    // Tạo state cho section này
+    const state = {
+      questions,
+      current: 0,
+      userAnswers: new Array(questions.length).fill(null),
+      correctCount: 0,
+    };
+    mcqOneByOneState[section.id] = state;
+
+    const box = createEl("div", "mcq-onebyone");
+
+    const headerRow = createEl("div", "mcq-header-row");
+    const progress = createEl("span", "mcq-progress", "");
+    headerRow.appendChild(progress);
+    box.appendChild(headerRow);
+
+    const qText = createEl("p", "quiz-question-text", "");
+    box.appendChild(qText);
+
+    const optionsWrap = createEl("div", "mcq-choice-list");
+    box.appendChild(optionsWrap);
+
+    const explainBox = createEl("div", "quiz-explain", "");
+    box.appendChild(explainBox);
+
+    const navRow = createEl("div", "mcq-nav-row");
+    const prevBtn = createEl("button", "quiz-nav-btn ghost", "◀ Câu trước");
+    const nextBtn = createEl("button", "quiz-nav-btn", "Câu tiếp ▶");
+    navRow.appendChild(prevBtn);
+    navRow.appendChild(nextBtn);
+    box.appendChild(navRow);
+
+    parent.appendChild(box);
+
+    function updateProgress() {
+      const idx = state.current;
+      const total = questions.length;
+      progress.textContent = `Câu ${idx + 1} / ${total} | Đúng tạm thời: ${state.correctCount}/${total}`;
+    }
+
+    function renderCurrent() {
+      const idx = state.current;
+      const q = questions[idx];
+      if (!q) return;
+
+      qText.textContent = `Câu ${q.number ?? idx + 1}. ${q.text || ""}`;
+      optionsWrap.innerHTML = "";
+      explainBox.textContent = "";
+
+      const chosenIndex = state.userAnswers[idx];
+
+      (q.options || []).forEach((opt, optIdx) => {
+        const btn = createEl("button", "quiz-choice-btn", opt);
+        btn.dataset.idx = String(optIdx);
+
+        // Nếu đã chọn rồi -> highlight trạng thái
+        if (chosenIndex != null) {
+          if (optIdx === q.correct) {
+            btn.classList.add("correct");
+          }
+          if (optIdx === chosenIndex && chosenIndex !== q.correct) {
+            btn.classList.add("wrong");
+          }
+          if (optIdx === chosenIndex) {
+            btn.classList.add("chosen");
+          }
+        }
+
+        btn.addEventListener("click", () => handleChoice(optIdx));
+        optionsWrap.appendChild(btn);
+      });
+
+      // Nếu đã trả lời rồi -> hiện lại giải thích
+      if (chosenIndex != null) {
+        const isCorrect = chosenIndex === questions[idx].correct;
+        showExplanation(q, isCorrect);
+      }
+
+      prevBtn.disabled = idx === 0;
+      nextBtn.disabled = idx === questions.length - 1;
+      updateProgress();
+    }
+
+    function handleChoice(choiceIndex) {
+      const idx = state.current;
+      const q = questions[idx];
+
+      // Nếu đã chọn rồi -> không cho đổi nữa
+      if (state.userAnswers[idx] != null) return;
+
+      state.userAnswers[idx] = choiceIndex;
+
+      const isCorrect = choiceIndex === q.correct;
+      if (isCorrect) {
+        state.correctCount += 1;
+      }
+
+      // Tô màu các nút
+      const btns = optionsWrap.querySelectorAll(".quiz-choice-btn");
+      btns.forEach((b) => {
+        const i = Number(b.dataset.idx || "0");
+        b.classList.remove("correct", "wrong", "chosen");
+        if (i === q.correct) {
+          b.classList.add("correct");
+        }
+        if (i === choiceIndex && choiceIndex !== q.correct) {
+          b.classList.add("wrong");
+        }
+        if (i === choiceIndex) {
+          b.classList.add("chosen");
+        }
+      });
+
+      // Hiển thị giải thích
+      showExplanation(q, isCorrect);
+      updateProgress();
+    }
+
+    function showExplanation(q, isCorrect) {
+      if (!explainBox) return;
+      const ansText = q.options && q.options[q.correct] != null
+        ? q.options[q.correct]
+        : "";
+
+      const baseExplain = q.explanation || "";
+      if (isCorrect) {
+        explainBox.innerHTML =
+          "✅ Chính xác! " + (baseExplain ? baseExplain : "");
+      } else {
+        explainBox.innerHTML =
+          "❌ Sai rồi. Đáp án đúng là: <b>" +
+          ansText +
+          "</b>" +
+          (baseExplain ? " – " + baseExplain : "");
+      }
+    }
+
+    prevBtn.addEventListener("click", () => {
+      if (state.current > 0) {
+        state.current -= 1;
+        renderCurrent();
+      }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      if (state.current < questions.length - 1) {
+        state.current += 1;
+        renderCurrent();
+      }
+    });
+
+    // render câu đầu tiên
+    renderCurrent();
+  }
+
+  // ============================================================
+  // 8. Thưởng XP / Coin – cấp phát sau khi Nộp bài
+  // ============================================================
   async function awardStats(scorePercent, testIdOverride) {
     scorePercent = Math.max(0, Math.min(100, scorePercent || 0));
     const testId = testIdOverride || getTestIdFromQuery();
@@ -561,7 +764,9 @@
     return { xpGain, coinGain, updated: true };
   }
 
-  // ===== Modal kết quả =====
+  // ============================================================
+  // 9. Modal kết quả cuối bài
+  // ============================================================
   function showResultModal(summary, reward, onExit) {
     let overlay = document.getElementById("quiz-result-modal");
     if (overlay) overlay.remove();
@@ -622,7 +827,9 @@
     }
   }
 
-  // ===== Chấm điểm =====
+  // ============================================================
+  // 10. Chấm điểm toàn bài (gọi khi bấm “Nộp bài”)
+  // ============================================================
   let quizAlreadySubmitted = false;
 
   async function gradeQuiz(root, sections) {
@@ -636,7 +843,27 @@
 
     sections.forEach((section) => {
       switch (section.type) {
-        case "mcqOneByOne":
+        // ---- PHẦN 1: mcqOneByOne – dùng state đã lưu ----
+        case "mcqOneByOne": {
+          const state = mcqOneByOneState[section.id];
+          const qs = section.questions || [];
+          if (!state || !qs.length) break;
+
+          total += qs.length;
+          correctCount += state.correctCount;
+
+          qs.forEach((q, idx) => {
+            const chosen = state.userAnswers[idx];
+            const correct = q.correct;
+            if (chosen !== correct) {
+              const num = q.number ?? idx + 1;
+              mistakes.push("Câu " + num + " (phần " + section.partIndex + ")");
+            }
+          });
+          break;
+        }
+
+        // ---- MCQ có hình – chấm bằng radio trong DOM như cũ ----
         case "mcqImage":
           (section.questions || []).forEach((q) => {
             if (q.correct == null) return;
@@ -654,6 +881,7 @@
           });
           break;
 
+        // ---- Reading MCQ / True-False ----
         case "readingMcq":
           (section.questions || []).forEach((q) => {
             total++;
@@ -676,6 +904,7 @@
           });
           break;
 
+        // ---- Cloze --- điền vào đoạn văn ----
         case "readingDragDrop":
           Object.entries(section.blanks || {}).forEach(([num, ans]) => {
             total++;
@@ -691,6 +920,7 @@
           });
           break;
 
+        // ---- Word form ----
         case "wordForm":
           (section.questions || []).forEach((q) => {
             total++;
@@ -706,6 +936,7 @@
           });
           break;
 
+        // ---- Reorder / Rewrite ----
         case "reorderAndRewrite":
           (section.questions || []).forEach((q) => {
             total++;
@@ -747,7 +978,9 @@
     showResultModal(summary, reward);
   }
 
-  // ===== CSS phụ cho quiz =====
+  // ============================================================
+  // 11. CSS phụ cho quiz (tiêm runtime, giữ style đồng bộ)
+  // ============================================================
   (function injectQuizStyles() {
     const css = `
     .quiz-title {
@@ -914,13 +1147,92 @@
       display: flex;
       justify-content: flex-end;
     }
+
+    /* ====== Style riêng cho mcqOneByOne ====== */
+    .mcq-onebyone {
+      padding: 8px 0;
+    }
+    .mcq-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .mcq-choice-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 6px;
+      margin-bottom: 4px;
+    }
+    .quiz-choice-btn {
+      width: 100%;
+      text-align: left;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #d4d4d8;
+      background: #f9fafb;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.1s ease;
+    }
+    .quiz-choice-btn:hover {
+      background: #e5e7eb;
+      transform: translateY(-1px);
+      box-shadow: 0 1px 3px rgba(15,23,42,0.12);
+    }
+    .quiz-choice-btn.correct {
+      background: #dcfce7;
+      border-color: #16a34a;
+      color: #14532d;
+    }
+    .quiz-choice-btn.wrong {
+      background: #fee2e2;
+      border-color: #dc2626;
+      color: #7f1d1d;
+    }
+    .quiz-choice-btn.chosen {
+      box-shadow: 0 0 0 1px rgba(37,99,235,0.25);
+    }
+    .quiz-explain {
+      font-size: 13px;
+      margin-top: 4px;
+      margin-bottom: 8px;
+      color: #4b5563;
+    }
+    .mcq-nav-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+      gap: 8px;
+    }
+    .quiz-nav-btn {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #d4d4d8;
+      background: #f9fafb;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .quiz-nav-btn.ghost {
+      background: #ffffff;
+    }
+    .quiz-nav-btn:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
     `;
     const styleEl = document.createElement("style");
     styleEl.textContent = css;
     document.head.appendChild(styleEl);
   })();
 
-  // ===== DOM ready =====
+  // ============================================================
+  // 12. DOM ready
+  // ============================================================
   document.addEventListener("DOMContentLoaded", () => {
     initQuizHeader();
     initQuizEng();
