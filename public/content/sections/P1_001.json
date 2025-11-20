@@ -1,4 +1,4 @@
-﻿{
+{
   "id": "P1_001",
   "testName": "Test 1",
   "partIndex": 1,
@@ -10,25 +10,29 @@
       "number": 1,
       "text": "Which word has the underlined part pronounced differently from that of the others?",
       "options": ["amazingly", "fad", "apparently", "absolutely"],
-      "correct": 1
+      "correct": 1,
+      "explanation": "“Fad” /fæd/ có nguyên âm /æ/, còn “amazingly”, “apparently”, “absolutely” đều có âm /ə/ hoặc /əˈ/ ở âm được gạch chân. Vì vậy “fad” phát âm khác."
     },
     {
       "number": 2,
       "text": "Which word has the underlined part pronounced differently from that of the others?",
       "options": ["general", "gadget", "friend", "trend"],
-      "correct": 2
+      "correct": 2,
+      "explanation": "“Friend” /frend/ có nguyên âm /e/, trong khi ở các từ còn lại âm được gạch chân phát âm /æ/ hoặc khác với /e/. Vì vậy “friend” là từ phát âm khác."
     },
     {
       "number": 3,
       "text": "Which word has a different stress pattern from that of the others?",
       "options": ["obvious", "patterned", "amazing", "social"],
-      "correct": 2
+      "correct": 2,
+      "explanation": "“Obvious”, “patterned”, “social” đều có trọng âm rơi vào âm tiết thứ nhất (OB-vious, PAT-terned, SO-cial). “Amazing” lại nhấn ở âm tiết thứ hai (a-MAZ-ing) nên khác với các từ còn lại."
     },
     {
       "number": 4,
       "text": "Which word has a different stress pattern from that of the others?",
       "options": ["trousers", "hoodie", "design", "alpaca"],
-      "correct": 2
+      "correct": 2,
+      "explanation": "“Trousers”, “hoodie”, “alpaca” trong đề này được coi là nhấn ở âm tiết thứ nhất (TROUS-ers, HOO-die, AL-paca). “Design” lại nhấn ở âm tiết thứ hai (de-SIGN), nên có trọng âm khác."
     },
     {
       "number": 5,
@@ -39,43 +43,50 @@
         "I have a few shoe brands that I really like, but I wouldn't say I have a favourite.",
         "I really like my shoe brand."
       ],
-      "correct": 2
+      "correct": 2,
+      "explanation": "Câu hỏi hỏi trực tiếp về “favourite shoe brand”. Câu (C) trả lời đúng trọng tâm: nói về việc có vài thương hiệu thích nhưng không hẳn có một thương hiệu ‘yêu thích nhất’. Các câu khác hoặc nói về cửa hàng, hoặc không rõ nghĩa, hoặc không tự nhiên."
     },
     {
       "number": 6,
       "text": "___________, the movie is fully booked and we can't get tickets anymore.",
       "options": ["Unfortunately", "Happily", "Luckily", "Sadness"],
-      "correct": 0
+      "correct": 0,
+      "explanation": "Ngữ cảnh là tin xấu (phim đã hết vé). Trạng từ phải mang nghĩa tiêu cực: “Unfortunately”. “Happily” và “Luckily” mang nghĩa may mắn/tích cực, còn “Sadness” là danh từ, không dùng được ở đây."
     },
     {
       "number": 7,
       "text": "The ___________ was packed with people and loud music.",
       "options": ["library", "park", "museum", "club"],
-      "correct": 3
+      "correct": 3,
+      "explanation": "Câu miêu tả chỗ đông người và nhạc lớn. “Club” (hộp đêm/quán bar) phù hợp nhất. Thư viện, công viên, bảo tàng thường không gắn với ‘loud music’."
     },
     {
       "number": 8,
       "text": "While Mary ___________ in the garden, her husband ___________ her.",
       "options": ["was working/ called", "work/ called", "worked/ calling", "was working/ calls"],
-      "correct": 0
+      "correct": 0,
+      "explanation": "Mẫu câu quá khứ: một hành động đang diễn ra thì hành động khác xen vào → While + past continuous, then simple past. “was working / called” đúng: While Mary was working..., her husband called her."
     },
     {
       "number": 9,
       "text": "This jacket is so cool, I will try it ___________.",
       "options": ["at", "on", "with", "for"],
-      "correct": 1
+      "correct": 1,
+      "explanation": "Cụm động từ đúng là “try on” (thử quần áo). Các giới từ khác không đi kèm ‘try’ trong nghĩa này."
     },
     {
       "number": 10,
       "text": "50 years ago, only a few people ___________ computers, but most of them were very large.",
       "options": ["can afford", "can not afford", "could not afford", "could afford"],
-      "correct": 3
+      "correct": 3,
+      "explanation": "Câu nói về quá khứ (“50 years ago”), nên dùng “could” thay cho “can”. Ý là chỉ một vài người có khả năng mua được → “could afford”. Các lựa chọn với “can” sai thì, “could not afford” trái nghĩa với vế ‘only a few people’."
     },
     {
       "number": 11,
       "text": "My grandmother always tells me about how she ___________ to cook for her whole family when she was young.",
       "options": ["cooks", "cook", "used to cook", "cooking"],
-      "correct": 2
+      "correct": 2,
+      "explanation": "“When she was young” nói về thói quen trong quá khứ → dùng “used to + V”: ‘used to cook’. Các dạng khác không diễn tả thói quen đã kết thúc."
     },
     {
       "number": 12,
@@ -86,19 +97,22 @@
         "For a first date, I’m always on time.",
         "I don’t mind changing clothes."
       ],
-      "correct": 1
+      "correct": 1,
+      "explanation": "Câu hỏi hỏi trang phục bạn thường chọn cho buổi hẹn hò đầu tiên. (B) trả lời trực tiếp: ‘I usually wear something casual but nice.’ Các câu khác nói sang chuyện khác (đúng giờ, không ngại thay đồ, v.v.)."
     },
     {
       "number": 13,
       "text": "Social media and online gaming are some of the recent trends ___________ teenagers.",
       "options": ["about", "for", "at", "from"],
-      "correct": 1
+      "correct": 1,
+      "explanation": "Cấu trúc tự nhiên: “trends for teenagers” (xu hướng dành cho thanh thiếu niên). “about/at/from teenagers” không hợp ngữ pháp hoặc không dùng trong cụm ‘trends ... teenagers’ theo nghĩa này."
     },
     {
       "number": 14,
       "text": "I need to buy a new ___________ for my friend's wedding.",
       "options": ["presents", "cake", "gifts", "dress"],
-      "correct": 3
+      "correct": 3,
+      "explanation": "Ngữ cảnh: đi dự đám cưới → người nói cần mua đồ để mặc. “dress” (váy/đầm) là phù hợp. “presents, gifts” là quà, “cake” là bánh, không ăn khớp với câu."
     }
   ]
 }
