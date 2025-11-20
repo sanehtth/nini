@@ -550,6 +550,113 @@ button.main-btn.loading::after { content:''; position:absolute; width:16px; heig
   font-size: 13px;
   color: #374151;
 }
+/* ===== Quiz English – layout chung ===== */
+.quiz-title {
+  margin-top: 10px;
+  margin-bottom: 4px;
+}
+.quiz-subtitle {
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #6b7280;
+}
+.quiz-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 18px 20px 20px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e5e7eb;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.quiz-section {
+  border-top: 1px solid #f3f4f6;
+  padding-top: 12px;
+  margin-top: 12px;
+}
+.quiz-section:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+.quiz-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.quiz-question {
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+.quiz-question-text {
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.quiz-option {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 3px;
+  cursor: pointer;
+}
+.quiz-option input {
+  margin-right: 4px;
+}
+.quiz-passage {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-top: 6px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.quiz-hint {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+.quiz-submit-row {
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* nút chính / phụ – đồng bộ style với site */
+.main-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 14px;
+  background: #e11d48;
+  color: #fff;
+  cursor: pointer;
+}
+.main-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.sub-btn {
+  border-radius: 999px;
+  padding: 6px 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* highlight đáp án */
+.opt-correct {
+  background: #ecfdf3;
+  border-radius: 8px;
+}
+.opt-wrong {
+  background: #fef2f2;
+}
+.opt-chosen {
+  font-weight: 500;
+}
+
 
 
 
