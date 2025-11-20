@@ -153,8 +153,7 @@
       list.appendChild(card);
     });
 
-    // TODO: khi sau này bạn muốn cộng XP/Coin sau khi làm hết các phần,
-    // có thể thêm 1 nút "Hoàn thành bài test / Nộp điểm" ở đây.
+    // TODO: Sau này thêm nút "Nộp điểm / cộng XP" ở đây nếu cần
   }
 
   // ================== CHẠY 1 PHẦN ==================
@@ -168,10 +167,10 @@
         break;
 
       case "readingMcq":
-        runReadingMcqSection(root, runtime, section); // PHẦN 3 – mới
+        runReadingMcqSection(root, runtime, section); // PHẦN 3
         break;
 
-      // Bạn có thể bổ sung thêm các kiểu khác ở đây:
+      // Sau này thêm các kiểu khác:
       // case "mcqImage": ...
       // case "readingDragDrop": ...
       // case "wordForm": ...
@@ -274,9 +273,6 @@
         runtime.tempScore = (runtime.tempScore || 0) + 1;
       }
 
-      // TODO: nếu muốn hiện giải thích từng câu ở đây,
-      // bạn có thể mở popup nhỏ, sau đó mới chuyển câu.
-
       if (idx + 1 < total) {
         runtime.currentQuestionIndex = idx + 1;
         runOneByOneSection(root, runtime, section);
@@ -291,6 +287,9 @@
 
   // ================== PHẦN 3 – READING MCQ (TỪNG CÂU) ==================
   // Giữ nguyên đoạn văn ở trên, chỉ thay câu hỏi & đáp án ở dưới.
+  // HỖ TRỢ:
+  //   kind: "tf"  -> 2 đáp án True / False, correct = boolean
+  //   kind: "mcq" -> 4 đáp án trong mảng options, correct = index
 
   function runReadingMcqSection(root, runtime, section) {
     const data = section;
@@ -343,17 +342,36 @@
     const optionsBox = el("div", "quiz-eng-options");
     qBox.appendChild(optionsBox);
 
-    (q.options || []).forEach((opt, i) => {
-      const label = el("label", "quiz-eng-option");
-      const input = document.createElement("input");
-      input.type = "radio";
-      input.name = "readingmcq_" + section.id + "_" + q.number;
-      input.value = String(i);
+    const kind = (q.kind || "mcq").toLowerCase();
 
-      label.appendChild(input);
-      label.appendChild(document.createTextNode(" " + opt));
-      optionsBox.appendChild(label);
-    });
+    if (kind === "tf") {
+      // TRUE / FALSE
+      [
+        { label: "True", value: "true" },
+        { label: "False", value: "false" },
+      ].forEach(({ label, value }) => {
+        const row = el("label", "quiz-eng-option");
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = "readingmcq_" + section.id + "_" + q.number;
+        input.value = value;
+        row.appendChild(input);
+        row.appendChild(document.createTextNode(" " + label));
+        optionsBox.appendChild(row);
+      });
+    } else {
+      // MCQ bình thường
+      (q.options || []).forEach((opt, i) => {
+        const row = el("label", "quiz-eng-option");
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = "readingmcq_" + section.id + "_" + q.number;
+        input.value = String(i);
+        row.appendChild(input);
+        row.appendChild(document.createTextNode(" " + opt));
+        optionsBox.appendChild(row);
+      });
+    }
 
     // Footer nút
     const footer = el("div", "quiz-eng-footer");
@@ -374,22 +392,25 @@
     footer.appendChild(nextBtn);
 
     nextBtn.onclick = () => {
-      const checked = root.querySelector(
-        'input[name="readingmcq_' + section.id + "_" + q.number + '"]:checked'
-      );
+      const name = "readingmcq_" + section.id + "_" + q.number;
+      const checked = root.querySelector('input[name="' + name + '"]:checked');
       if (!checked) {
         alert("Bạn hãy chọn một đáp án trước khi sang câu tiếp theo nhé.");
         return;
       }
 
-      const userIndex = parseInt(checked.value, 10);
-      const isCorrect = userIndex === Number(q.correct);
+      let isCorrect = false;
+      if (kind === "tf") {
+        const userVal = checked.value === "true";
+        isCorrect = userVal === !!q.correct;
+      } else {
+        const userIndex = parseInt(checked.value, 10);
+        isCorrect = userIndex === Number(q.correct);
+      }
 
       if (isCorrect) {
         runtime.tempScore = (runtime.tempScore || 0) + 1;
       }
-
-      // TODO: chỗ này cũng có thể hiển thị giải thích từng câu nếu muốn.
 
       if (idx + 1 < total) {
         runtime.currentQuestionIndex = idx + 1;
