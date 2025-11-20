@@ -1,12 +1,11 @@
 // js/quizEng.js
-// Bài test tiếng Anh: chạy theo TỪNG PHẦN, TỪNG CÂU
-// - Đọc testsManifest & sectionsManifest
-// - Cho chọn phần (1..6), mỗi phần hiển thị lần lượt từng câu
-// - Cộng điểm tạm vào runtime.tempScore
-// - Sau này có thể dùng tempScore để cộng XP/Coin thật vào Firebase
+// Render bài test tiếng Anh từ JSON (6 phần), làm từng câu một, có giải thích.
 
+// Toàn bộ code gói trong IIFE để không rò rỉ biến global
 (function () {
-  // ================== CÁC HÀM DÙNG CHUNG ==================
+  // ============================================================
+  // 1. Helper chung
+  // ============================================================
 
   function getTestIdFromQuery() {
     const params = new URLSearchParams(window.location.search);
@@ -15,555 +14,712 @@
 
   async function loadJson(url) {
     const res = await fetch(url);
-    if (!res.ok) throw new Error("Không tải được " + url + " (" + res.status + ")");
+    if (!res.ok) {
+      throw new Error("Không tải được " + url + " (" + res.status + ")");
+    }
     return await res.json();
   }
 
-  function el(tag, className, text) {
-    const e = document.createElement(tag);
-    if (className) e.className = className;
-    if (text != null) e.textContent = text;
-    return e;
+  function createEl(tag, className, text) {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    if (text != null) el.textContent = text;
+    return el;
   }
 
-  const norm = (s) => (s || "").trim().toLowerCase();
+  function norm(s) {
+    return (s || "").trim().toLowerCase();
+  }
 
-  // ================== KHỞI ĐỘNG TOÀN BÀI ==================
+  // ============================================================
+  // 2. Header: đọc XP/Coin từ Firebase (giống bản cũ của bạn)
+  // ============================================================
+
+  function initQuizHeader() {
+    if (!window.firebase || !firebase.auth) return;
+
+    const emailEl = document.getElementById("quizUserEmail");
+    const xpEl = document.getElementById("quizXP");
+    const coinEl = document.getElementById("quizCoin");
+    const badgeEl = document.getElementById("quizBadge");
+
+    firebase.auth().onAuthStateChanged((user) => {
+      if (!user) {
+        if (emailEl) emailEl.textContent = "Chưa đăng nhập";
+        return;
+      }
+      if (emailEl) emailEl.textContent = user.email;
+
+      const statsRef = firebase
+        .database()
+        .ref("users/" + user.uid + "/stats");
+
+      statsRef.on("value", (snap) => {
+        const stats = snap.val() || {};
+        if (xpEl) xpEl.textContent = stats.xp != null ? stats.xp : 0;
+        if (coinEl) coinEl.textContent = stats.coin != null ? stats.coin : 0;
+        if (badgeEl) badgeEl.textContent = stats.badge != null ? stats.badge : 1;
+      });
+    });
+  }
+
+  // ============================================================
+  // 3. Runtime cho cả bài test
+  // ============================================================
+
+  const runtime = {
+    root: null,
+    testMeta: null,          // object trong testsManifest
+    sectionMetas: [],        // mảng meta trong sectionsManifest
+    sectionData: {},         // id -> data JSON (P1_001.json,...)
+    sectionStates: [],       // per section: {done, answers:[], total}
+    currentSectionIndex: -1,
+    currentQuestionIndex: -1
+  };
+
+  // ============================================================
+  // 4. Khởi động trang quiz
+  // ============================================================
 
   async function initQuizEng() {
     const root =
       document.getElementById("quiz-eng-root") ||
-      document.getElementById("quizEng-root");
-    if (!root) return;
+      document.getElementById("quizRoot") ||
+      document.getElementById("quizApp");
 
+    if (!root) {
+      console.warn("[quizEng] Không tìm thấy #quiz-eng-root");
+      return;
+    }
+    runtime.root = root;
     root.textContent = "Đang tải đề kiểm tra...";
 
     try {
       const testId = getTestIdFromQuery();
 
-      // Đọc manifest
-      const [testsManifest, sectionsManifest] = await Promise.all([
-        loadJson("/content/testsManifest.json"),
-        loadJson("/content/sectionsManifest.json"),
-      ]);
+      // 4.1. Đọc manifest bài test
+      const testsManifest = await loadJson("/content/testsManifest.json");
+      const tests = testsManifest.tests || [];
+      const testMeta =
+        tests.find((t) => t.id === testId) || tests[0];
 
-      const test =
-        (testsManifest.tests || []).find((t) => t.id === testId) ||
-        (testsManifest.tests || [])[0];
-
-      if (!test) {
-        root.textContent = "Không tìm thấy bài test.";
+      if (!testMeta) {
+        root.textContent = "Không tìm thấy bài kiểm tra.";
         return;
       }
+      runtime.testMeta = testMeta;
 
-      // Map id -> meta
-      const sectionMetaMap = new Map(
+      // 4.2. Đọc manifest sections
+      const sectionsManifest = await loadJson("/content/sectionsManifest.json");
+      const sectionMap = new Map(
         (sectionsManifest.sections || []).map((s) => [s.id, s])
       );
 
-      // Load dữ liệu từng section của bài test
-      const sections = [];
-      for (const secId of test.sections || []) {
-        const meta = sectionMetaMap.get(secId);
-        if (!meta) continue;
+      const sectionMetas = [];
+      const sectionIds = testMeta.sections || testMeta.sectionIds || [];
+      sectionIds.forEach((id) => {
+        const meta = sectionMap.get(id);
+        if (meta) sectionMetas.push(meta);
+      });
+
+      if (!sectionMetas.length) {
+        root.textContent =
+          "Không tìm thấy danh sách phần cho bài test này (kiểm tra testsManifest & sectionsManifest).";
+        return;
+      }
+      runtime.sectionMetas = sectionMetas;
+
+      // 4.3. Load dữ liệu từng phần
+      runtime.sectionData = {};
+      runtime.sectionStates = [];
+      for (const meta of sectionMetas) {
         const data = await loadJson(meta.file);
-        // Gắn thêm meta để dùng: title, type, partIndex...
-        data.id = meta.id;
-        data.partIndex = meta.partIndex;
-        data.label = meta.label;
-        sections.push(data);
+        runtime.sectionData[meta.id] = data;
+        runtime.sectionStates.push({
+          id: meta.id,
+          done: false,
+          total: countQuestionsInSection(data),
+          answers: [] // mỗi phần tử: {number, correct:true/false}
+        });
       }
 
-      const runtime = {
-        test,
-        sections,
-        // điểm tạm cho cả bài test (tăng dần mỗi câu đúng)
-        tempScore: 0,
-        // trạng thái từng phần: "new" | "in-progress" | "done"
-        sectionState: {},
-        // chỉ số câu hiện tại trong phần đang chạy
-        currentQuestionIndex: 0,
-      };
-
-      renderTestOverview(root, runtime);
-    } catch (e) {
-      console.error(e);
-      root.textContent =
-        "Có lỗi khi tải đề kiểm tra. Vui lòng kiểm tra lại JSON hoặc kết nối mạng.";
+      // 4.4. Hiển thị danh sách phần
+      renderSectionsOverview();
+    } catch (err) {
+      console.error(err);
+      runtime.root.innerHTML =
+        "<p>Có lỗi khi tải đề kiểm tra. Kiểm tra lại đường dẫn JSON hoặc mở F12 để xem chi tiết.</p>";
     }
   }
 
-  // ================== MÀN HÌNH TỔNG – DANH SÁCH PHẦN ==================
+  function countQuestionsInSection(sectionData) {
+    if (!sectionData) return 0;
+    if (Array.isArray(sectionData.questions)) return sectionData.questions.length;
+    if (sectionData.type === "readingDragDrop" && sectionData.blanks) {
+      return Object.keys(sectionData.blanks).length;
+    }
+    return 0;
+  }
 
-  function renderTestOverview(root, runtime) {
-    const { test, sections, sectionState } = runtime;
+  // ============================================================
+  // 5. Màn danh sách phần
+  // ============================================================
 
+  function renderSectionsOverview() {
+    const root = runtime.root;
     root.innerHTML = "";
 
-    const title = el(
+    const h = createEl(
       "h2",
-      "quiz-eng-overview-title",
-      test.title || "English Quiz – Bài kiểm tra tiếng Anh"
+      "quiz-title",
+      runtime.testMeta.title || "English Quiz"
+    );
+    root.appendChild(h);
+
+    const note = createEl(
+      "p",
+      "quiz-subtitle",
+      "Chọn một phần để bắt đầu. Làm xong một phần sẽ được đánh dấu ✔ Hoàn thành."
+    );
+    root.appendChild(note);
+
+    const list = createEl("div", "quiz-card");
+    root.appendChild(list);
+
+    runtime.sectionMetas.forEach((meta, idx) => {
+      const state = runtime.sectionStates[idx] || { done: false, total: 0 };
+      const data = runtime.sectionData[meta.id];
+
+      const box = createEl("div", "quiz-section");
+      const title = createEl(
+        "h3",
+        "quiz-section-title",
+        meta.label || data.title || "Phần " + (meta.partIndex || idx + 1)
+      );
+      box.appendChild(title);
+
+      const info = createEl(
+        "p",
+        "quiz-hint",
+        `Kiểu: ${data.type || "unknown"} · Số câu: ${state.total}`
+      );
+      box.appendChild(info);
+
+      const status = createEl(
+        "p",
+        "quiz-hint",
+        state.done ? "✔ Đã hoàn thành" : "Chưa làm"
+      );
+      status.style.fontWeight = "500";
+      status.style.color = state.done ? "#16a34a" : "#6b7280";
+      box.appendChild(status);
+
+      const btn = createEl(
+        "button",
+        "main-btn",
+        state.done ? "Làm lại phần này" : "Bắt đầu phần này"
+      );
+      btn.addEventListener("click", () => {
+        startSection(idx);
+      });
+      box.appendChild(btn);
+
+      list.appendChild(box);
+    });
+
+    // nút tạm: sau này bạn có thể dùng để tính điểm tổng / kết thúc bài test
+    const footer = createEl("div", "quiz-submit-row");
+    const endBtn = createEl("button", "main-btn", "Thoát bài test");
+    endBtn.addEventListener("click", () => {
+      if (confirm("Thoát bài test? Điểm XP/Coin hiện tại chưa được tính thêm.")) {
+        window.location.href = "index.html";
+      }
+    });
+    footer.appendChild(endBtn);
+    root.appendChild(footer);
+  }
+
+  // ============================================================
+  // 6. Chuyển vào một phần
+  // ============================================================
+
+  function startSection(sectionIndex) {
+    runtime.currentSectionIndex = sectionIndex;
+    runtime.currentQuestionIndex = 0;
+
+    const meta = runtime.sectionMetas[sectionIndex];
+    const data = runtime.sectionData[meta.id];
+    const type = data.type;
+
+    if (type === "mcqOneByOne") {
+      runMcqOneByOneSection();
+    } else if (type === "readingMcq") {
+      runReadingMcqSection();
+    } else {
+      // Các loại khác tạm chưa làm step-by-step
+      alert(
+        "Kiểu phần '" +
+          type +
+          "' hiện chưa được làm từng câu. Mình đang để TODO để làm sau."
+      );
+      renderSectionsOverview();
+    }
+  }
+
+  // ============================================================
+  // 7. Phần 1 – MCQ từng câu (mcqOneByOne)
+  // ============================================================
+
+  function runMcqOneByOneSection() {
+    const secIdx = runtime.currentSectionIndex;
+    const meta = runtime.sectionMetas[secIdx];
+    const data = runtime.sectionData[meta.id];
+    const questions = data.questions || [];
+    const total = questions.length;
+
+    // bảo vệ
+    if (!total) {
+      alert("Phần này không có câu hỏi.");
+      renderSectionsOverview();
+      return;
+    }
+
+    const qIndex = runtime.currentQuestionIndex;
+    const q = questions[qIndex];
+
+    const root = runtime.root;
+    root.innerHTML = "";
+
+    const title = createEl(
+      "h2",
+      "quiz-title",
+      `${data.testName || runtime.testMeta.title || "Test"} - Phần ${
+        data.partIndex || meta.partIndex || secIdx + 1
+      } - Trắc nghiệm`
     );
     root.appendChild(title);
 
-    if (test.description) {
-      const sub = el("p", "quiz-eng-overview-sub", test.description);
-      root.appendChild(sub);
-    }
+    const sub = createEl(
+      "p",
+      "quiz-subtitle",
+      `Câu ${qIndex + 1} / ${total}`
+    );
+    root.appendChild(sub);
 
-    const list = el("div", "quiz-eng-section-list");
-    root.appendChild(list);
+    const card = createEl("section", "quiz-card");
+    root.appendChild(card);
 
-    sections.forEach((sec, idx) => {
-      const state = sectionState[sec.id] || "new";
-      const card = el("div", "quiz-eng-section-card");
+    const box = createEl("div", "quiz-question");
+    const qTitle = createEl(
+      "p",
+      "quiz-question-text",
+      `Câu ${q.number}. ${q.text || ""}`
+    );
+    box.appendChild(qTitle);
 
-      const name = el(
-        "div",
-        "quiz-eng-section-name",
-        sec.label || `Phần ${sec.partIndex || idx + 1}`
-      );
-      card.appendChild(name);
-
-      const metaLine = el(
-        "div",
-        "quiz-eng-section-meta",
-        `Kiểu: ${sec.type || "?"} • Số câu: ${(sec.questions || []).length || 0}`
-      );
-      card.appendChild(metaLine);
-
-      const btnRow = el("div", "quiz-eng-section-actions");
-      card.appendChild(btnRow);
-
-      const btn = el("button", "main-btn");
-      if (state === "done") {
-        btn.textContent = "Đã hoàn thành";
-        btn.disabled = true;
-      } else {
-        btn.textContent = state === "in-progress" ? "Tiếp tục làm" : "Bắt đầu làm";
-        btn.addEventListener("click", () => {
-          runtime.sectionState[sec.id] = "in-progress";
-          runtime.currentQuestionIndex = 0;
-          startSection(root, runtime, sec);
-        });
-      }
-      btnRow.appendChild(btn);
-
-      list.appendChild(card);
-    });
-
-    // TODO: Sau này thêm nút "Nộp điểm / cộng XP" ở đây nếu cần
-  }
-
-  // ================== CHẠY 1 PHẦN ==================
-
-  function startSection(root, runtime, section) {
-    const type = section.type;
-
-    switch (type) {
-      case "mcqOneByOne":
-        runOneByOneSection(root, runtime, section);
-        break;
-
-      case "readingMcq":
-        runReadingMcqSection(root, runtime, section); // PHẦN 3
-        break;
-
-      // Sau này thêm các kiểu khác:
-      // case "mcqImage": ...
-      // case "readingDragDrop": ...
-      // case "wordForm": ...
-      // case "reorderAndRewrite": ...
-      default:
-        alert("Hiện chưa hỗ trợ kiểu phần: " + (type || "không xác định"));
-        renderTestOverview(root, runtime);
-    }
-  }
-
-  // ================== PHẦN 1 – MCQ ONE BY ONE ==================
-  // Mỗi lần chỉ hiện 1 câu trắc nghiệm. Bấm "Câu tiếp theo" để sang câu sau.
-
- // ============================ PHẦN 1: MCQ ONE-BY-ONE ============================
-function runOneByOneSection(root, runtime, section) {
-  const data = section;              // chính là JSON P1_001
-  const questions = data.questions || [];
-  const total = questions.length;
-
-  if (!total) {
-    root.innerHTML = "<p>Phần này chưa có câu hỏi.</p>";
-    return;
-  }
-
-  const state = {
-    idx: 0,                  // câu đang làm (0 .. total-1)
-    stage: "answer",         // "answer" -> chọn đáp án, "feedback" -> xem giải thích
-  };
-
-  renderStep();
-
-  function renderStep() {
-    const q = questions[state.idx];
-
-    root.innerHTML = "";
-
-    // Header: tiêu đề + tiến độ
-    const header = document.createElement("div");
-    header.className = "quiz-eng-header-row";
-
-    const title = document.createElement("h2");
-    title.className = "quiz-title";
-    title.textContent = data.title || "Phần 1 - Trắc nghiệm";
-    header.appendChild(title);
-
-    const progress = document.createElement("span");
-    progress.className = "quiz-progress";
-    progress.textContent = `Câu ${q.number} / ${questions[questions.length - 1].number}`;
-    header.appendChild(progress);
-
-    root.appendChild(header);
-
-    // Thân câu hỏi
-    const card = document.createElement("div");
-    card.className = "quiz-card";
-
-    const qText = document.createElement("p");
-    qText.className = "quiz-question-text";
-    qText.textContent = `Câu ${q.number}. ${q.text || ""}`;
-    card.appendChild(qText);
-
-    const optionsWrap = document.createElement("div");
-    optionsWrap.className = "quiz-options";
-
+    const optionsWrap = createEl("div");
+    const name = `sec${secIdx}_q${q.number}`;
     (q.options || []).forEach((opt, idx) => {
-      const line = document.createElement("label");
-      line.className = "quiz-option-row";
-
+      const line = createEl("label", "quiz-option");
       const input = document.createElement("input");
       input.type = "radio";
-      input.name = "mcq-" + data.id + "-" + q.number;
+      input.name = name;
       input.value = String(idx);
-
-      const span = document.createElement("span");
-      span.textContent = opt;
-
       line.appendChild(input);
-      line.appendChild(span);
+      line.appendChild(document.createTextNode(" " + opt));
       optionsWrap.appendChild(line);
     });
+    box.appendChild(optionsWrap);
 
-    card.appendChild(optionsWrap);
+    const explainBox = createEl("div", "quiz-passage");
+    explainBox.style.display = "none";
+    card.appendChild(box);
+    card.appendChild(explainBox);
 
-    // Vùng feedback (giải thích)
-    const feedback = document.createElement("div");
-    feedback.className = "quiz-feedback";
-    feedback.style.minHeight = "32px";
-    card.appendChild(feedback);
+    // row nút
+    const row = createEl("div", "quiz-submit-row");
+    card.appendChild(row);
 
-    // Hàng nút
-    const btnRow = document.createElement("div");
-    btnRow.className = "quiz-nav-row";
-
-    const backBtn = document.createElement("button");
-    backBtn.className = "sub-btn";
-    backBtn.textContent = "⬅ Về danh sách phần";
+    const backBtn = createEl("button", "sub-btn", "← Về danh sách phần");
     backBtn.addEventListener("click", () => {
-      renderSectionsOverview(runtime);
-    });
-    btnRow.appendChild(backBtn);
-
-    const mainBtn = document.createElement("button");
-    mainBtn.className = "main-btn";
-    mainBtn.textContent =
-      state.stage === "answer" ? "Kiểm tra đáp án" : "Câu tiếp theo ➜";
-    btnRow.appendChild(mainBtn);
-
-    card.appendChild(btnRow);
-    root.appendChild(card);
-
-    // ===== Logic cho nút chính =====
-    mainBtn.addEventListener("click", () => {
-      const chosen = card.querySelector(
-        'input[name="mcq-' + data.id + "-" + q.number + '"]:checked'
-      );
-
-      if (state.stage === "answer") {
-        if (!chosen) {
-          alert("Bạn hãy chọn 1 đáp án trước đã nhé.");
-          return;
-        }
-
-        const chosenIndex = Number(chosen.value);
-        const correctIndex = Number(q.correct);
-        const optionLabels = "ABCD";
-
-        // Đánh dấu đúng / sai
-        const allRows = optionsWrap.querySelectorAll(".quiz-option-row");
-        allRows.forEach((row, idx) => {
-          row.classList.remove("is-correct", "is-wrong", "is-selected");
-          if (idx === chosenIndex) row.classList.add("is-selected");
-          if (idx === correctIndex) row.classList.add("is-correct");
-        });
-
-        let msg;
-        const explain = q.explain || q.explanation || "";
-
-        if (chosenIndex === correctIndex) {
-          // cộng điểm tạm
-          runtime.tempScore = (runtime.tempScore || 0) + 1;
-
-          msg =
-            "✅ Chính xác! " +
-            (explain ? " " + explain : "Bạn đã chọn đúng đáp án.");
-        } else {
-          msg =
-            `❌ Chưa đúng. Đáp án đúng là ${
-              optionLabels[correctIndex] || (correctIndex + 1)
-            }. ` + (explain ? explain : "");
-        }
-
-        feedback.textContent = msg;
-        state.stage = "feedback";
-        mainBtn.textContent =
-          state.idx === total - 1 ? "Hoàn thành phần này" : "Câu tiếp theo ➜";
-      } else {
-        // sang câu kế tiếp hoặc quay lại danh sách phần
-        if (state.idx < total - 1) {
-          state.idx++;
-          state.stage = "answer";
-          renderStep();
-        } else {
-          // đánh dấu đã xong phần & quay lại overview
-          markSectionDone(runtime, data.id);
-          renderSectionsOverview(runtime);
-        }
+      if (
+        confirm(
+          "Thoát khỏi phần này? Những câu chưa làm sẽ không được tính vào điểm."
+        )
+      ) {
+        renderSectionsOverview();
       }
     });
-  }
-}
+    row.appendChild(backBtn);
 
+    const actionBtn = createEl("button", "main-btn", "Kiểm tra đáp án");
+    row.appendChild(actionBtn);
 
-  // ================== PHẦN 3 – READING MCQ (TỪNG CÂU) ==================
-  // Giữ nguyên đoạn văn ở trên, chỉ thay câu hỏi & đáp án ở dưới.
-  // HỖ TRỢ:
-  //   kind: "tf"  -> 2 đáp án True / False, correct = boolean
-  //   kind: "mcq" -> 4 đáp án trong mảng options, correct = index
+    let checked = false;
 
-  // ============================ PHẦN 3: READING + MCQ ============================
-function runReadingMcqSection(root, runtime, section) {
-  const data = section;               // JSON P3_001
-  const questions = data.questions || [];
-  const total = questions.length;
-
-  if (!total) {
-    root.innerHTML = "<p>Phần này chưa có câu hỏi.</p>";
-    return;
-  }
-
-  const state = {
-    idx: 0,
-    stage: "answer",
-  };
-
-  renderStep();
-
-  function renderStep() {
-    const q = questions[state.idx];
-
-    root.innerHTML = "";
-
-    // Header
-    const header = document.createElement("div");
-    header.className = "quiz-eng-header-row";
-
-    const title = document.createElement("h2");
-    title.className = "quiz-title";
-    title.textContent =
-      data.title || "Phần 3 - Đọc đoạn văn và trả lời câu hỏi";
-    header.appendChild(title);
-
-    const progress = document.createElement("span");
-    progress.className = "quiz-progress";
-    progress.textContent = `Câu ${state.idx + 1} / ${total}`;
-    header.appendChild(progress);
-
-    root.appendChild(header);
-
-    // Đoạn văn – luôn hiển thị phía trên
-    const passageCard = document.createElement("div");
-    passageCard.className = "quiz-card reading-passage-card";
-
-    const passage = document.createElement("div");
-    passage.className = "quiz-passage";
-    passage.innerHTML = (data.passage || "").replace(/\n/g, "<br>");
-    passageCard.appendChild(passage);
-
-    root.appendChild(passageCard);
-
-    // Card câu hỏi ngay dưới đoạn văn
-    const card = document.createElement("div");
-    card.className = "quiz-card";
-
-    const qText = document.createElement("p");
-    qText.className = "quiz-question-text";
-    qText.textContent = `Câu ${q.number}. ${q.text || ""}`;
-    card.appendChild(qText);
-
-    const optionsWrap = document.createElement("div");
-    optionsWrap.className = "quiz-options";
-
-    if (q.kind === "tf") {
-      // True / False
-      [["true", "True"], ["false", "False"]].forEach(([val, label]) => {
-        const row = document.createElement("label");
-        row.className = "quiz-option-row";
-
-        const input = document.createElement("input");
-        input.type = "radio";
-        input.name = "reading-" + data.id + "-" + q.number;
-        input.value = val;
-
-        const span = document.createElement("span");
-        span.textContent = label;
-
-        row.appendChild(input);
-        row.appendChild(span);
-        optionsWrap.appendChild(row);
-      });
-    } else {
-      // MCQ 4 lựa chọn
-      (q.options || []).forEach((opt, idx) => {
-        const row = document.createElement("label");
-        row.className = "quiz-option-row";
-
-        const input = document.createElement("input");
-        input.type = "radio";
-        input.name = "reading-" + data.id + "-" + q.number;
-        input.value = String(idx);
-
-        const span = document.createElement("span");
-        span.textContent = opt;
-
-        row.appendChild(input);
-        row.appendChild(span);
-        optionsWrap.appendChild(row);
-      });
-    }
-
-    card.appendChild(optionsWrap);
-
-    // Feedback
-    const feedback = document.createElement("div");
-    feedback.className = "quiz-feedback";
-    feedback.style.minHeight = "32px";
-    card.appendChild(feedback);
-
-    // Nút
-    const btnRow = document.createElement("div");
-    btnRow.className = "quiz-nav-row";
-
-    const backBtn = document.createElement("button");
-    backBtn.className = "sub-btn";
-    backBtn.textContent = "⬅ Về danh sách phần";
-    backBtn.addEventListener("click", () => {
-      renderSectionsOverview(runtime);
-    });
-    btnRow.appendChild(backBtn);
-
-    const mainBtn = document.createElement("button");
-    mainBtn.className = "main-btn";
-    mainBtn.textContent =
-      state.stage === "answer" ? "Kiểm tra đáp án" : "Câu tiếp theo ➜";
-    btnRow.appendChild(mainBtn);
-
-    card.appendChild(btnRow);
-    root.appendChild(card);
-
-    // ===== Logic nút chính =====
-    mainBtn.addEventListener("click", () => {
-      const chosen = card.querySelector(
-        'input[name="reading-' + data.id + "-" + q.number + '"]:checked'
+    actionBtn.addEventListener("click", () => {
+      const chosenInput = card.querySelector(
+        `input[name="${name}"]:checked`
       );
-
-      if (state.stage === "answer") {
-        if (!chosen) {
-          alert("Bạn hãy chọn 1 đáp án trước đã nhé.");
+      if (!checked) {
+        // Lần đầu: chấm câu này
+        if (!chosenInput) {
+          alert("Bạn hãy chọn một đáp án trước đã nhé.");
           return;
         }
+        checked = true;
 
-        const explain = q.explain || q.explanation || "";
-        let correct = false;
-        let correctLabel = "";
+        const chosen = Number(chosenInput.value);
+        const correct = q.correct;
+        const optsDom = Array.from(
+          optionsWrap.querySelectorAll("label.quiz-option")
+        );
 
-        if (q.kind === "tf") {
-          const userVal = chosen.value === "true";
-          correct = userVal === !!q.correct;
-          correctLabel = q.correct ? "True" : "False";
-        } else {
-          const userIdx = Number(chosen.value);
-          const rightIdx = Number(q.correct);
-          correct = userIdx === rightIdx;
-          const labels = "ABCD";
-          correctLabel = labels[rightIdx] || `Lựa chọn ${rightIdx + 1}`;
-        }
-
-        // Đánh dấu đúng / sai
-        const allRows = optionsWrap.querySelectorAll(".quiz-option-row");
-        allRows.forEach((row) => row.classList.remove("is-correct", "is-wrong", "is-selected"));
-
-        allRows.forEach((row) => {
-          const input = row.querySelector("input");
-          if (!input) return;
-          const val = input.value;
-
-          if (q.kind === "tf") {
-            const isTrueRow = val === "true";
-            const isCorrect = (!!q.correct && isTrueRow) || (!q.correct && !isTrueRow);
-            if (isCorrect) row.classList.add("is-correct");
-            if (input === chosen) row.classList.add("is-selected");
-          } else {
-            const idx = Number(val);
-            if (idx === Number(q.correct)) row.classList.add("is-correct");
-            if (input === chosen && idx !== Number(q.correct)) {
-              row.classList.add("is-selected");
+        optsDom.forEach((labelEl, idx) => {
+          labelEl.classList.remove("opt-correct", "opt-wrong", "opt-chosen");
+          if (idx === correct) {
+            labelEl.classList.add("opt-correct");
+          }
+          if (idx === chosen) {
+            labelEl.classList.add("opt-chosen");
+            if (idx !== correct) {
+              labelEl.classList.add("opt-wrong");
             }
           }
         });
 
-        let msg;
-        if (correct) {
-          runtime.tempScore = (runtime.tempScore || 0) + 1;
-          msg =
-            "✅ Chính xác! " +
-            (explain ? " " + explain : "Bạn đã chọn đúng dựa trên đoạn văn.");
-        } else {
-          msg =
-            `❌ Chưa đúng. Đáp án đúng là ${correctLabel}. ` +
-            (explain ? explain : "");
-        }
+        // Lưu kết quả câu này vào state
+        const secState = runtime.sectionStates[secIdx];
+        secState.answers[qIndex] = {
+          number: q.number,
+          correct: chosen === correct
+        };
 
-        feedback.textContent = msg;
-        state.stage = "feedback";
-        mainBtn.textContent =
-          state.idx === total - 1 ? "Hoàn thành phần này" : "Câu tiếp theo ➜";
-      } else {
-        if (state.idx < total - 1) {
-          state.idx++;
-          state.stage = "answer";
-          renderStep();
+        // Giải thích
+        let html = `<b>Đáp án đúng:</b> ${
+          (q.options && q.options[correct]) || ""
+        }`;
+        if (q.explanation) {
+          html += `<br><span style="font-size:13px;">${q.explanation}</span>`;
+        }
+        explainBox.innerHTML = html;
+        explainBox.style.display = "block";
+
+        if (qIndex < total - 1) {
+          actionBtn.textContent = "Câu tiếp theo →";
         } else {
-          markSectionDone(runtime, data.id);
-          renderSectionsOverview(runtime);
+          actionBtn.textContent = "Hoàn thành phần này";
+        }
+      } else {
+        // Sau khi đã xem đáp án → chuyển câu / kết thúc phần
+        if (qIndex < total - 1) {
+          runtime.currentQuestionIndex++;
+          runMcqOneByOneSection();
+        } else {
+          runtime.sectionStates[secIdx].done = true;
+          alert("Bạn đã hoàn thành phần 1 – Trắc nghiệm!");
+          renderSectionsOverview();
         }
       }
     });
   }
-}
 
-  // ================== DOM READY ==================
+  // ============================================================
+  // 8. Phần 3 – Đọc đoạn văn & trả lời (readingMcq)
+  // ============================================================
+
+  function runReadingMcqSection() {
+    const secIdx = runtime.currentSectionIndex;
+    const meta = runtime.sectionMetas[secIdx];
+    const data = runtime.sectionData[meta.id];
+    const questions = data.questions || [];
+    const total = questions.length;
+
+    if (!total) {
+      alert("Phần đọc hiểu này không có câu hỏi.");
+      renderSectionsOverview();
+      return;
+    }
+
+    const qIndex = runtime.currentQuestionIndex;
+    const q = questions[qIndex];
+
+    const root = runtime.root;
+    root.innerHTML = "";
+
+    const title = createEl(
+      "h2",
+      "quiz-title",
+      `${data.testName || runtime.testMeta.title || "Test"} - Phần ${
+        data.partIndex || meta.partIndex || secIdx + 1
+      } - Đọc đoạn văn và trả lời`
+    );
+    root.appendChild(title);
+
+    const sub = createEl(
+      "p",
+      "quiz-subtitle",
+      `Câu ${qIndex + 1} / ${total}`
+    );
+    root.appendChild(sub);
+
+    const card = createEl("section", "quiz-card");
+    root.appendChild(card);
+
+    // Đoạn văn (giữ nguyên cho tất cả câu)
+    if (data.passage) {
+      const passDiv = createEl("div", "quiz-passage");
+      passDiv.innerHTML = data.passage.replace(/\n/g, "<br>");
+      card.appendChild(passDiv);
+    }
+
+    // Câu hỏi
+    const box = createEl("div", "quiz-question");
+    const qTitle = createEl(
+      "p",
+      "quiz-question-text",
+      `Câu ${q.number}. ${q.text || ""}`
+    );
+    box.appendChild(qTitle);
+
+    const optionsWrap = createEl("div");
+    const name = `sec${secIdx}_q${q.number}`;
+
+    if (q.kind === "tf") {
+      const choices = ["True", "False"];
+      choices.forEach((label, idx) => {
+        const line = createEl("label", "quiz-option");
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = name;
+        input.value = idx === 0 ? "true" : "false";
+        line.appendChild(input);
+        line.appendChild(document.createTextNode(" " + label));
+        optionsWrap.appendChild(line);
+      });
+    } else {
+      (q.options || []).forEach((opt, idx) => {
+        const line = createEl("label", "quiz-option");
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = name;
+        input.value = String(idx);
+        line.appendChild(input);
+        line.appendChild(document.createTextNode(" " + opt));
+        optionsWrap.appendChild(line);
+      });
+    }
+
+    box.appendChild(optionsWrap);
+    card.appendChild(box);
+
+    const explainBox = createEl("div", "quiz-passage");
+    explainBox.style.display = "none";
+    card.appendChild(explainBox);
+
+    // Nút
+    const row = createEl("div", "quiz-submit-row");
+    card.appendChild(row);
+
+    const backBtn = createEl("button", "sub-btn", "← Về danh sách phần");
+    backBtn.addEventListener("click", () => {
+      if (
+        confirm(
+          "Thoát khỏi phần đọc hiểu? Những câu chưa làm sẽ không được tính vào điểm."
+        )
+      ) {
+        renderSectionsOverview();
+      }
+    });
+    row.appendChild(backBtn);
+
+    const actionBtn = createEl("button", "main-btn", "Kiểm tra đáp án");
+    row.appendChild(actionBtn);
+
+    let checked = false;
+
+    actionBtn.addEventListener("click", () => {
+      const chosenInput = card.querySelector(
+        `input[name="${name}"]:checked`
+      );
+      if (!checked) {
+        if (!chosenInput) {
+          alert("Bạn hãy chọn một đáp án trước đã nhé.");
+          return;
+        }
+        checked = true;
+
+        let isCorrect = false;
+        if (q.kind === "tf") {
+          const val = chosenInput.value === "true";
+          isCorrect = val === !!q.correct;
+        } else {
+          const chosenIdx = Number(chosenInput.value);
+          isCorrect = chosenIdx === q.correct;
+        }
+
+        const optsDom = Array.from(
+          optionsWrap.querySelectorAll("label.quiz-option")
+        );
+
+        if (q.kind === "tf") {
+          const trueCorrect = q.correct === true;
+          optsDom.forEach((labelEl, idx) => {
+            labelEl.classList.remove("opt-correct", "opt-wrong", "opt-chosen");
+            const val = idx === 0; // True
+            if (val === q.correct) {
+              labelEl.classList.add("opt-correct");
+            }
+            if (
+              chosenInput &&
+              labelEl.contains(chosenInput) &&
+              val !== q.correct
+            ) {
+              labelEl.classList.add("opt-wrong");
+            }
+            if (labelEl.contains(chosenInput)) {
+              labelEl.classList.add("opt-chosen");
+            }
+          });
+        } else {
+          optsDom.forEach((labelEl, idx) => {
+            const input = labelEl.querySelector("input");
+            const chosen = input && input.checked;
+            labelEl.classList.remove("opt-correct", "opt-wrong", "opt-chosen");
+            if (idx === q.correct) {
+              labelEl.classList.add("opt-correct");
+            }
+            if (chosen) {
+              labelEl.classList.add("opt-chosen");
+              if (idx !== q.correct) {
+                labelEl.classList.add("opt-wrong");
+              }
+            }
+          });
+        }
+
+        // Lưu state
+        const secState = runtime.sectionStates[secIdx];
+        secState.answers[qIndex] = {
+          number: q.number,
+          correct: isCorrect
+        };
+
+        // Giải thích
+        let explain = "";
+        if (q.kind === "tf") {
+          explain =
+            "<b>Đáp án đúng:</b> " + (q.correct ? "True" : "False");
+        } else {
+          explain =
+            "<b>Đáp án đúng:</b> " +
+            ((q.options && q.options[q.correct]) || "");
+        }
+        if (q.explanation) {
+          explain += `<br><span style="font-size:13px;">${q.explanation}</span>`;
+        }
+        explainBox.innerHTML = explain;
+        explainBox.style.display = "block";
+
+        if (qIndex < total - 1) {
+          actionBtn.textContent = "Câu tiếp theo →";
+        } else {
+          actionBtn.textContent = "Hoàn thành phần này";
+        }
+      } else {
+        // next / finish
+        if (qIndex < total - 1) {
+          runtime.currentQuestionIndex++;
+          runReadingMcqSection();
+        } else {
+          runtime.sectionStates[secIdx].done = true;
+          alert("Bạn đã hoàn thành phần 3 – Đọc hiểu!");
+          renderSectionsOverview();
+        }
+      }
+    });
+  }
+
+  // ============================================================
+  // 9. (Giữ lại) Hàm awardStats – cộng XP/Coin (chưa gọi tới)
+  // ============================================================
+
+  async function awardStats(scorePercent, testIdOverride) {
+    scorePercent = Math.max(0, Math.min(100, scorePercent || 0));
+    const testId = testIdOverride || getTestIdFromQuery();
+
+    if (!window.firebase || !firebase.auth) {
+      console.warn("Firebase chưa sẵn sàng, không cập nhật XP/Coin được.");
+      return { xpGain: 0, coinGain: 0, updated: false };
+    }
+
+    const user = firebase.auth().currentUser;
+    if (!user) {
+      console.warn("Chưa đăng nhập, không cập nhật XP/Coin.");
+      return { xpGain: 0, coinGain: 0, updated: false };
+    }
+
+    const uid = user.uid;
+    const db = firebase.database();
+    const quizRef = db.ref("users/" + uid + "/quizEng/" + testId);
+    const statsRef = db.ref("users/" + uid + "/stats");
+
+    const snap = await quizRef.once("value");
+    const info = snap.val() || {};
+    const attempts = info.attempts || 0;
+    const gotPerfectCoin = !!info.gotPerfectCoin;
+
+    let xpGain = 0;
+    let coinGain = 0;
+    let newGotPerfectCoin = gotPerfectCoin;
+
+    if (attempts === 0) {
+      if (scorePercent === 100) {
+        xpGain = 100;
+        coinGain = 250; // theo yêu cầu: lần đầu 100% thưởng 250 coin
+        newGotPerfectCoin = true;
+      } else {
+        xpGain = scorePercent;
+        coinGain = 50;
+      }
+    } else {
+      xpGain = scorePercent;
+      if (scorePercent === 100 && !gotPerfectCoin) {
+        coinGain = 250;
+        newGotPerfectCoin = true;
+      }
+    }
+
+    const newAttempts = attempts + 1;
+    const bestScore = Math.max(info.bestScore || 0, scorePercent);
+
+    await quizRef.update({
+      attempts: newAttempts,
+      bestScore: bestScore,
+      lastScore: scorePercent,
+      gotPerfectCoin: newGotPerfectCoin,
+      lastUpdated: Date.now()
+    });
+
+    if (xpGain || coinGain) {
+      await statsRef.transaction((stats) => {
+        stats = stats || {};
+        stats.xp = (stats.xp || 0) + xpGain;
+        stats.coin = (stats.coin || 0) + coinGain;
+        if (stats.badge == null) stats.badge = 1;
+        return stats;
+      });
+    }
+
+    return { xpGain, coinGain, updated: true };
+  }
+
+  // ============================================================
+  // 11. DOM ready
+  // ============================================================
 
   document.addEventListener("DOMContentLoaded", () => {
+    initQuizHeader();
     initQuizEng();
   });
 })();
-
