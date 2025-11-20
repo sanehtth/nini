@@ -416,3 +416,164 @@ body.dark-theme .forgot-link a {
 body.dark-theme .forgot-link a:hover {
   text-decoration: underline;
 }
+
+/* ===================== QUIZ ENGLISH – DARK MODE ===================== */
+
+.dark .quiz-card {
+  background: #020617;           /* slate-950 */
+  border-color: #1e293b;         /* slate-800 */
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.6);
+}
+
+.dark .quiz-title {
+  color: #e5e7eb;                /* text */
+}
+
+.dark .quiz-subtitle {
+  color: #9ca3af;                /* slate-400 */
+}
+
+.dark .quiz-section-item {
+  background: #020617;
+  border-color: #1f2937;
+}
+
+.dark .quiz-section-item-title {
+  color: #e5e7eb;
+}
+
+.dark .quiz-section-item-meta,
+.dark .quiz-section-item-status {
+  color: #9ca3af;
+}
+
+/* Passage, word bank, reorder */
+
+.dark .quiz-passage {
+  background: #020617;
+  border-color: #1f2937;
+  color: #e5e7eb;
+}
+
+.dark .quiz-passage-input input.quiz-blank {
+  background: #020617;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+.dark .quiz-wordbank {
+  /* giữ layout, chỉ chỉnh màu chip */
+}
+
+.dark .quiz-wordchip {
+  background: #020617;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+.dark .reorder-bank,
+.dark .reorder-dropzone {
+  background: #020617;
+  border-color: #374151;
+}
+
+.dark .reorder-dropzone {
+  background: #020617;
+}
+
+.dark .reorder-chip {
+  background: #020617;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+.dark .reorder-chip.in-drop {
+  background: #111827;
+}
+
+/* Input / textarea */
+
+.dark .quiz-input,
+.dark .quiz-textarea {
+  background: #020617;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+.dark .quiz-input::placeholder,
+.dark .quiz-textarea::placeholder {
+  color: #6b7280;
+}
+
+/* Khi sai câu */
+
+.dark .quiz-input-wrong {
+  background: #450a0a;
+  border-color: #b91c1c;
+}
+
+.dark .quiz-blank-correct {
+  background: #064e3b;
+  border-color: #16a34a;
+  color: #bbf7d0;
+}
+
+.dark .quiz-blank-wrong {
+  background: #450a0a;
+  border-color: #dc2626;
+  color: #fecaca;
+}
+
+.dark .reorder-dropzone-wrong {
+  background: #450a0a;
+  border-color: #b91c1c;
+}
+
+/* Option hover & đúng/sai */
+
+.dark .quiz-option {
+  color: #e5e7eb;
+}
+
+.dark .quiz-option:hover {
+  background: #111827;
+}
+
+.dark .quiz-option-correct {
+  background: #065f46 !important;
+  border-color: #16a34a;
+  color: #bbf7d0;
+}
+
+.dark .quiz-option-wrong {
+  background: #7f1d1d !important;
+  border-color: #dc2626;
+  color: #fee2e2;
+}
+
+/* Explanation */
+
+.dark .quiz-explanation-box {
+  border-top-color: #374151;
+  color: #e5e7eb;
+}
+
+.dark .quiz-correct-line {
+  color: #bbf7d0;
+}
+
+/* Modal */
+
+.dark .quiz-modal-overlay {
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.dark .quiz-modal-card {
+  background: #020617;
+  border-color: #1f2937;
+  color: #e5e7eb;
+}
+
+.dark .quiz-modal-card h3 {
+  color: #e5e7eb;
+}
