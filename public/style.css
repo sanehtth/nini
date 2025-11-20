@@ -522,6 +522,35 @@ button.main-btn.loading::after { content:''; position:absolute; width:16px; heig
   margin-bottom: 2px;
 }
 
+.quiz-option-row {
+  display: block;
+  padding: 4px 8px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.quiz-option-row input {
+  margin-right: 6px;
+}
+
+.quiz-option-row.is-selected {
+  border: 1px solid #f97373;
+  background: #fef2f2;
+}
+
+.quiz-option-row.is-correct {
+  border: 1px solid #22c55e;
+  background: #ecfdf3;
+}
+
+.quiz-feedback {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #374151;
+}
+
 
 
 
