@@ -14,21 +14,17 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("signupBtn")
     ?.addEventListener("click", () => handleAuth(signup, "signupBtn"));
-
   document
     .getElementById("loginBtn")
     ?.addEventListener("click", () => handleAuth(login, "loginBtn"));
-
   document
     .getElementById("logoutBtn")
     ?.addEventListener("click", () =>
       auth.signOut().then(() => location.reload())
     );
-
   document
     .getElementById("profileBtn")
     ?.addEventListener("click", showProfile);
-
   document
     .getElementById("backBtn")
     ?.addEventListener("click", backToGameBoard);
@@ -48,12 +44,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const actionBtn = document.getElementById("actionBtn");
   const forgotPassword = document.getElementById("forgotPassword");
   const authMsg = document.getElementById("authMsg");
-  const forgotBtn = document.getElementById("forgotBtn");
 
-  // Chỉ cài đặt logic login/signup nếu đúng là trang có form đăng nhập
+  let isLoginMode = true;
+
+  // Chỉ gán handler nếu đang ở trang có form login
   if (loginTab && signupTab && actionBtn && forgotPassword && authMsg) {
-    let isLoginMode = true;
-
     // Chuyển tab
     loginTab.onclick = () => {
       isLoginMode = true;
@@ -92,12 +87,11 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     // Quên mật khẩu
+    const forgotBtn = document.getElementById("forgotBtn");
     if (forgotBtn) {
       forgotBtn.onclick = (e) => {
         e.preventDefault();
-        const email = document
-          .getElementById("email")
-          .value.trim();
+        const email = document.getElementById("email").value.trim();
         if (!email) {
           authMsg.textContent = "Vui lòng nhập email trước!";
           return;
