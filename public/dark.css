@@ -577,3 +577,29 @@ body.dark-theme .forgot-link a:hover {
 .dark .quiz-modal-card h3 {
   color: #e5e7eb;
 }
+
+/* Quiz – dark mode override */
+body.dark-mode .quiz-card {
+  background: #111827;
+  border-color: #1f2937;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
+}
+body.dark-mode .quiz-passage {
+  background: #1f2937;
+  color: #e5e7eb;
+}
+body.dark-mode .quiz-subtitle,
+body.dark-mode .quiz-hint {
+  color: #9ca3af;
+}
+body.dark-mode .sub-btn {
+  background: #111827;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+body.dark-mode .opt-correct {
+  background: #064e3b;
+}
+body.dark-mode .opt-wrong {
+  background: #7f1d1d;
+}
