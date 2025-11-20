@@ -14,17 +14,21 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("signupBtn")
     ?.addEventListener("click", () => handleAuth(signup, "signupBtn"));
+
   document
     .getElementById("loginBtn")
     ?.addEventListener("click", () => handleAuth(login, "loginBtn"));
+
   document
     .getElementById("logoutBtn")
     ?.addEventListener("click", () =>
       auth.signOut().then(() => location.reload())
     );
+
   document
     .getElementById("profileBtn")
     ?.addEventListener("click", showProfile);
+
   document
     .getElementById("backBtn")
     ?.addEventListener("click", backToGameBoard);
@@ -44,57 +48,65 @@ document.addEventListener("DOMContentLoaded", () => {
   const actionBtn = document.getElementById("actionBtn");
   const forgotPassword = document.getElementById("forgotPassword");
   const authMsg = document.getElementById("authMsg");
+  const forgotBtn = document.getElementById("forgotBtn");
 
-  let isLoginMode = true;
+  // Chỉ cài đặt logic login/signup nếu đúng là trang có form đăng nhập
+  if (loginTab && signupTab && actionBtn && forgotPassword && authMsg) {
+    let isLoginMode = true;
 
-  // Chuyển tab
-  loginTab.onclick = () => {
-    isLoginMode = true;
-    loginTab.classList.add("active");
-    signupTab.classList.remove("active");
-    actionBtn.textContent = "Đăng nhập";
-    forgotPassword.style.display = "block";
-    authMsg.textContent = "";
-  };
+    // Chuyển tab
+    loginTab.onclick = () => {
+      isLoginMode = true;
+      loginTab.classList.add("active");
+      signupTab.classList.remove("active");
+      actionBtn.textContent = "Đăng nhập";
+      forgotPassword.style.display = "block";
+      authMsg.textContent = "";
+    };
 
-  signupTab.onclick = () => {
-    isLoginMode = false;
-    signupTab.classList.add("active");
-    loginTab.classList.remove("active");
-    actionBtn.textContent = "Đăng ký";
-    forgotPassword.style.display = "none";
-    authMsg.textContent = "";
-  };
+    signupTab.onclick = () => {
+      isLoginMode = false;
+      signupTab.classList.add("active");
+      loginTab.classList.remove("active");
+      actionBtn.textContent = "Đăng ký";
+      forgotPassword.style.display = "none";
+      authMsg.textContent = "";
+    };
 
-  // Hành động chính
-  actionBtn.onclick = () => {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
+    // Hành động chính
+    actionBtn.onclick = () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
 
-    if (!email || !password) {
-      authMsg.textContent =
-        "Vui lòng nhập đầy đủ email và mật khẩu!";
-      return;
+      if (!email || !password) {
+        authMsg.textContent =
+          "Vui lòng nhập đầy đủ email và mật khẩu!";
+        return;
+      }
+
+      if (isLoginMode) {
+        login(email, password);
+      } else {
+        signup(email, password);
+      }
+    };
+
+    // Quên mật khẩu
+    if (forgotBtn) {
+      forgotBtn.onclick = (e) => {
+        e.preventDefault();
+        const email = document
+          .getElementById("email")
+          .value.trim();
+        if (!email) {
+          authMsg.textContent = "Vui lòng nhập email trước!";
+          return;
+        }
+        // Hàm này nằm trong firebase.js
+        sendPasswordReset(email);
+      };
     }
-
-    if (isLoginMode) {
-      login(email, password);
-    } else {
-      signup(email, password);
-    }
-  };
-
-  // Quên mật khẩu
-  document.getElementById("forgotBtn").onclick = (e) => {
-    e.preventDefault();
-    const email = document.getElementById("email").value.trim();
-    if (!email) {
-      authMsg.textContent = "Vui lòng nhập email trước!";
-      return;
-    }
-    // Hàm này nằm trong firebase.js
-    sendPasswordReset(email);
-  };
+  }
 
   // ============ Vá schema user ============
 
