@@ -1,12 +1,16 @@
-// js/quizEng.js
-// Render bài test tiếng Anh từ JSON (6 phần), làm từng câu một, có giải thích.
+// public/js/quizEng.js
+// Trang bài test tiếng Anh nhiều phần (6 phần).
+// - Đọc testsManifest.json & sectionsManifest.json để biết cấu trúc bài.
+// - Mỗi phần làm theo kiểu "từng câu một".
+//   + mcqOneByOne  : trắc nghiệm thường
+//   + mcqImage     : trắc nghiệm có hình
+//   + readingMcq   : có đoạn văn + câu hỏi trắc nghiệm
+//
+// File này KHÔNG cộng XP/Coin. Việc cộng XP/Coin sẽ được xử lý ở bước sau
+// khi mình thống nhất luật điểm. Hiện tại chỉ là luyện tập + giải thích.
 
-// Toàn bộ code gói trong IIFE để không rò rỉ biến global
 (function () {
-  // ============================================================
-  // 1. Helper chung
-  // ============================================================
-
+  // ================== Helper chung ==================
   function getTestIdFromQuery() {
     const params = new URLSearchParams(window.location.search);
     return params.get("test") || "test1";
@@ -17,7 +21,7 @@
     if (!res.ok) {
       throw new Error("Không tải được " + url + " (" + res.status + ")");
     }
-    return await res.json();
+    return res.json();
   }
 
   function createEl(tag, className, text) {
@@ -27,475 +31,266 @@
     return el;
   }
 
-  function norm(s) {
-    return (s || "").trim().toLowerCase();
+  function nl2br(text) {
+    return (text || "").replace(/\n/g, "<br>");
   }
 
-  // ============================================================
-  // 2. Header: đọc XP/Coin từ Firebase (giống bản cũ của bạn)
-  // ============================================================
+  // ================== State toàn cục ==================
+  let gRoot = null;              // container chính
+  let gTest = null;              // object test trong testsManifest
+  let gSections = [];            // [{meta, data}]
+  let gSectionProgress = {};     // {sectionId: {done, correct, total}}
+  let gCurrentRuntime = null;    // trạng thái khi đang làm 1 phần
 
-  function initQuizHeader() {
-    if (!window.firebase || !firebase.auth) return;
+  // ================== Khởi động trang ==================
+  document.addEventListener("DOMContentLoaded", initQuizEngPage);
 
-    const emailEl = document.getElementById("quizUserEmail");
-    const xpEl = document.getElementById("quizXP");
-    const coinEl = document.getElementById("quizCoin");
-    const badgeEl = document.getElementById("quizBadge");
-
-    firebase.auth().onAuthStateChanged((user) => {
-      if (!user) {
-        if (emailEl) emailEl.textContent = "Chưa đăng nhập";
-        return;
-      }
-      if (emailEl) emailEl.textContent = user.email;
-
-      const statsRef = firebase
-        .database()
-        .ref("users/" + user.uid + "/stats");
-
-      statsRef.on("value", (snap) => {
-        const stats = snap.val() || {};
-        if (xpEl) xpEl.textContent = stats.xp != null ? stats.xp : 0;
-        if (coinEl) coinEl.textContent = stats.coin != null ? stats.coin : 0;
-        if (badgeEl) badgeEl.textContent = stats.badge != null ? stats.badge : 1;
-      });
-    });
-  }
-
-  // ============================================================
-  // 3. Runtime cho cả bài test
-  // ============================================================
-
-  const runtime = {
-    root: null,
-    testMeta: null,          // object trong testsManifest
-    sectionMetas: [],        // mảng meta trong sectionsManifest
-    sectionData: {},         // id -> data JSON (P1_001.json,...)
-    sectionStates: [],       // per section: {done, answers:[], total}
-    currentSectionIndex: -1,
-    currentQuestionIndex: -1
-  };
-
-  // ============================================================
-  // 4. Khởi động trang quiz
-  // ============================================================
-
-  async function initQuizEng() {
-    const root =
+  async function initQuizEngPage() {
+    // Tìm container: thử vài id cho chắc vì HTML mình từng đổi tên
+    gRoot =
+      document.getElementById("quizEngRoot") ||
       document.getElementById("quiz-eng-root") ||
-      document.getElementById("quizRoot") ||
-      document.getElementById("quizApp");
+      document.getElementById("quizEng") ||
+      document.getElementById("quiz-eng") ||
+      document.getElementById("quiz");
 
-    if (!root) {
-      console.warn("[quizEng] Không tìm thấy #quiz-eng-root");
+    if (!gRoot) {
+      // Không phải trang quizEng → thoát.
       return;
     }
-    runtime.root = root;
-    root.textContent = "Đang tải đề kiểm tra...";
+
+    gRoot.textContent = "Đang tải bài test...";
 
     try {
       const testId = getTestIdFromQuery();
 
-      // 4.1. Đọc manifest bài test
       const testsManifest = await loadJson("/content/testsManifest.json");
-      const tests = testsManifest.tests || [];
-      const testMeta =
-        tests.find((t) => t.id === testId) || tests[0];
+      const allTests = testsManifest.tests || [];
+      gTest =
+        allTests.find((t) => t.id === testId) ||
+        allTests[0];
 
-      if (!testMeta) {
-        root.textContent = "Không tìm thấy bài kiểm tra.";
+      if (!gTest) {
+        gRoot.textContent = "Không tìm thấy bài test.";
         return;
       }
-      runtime.testMeta = testMeta;
 
-      // 4.2. Đọc manifest sections
       const sectionsManifest = await loadJson("/content/sectionsManifest.json");
       const sectionMap = new Map(
         (sectionsManifest.sections || []).map((s) => [s.id, s])
       );
 
-      const sectionMetas = [];
-      const sectionIds = testMeta.sections || testMeta.sectionIds || [];
-      sectionIds.forEach((id) => {
-        const meta = sectionMap.get(id);
-        if (meta) sectionMetas.push(meta);
-      });
+      const sectionMetas = (gTest.sections || [])
+        .map((id) => sectionMap.get(id))
+        .filter(Boolean)
+        .sort((a, b) => {
+          const pa = a.partIndex || 0;
+          const pb = b.partIndex || 0;
+          if (pa !== pb) return pa - pb;
+          const oa = a.sectionOrder || 0;
+          const ob = b.sectionOrder || 0;
+          return oa - ob;
+        });
 
-      if (!sectionMetas.length) {
-        root.textContent =
-          "Không tìm thấy danh sách phần cho bài test này (kiểm tra testsManifest & sectionsManifest).";
-        return;
-      }
-      runtime.sectionMetas = sectionMetas;
-
-      // 4.3. Load dữ liệu từng phần
-      runtime.sectionData = {};
-      runtime.sectionStates = [];
+      gSections = [];
       for (const meta of sectionMetas) {
         const data = await loadJson(meta.file);
-        runtime.sectionData[meta.id] = data;
-        runtime.sectionStates.push({
-          id: meta.id,
+        gSections.push({ meta, data });
+        gSectionProgress[meta.id] = {
           done: false,
-          total: countQuestionsInSection(data),
-          answers: [] // mỗi phần tử: {number, correct:true/false}
-        });
+          correct: 0,
+          total: (data.questions || []).length || 0,
+        };
       }
 
-      // 4.4. Hiển thị danh sách phần
       renderSectionsOverview();
     } catch (err) {
       console.error(err);
-      runtime.root.innerHTML =
-        "<p>Có lỗi khi tải đề kiểm tra. Kiểm tra lại đường dẫn JSON hoặc mở F12 để xem chi tiết.</p>";
+      gRoot.innerHTML =
+        '<p>Không tải được dữ liệu test. Bạn kiểm tra lại file JSON hoặc thử tải lại trang.</p>';
     }
   }
 
-  function countQuestionsInSection(sectionData) {
-    if (!sectionData) return 0;
-    if (Array.isArray(sectionData.questions)) return sectionData.questions.length;
-    if (sectionData.type === "readingDragDrop" && sectionData.blanks) {
-      return Object.keys(sectionData.blanks).length;
-    }
-    return 0;
-  }
-
-  // ============================================================
-  // 5. Màn danh sách phần
-  // ============================================================
-
+  // ================== Màn hình danh sách 6 phần ==================
   function renderSectionsOverview() {
-    const root = runtime.root;
-    root.innerHTML = "";
+    gCurrentRuntime = null;
 
-    const h = createEl(
+    gRoot.innerHTML = "";
+
+    const title = createEl(
       "h2",
       "quiz-title",
-      runtime.testMeta.title || "English Quiz"
+      gTest.title || (gTest.id ? gTest.id : "Bài test tiếng Anh")
     );
-    root.appendChild(h);
+    gRoot.appendChild(title);
 
-    const note = createEl(
+    const desc = createEl(
       "p",
       "quiz-subtitle",
-      "Chọn một phần để bắt đầu. Làm xong một phần sẽ được đánh dấu ✔ Hoàn thành."
+      "Chọn một phần để bắt đầu làm. Làm xong một phần sẽ được đánh dấu ✓ Hoàn thành."
     );
-    root.appendChild(note);
+    gRoot.appendChild(desc);
 
-    const list = createEl("div", "quiz-card");
-    root.appendChild(list);
+    gSections.forEach(({ meta, data }) => {
+      const secId = meta.id;
+      const progress = gSectionProgress[secId] || {
+        done: false,
+        correct: 0,
+        total: (data.questions || []).length || 0,
+      };
 
-    runtime.sectionMetas.forEach((meta, idx) => {
-      const state = runtime.sectionStates[idx] || { done: false, total: 0 };
-      const data = runtime.sectionData[meta.id];
-
-      const box = createEl("div", "quiz-section");
-      const title = createEl(
-        "h3",
-        "quiz-section-title",
-        meta.label || data.title || "Phần " + (meta.partIndex || idx + 1)
+      const card = createEl("div", "quiz-part-card");
+      const header = createEl(
+        "div",
+        "quiz-part-header",
+        meta.label || data.title || "Phần " + (meta.partIndex || "")
       );
-      box.appendChild(title);
+      card.appendChild(header);
 
       const info = createEl(
         "p",
-        "quiz-hint",
-        `Kiểu: ${data.type || "unknown"} · Số câu: ${state.total}`
+        "quiz-part-info",
+        `Kiểu: ${data.type || "?"} · Số câu: ${(data.questions || []).length || 0}`
       );
-      box.appendChild(info);
+      card.appendChild(info);
 
       const status = createEl(
         "p",
-        "quiz-hint",
-        state.done ? "✔ Đã hoàn thành" : "Chưa làm"
+        "quiz-part-status",
+        progress.done
+          ? `Đã làm · Đúng ${progress.correct}/${progress.total} câu`
+          : "Chưa làm"
       );
-      status.style.fontWeight = "500";
-      status.style.color = state.done ? "#16a34a" : "#6b7280";
-      box.appendChild(status);
+      card.appendChild(status);
 
       const btn = createEl(
         "button",
-        "main-btn",
-        state.done ? "Làm lại phần này" : "Bắt đầu phần này"
+        "main-btn quiz-part-btn",
+        progress.done ? "Làm lại phần này" : "Bắt đầu phần này"
       );
       btn.addEventListener("click", () => {
-        startSection(idx);
+        startSection({ meta, data });
       });
-      box.appendChild(btn);
+      card.appendChild(btn);
 
-      list.appendChild(box);
+      gRoot.appendChild(card);
     });
-
-    // nút tạm: sau này bạn có thể dùng để tính điểm tổng / kết thúc bài test
-    const footer = createEl("div", "quiz-submit-row");
-    const endBtn = createEl("button", "main-btn", "Thoát bài test");
-    endBtn.addEventListener("click", () => {
-      if (confirm("Thoát bài test? Điểm XP/Coin hiện tại chưa được tính thêm.")) {
-        window.location.href = "index.html";
-      }
-    });
-    footer.appendChild(endBtn);
-    root.appendChild(footer);
   }
 
-  // ============================================================
-  // 6. Chuyển vào một phần
-  // ============================================================
-
-  function startSection(sectionIndex) {
-    runtime.currentSectionIndex = sectionIndex;
-    runtime.currentQuestionIndex = 0;
-
-    const meta = runtime.sectionMetas[sectionIndex];
-    const data = runtime.sectionData[meta.id];
+  // ================== Bắt đầu 1 phần ==================
+  function startSection(sectionBundle) {
+    const { meta, data } = sectionBundle;
     const type = data.type;
 
-    if (type === "mcqOneByOne") {
-      runMcqOneByOneSection();
-    } else if (type === "readingMcq") {
-      runReadingMcqSection();
-    } else {
-      // Các loại khác tạm chưa làm step-by-step
-      alert(
-        "Kiểu phần '" +
-          type +
-          "' hiện chưa được làm từng câu. Mình đang để TODO để làm sau."
-      );
-      renderSectionsOverview();
-    }
-  }
+    // Runtime mới cho phần này
+    gCurrentRuntime = {
+      meta,
+      section: data,
+      idx: 0,
+      correct: 0,
+      state: "answering", // "answering" | "reviewing"
+    };
 
-  // ============================================================
-  // 7. Phần 1 – MCQ từng câu (mcqOneByOne)
-  // ============================================================
-
-  function runMcqOneByOneSection() {
-    const secIdx = runtime.currentSectionIndex;
-    const meta = runtime.sectionMetas[secIdx];
-    const data = runtime.sectionData[meta.id];
-    const questions = data.questions || [];
-    const total = questions.length;
-
-    // bảo vệ
-    if (!total) {
-      alert("Phần này không có câu hỏi.");
-      renderSectionsOverview();
-      return;
-    }
-
-    const qIndex = runtime.currentQuestionIndex;
-    const q = questions[qIndex];
-
-    const root = runtime.root;
-    root.innerHTML = "";
-
-    const title = createEl(
-      "h2",
-      "quiz-title",
-      `${data.testName || runtime.testMeta.title || "Test"} - Phần ${
-        data.partIndex || meta.partIndex || secIdx + 1
-      } - Trắc nghiệm`
-    );
-    root.appendChild(title);
-
-    const sub = createEl(
-      "p",
-      "quiz-subtitle",
-      `Câu ${qIndex + 1} / ${total}`
-    );
-    root.appendChild(sub);
-
-    const card = createEl("section", "quiz-card");
-    root.appendChild(card);
-
-    const box = createEl("div", "quiz-question");
-    const qTitle = createEl(
-      "p",
-      "quiz-question-text",
-      `Câu ${q.number}. ${q.text || ""}`
-    );
-    box.appendChild(qTitle);
-
-    const optionsWrap = createEl("div");
-    const name = `sec${secIdx}_q${q.number}`;
-    (q.options || []).forEach((opt, idx) => {
-      const line = createEl("label", "quiz-option");
-      const input = document.createElement("input");
-      input.type = "radio";
-      input.name = name;
-      input.value = String(idx);
-      line.appendChild(input);
-      line.appendChild(document.createTextNode(" " + opt));
-      optionsWrap.appendChild(line);
-    });
-    box.appendChild(optionsWrap);
-
-    const explainBox = createEl("div", "quiz-passage");
-    explainBox.style.display = "none";
-    card.appendChild(box);
-    card.appendChild(explainBox);
-
-    // row nút
-    const row = createEl("div", "quiz-submit-row");
-    card.appendChild(row);
-
-    const backBtn = createEl("button", "sub-btn", "← Về danh sách phần");
-    backBtn.addEventListener("click", () => {
-      if (
-        confirm(
-          "Thoát khỏi phần này? Những câu chưa làm sẽ không được tính vào điểm."
-        )
-      ) {
-        renderSectionsOverview();
-      }
-    });
-    row.appendChild(backBtn);
-
-    const actionBtn = createEl("button", "main-btn", "Kiểm tra đáp án");
-    row.appendChild(actionBtn);
-
-    let checked = false;
-
-    actionBtn.addEventListener("click", () => {
-      const chosenInput = card.querySelector(
-        `input[name="${name}"]:checked`
-      );
-      if (!checked) {
-        // Lần đầu: chấm câu này
-        if (!chosenInput) {
-          alert("Bạn hãy chọn một đáp án trước đã nhé.");
-          return;
-        }
-        checked = true;
-
-        const chosen = Number(chosenInput.value);
-        const correct = q.correct;
-        const optsDom = Array.from(
-          optionsWrap.querySelectorAll("label.quiz-option")
+    switch (type) {
+      case "mcqOneByOne":
+      case "mcqImage":
+      case "readingMcq":
+        renderCurrentQuestion();
+        break;
+      default:
+        alert(
+          `Kiểu phần "${type}" hiện chưa hỗ trợ làm từng câu. Tạm thời bạn dùng kiểu khác trước nhé.`
         );
-
-        optsDom.forEach((labelEl, idx) => {
-          labelEl.classList.remove("opt-correct", "opt-wrong", "opt-chosen");
-          if (idx === correct) {
-            labelEl.classList.add("opt-correct");
-          }
-          if (idx === chosen) {
-            labelEl.classList.add("opt-chosen");
-            if (idx !== correct) {
-              labelEl.classList.add("opt-wrong");
-            }
-          }
-        });
-
-        // Lưu kết quả câu này vào state
-        const secState = runtime.sectionStates[secIdx];
-        secState.answers[qIndex] = {
-          number: q.number,
-          correct: chosen === correct
-        };
-
-        // Giải thích
-        let html = `<b>Đáp án đúng:</b> ${
-          (q.options && q.options[correct]) || ""
-        }`;
-        if (q.explanation) {
-          html += `<br><span style="font-size:13px;">${q.explanation}</span>`;
-        }
-        explainBox.innerHTML = html;
-        explainBox.style.display = "block";
-
-        if (qIndex < total - 1) {
-          actionBtn.textContent = "Câu tiếp theo →";
-        } else {
-          actionBtn.textContent = "Hoàn thành phần này";
-        }
-      } else {
-        // Sau khi đã xem đáp án → chuyển câu / kết thúc phần
-        if (qIndex < total - 1) {
-          runtime.currentQuestionIndex++;
-          runMcqOneByOneSection();
-        } else {
-          runtime.sectionStates[secIdx].done = true;
-          alert("Bạn đã hoàn thành phần 1 – Trắc nghiệm!");
-          renderSectionsOverview();
-        }
-      }
-    });
+        renderSectionsOverview();
+    }
   }
 
-  // ============================================================
-  // 8. Phần 3 – Đọc đoạn văn & trả lời (readingMcq)
-  // ============================================================
+  // ================== Render 1 câu hỏi của phần hiện tại ==================
+  function renderCurrentQuestion() {
+    const rt = gCurrentRuntime;
+    if (!rt) return;
 
-  function runReadingMcqSection() {
-    const secIdx = runtime.currentSectionIndex;
-    const meta = runtime.sectionMetas[secIdx];
-    const data = runtime.sectionData[meta.id];
-    const questions = data.questions || [];
-    const total = questions.length;
-
-    if (!total) {
-      alert("Phần đọc hiểu này không có câu hỏi.");
-      renderSectionsOverview();
+    const { section, meta } = rt;
+    const questions = section.questions || [];
+    if (rt.idx < 0 || rt.idx >= questions.length) {
+      // Hết câu -> quay về overview & lưu progress
+      finishCurrentSection();
       return;
     }
 
-    const qIndex = runtime.currentQuestionIndex;
-    const q = questions[qIndex];
+    const q = questions[rt.idx];
 
-    const root = runtime.root;
-    root.innerHTML = "";
+    gRoot.innerHTML = "";
 
+    // ---- Header ----
+    const header = createEl("div", "quiz-section-header");
     const title = createEl(
       "h2",
       "quiz-title",
-      `${data.testName || runtime.testMeta.title || "Test"} - Phần ${
-        data.partIndex || meta.partIndex || secIdx + 1
-      } - Đọc đoạn văn và trả lời`
+      section.title ||
+        meta.label ||
+        `Phần ${meta.partIndex || ""} - ${section.type || ""}`
     );
-    root.appendChild(title);
+    header.appendChild(title);
 
     const sub = createEl(
       "p",
       "quiz-subtitle",
-      `Câu ${qIndex + 1} / ${total}`
+      `Câu ${q.number || rt.idx + 1} / ${questions.length}`
     );
-    root.appendChild(sub);
+    header.appendChild(sub);
 
-    const card = createEl("section", "quiz-card");
-    root.appendChild(card);
+    gRoot.appendChild(header);
 
-    // Đoạn văn (giữ nguyên cho tất cả câu)
-    if (data.passage) {
-      const passDiv = createEl("div", "quiz-passage");
-      passDiv.innerHTML = data.passage.replace(/\n/g, "<br>");
-      card.appendChild(passDiv);
+    // ---- Card chứa nội dung câu hỏi ----
+    const card = createEl("div", "quiz-card");
+    gRoot.appendChild(card);
+
+    // Nếu có passage (đọc hiểu)
+    if (section.type === "readingMcq" && section.passage) {
+      const passageBox = createEl("div", "quiz-passage");
+      passageBox.innerHTML = nl2br(section.passage);
+      card.appendChild(passageBox);
+    }
+
+    // Nếu có hình (phần 2)
+    if (section.type === "mcqImage" && q.imageFile) {
+      const imgWrap = createEl("div", "quiz-image-wrap");
+      const img = document.createElement("img");
+      img.src = "/assets/content/" + q.imageFile;
+      img.alt = q.text || "Question image";
+      img.className = "quiz-image";
+      imgWrap.appendChild(img);
+      card.appendChild(imgWrap);
     }
 
     // Câu hỏi
-    const box = createEl("div", "quiz-question");
-    const qTitle = createEl(
+    const qText = createEl(
       "p",
       "quiz-question-text",
-      `Câu ${q.number}. ${q.text || ""}`
+      (q.prefix || "Câu " + (q.number || rt.idx + 1) + ". ") + (q.text || "")
     );
-    box.appendChild(qTitle);
+    card.appendChild(qText);
 
-    const optionsWrap = createEl("div");
-    const name = `sec${secIdx}_q${q.number}`;
+    // Options
+    const optsWrap = createEl("div", "quiz-options");
+    card.appendChild(optsWrap);
 
-    if (q.kind === "tf") {
-      const choices = ["True", "False"];
-      choices.forEach((label, idx) => {
+    const name = "quizOpt";
+    const options = [];
+
+    if (section.type === "readingMcq" && q.kind === "tf") {
+      // True / False
+      [["true", "True"], ["false", "False"]].forEach(([value, label]) => {
         const line = createEl("label", "quiz-option");
         const input = document.createElement("input");
         input.type = "radio";
         input.name = name;
-        input.value = idx === 0 ? "true" : "false";
+        input.value = value;
         line.appendChild(input);
         line.appendChild(document.createTextNode(" " + label));
-        optionsWrap.appendChild(line);
+        optsWrap.appendChild(line);
+        options.push({ input, label: line, value });
       });
     } else {
       (q.options || []).forEach((opt, idx) => {
@@ -506,220 +301,148 @@
         input.value = String(idx);
         line.appendChild(input);
         line.appendChild(document.createTextNode(" " + opt));
-        optionsWrap.appendChild(line);
+        optsWrap.appendChild(line);
+        options.push({ input, label: line, idx });
       });
     }
 
-    box.appendChild(optionsWrap);
-    card.appendChild(box);
-
-    const explainBox = createEl("div", "quiz-passage");
-    explainBox.style.display = "none";
+    // Ô giải thích
+    const explainBox = createEl("div", "quiz-explanation");
     card.appendChild(explainBox);
 
-    // Nút
-    const row = createEl("div", "quiz-submit-row");
-    card.appendChild(row);
+    // Hàng nút
+    const actions = createEl("div", "quiz-actions");
+    const backBtn = createEl("button", "sub-btn quiz-back-btn", "← Về danh sách phần");
+    const primaryText =
+      rt.state === "reviewing"
+        ? rt.idx === (section.questions || []).length - 1
+          ? "Kết thúc phần này"
+          : "Câu tiếp theo →"
+        : "Kiểm tra đáp án";
+    const checkBtn = createEl("button", "main-btn quiz-check-btn", primaryText);
+    actions.appendChild(backBtn);
+    actions.appendChild(checkBtn);
+    card.appendChild(actions);
 
-    const backBtn = createEl("button", "sub-btn", "← Về danh sách phần");
+    // ====== Gán event ======
+
     backBtn.addEventListener("click", () => {
-      if (
-        confirm(
-          "Thoát khỏi phần đọc hiểu? Những câu chưa làm sẽ không được tính vào điểm."
-        )
-      ) {
+      const confirmLeave =
+        rt.state === "reviewing" || rt.idx > 0
+          ? confirm(
+              "Nếu bạn thoát bây giờ thì kết quả tạm thời của phần này sẽ không được lưu. Bạn chắc chắn muốn thoát?"
+            )
+          : true;
+      if (confirmLeave) {
+        gCurrentRuntime = null;
         renderSectionsOverview();
       }
     });
-    row.appendChild(backBtn);
 
-    const actionBtn = createEl("button", "main-btn", "Kiểm tra đáp án");
-    row.appendChild(actionBtn);
-
-    let checked = false;
-
-    actionBtn.addEventListener("click", () => {
-      const chosenInput = card.querySelector(
-        `input[name="${name}"]:checked`
-      );
-      if (!checked) {
-        if (!chosenInput) {
-          alert("Bạn hãy chọn một đáp án trước đã nhé.");
-          return;
-        }
-        checked = true;
-
-        let isCorrect = false;
-        if (q.kind === "tf") {
-          const val = chosenInput.value === "true";
-          isCorrect = val === !!q.correct;
-        } else {
-          const chosenIdx = Number(chosenInput.value);
-          isCorrect = chosenIdx === q.correct;
-        }
-
-        const optsDom = Array.from(
-          optionsWrap.querySelectorAll("label.quiz-option")
-        );
-
-        if (q.kind === "tf") {
-          const trueCorrect = q.correct === true;
-          optsDom.forEach((labelEl, idx) => {
-            labelEl.classList.remove("opt-correct", "opt-wrong", "opt-chosen");
-            const val = idx === 0; // True
-            if (val === q.correct) {
-              labelEl.classList.add("opt-correct");
-            }
-            if (
-              chosenInput &&
-              labelEl.contains(chosenInput) &&
-              val !== q.correct
-            ) {
-              labelEl.classList.add("opt-wrong");
-            }
-            if (labelEl.contains(chosenInput)) {
-              labelEl.classList.add("opt-chosen");
-            }
-          });
-        } else {
-          optsDom.forEach((labelEl, idx) => {
-            const input = labelEl.querySelector("input");
-            const chosen = input && input.checked;
-            labelEl.classList.remove("opt-correct", "opt-wrong", "opt-chosen");
-            if (idx === q.correct) {
-              labelEl.classList.add("opt-correct");
-            }
-            if (chosen) {
-              labelEl.classList.add("opt-chosen");
-              if (idx !== q.correct) {
-                labelEl.classList.add("opt-wrong");
-              }
-            }
-          });
-        }
-
-        // Lưu state
-        const secState = runtime.sectionStates[secIdx];
-        secState.answers[qIndex] = {
-          number: q.number,
-          correct: isCorrect
-        };
-
-        // Giải thích
-        let explain = "";
-        if (q.kind === "tf") {
-          explain =
-            "<b>Đáp án đúng:</b> " + (q.correct ? "True" : "False");
-        } else {
-          explain =
-            "<b>Đáp án đúng:</b> " +
-            ((q.options && q.options[q.correct]) || "");
-        }
-        if (q.explanation) {
-          explain += `<br><span style="font-size:13px;">${q.explanation}</span>`;
-        }
-        explainBox.innerHTML = explain;
-        explainBox.style.display = "block";
-
-        if (qIndex < total - 1) {
-          actionBtn.textContent = "Câu tiếp theo →";
-        } else {
-          actionBtn.textContent = "Hoàn thành phần này";
-        }
-      } else {
-        // next / finish
-        if (qIndex < total - 1) {
-          runtime.currentQuestionIndex++;
-          runReadingMcqSection();
-        } else {
-          runtime.sectionStates[secIdx].done = true;
-          alert("Bạn đã hoàn thành phần 3 – Đọc hiểu!");
-          renderSectionsOverview();
-        }
-      }
+    checkBtn.addEventListener("click", () => {
+      handleCheckOrNext({ options, explainBox, checkBtn });
     });
   }
 
-  // ============================================================
-  // 9. (Giữ lại) Hàm awardStats – cộng XP/Coin (chưa gọi tới)
-  // ============================================================
+  // ================== Xử lý click "Kiểm tra đáp án" / "Câu tiếp theo" ==================
+  function handleCheckOrNext(viewRefs) {
+    const rt = gCurrentRuntime;
+    if (!rt) return;
 
-  async function awardStats(scorePercent, testIdOverride) {
-    scorePercent = Math.max(0, Math.min(100, scorePercent || 0));
-    const testId = testIdOverride || getTestIdFromQuery();
+    const section = rt.section;
+    const questions = section.questions || [];
+    theQuestion = questions[rt.idx];
+    const q = theQuestion;
 
-    if (!window.firebase || !firebase.auth) {
-      console.warn("Firebase chưa sẵn sàng, không cập nhật XP/Coin được.");
-      return { xpGain: 0, coinGain: 0, updated: false };
-    }
+    if (rt.state === "answering") {
+      // ---- Kiểm tra đáp án ----
+      const chosen = viewRefs.options
+        .map((o) => o.input)
+        .find((i) => i.checked);
 
-    const user = firebase.auth().currentUser;
-    if (!user) {
-      console.warn("Chưa đăng nhập, không cập nhật XP/Coin.");
-      return { xpGain: 0, coinGain: 0, updated: false };
-    }
+      if (!chosen) {
+        alert("Bạn hãy chọn 1 đáp án trước đã nhé.");
+        return;
+      }
 
-    const uid = user.uid;
-    const db = firebase.database();
-    const quizRef = db.ref("users/" + uid + "/quizEng/" + testId);
-    const statsRef = db.ref("users/" + uid + "/stats");
+      let isCorrect = false;
+      let correctLabelText = "";
 
-    const snap = await quizRef.once("value");
-    const info = snap.val() || {};
-    const attempts = info.attempts || 0;
-    const gotPerfectCoin = !!info.gotPerfectCoin;
-
-    let xpGain = 0;
-    let coinGain = 0;
-    let newGotPerfectCoin = gotPerfectCoin;
-
-    if (attempts === 0) {
-      if (scorePercent === 100) {
-        xpGain = 100;
-        coinGain = 250; // theo yêu cầu: lần đầu 100% thưởng 250 coin
-        newGotPerfectCoin = true;
+      if (section.type === "readingMcq" && q.kind === "tf") {
+        const val = chosen.value === "true";
+        isCorrect = val === !!q.correct;
+        correctLabelText = q.correct ? "True" : "False";
       } else {
-        xpGain = scorePercent;
-        coinGain = 50;
+        const correctIdx = String(q.correct);
+        isCorrect = chosen.value === correctIdx;
+
+        const opt = (q.options || [])[q.correct] || "";
+        correctLabelText = opt;
       }
-    } else {
-      xpGain = scorePercent;
-      if (scorePercent === 100 && !gotPerfectCoin) {
-        coinGain = 250;
-        newGotPerfectCoin = true;
+
+      if (isCorrect) {
+        rt.correct++;
       }
-    }
 
-    const newAttempts = attempts + 1;
-    const bestScore = Math.max(info.bestScore || 0, scorePercent);
-
-    await quizRef.update({
-      attempts: newAttempts,
-      bestScore: bestScore,
-      lastScore: scorePercent,
-      gotPerfectCoin: newGotPerfectCoin,
-      lastUpdated: Date.now()
-    });
-
-    if (xpGain || coinGain) {
-      await statsRef.transaction((stats) => {
-        stats = stats || {};
-        stats.xp = (stats.xp || 0) + xpGain;
-        stats.coin = (stats.coin || 0) + coinGain;
-        if (stats.badge == null) stats.badge = 1;
-        return stats;
+      // Khóa các option
+      viewRefs.options.forEach(({ input }) => {
+        input.disabled = true;
       });
-    }
 
-    return { xpGain, coinGain, updated: true };
+      // Nội dung giải thích
+      const baseMsg = isCorrect
+        ? "✔ Chính xác! "
+        : "✘ Chưa chính xác. ";
+      const explain =
+        q.explanation ||
+        (correctLabelText
+          ? "Đáp án đúng là: " + correctLabelText
+          : "");
+
+      viewRefs.explainBox.innerHTML =
+        "<p><strong>" + baseMsg + "</strong>" + explain + "</p>";
+
+      rt.state = "reviewing";
+
+      const isLast = rt.idx === questions.length - 1;
+      viewRefs.checkBtn.textContent = isLast
+        ? "Kết thúc phần này"
+        : "Câu tiếp theo →";
+    } else {
+      // ---- Sang câu tiếp theo / kết thúc phần ----
+      const isLast = rt.idx === (section.questions || []).length - 1;
+      if (isLast) {
+        finishCurrentSection();
+      } else {
+        rt.idx++;
+        rt.state = "answering";
+        renderCurrentQuestion();
+      }
+    }
   }
 
-  // ============================================================
-  // 11. DOM ready
-  // ============================================================
+  // ================== Kết thúc 1 phần ==================
+  function finishCurrentSection() {
+    const rt = gCurrentRuntime;
+    if (!rt) {
+      renderSectionsOverview();
+      return;
+    }
+    const secId = rt.meta.id;
+    const total = (rt.section.questions || []).length || 0;
 
-  document.addEventListener("DOMContentLoaded", () => {
-    initQuizHeader();
-    initQuizEng();
-  });
+    gSectionProgress[secId] = {
+      done: true,
+      correct: rt.correct,
+      total,
+    };
+
+    alert(
+      `Bạn đã làm xong ${rt.section.title || rt.meta.label || "phần này"}.\n` +
+        `Kết quả: đúng ${rt.correct}/${total} câu.`
+    );
+
+    gCurrentRuntime = null;
+    renderSectionsOverview();
+  }
 })();
