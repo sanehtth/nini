@@ -656,6 +656,82 @@ button.main-btn.loading::after { content:''; position:absolute; width:16px; heig
 .opt-chosen {
   font-weight: 500;
 }
+/* ===== Quiz English – trạng thái từng phần ===== */
+
+.quiz-section-list .quiz-part-card {
+  position: relative;
+  border-radius: 18px;
+  border: 1px solid #e5e7eb;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s;
+}
+
+.quiz-section-list .quiz-part-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
+}
+
+/* title & type nhỏ phía dưới */
+.quiz-part-header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.quiz-part-title {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.quiz-part-type {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* chip trạng thái bên phải */
+.quiz-part-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.quiz-part-status {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* ĐÃ LÀM – hiển thị màu xanh + icon */
+.quiz-part-status.done {
+  color: #15803d;
+  font-weight: 600;
+  background: #dcfce7;
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.quiz-part-status.done::before {
+  content: "✓ ";
+}
+
+/* ĐANG LÀM DỞ */
+.quiz-part-status.in-progress {
+  color: #a16207;
+  background: #fef9c3;
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+/* Nút “Làm lại phần này / Bắt đầu phần này” */
+.quiz-part-actions .main-btn {
+  padding-inline: 18px;
+  height: 32px;
+  font-size: 13px;
+}
+
 
 
 
