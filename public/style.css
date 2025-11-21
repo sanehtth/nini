@@ -731,6 +731,91 @@ button.main-btn.loading::after { content:''; position:absolute; width:16px; heig
   height: 32px;
   font-size: 13px;
 }
+/* ==== Quiz Eng: ô giải thích đúng / sai cho từng câu ==== */
+.quiz-explain {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Câu đúng */
+.quiz-explain.correct {
+  background: #ecfdf3;          /* nền xanh nhạt */
+  border: 1px solid #22c55e;    /* viền xanh */
+  color: #166534;               /* chữ xanh đậm */
+}
+
+/* Câu sai */
+.quiz-explain.incorrect {
+  background: #fef2f2;          /* nền đỏ nhạt */
+  border: 1px solid #f97373;    /* viền đỏ */
+  color: #b91c1c;               /* chữ đỏ đậm */
+}
+
+/* Nếu muốn dùng kèm với opt-correct / opt-wrong hiện có */
+.opt-correct {
+  background: #ecfdf3;
+  border-radius: 8px;
+}
+.opt-wrong {
+  background: #fef2f2;
+}
+.opt-chosen {
+  font-weight: 500;
+}
+
+/* ==== Quiz Eng: card phần đã hoàn thành / đang làm dở ==== */
+
+/* Card phần quiz trong danh sách */
+.quiz-section-list .quiz-part-card {
+  position: relative;
+  border-radius: 18px;
+  border: 1px solid #e5e7eb;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s;
+}
+
+.quiz-section-list .quiz-part-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
+}
+
+/* Khi phần đó đã làm xong – thêm class .done trên .quiz-part-card */
+.quiz-section-list .quiz-part-card.done {
+  border-color: #22c55e;
+  box-shadow: 0 16px 40px rgba(22, 163, 74, 0. twenty);
+}
+
+/* Chip trạng thái “Đã làm” / “Đang làm dở” */
+.quiz-part-status {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.quiz-part-status.done {
+  color: #15803d;
+  font-weight: 600;
+  background: #dcfce7;
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.quiz-part-status.done::before {
+  content: "✓ ";
+}
+
+.quiz-part-status.in-progress {
+  color: #a16207;
+  background: #fef9c3;
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
 
 
 
