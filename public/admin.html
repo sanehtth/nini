@@ -196,39 +196,22 @@
       <!-- PANEL 2: PROMPT NHÂN VẬT -->
       <section id="panel-char" class="admin-panel hidden">
         <h2>🧑‍🎨 Tạo prompt Nhân Vật</h2>
-
-        <div class="two-col">
-          <div class="col">
-            <div class="form-row">
-              <label>Mô tả nhân vật (thô):</label>
-              <textarea id="charRaw" class="input textarea" rows="5"
-                placeholder="Ví dụ: Cậu bé tóc đen, dáng người nhỏ, phong cách fantasy rừng trôi nổi..."></textarea>
-            </div>
-          </div>
-
-          <div class="col">
-            <div class="form-row">
-              <label>Tuổi / dáng người / tính cách (tuỳ chọn):</label>
-              <input id="charDetail" class="input" placeholder="10–12 tuổi, slim, gan dạ, tò mò..." />
-            </div>
-
-            <div class="form-row">
-              <label>Artstyle & ánh sáng:</label>
-              <input id="charStyle" class="input"
-                placeholder="painterly fantasy illustration, soft lighting, full body, 4K" />
-            </div>
-          </div>
-        </div>
-
-        <div class="form-row btn-row">
-          <button class="main-btn" id="buildCharPromptBtn">✨ Tạo prompt nhân vật</button>
-          <button class="profile-btn" id="copyCharPromptBtn">📋 Copy</button>
-        </div>
+ <p style="margin-bottom: 12px;">
+          Dùng tool riêng <code>character.html</code> để: tạo nhân vât.
+        </p>
 
         <div class="form-row">
-          <label>Character prompt (kết quả):</label>
-          <textarea id="charFinal" class="input textarea" rows="6"></textarea>
+          <button type="button"
+                  class="main-btn"
+                  onclick="window.open('character.html', '_blank')">
+            🚀 Mở tool MakePrompt (lyrics → shots)
+          </button>
         </div>
+
+        <p style="margin-top: 16px; font-size: 13px; opacity: 0.8;">
+          Gợi ý: Bạn có thể mở tool này trong tab mới của trình duyệt để vừa xem admin vừa chỉnh storyboard.
+        </p>
+        
       </section>
 
       <!-- PANEL 3: PROMPT OUTFIT -->
@@ -331,3 +314,4 @@
   <script src="js/admin.js"></script>
 </body>
 </html>
+
