@@ -1,194 +1,112 @@
-// character.js
-// Tool nhỏ: build prompt nhân vật + quản lý JSON nhiều character
+// =========== DANH SÁCH NHÂN VẬT ===============
+let characterList = [];
 
-(function () {
-  const buildBtn   = document.getElementById("buildCharPromptBtn");
-  const copyBtn    = document.getElementById("copyCharPromptBtn");
-  const addJsonBtn = document.getElementById("addCharToJsonBtn");
-  const dlJsonBtn  = document.getElementById("downloadJsonBtn");
-  const clearJsonBtn = document.getElementById("clearJsonBtn");
+// ===============================================
+// 1. TẠO PROMPT
+// ===============================================
+function buildCharacterPrompt() {
+  const id = document.getElementById("charId").value.trim();
+  const name = document.getElementById("charName").value.trim();
+  const summary = document.getElementById("charSummary").value.trim();
+  const ageRole = document.getElementById("charAgeRole").value.trim();
+  const appearance = document.getElementById("charAppearance").value.trim();
+  const outfit = document.getElementById("charOutfit").value.trim();
+  const tools = document.getElementById("charTools").value.trim();
+  const colors = document.getElementById("charColors").value.trim();
+  const art = document.getElementById("charArt").value.trim();
 
-  const idEl       = document.getElementById("charId");
-  const nameEl     = document.getElementById("charName");
-  const rawEl      = document.getElementById("charRaw");
-  const ageRoleEl  = document.getElementById("charAgeRole");
-  const hairEl     = document.getElementById("charHair");
-  const outfitEl   = document.getElementById("charOutfit");
-  const toolsEl    = document.getElementById("charTools");
-  const colorsEl   = document.getElementById("charColors");
-  const styleEl    = document.getElementById("charStyle");
-  const finalEl    = document.getElementById("charFinal");
-  const jsonEl     = document.getElementById("charJson");
-
-  // Mảng lưu nhiều nhân vật trong session hiện tại
-  let characters = [];
-
-  function generateIdFallback() {
-    const ts = Date.now();
-    const rand = Math.floor(Math.random() * 1000);
-    return `char_${ts}_${rand}`;
+  if (!id || !name) {
+    alert("ID và Tên nhân vật là bắt buộc!");
+    return;
   }
 
-  function buildPrompt() {
-    const name      = nameEl.value.trim() || "Unnamed character";
-    const raw       = rawEl.value.trim();
-    const ageRole   = ageRoleEl.value.trim();
-    const hair      = hairEl.value.trim();
-    const outfit    = outfitEl.value.trim();
-    const tools     = toolsEl.value.trim();
-    const colors    = colorsEl.value.trim();
-    const artstyle  = styleEl.value.trim();
+  const prompt = `
+${name}, ${ageRole}.
+Full anime character sheet: front, left, right, back, hair details, outfit & accessory breakdown.
 
-    const titleLine = name
-      ? `${name}, ${ageRole || "fantasy character"}.`
-      : ageRole || "Fantasy character.";
+APPEARANCE:
+– ${appearance}
 
-    const promptParts = [];
+OUTFIT:
+– ${outfit}
 
-    promptParts.push(titleLine);
-    if (raw) {
-      promptParts.push(raw);
-    }
+TOOLS:
+– ${tools}
 
-    promptParts.push("");
-    promptParts.push("APPEARANCE:");
-    if (hair)   promptParts.push("– " + hair);
-    if (outfit) promptParts.push("– " + outfit);
+COLOR PALETTE:
+– ${colors}
 
-    promptParts.push("");
-    promptParts.push("TOOLS & PROPS:");
-    if (tools) promptParts.push("– " + tools);
+STYLE:
+${art}
+`.trim();
 
-    promptParts.push("");
-    promptParts.push("COLOR PALETTE:");
-    if (colors) promptParts.push("– " + colors);
+  document.getElementById("finalPrompt").value = prompt;
+}
 
-    promptParts.push("");
-    promptParts.push("STYLE:");
-    promptParts.push(
-      artstyle ||
-        "Anime, detailed character reference sheet with multiple views and labeled panels."
-    );
+// ===============================================
+// 2. COPY PROMPT
+// ===============================================
+function copyPrompt() {
+  const txt = document.getElementById("finalPrompt").value;
+  navigator.clipboard.writeText(txt);
+  alert("Đã copy!");
+}
 
-    finalEl.value = promptParts.join("\n");
-    return finalEl.value;
+// ===============================================
+// 3. THÊM NHÂN VẬT VÀO JSON
+// ===============================================
+function addToJson() {
+  const obj = {
+    id: document.getElementById("charId").value.trim(),
+    name: document.getElementById("charName").value.trim(),
+    summary: document.getElementById("charSummary").value.trim(),
+    ageRole: document.getElementById("charAgeRole").value.trim(),
+    appearance: document.getElementById("charAppearance").value.trim(),
+    outfit: document.getElementById("charOutfit").value.trim(),
+    tools: document.getElementById("charTools").value.trim(),
+    colorPalette: document.getElementById("charColors").value.trim(),
+    artStyle: document.getElementById("charArt").value.trim(),
+    prompt: document.getElementById("finalPrompt").value.trim()
+  };
+
+  if (!obj.id || !obj.name) {
+    alert("Thiếu ID hoặc Tên!");
+    return;
   }
 
-  function buildCharacterObject() {
-    const id = (idEl.value.trim() || generateIdFallback()).replace(/\s+/g, "_");
-    idEl.value = id; // điền lại để user thấy
-
-    const prompt = finalEl.value.trim() || buildPrompt();
-
-    const character = {
-      id,
-      name: nameEl.value.trim(),
-      summary: rawEl.value.trim(),
-      ageRole: ageRoleEl.value.trim(),
-      appearance: hairEl.value.trim(),
-      outfit: outfitEl.value.trim(),
-      tools: toolsEl.value
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
-      colorPalette: colorsEl.value.trim(),
-      artStyle: styleEl.value.trim(),
-      prompt, // prompt đã build
-    };
-
-    return character;
+  // Check duplicate ID
+  if (characterList.some(c => c.id === obj.id)) {
+    alert("ID đã tồn tại trong danh sách!");
+    return;
   }
 
-  function refreshJsonTextarea() {
-    jsonEl.value = JSON.stringify(characters, null, 2);
-  }
+  characterList.push(obj);
 
-  // ====== Event handlers ======
+  document.getElementById("jsonList").value =
+    JSON.stringify(characterList, null, 2);
 
-  if (buildBtn) {
-    buildBtn.onclick = () => {
-      buildPrompt();
-    };
-  }
+  alert("Đã thêm vào JSON!");
+}
 
-  if (copyBtn && navigator.clipboard) {
-    copyBtn.onclick = async () => {
-      const text = finalEl.value.trim();
-      if (!text) {
-        alert("Chưa có prompt để copy. Hãy bấm 'Tạo prompt nhân vật' trước.");
-        return;
-      }
-      try {
-        await navigator.clipboard.writeText(text);
-        copyBtn.textContent = "✅ Đã copy";
-        setTimeout(() => (copyBtn.textContent = "📋 Copy prompt"), 1500);
-      } catch (e) {
-        console.error(e);
-        alert("Trình duyệt không cho phép copy tự động, hãy chọn tay.");
-      }
-    };
-  }
 
-  if (addJsonBtn) {
-    addJsonBtn.onclick = () => {
-      const charObj = buildCharacterObject();
+// ===============================================
+// 4. TẢI FILE JSON
+// ===============================================
+function downloadJson() {
+  const data = JSON.stringify(characterList, null, 2);
+  const blob = new Blob([data], { type: "application/json" });
 
-      // Nếu ID đã tồn tại → thay thế; nếu không → push mới
-      const existingIndex = characters.findIndex((c) => c.id === charObj.id);
-      if (existingIndex >= 0) {
-        characters[existingIndex] = charObj;
-      } else {
-        characters.push(charObj);
-      }
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "character.json";
+  link.click();
+}
 
-      refreshJsonTextarea();
-      addJsonBtn.textContent = "✅ Đã thêm / cập nhật JSON";
-      setTimeout(
-        () => (addJsonBtn.textContent = "➕ Thêm vào danh sách JSON"),
-        1500
-      );
-    };
-  }
-
-  if (dlJsonBtn) {
-    dlJsonBtn.onclick = () => {
-      if (!characters.length) {
-        alert("Chưa có nhân vật nào trong JSON. Hãy thêm ít nhất 1 nhân vật.");
-        return;
-      }
-      const blob = new Blob([JSON.stringify(characters, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "characters.json";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    };
-  }
-
-  if (clearJsonBtn) {
-    clearJsonBtn.onclick = () => {
-      if (!confirm("Xoá toàn bộ danh sách JSON trong session hiện tại?")) return;
-      characters = [];
-      refreshJsonTextarea();
-    };
-  }
-
-  // Nếu người dùng tự sửa JSON textbox → sync lại vào mảng (optional)
-  if (jsonEl) {
-    jsonEl.addEventListener("change", () => {
-      try {
-        const parsed = JSON.parse(jsonEl.value);
-        if (Array.isArray(parsed)) {
-          characters = parsed;
-        }
-      } catch (e) {
-        console.warn("JSON không hợp lệ, bỏ qua", e);
-      }
-    });
-  }
-})();
+// ===============================================
+// 5. XÓA DANH SÁCH JSON
+// ===============================================
+function clearJson() {
+  if (!confirm("Xóa toàn bộ danh sách?")) return;
+  characterList = [];
+  document.getElementById("jsonList").value = "[]";
+}
