@@ -15,6 +15,18 @@ function makeAutoId() {
   return `char_${y}${m}${d}_${h}${mi}${s}`;
 }
 
+// Chuẩn hoá tên để đưa vào file path
+function makeSafeName(rawName) {
+  if (!rawName) return "noname";
+  // Bỏ dấu tiếng Việt + ký tự lạ
+  let s = rawName
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove accents
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")   // mọi thứ không phải a-z0-9 -> _
+    .replace(/^_+|_+$/g, "");      // bỏ _ ở đầu/cuối
+  return s || "noname";
+}
+
 // Gộp các field thành prompt chuẩn
 function buildCharacterPrompt() {
   const id = (document.getElementById("charId").value || "").trim();
@@ -27,7 +39,17 @@ function buildCharacterPrompt() {
   const colorPalette = (document.getElementById("charPalette").value || "").trim();
   const artStyle = (document.getElementById("charArtStyle").value || "").trim();
 
+  const imgInput = document.getElementById("charImagePath");
+  let imagePath = (imgInput?.value || "").trim();
+
   const finalId = id || makeAutoId();
+
+  // Nếu chưa nhập path hình thì tự generate
+  if (!imagePath) {
+    const safeName = makeSafeName(name);
+    imagePath = `public/assets/character/${finalId}_${safeName}.webp`;
+    if (imgInput) imgInput.value = imagePath; // fill lại vào ô cho user thấy
+  }
 
   // Phần đầu: tên + tuổi / role
   let headerLine = "";
@@ -79,10 +101,16 @@ function buildCharacterPrompt() {
     promptLines.push(artStyle);
   }
 
+  // (tuỳ chọn) thêm info file minh hoạ vào cuối prompt
+  if (imagePath) {
+    promptLines.push("\nILLUSTRATION FILE PATH:");
+    promptLines.push(imagePath);
+  }
+
   const finalPrompt = promptLines.join("\n");
 
   const promptBox = document.getElementById("charPromptFinal");
-  promptBox.value = finalPrompt;
+  if (promptBox) promptBox.value = finalPrompt;
 
   // Trả thêm object để dùng khi add JSON
   return {
@@ -95,6 +123,7 @@ function buildCharacterPrompt() {
     tools,
     colorPalette,
     artStyle,
+    imagePath,
     prompt: finalPrompt,
   };
 }
@@ -109,12 +138,15 @@ function addCurrentCharacterToJson() {
 // In mảng characters ra textarea JSON
 function renderCharactersJson() {
   const output = document.getElementById("charJsonOutput");
-  output.value = JSON.stringify(characters, null, 2);
+  if (output) {
+    output.value = JSON.stringify(characters, null, 2);
+  }
 }
 
 // Copy prompt
 function copyPromptToClipboard() {
   const promptBox = document.getElementById("charPromptFinal");
+  if (!promptBox) return;
   promptBox.select();
   document.execCommand("copy");
 }
@@ -149,23 +181,23 @@ function clearCharactersJson() {
 document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("buildPromptBtn")
-    .addEventListener("click", buildCharacterPrompt);
+    ?.addEventListener("click", buildCharacterPrompt);
 
   document
     .getElementById("addToJsonBtn")
-    .addEventListener("click", addCurrentCharacterToJson);
+    ?.addEventListener("click", addCurrentCharacterToJson);
 
   document
     .getElementById("copyPromptBtn")
-    .addEventListener("click", copyPromptToClipboard);
+    ?.addEventListener("click", copyPromptToClipboard);
 
   document
     .getElementById("downloadJsonBtn")
-    .addEventListener("click", downloadCharactersJson);
+    ?.addEventListener("click", downloadCharactersJson);
 
   document
     .getElementById("clearJsonBtn")
-    .addEventListener("click", clearCharactersJson);
+    ?.addEventListener("click", clearCharactersJson);
 
   // Render mảng rỗng ban đầu
   renderCharactersJson();
