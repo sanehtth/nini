@@ -1,0 +1,87 @@
+﻿<!-- public/character.html -->
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Tạo prompt nhân vật</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="dark.css" />
+  </head>
+  <body class="admin-page">
+    <header class="admin-header">
+      <a href="admin.html" class="profile-btn">&larr; Về Admin</a>
+      <h1>Tạo prompt Nhân Vật</h1>
+    </header>
+
+    <main class="admin-container">
+      <section class="admin-panel">
+        <h2>Thông tin nhân vật</h2>
+
+        <div class="two-col">
+          <div class="col">
+            <div class="form-row">
+              <label for="charName">Tên nhân vật:</label>
+              <input id="charName" class="input" placeholder="Kha, Luna, ..." />
+            </div>
+
+            <div class="form-row">
+              <label for="charRaw">Mô tả nhân vật (thô):</label>
+              <textarea id="charRaw" class="input textarea" rows="5"
+                placeholder="Ví dụ: Cậu bé tóc đen, dáng người nhỏ, phong cách fantasy rừng tối..."></textarea>
+            </div>
+
+            <div class="form-row">
+              <label for="charAgeRole">Tuổi / vai trò:</label>
+              <input id="charAgeRole" class="input"
+                placeholder="12–14-year-old ancient steampunk crafter boy" />
+            </div>
+
+            <div class="form-row">
+              <label for="charAppearance">Hair / appearance:</label>
+              <textarea id="charAppearance" class="input textarea" rows="3"
+                placeholder="Long green hair, low ponytail, messy curls, bronze gear earring, gear necklace..."></textarea>
+            </div>
+          </div>
+
+          <div class="col">
+            <div class="form-row">
+              <label for="charOutfit">Outfit:</label>
+              <textarea id="charOutfit" class="input textarea" rows="4"
+                placeholder="Poncho-like tunic with geometric patterns, leather straps, tool harness, gloves, boots with hidden mechanisms..."></textarea>
+            </div>
+
+            <div class="form-row">
+              <label for="charTools">Tools & props:</label>
+              <textarea id="charTools" class="input textarea" rows="3"
+                placeholder="Small glowing energy core gear, mini bombs, scrolls, hybrid brass-and-wood tools, wires, pliers, wrenches..."></textarea>
+            </div>
+
+            <div class="form-row">
+              <label for="charPalette">Color palette:</label>
+              <input id="charPalette" class="input"
+                placeholder="Forest green, brown leather, antique brass, teal glow" />
+            </div>
+
+            <div class="form-row">
+              <label for="charStyle">Artstyle & layout:</label>
+              <input id="charStyle" class="input"
+                placeholder="Anime, ancient-steampunk fantasy hybrid, full character sheet with organized labeled panels" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row btn-row">
+          <button class="main-btn" id="buildCharPromptBtn">✨ Tạo prompt nhân vật</button>
+          <button class="profile-btn" id="copyCharPromptBtn">📋 Copy</button>
+        </div>
+
+        <div class="form-row">
+          <label for="charFinal">Character prompt (kết quả):</label>
+          <textarea id="charFinal" class="input textarea" rows="10"></textarea>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/character.js"></script>
+  </body>
+</html>
