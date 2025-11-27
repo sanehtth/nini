@@ -3,276 +3,295 @@
 <head>
   <meta charset="UTF-8" />
   <title>Tạo prompt Nhân Vật – LearnQuest AI</title>
-
-  <!-- CSS chung của site -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- style chung của site -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- CSS riêng cho trang character -->
+  <!-- Style nhẹ riêng cho trang character -->
   <style>
-    .char-page {
-      max-width: 960px;
+    .char-container {
+      max-width: 1100px;
       margin: 0 auto;
       background: #ffffff;
       border-radius: 20px;
       box-shadow: 0 15px 35px rgba(0,0,0,0.15);
       overflow: hidden;
     }
+
     .char-header {
       background: #e11d48;
       color: #fff;
-      padding: 18px 24px;
+      padding: 16px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
-    .char-header-left h1 {
-      font-size: 22px;
-      margin-bottom: 4px;
+
+    .char-header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
-    .char-header-left p {
+
+    .char-header-title {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .char-header-sub {
       font-size: 13px;
       opacity: 0.9;
     }
-    .char-back-link {
-      font-size: 13px;
-      color: #f9fafb;
-      text-decoration: none;
+
+    .char-back-btn {
       border-radius: 999px;
-      border: 1px solid #fecaca;
-      padding: 6px 12px;
-      background: #be123c;
-    }
-    .char-back-link:hover {
-      background: #9f1239;
+      padding: 6px 14px;
+      font-size: 13px;
+      border: none;
+      background: #fff;
+      color: #e11d48;
+      cursor: pointer;
+      font-weight: 600;
     }
 
     .char-body {
-      padding: 24px 24px 28px;
+      padding: 24px 26px 30px;
     }
 
     .char-section-title {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 600;
-      margin-bottom: 12px;
-      color: #111827;
+      margin-bottom: 8px;
     }
 
-    .char-grid-2 {
+    .char-help {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 16px;
+    }
+
+    .char-grid {
       display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 18px;
-      margin-bottom: 18px;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+      gap: 18px 24px;
+    }
+
+    @media (max-width: 900px) {
+      .char-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     .char-field {
-      margin-bottom: 12px;
-    }
-    .char-field label {
-      display: block;
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 4px;
-      color: #374151;
-    }
-    .char-field small {
-      font-size: 12px;
-      color: #6b7280;
+      margin-bottom: 10px;
     }
 
-    .char-input,
-    .char-textarea {
+    .char-label {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    textarea {
       width: 100%;
+      padding: 10px;
+      margin-top: 4px;
       border-radius: 10px;
-      border: 1px solid #d4d4d8;
-      padding: 8px 10px;
+      border: 1px solid #ddd;
       font-size: 14px;
       resize: vertical;
-    }
-    .char-textarea {
       min-height: 60px;
+      transition: 0.3s;
     }
-    .char-input:focus,
-    .char-textarea:focus {
-      outline: none;
+
+    textarea:focus {
       border-color: #e11d48;
-      box-shadow: 0 0 0 1px #fecaca;
+      outline: none;
     }
 
     .char-actions {
-      margin-top: 8px;
+      margin-top: 18px;
       display: flex;
-      gap: 10px;
       flex-wrap: wrap;
+      gap: 10px;
       align-items: center;
     }
 
     .char-actions .main-btn {
-      padding-inline: 20px;
+      padding-inline: 18px;
     }
 
-    .char-note {
-      font-size: 13px;
-      color: #6b7280;
-      margin-top: 4px;
+    .char-output-wrap {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: 18px;
     }
 
-    .char-result-box {
-      margin-top: 16px;
-    }
-
-    #charPromptFinal {
-      min-height: 160px;
-      white-space: pre-wrap;
-    }
-
-    @media (max-width: 768px) {
-      .char-grid-2 {
+    @media (max-width: 900px) {
+      .char-output-wrap {
         grid-template-columns: 1fr;
       }
-      .char-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-      }
+    }
+
+    .char-output-box {
+      background: #f9fafb;
+      border-radius: 14px;
+      padding: 12px 14px 10px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .char-output-box h3 {
+      margin: 0 0 6px;
+      font-size: 14px;
+    }
+
+    .char-output-box small {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .char-output-box textarea {
+      margin-top: 6px;
+      background: #fff;
+      min-height: 130px;
+      font-family: "Consolas", "SFMono-Regular", ui-monospace, monospace;
+      font-size: 13px;
+    }
+
+    .char-output-actions {
+      margin-top: 6px;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .char-output-actions .sub-btn {
+      padding-inline: 12px;
     }
   </style>
 </head>
 <body>
-  <!-- nền hồng gradient đã set trong style.css cho body -->
-
-  <div class="char-page">
+  <div class="char-container">
     <!-- HEADER -->
     <header class="char-header">
       <div class="char-header-left">
-        <h1>🧑‍🚀 Tạo prompt Nhân Vật</h1>
-        <p>Tạo prompt chuẩn để vẽ full character sheet (front / side / back, breakdown...).</p>
+        <div class="char-header-title">Tạo prompt Nhân Vật</div>
+        <div class="char-header-sub">
+          Dùng cho AI vẽ full character sheet (front / side / back, breakdown…)
+        </div>
       </div>
-      <a href="admin.html" class="char-back-link">← Về Admin</a>
+      <button class="char-back-btn" onclick="window.location.href='admin.html'">
+        ← Về Admin
+      </button>
     </header>
 
     <!-- BODY -->
     <main class="char-body">
       <h2 class="char-section-title">Thông tin nhân vật</h2>
+      <p class="char-help">
+        Điền tiếng Việt hoặc tiếng Anh đều được. Tool sẽ ghép lại thành 1 prompt chuẩn + JSON.
+      </p>
 
-      <form id="charForm" autocomplete="off">
-        <!-- Tên & mô tả ngắn -->
-        <div class="char-field">
-          <label for="charName">Tên nhân vật:</label>
-          <input
-            id="charName"
-            class="char-input"
-            type="text"
-            placeholder="Kha, Luna, ..."
-          />
-        </div>
-
-        <div class="char-field">
-          <label for="charShort">Mô tả nhân vật (thô):</label>
-          <textarea
-            id="charShort"
-            class="char-textarea"
-            rows="2"
-            placeholder="Ví dụ: Cậu bé tóc đen, dáng người nhỏ, phong cách fantasy rừng tối..."
-          ></textarea>
-        </div>
-
-        <!-- Lưới 2 cột: left: age/role + appearance + outfit; right: tools + palette + style -->
-        <div class="char-grid-2">
-          <div>
-            <div class="char-field">
-              <label for="charRole">Tuổi / vai trò:</label>
-              <input
-                id="charRole"
-                class="char-input"
-                type="text"
-                placeholder="12–14-year-old ancient steampunk crafter boy"
-              />
-            </div>
-
-            <div class="char-field">
-              <label for="charHair">Hair / appearance:</label>
-              <textarea
-                id="charHair"
-                class="char-textarea"
-                rows="3"
-                placeholder="Long green hair, low ponytail, messy; bronze gear earring, headband..."
-              ></textarea>
-            </div>
-
-            <div class="char-field">
-              <label for="charOutfit">Outfit / clothing:</label>
-              <textarea
-                id="charOutfit"
-                class="char-textarea"
-                rows="3"
-                placeholder="Poncho-like tunic with geometric patterns, leather tool harness, gloves with metal filaments..."
-              ></textarea>
-            </div>
-          </div>
-
-          <div>
-            <div class="char-field">
-              <label for="charTools">Tools &amp; props:</label>
-              <textarea
-                id="charTools"
-                class="char-textarea"
-                rows="3"
-                placeholder="Small glowing energy core gear, mini bombs, scrolls, pliers, wrenches, belt charms..."
-              ></textarea>
-            </div>
-
-            <div class="char-field">
-              <label for="charColors">Color palette:</label>
-              <input
-                id="charColors"
-                class="char-input"
-                type="text"
-                placeholder="Forest green, brown leather, antique brass, teal glow"
-              />
-            </div>
-
-            <div class="char-field">
-              <label for="charStyle">Artstyle &amp; layout:</label>
-              <input
-                id="charStyle"
-                class="char-input"
-                type="text"
-                placeholder="Anime, ancient-steampunk fantasy hybrid, full character sheet with organized labeled panels"
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- Actions -->
-        <div class="char-actions">
-          <button type="button" id="buildCharPromptBtn" class="main-btn">
-            ✨ Tạo prompt nhân vật
-          </button>
-          <button type="button" id="copyCharPromptBtn" class="sub-btn">
-            📋 Copy
-          </button>
-          <span class="char-note">
-            Gợi ý: nhập ngắn gọn ở từng ô, tool sẽ ghép thành prompt dài chuẩn cho AI vẽ.
-          </span>
-        </div>
-
-        <!-- Kết quả -->
-        <div class="char-result-box">
+      <!-- FORM INPUT -->
+      <div class="char-grid">
+        <div>
           <div class="char-field">
-            <label for="charPromptFinal">Character prompt (kết quả):</label>
-            <textarea
-              id="charPromptFinal"
-              class="char-textarea"
-              rows="8"
-              readonly
-            ></textarea>
+            <label class="char-label" for="charName">Tên nhân vật:</label>
+            <input id="charName" type="text" placeholder="Kha, Luna, ..." />
+          </div>
+
+          <div class="char-field">
+            <label class="char-label" for="charRaw">Mô tả nhân vật (thô):</label>
+            <textarea id="charRaw" rows="3"
+              placeholder="Ví dụ: Cậu bé tóc đen, dáng người nhỏ, phong cách fantasy rừng tối..."></textarea>
+          </div>
+
+          <div class="char-field">
+            <label class="char-label" for="charRole">Tuổi / vai trò:</label>
+            <input id="charRole" type="text"
+              placeholder="12–14-year-old ancient steampunk crafter boy" />
+          </div>
+
+          <div class="char-field">
+            <label class="char-label" for="charHair">
+              Hair / appearance:
+            </label>
+            <textarea id="charHair" rows="4"
+              placeholder="Long green hair, low ponytail, messy curls; bronze gear earring, bronze gear necklace..."></textarea>
+          </div>
+
+          <div class="char-field">
+            <label class="char-label" for="charOutfit">Outfit:</label>
+            <textarea id="charOutfit" rows="4"
+              placeholder="Poncho-like tunic with geometric patterns, leather straps, tool harness..."></textarea>
           </div>
         </div>
-      </form>
+
+        <div>
+          <div class="char-field">
+            <label class="char-label" for="charTools">Tools & props:</label>
+            <textarea id="charTools" rows="3"
+              placeholder="Small glowing energy core gear, mini bombs, scrolls, hybrid brass-wood tools, pliers, wrenches..."></textarea>
+          </div>
+
+          <div class="char-field">
+            <label class="char-label" for="charPalette">Color palette:</label>
+            <input id="charPalette" type="text"
+              placeholder="Forest green, brown leather, antique brass, teal glow" />
+          </div>
+
+          <div class="char-field">
+            <label class="char-label" for="charStyle">Artstyle & layout:</label>
+            <input id="charStyle" type="text"
+              placeholder="Anime, ancient-steampunk fantasy hybrid, full character sheet with organized labeled panels" />
+          </div>
+
+          <div class="char-field">
+            <label class="char-label" for="charExtra">
+              Ghi chú thêm (optional):
+            </label>
+            <textarea id="charExtra" rows="3"
+              placeholder="Ví dụ: gentle but brave, prefers gadgets over swords, sidekick of main hero..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="char-actions">
+        <button id="buildCharPromptBtn" class="main-btn">
+          ⚙️ Tạo prompt nhân vật
+        </button>
+        <span id="charStatus" style="font-size:13px;color:#6b7280;"></span>
+      </div>
+
+      <!-- OUTPUT -->
+      <div class="char-output-wrap">
+        <!-- PROMPT -->
+        <div class="char-output-box">
+          <h3>Prompt character (kết quả)</h3>
+          <small>Dùng để paste thẳng vào AI vẽ (Leonardo, DALL·E, v.v.).</small>
+          <textarea id="charFinal" rows="8"></textarea>
+          <div class="char-output-actions">
+            <button id="copyCharPromptBtn" class="sub-btn">Copy prompt</button>
+          </div>
+        </div>
+
+        <!-- JSON -->
+        <div class="char-output-box">
+          <h3>JSON dữ liệu nhân vật</h3>
+          <small>Dùng để lưu trong database hoặc build UI khác.</small>
+          <textarea id="charJson" rows="8" spellcheck="false"></textarea>
+          <div class="char-output-actions">
+            <button id="copyCharJsonBtn" class="sub-btn">Copy JSON</button>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 
-  <!-- JS: file riêng cho tool tạo prompt -->
+  <!-- JS ghép prompt + JSON -->
   <script src="character.js"></script>
 </body>
 </html>
