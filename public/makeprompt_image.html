@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <title>Prompt tạo ảnh – Xóm Ngàn Chuyện</title>
+  <title>Prompt tạo ẢNH – Xóm Ngàn Chuyện</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- CSS chung của site -->
@@ -53,6 +53,7 @@
       font-weight: 500;
     }
     .xnc-field input[type="text"],
+    .xnc-field input[type="password"],
     .xnc-field textarea,
     .xnc-field select {
       width: 100%;
@@ -126,6 +127,33 @@
       <h1>Prompt tạo ẢNH – Xóm Ngàn Chuyện</h1>
       <p>Tool sinh prompt hình chuẩn ADN (style) + xuất JSON cho từng cảnh 2D.</p>
     </header>
+
+    <!-- CẤU HÌNH API / PROVIDER -->
+    <section class="xnc-block">
+      <h3>Cấu hình AI dùng để chuẩn hoá prompt</h3>
+      <div class="xnc-field">
+        <label for="mpProvider">AI Provider</label>
+        <select id="mpProvider">
+          <option value="openai">OpenAI</option>
+          <option value="gemini">Google AI (Gemini)</option>
+          <option value="grok">Grok (xAI)</option>
+        </select>
+        <div class="xnc-hint" id="mpProviderHint">
+          Hiện tại chức năng chuẩn hoá prompt chỉ hỗ trợ OpenAI.
+        </div>
+      </div>
+      <div class="xnc-field">
+        <label for="mpApiKey">OpenAI API Key</label>
+        <input
+          type="password"
+          id="mpApiKey"
+          placeholder="sk-..."
+        />
+        <div class="xnc-hint">
+          Nếu để trống, hệ thống sẽ cố gắng đọc key từ cấu hình đã lưu trong <code>localStorage.apiProfiles</code>.
+        </div>
+      </div>
+    </section>
 
     <!-- CHỌN ADN / SERIES -->
     <section class="xnc-block">
@@ -252,13 +280,36 @@
       </div>
     </section>
 
+    <!-- PROMPT MẪU + CHUẨN HOÁ -->
+    <section class="xnc-block">
+      <h3>Prompt mẫu từ AI khác (tuỳ chọn)</h3>
+
+      <div class="xnc-field">
+        <label for="xncSamplePrompt">Dán prompt gốc (Flow / Meta / Sora / v.v.)</label>
+        <textarea
+          id="xncSamplePrompt"
+          placeholder="Dán prompt của AI khác vào đây..."
+        ></textarea>
+        <p class="xnc-hint">
+          Bấm nút bên dưới để chuẩn hoá prompt này theo ADN Xóm Ngàn Chuyện:
+          chibi 2D pastel, xanh lá &amp; nâu, tiểu học Việt Nam, đúng tính cách nhân vật.
+        </p>
+      </div>
+
+      <div class="xnc-field">
+        <button type="button" class="xnc-btn" id="btnNormalizeImage">
+          Chuẩn hoá prompt ẢNH theo ADN Xóm Ngàn Chuyện (OpenAI)
+        </button>
+      </div>
+    </section>
+
     <!-- PROMPT ẢNH -->
     <section class="xnc-block">
-      <h3>🖼️ Prompt tạo ra (ẢNH – tiếng Anh, đúng ADN XNC)</h3>
+      <h3>🖼️ Prompt tạo ra (ẢNH – tiếng Anh, chuẩn ADN XNC)</h3>
 
       <div class="xnc-actions">
         <button type="button" class="xnc-btn" id="btnGenPrompt">
-          🖼️ Tạo Prompt ảnh
+          🖼️ Tạo Prompt ảnh (từ form)
         </button>
         <button type="button" class="xnc-btn secondary" id="btnCopyPrompt">
           📋 Copy Prompt ảnh
@@ -269,7 +320,7 @@
         <textarea
           id="xncOutput"
           class="xnc-output"
-          placeholder="Prompt sẽ hiện ở đây sau khi bạn bấm 'Tạo Prompt ảnh'..."
+          placeholder="Prompt sẽ hiện ở đây sau khi bạn bấm 'Tạo Prompt ảnh' hoặc sau khi chuẩn hoá từ prompt mẫu..."
         ></textarea>
       </div>
 
@@ -309,7 +360,183 @@
   <!-- JS ADN đa profile -->
   <script src="js/xomnganchuyen.js"></script>
   <script>
+    /* ========= Helper API / Provider ========= */
+
+    function getActiveProvider() {
+      const select = document.getElementById("mpProvider");
+      if (select && select.value) {
+        return select.value;
+      }
+      return localStorage.getItem("nini_active_provider") || "openai";
+    }
+
+    function setActiveProvider(provider) {
+      localStorage.setItem("nini_active_provider", provider);
+    }
+
+    function initProviderSelectLocal() {
+      const select = document.getElementById("mpProvider");
+      if (!select) return;
+      const saved = localStorage.getItem("nini_active_provider") || "openai";
+      select.value = saved;
+      select.addEventListener("change", () => {
+        const v = select.value || "openai";
+        setActiveProvider(v);
+        updateProviderHint();
+      });
+      updateProviderHint();
+    }
+
+    function updateProviderHint() {
+      const p = getActiveProvider();
+      const el = document.getElementById("mpProviderHint");
+      if (!el) return;
+      if (p !== "openai") {
+        el.textContent =
+          "Hiện tại chuẩn hoá prompt chỉ hỗ trợ OpenAI. Vui lòng chọn OpenAI nếu muốn dùng nút chuẩn hoá.";
+      } else {
+        el.textContent =
+          "OpenAI đang được dùng để chuẩn hoá prompt (gọi model gpt-4.1-mini).";
+      }
+    }
+
+    // Lấy OpenAI key từ ô input hoặc từ localStorage.apiProfiles (format giống admin)
+    function getOpenAIKeyForXNC() {
+      const input = document.getElementById("mpApiKey");
+      if (input && input.value.trim()) return input.value.trim();
+
+      try {
+        const raw =
+          localStorage.getItem("apiProfiles") ||
+          localStorage.getItem("api_profiles") ||
+          "";
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            const found = parsed.find(
+              p =>
+                p &&
+                (p.provider === "openai" || p.provider === "OpenAI") &&
+                p.apiKey
+            );
+            if (found) return found.apiKey;
+          } else if (typeof parsed === "object") {
+            for (const k in parsed) {
+              const p = parsed[k];
+              if (
+                p &&
+                (p.provider === "openai" || p.provider === "OpenAI") &&
+                p.apiKey
+              ) {
+                return p.apiKey;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Không đọc được apiProfiles từ localStorage:", e);
+      }
+      return "";
+    }
+
+    async function callXNCAnalyzer(rawSamplePrompt, target) {
+      const provider = getActiveProvider();
+      const apiKey = getOpenAIKeyForXNC();
+
+      if (!rawSamplePrompt || !rawSamplePrompt.trim()) {
+        alert("Dán prompt mẫu vào trước đã nha.");
+        return "";
+      }
+
+      if (provider !== "openai") {
+        alert(
+          "Module chuẩn hoá prompt hiện chỉ hỗ trợ OpenAI.\n" +
+            "Bạn đang chọn: " +
+            provider +
+            ". Vui lòng chọn OpenAI trong phần cấu hình AI."
+        );
+        return "";
+      }
+
+      if (!apiKey) {
+        alert(
+          "Chưa có OpenAI API key.\n" +
+            "- Nhập key vào ô OpenAI API Key, HOẶC\n" +
+            "- Đảm bảo bạn đã lưu profile OpenAI trong Admin (localStorage.apiProfiles)."
+        );
+        return "";
+      }
+
+      const mode =
+        target === "video"
+          ? "short animation video (1–3 seconds)"
+          : "single illustration image";
+
+      const userContent = `
+You are a prompt formatter for the Vietnamese chibi universe "Xóm Ngàn Chuyện".
+
+Your job:
+- Take the raw prompt below (may come from any AI tool).
+- Rewrite it into ONE clean English prompt that strictly follows the ADN of "Xóm Ngàn Chuyện".
+
+ADN:
+- 2D pastel chibi style
+- Green & brown Vietnamese village / primary school vibe
+- Setting: Vietnamese primary school or small neighbourhood
+- Warm, funny, lighthearted, not dark, not violent.
+
+Output:
+- One single English prompt for a ${mode}.
+- No explanation, no numbering.
+
+Raw prompt:
+"""${rawSamplePrompt.trim()}"""
+      `.trim();
+
+      try {
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + apiKey
+          },
+          body: JSON.stringify({
+            model: "gpt-4.1-mini",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You convert any raw prompt into the ADN style of the Vietnamese chibi universe Xóm Ngàn Chuyện."
+              },
+              { role: "user", content: userContent }
+            ],
+            temperature: 0.8,
+            max_tokens: 400
+          })
+        });
+
+        if (!res.ok) {
+          console.error("OpenAI XNC analyzer error:", await res.text());
+          alert("Lỗi khi gọi OpenAI để chuẩn hoá prompt.");
+          return "";
+        }
+
+        const data = await res.json();
+        const text =
+          data.choices?.[0]?.message?.content?.trim() || "";
+
+        return text;
+      } catch (err) {
+        console.error("Lỗi callXNCAnalyzer:", err);
+        alert("Có lỗi kết nối khi chuẩn hoá prompt.");
+        return "";
+      }
+    }
+
+    /* ========= Logic XNC cho ẢNH ========= */
     document.addEventListener("DOMContentLoaded", function () {
+      initProviderSelectLocal();
+
       const adnSelect = document.getElementById("xncAdnProfile");
 
       const imageIdInput = document.getElementById("xncImageId");
@@ -330,13 +557,13 @@
 
       const btnGenPrompt = document.getElementById("btnGenPrompt");
       const btnCopyPrompt = document.getElementById("btnCopyPrompt");
+      const btnNormalizeImage = document.getElementById("btnNormalizeImage");
 
       if (!window.XNC) {
         console.error("XNC core not found");
         return;
       }
 
-      // Load ADN + đổ nhân vật
       function loadProfileAndFill() {
         const profileId = adnSelect.value || "xomnganchuyen";
 
@@ -381,7 +608,6 @@
         });
       });
 
-      // ====== PROMPT ẢNH ======
       function buildImagePrompt() {
         const characterId = charSelect.value;
         const signatureId = sigSelect.value || "";
@@ -427,7 +653,14 @@
         alert("Đã copy prompt ảnh.");
       });
 
-      // ====== JSON EXPORT ======
+      btnNormalizeImage.addEventListener("click", async () => {
+        const sample = document.getElementById("xncSamplePrompt").value;
+        const result = await callXNCAnalyzer(sample, "image");
+        if (result) {
+          output.value = result;
+        }
+      });
+
       function buildImageJson() {
         const imageId = imageIdInput.value.trim();
         const actionText = actionInput.value.trim();
@@ -448,7 +681,7 @@
           return null;
         }
         if (!imgPrompt) {
-          alert("Bạn chưa tạo prompt ảnh. Bấm 'Tạo Prompt ảnh' trước.");
+          alert("Bạn chưa tạo prompt ảnh. Bấm 'Tạo Prompt ảnh' hoặc 'Chuẩn hoá' trước.");
           return null;
         }
 
