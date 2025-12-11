@@ -87,7 +87,7 @@
       <button class="tab-btn admin-tab active" data-target="panel-api">🔑 Nhập API</button>
       <button class="tab-btn admin-tab" data-target="panel-char">🧑‍🎨 Prompt nhân vật</button>
       <button class="tab-btn admin-tab" data-target="panel-outfit">👕 Prompt đổi outfit</button>
-      <button class="tab-btn admin-tab" data-target="panel-story">🎬 Prompt storyboard</button>
+      <button class="tab-btn admin-tab" data-target="panel-story">🎬 Tạo Video - short</button>
       <!-- NEW TAB: Quiz / Make JSON -->
       <button class="tab-btn admin-tab" data-target="panel-json">📚 Quiz / Make JSON</button>
     </nav>
@@ -277,7 +277,13 @@
             🚀 Mở tool MakePrompt (lyrics → shots)
           </button>
         </div>
-
+        <div class="form-row">
+          <button type="button"
+                  class="main-btn"
+                  onclick="window.open('makepromt_image.html', '_blank')">
+            🚀 Mở tool makepromt_image tao promt hinh anh theo ADN series 
+          </button>
+        </div>
         <p style="margin-top: 16px; font-size: 13px; opacity: 0.8;">
           Gợi ý: Bạn có thể mở tool này trong tab mới của trình duyệt để vừa xem admin vừa chỉnh storyboard.
         </p>
@@ -315,6 +321,7 @@
   <script src="js/admin.js"></script>
 </body>
 </html>
+
 
 
 
