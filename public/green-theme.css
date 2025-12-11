@@ -1,0 +1,126 @@
+﻿/* ===============================
+   XÓM NGÀN CHUYỆN – GREEN THEME
+   =============================== */
+
+body.green-theme {
+  background: linear-gradient(135deg, #C8F3E0, #F7F3EA);
+  min-height: 100vh;
+  padding: 20px;
+  color: #3c3c3c;
+  transition: 0.3s;
+}
+
+body.green-theme .container {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+}
+
+/* HEADER */
+body.green-theme header {
+  background: #4CAF50;
+  color: white;
+  padding: 20px 30px;
+}
+
+body.green-theme h1 {
+  color: white;
+}
+
+body.green-theme .subtitle {
+  opacity: 0.9;
+}
+
+/* USER INFO */
+body.green-theme .user-info {
+  background: #ffffff55;
+}
+
+body.green-theme .logout-btn,
+body.green-theme .profile-btn {
+  background: #8B5E3C;
+  color: white;
+}
+
+/* INPUT + BUTTON */
+body.green-theme input {
+  border: 1px solid #8B5E3C55;
+  background: #ffffff;
+}
+
+body.green-theme input:focus {
+  border-color: #4CAF50;
+}
+
+body.green-theme button.main-btn {
+  background: #4CAF50;
+  color: white;
+}
+
+body.green-theme button.main-btn:hover {
+  background: #43A047;
+}
+
+/* QUIZ + CARD */
+body.green-theme .question {
+  background: #F7F3EA;
+  border-left: 5px solid #8B5E3C;
+}
+
+body.green-theme .option {
+  border: 2px solid #C8A27A;
+}
+
+body.green-theme .option:hover {
+  background: #FFF7E6;
+  border-color: #8B5E3C;
+}
+
+body.green-theme .option.selected {
+  background: #4CAF50;
+  border-color: #4CAF50;
+  color: white;
+}
+
+/* GAME-CARD */
+body.green-theme .game-card {
+  background: #ffffff;
+  border: 1px solid #C8A27A66;
+}
+
+body.green-theme .game-level {
+  color: #4CAF50;
+}
+
+body.green-theme .badge {
+  background: #4CAF50;
+}
+
+/* PROFILE */
+body.green-theme .trait-name {
+  color: #4CAF50;
+}
+
+body.green-theme .trait-fill {
+  background: #4CAF50;
+}
+
+/* TOAST */
+body.green-theme .toast {
+  background: #8B5E3C;
+  color: white;
+}
+
+/* TABS */
+body.green-theme .tab-btn.active {
+  color: #4CAF50;
+  border-bottom: 3px solid #4CAF50;
+}
+
+body.green-theme .tab-btn:hover:not(.active) {
+  color: #4CAF50;
+}
+
+body.green-theme .forgot-link a {
+  color: #4CAF50;
+}
