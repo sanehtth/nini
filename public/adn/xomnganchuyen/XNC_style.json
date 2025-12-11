@@ -1,0 +1,42 @@
+﻿{
+  "style": {
+    "brand_palette": {
+      "green_primary": "#8CCB7A",
+      "green_soft": "#CDECC1",
+      "brown_primary": "#B9885D",
+      "brown_soft": "#D8BFA8",
+      "accent_yellow": "#F4E8A2"
+    },
+
+    "pastel_palette": [
+      "#F7C6D5",
+      "#F9D3A2",
+      "#F9F2A1",
+      "#C8F3E0",
+      "#D9C8F7"
+    ],
+
+    "emotion_tone_map": {
+      "happy": "#C8F3E0",
+      "warm": "#F9D3A2",
+      "comedy": "#FFD93D",
+      "drama": "#333333",
+      "twist": "#5C3D8C",
+      "embarrassed": "#CDE4FF"
+    },
+
+    "camera": {
+      "closeup": "tight close-up, soft depth of field",
+      "medium": "mid-shot with clean classroom background",
+      "dramatic_low": "low-angle view with dramatic lighting",
+      "comedy_zoom": "fast punch-in zoom with squash-stretch feeling"
+    },
+
+    "lighting": {
+      "soft_pastel": "soft diffused pastel lighting",
+      "dramatic_spot": "spotlight with high contrast",
+      "warm_glow": "warm golden ambient light",
+      "school_daylight": "bright school fluorescent lighting"
+    }
+  }
+}

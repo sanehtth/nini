@@ -1,0 +1,31 @@
+﻿{
+  "audio": {
+    "bgm": {
+      "happy_school": {
+        "desc": "Light Vietnamese folk-inspired melody with dan tranh and sáo trúc.",
+        "ideal_for": "daily scenes, friendships, light comedy"
+      },
+      "mischief": {
+        "desc": "Playful pizzicato mixed with bamboo percussion.",
+        "ideal_for": "chaos, funny reveals"
+      },
+      "drama_spotlight": {
+        "desc": "Low drum + monochord tension tones.",
+        "ideal_for": "twists, shocking moments"
+      },
+      "wholesome": {
+        "desc": "Soft sáo trúc melody with warm pads.",
+        "ideal_for": "heartwarming or outro scenes"
+      }
+    },
+
+    "sfx": {
+      "pop": "Cartoon pop for sudden appearance",
+      "whoosh": "Fast motion accent",
+      "ding_cute": "Tiny bell for cute reactions",
+      "glass_break": "Shock or twist moment",
+      "slapstick_fall": "Soft boing for comedic falls",
+      "speaker_buzz": "School PA announcement hum"
+    }
+  }
+}
