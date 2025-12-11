@@ -1,261 +1,229 @@
-﻿// js/xomnganchuyen.js
-// ADN Xóm Ngàn Chuyện – loader + helper dùng chung cho mọi tool
+// public/js/xomnganchuyen.js
 
 (function (window) {
-  const XNC = {
-    // Dữ liệu ADN
-    characters: null,
-    style: null,
-    audio: null,
+  const DEFAULT_PROFILE = "xomnganchuyen";
+  const BASE_PATH = "/adn"; // thư mục chứa các profile
 
-    // Trạng thái load
-    _loaded: false,
-    _loadingPromise: null,
-    _queue: [],
-
-    // Đường dẫn base tới JSON (tính từ /public/)
-    _basePath: "adn/xomnganchuyen/",
-
-    // Khởi động load (chỉ gọi 1 lần, tự động nếu dùng XNC.ready)
-    load() {
-      if (this._loadingPromise) return this._loadingPromise;
-
-      const base = this._basePath;
-
-      this._loadingPromise = Promise.all([
-        fetch(base + "XNC_characters.json").then(r => r.json()),
-        fetch(base + "XNC_style.json").then(r => r.json()),
-        fetch(base + "XNC_audio.json").then(r => r.json())
-      ])
-        .then(([c, s, a]) => {
-          this.characters = c.characters || {};
-          this.style = s.style || {};
-          this.audio = a.audio || {};
-          this._loaded = true;
-
-          // chạy các callback đã đăng ký trước khi load xong
-          this._queue.forEach(fn => {
-            try { fn(); } catch (e) { console.error(e); }
-          });
-          this._queue = [];
-        })
-        .catch(err => {
-          console.error("[XNC] Lỗi load ADN Xóm Ngàn Chuyện:", err);
-        });
-
-      return this._loadingPromise;
-    },
-
-    /**
-     * XNC.ready(fn)
-     * Dùng ở HTML: đảm bảo ADN đã load trước khi thao tác UI.
-     */
-    ready(fn) {
-      if (this._loaded) {
-        fn();
-      } else {
-        this._queue.push(fn);
-        this.load();
-      }
-    },
-
-    // =========================
-    //  GETTER CƠ BẢN
-    // =========================
-
-    getCharacters() {
-      return this.characters || {};
-    },
-
-    getCharacter(id) {
-      return (this.characters && this.characters[id]) || null;
-    }
-
-    ,
-    getStyle() {
-      return this.style || {};
-    },
-
-    getAudio() {
-      return this.audio || {};
-    },
-
-    // =========================
-    //  CHARACTER & SIGNATURES
-    // =========================
-
-    /**
-     * Lấy danh sách nhân vật dạng:
-     * [{ id: "bolo", name: "Bô-lô", role: "Thánh soi" }, ...]
-     */
-    getCharacterList() {
-      const list = [];
-      const chars = this.getCharacters();
-      Object.keys(chars).forEach(id => {
-        const c = chars[id];
-        list.push({
-          id,
-          name: c.name || id,
-          role: c.role || ""
-        });
-      });
-      return list;
-    },
-
-    /**
-     * Lấy danh sách biểu cảm / hành vi đặc trưng cho 1 nhân vật:
-     * [{ id, label, desc }, ...]
-     */
-    getSignaturesFor(characterId) {
-      const c = this.getCharacter(characterId);
-      if (!c || !Array.isArray(c.signatures)) return [];
-      return c.signatures;
-    },
-
-    /**
-     * Lấy mô tả (desc) cho 1 signature cụ thể.
-     */
-    getSignatureDesc(characterId, signatureId) {
-      const list = this.getSignaturesFor(characterId);
-      const found = list.find(s => s.id === signatureId);
-      return found ? found.desc : "";
-    },
-
-    // =========================
-    //  STYLE – COLOR / CAMERA / LIGHT
-    // =========================
-
-    /**
-     * Lấy màu theo emotion key, fallback về brand green.
-     */
-    getEmotionColor(emotionKey) {
-      const style = this.getStyle();
-      if (!style || !style.emotion_tone_map) {
-        return "#8CCB7A"; // fallback
-      }
-      return (
-        style.emotion_tone_map[emotionKey] ||
-        (style.brand_palette && style.brand_palette.green_primary) ||
-        "#8CCB7A"
-      );
-    },
-
-    /**
-     * Lấy preset camera (text mô tả).
-     */
-    getCameraPreset(key) {
-      const style = this.getStyle();
-      if (!style || !style.camera) return "";
-      return style.camera[key] || "";
-    },
-
-    /**
-     * Lấy preset lighting (text mô tả).
-     */
-    getLightingPreset(key) {
-      const style = this.getStyle();
-      if (!style || !style.lighting) return "";
-      return style.lighting[key] || "";
-    },
-
-    // =========================
-    //  AUDIO – BGM / SFX
-    // =========================
-
-    /**
-     * Lấy BGM theo key.
-     * Trả về object { desc, ideal_for } hoặc {}.
-     */
-    getBgm(key) {
-      const audio = this.getAudio();
-      if (!audio || !audio.bgm) return {};
-      return audio.bgm[key] || {};
-    },
-
-    /**
-     * Lấy mô tả SFX theo key.
-     */
-    getSfx(key) {
-      const audio = this.getAudio();
-      if (!audio || !audio.sfx) return "";
-      return audio.sfx[key] || "";
-    },
-
-    // =========================
-    //  HELPER TẠO PROMPT
-    // =========================
-
-    /**
-     * buildCharacterPrompt(options)
-     *   options = {
-     *      characterId,
-     *      signatureId,
-     *      actionText,    // hành động thêm bạn mô tả
-     *      emotionKey,    // happy / drama / comedy...
-     *      contextText,   // bối cảnh
-     *      cameraKey,     // closeup / medium / dramatic_low...
-     *      lightingKey,   // soft_pastel / school_daylight...
-     *      extraMood     // mô tả mood chi tiết thêm
-     *   }
-     *
-     * Trả về 1 string prompt tiếng Anh, đúng ADN XNC.
-     */
-    buildCharacterPrompt(options = {}) {
-      const {
-        characterId,
-        signatureId,
-        actionText = "",
-        emotionKey = "happy",
-        contextText = "",
-        cameraKey = "",
-        lightingKey = "",
-        extraMood = ""
-      } = options;
-
-      const character = this.getCharacter(characterId) || {};
-      const charName = character.name || "a Vietnamese primary school kid";
-
-      const signatureDesc = signatureId
-        ? this.getSignatureDesc(characterId, signatureId)
-        : "";
-
-      const emotionColor = this.getEmotionColor(emotionKey);
-      const cameraDesc = cameraKey ? this.getCameraPreset(cameraKey) : "";
-      const lightDesc = lightingKey ? this.getLightingPreset(lightingKey) : "";
-
-      const actionBlock = [actionText, signatureDesc]
-        .filter(Boolean)
-        .join(" ");
-
-      const moodBlock = [extraMood, `dominant color tint ${emotionColor}`]
-        .filter(Boolean)
-        .join(", ");
-
-      // Prompt chung cho hình XNC (chibi 2D)
-      let prompt = `Chibi 2D illustration in the Xóm Ngàn Chuyện Vietnamese style, pastel colors, green & brown brand palette.`;
-
-      if (contextText) {
-        prompt += ` Scene: ${contextText}.`;
-      }
-
-      prompt += ` Main character: ${charName}.`;
-
-      if (actionBlock) {
-        prompt += ` Expression & action: ${actionBlock}.`;
-      }
-
-      if (cameraDesc) {
-        prompt += ` Camera: ${cameraDesc}.`;
-      }
-
-      if (lightDesc || moodBlock) {
-        prompt += ` Lighting & mood: ${[lightDesc, moodBlock].filter(Boolean).join(", ")}.`;
-      }
-
-      return prompt.trim();
+  let state = {
+    profileId: DEFAULT_PROFILE,
+    loading: false,
+    loaded: false,
+    queue: [],
+    data: {
+      characters: [],
+      style: {},
+      audio: {}
     }
   };
 
-  // Gắn vào window để HTML dùng
+  function log(...args) {
+    console.log("[XNC]", ...args);
+  }
+
+  async function fetchJson(path) {
+    const res = await fetch(path);
+    if (!res.ok) throw new Error("Fetch failed: " + path);
+    return res.json();
+  }
+
+  async function loadProfile(profileId) {
+    state.loading = true;
+    state.loaded = false;
+    state.profileId = profileId;
+
+    const base = `${BASE_PATH}/${profileId}`;
+    const [charactersRaw, styleRaw, audioRaw] = await Promise.all([
+      fetchJson(`${base}/XNC_characters.json`),
+      fetchJson(`${base}/XNC_style.json`),
+      fetchJson(`${base}/XNC_audio.json`).catch(() => ({}))
+    ]);
+
+    // Chấp nhận cả dạng array thuần hoặc {characters:[...]}
+    const characters = Array.isArray(charactersRaw)
+      ? charactersRaw
+      : charactersRaw.characters || [];
+
+    const style = styleRaw || {};
+    const audio = audioRaw || {};
+
+    state.data.characters = characters;
+    state.data.style = style;
+    state.data.audio = audio;
+
+    state.loaded = true;
+    state.loading = false;
+
+    // chạy các callback đã xếp hàng
+    state.queue.forEach((cb) => {
+      try {
+        cb();
+      } catch (e) {
+        console.error(e);
+      }
+    });
+    state.queue = [];
+    log("Profile loaded:", profileId);
+  }
+
+  // =========== PUBLIC API ===========
+
+  const XNC = {
+    /**
+     * Đặt / đổi profile ADN (vd: "xomnganchuyen", "series2", ...)
+     * return Promise khi load xong
+     */
+    setProfile(profileId) {
+      if (!profileId) profileId = DEFAULT_PROFILE;
+      // nếu trùng profile hiện tại và đã load rồi thì thôi
+      if (state.loaded && state.profileId === profileId) {
+        return Promise.resolve();
+      }
+      return loadProfile(profileId);
+    },
+
+    /**
+     * Đảm bảo profile đã load rồi mới chạy callback
+     */
+    ready(cb) {
+      if (state.loaded && !state.loading) {
+        cb();
+      } else {
+        state.queue.push(cb);
+        if (!state.loading) {
+          // chưa từng load => load profile mặc định
+          loadProfile(state.profileId).catch((e) =>
+            console.error("Load default profile failed:", e)
+          );
+        }
+      }
+    },
+
+    getCurrentProfileId() {
+      return state.profileId;
+    },
+
+    getCharacterList() {
+      return state.data.characters || [];
+    },
+
+    getSignaturesFor(characterId) {
+      const chars = state.data.characters || [];
+      const c = chars.find((c) => c.id === characterId);
+      if (!c) return [];
+      return c.signatures || [];
+    },
+
+    /**
+     * Xây prompt mô tả cảnh nhân vật, đã cài sẵn vibe/style của ADN
+     * options:
+     *   - characterId
+     *   - signatureId?
+     *   - actionText
+     *   - emotionKey
+     *   - contextText
+     *   - cameraKey?
+     *   - lightingKey?
+     *   - extraMood?
+     */
+    buildCharacterPrompt(options) {
+      const {
+        characterId,
+        signatureId,
+        actionText,
+        emotionKey,
+        contextText,
+        cameraKey,
+        lightingKey,
+        extraMood
+      } = options;
+
+      const chars = state.data.characters || [];
+      const style = state.data.style || {};
+
+      const character = chars.find((c) => c.id === characterId) || {};
+      const signature =
+        (character.signatures || []).find((s) => s.id === signatureId) || null;
+
+      const styleTags = style.tags || [
+        "Vietnamese primary school",
+        "chibi 2D",
+        "pastel colors",
+        "green and brown palette"
+      ];
+
+      const cameraDesc =
+        cameraKey === "closeup"
+          ? "close-up shot of the character"
+          : cameraKey === "medium"
+          ? "medium shot showing the character and some background"
+          : cameraKey === "dramatic_low"
+          ? "slightly low angle for a dramatic feel"
+          : cameraKey === "comedy_zoom"
+          ? "slight zoom-in for comedic timing"
+          : "";
+
+      const lightingDesc =
+        lightingKey === "school_daylight"
+          ? "soft daylight coming from classroom windows"
+          : "";
+
+      const baseLines = [];
+
+      baseLines.push(
+        `Chibi 2D illustration in the ${state.profileId} Vietnamese style, ${styleTags.join(
+          ", "
+        )}.`
+      );
+
+      baseLines.push(
+        `Scene: ${contextText}. The main action: ${actionText}.`
+      );
+
+      if (character.name) {
+        baseLines.push(
+          `Main character: ${character.name} (${character.role ||
+            "student"}).`
+        );
+      }
+
+      if (signature && signature.prompt) {
+        baseLines.push(`Signature behavior: ${signature.prompt}.`);
+      }
+
+      if (emotionKey) {
+        let emoText = "";
+        switch (emotionKey) {
+          case "happy":
+            emoText = "overall mood is happy and warm";
+            break;
+          case "comedy":
+            emoText =
+              "overall mood is comedic and light-hearted, expressions slightly exaggerated but still cute";
+            break;
+          case "warm":
+            emoText = "overall mood is cozy and heartwarming";
+            break;
+          case "drama":
+            emoText = "overall mood is dramatic and slightly tense";
+            break;
+          case "twist":
+            emoText = "overall mood is surprising, with a twist reveal";
+            break;
+          case "embarrassed":
+            emoText =
+              "overall mood is shy and embarrassed, blushing cheeks, awkward expression";
+            break;
+        }
+        if (emoText) baseLines.push(emoText + ".");
+      }
+
+      if (cameraDesc) baseLines.push(cameraDesc + ".");
+      if (lightingDesc) baseLines.push(lightingDesc + ".");
+      if (extraMood) baseLines.push(extraMood);
+
+      return baseLines.join(" ");
+    }
+  };
+
   window.XNC = XNC;
 })(window);
