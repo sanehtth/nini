@@ -9,6 +9,7 @@
   <!-- CSS chung -->
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="dark.css">
+  <link rel="stylesheet" href="green-theme.css">
   <link rel="icon" href="/assets/favicon.ico" type="image/x-icon">
 
   <!-- Firebase -->
@@ -70,10 +71,10 @@
           ⬅ Về trang chính
         </button>
 
-        <!-- Đổi theme (dùng chung với theme.js) -->
-        <button class="profile-btn" onclick="toggleTheme()">
-          Dark / Light
-        </button>
+       <button class="profile-btn" id="themeToggleBtn" onclick="toggleTheme()">
+  Theme: Default
+</button>
+
 
         <span id="adminEmail">admin</span>
         <button class="logout-btn" id="logoutBtnAdmin">Đăng xuất</button>
@@ -314,5 +315,6 @@
   <script src="js/admin.js"></script>
 </body>
 </html>
+
 
 
