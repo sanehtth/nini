@@ -1,5 +1,21 @@
 // XNC Motion Comic Engine (Cách A: JSON-driven)
 const $ = (id) => document.getElementById(id);
+// ===== ADN GETTERS (fix: getLayouts is not defined) =====
+// ADN có thể đang nằm ở biến `ADN` hoặc `adn` hoặc `window.ADN` tuỳ bản bạn merge.
+// Đoạn này cố tình "chịu lỗi" để không crash.
+function _getADN(){
+  return (typeof ADN !== "undefined" && ADN) ||
+         (typeof adn !== "undefined" && adn) ||
+         (window && window.ADN) ||
+         (window && window.adn) ||
+         null;
+}
+
+function getLayouts(){      return _getADN()?.layouts      || {}; }
+function getBackgrounds(){  return _getADN()?.backgrounds  || {}; }
+function getStyles(){       return _getADN()?.styles       || {}; }
+function getCharacters(){   return _getADN()?.characters   || {}; }
+function getActions(){      return _getADN()?.actions      || {}; }
 
 function log(msg){
   const el = $("log");
