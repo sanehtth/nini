@@ -1,76 +1,499 @@
-// xnc_motion_comic.js
-const ADN_PATH = "/adn/xomnganchuyen";
-const FILES = {
-  characters: "XNC_characters.json",
-  actions: "XNC_actions.json",
-  backgrounds: "XNC_backgrounds.json",
-  layouts: "XNC_layouts.json",
-  style: "XNC_style.json",
-};
+/* =========================================================
+   XNC Motion Comic Builder (FULL)
+   - Load ADN JSONs: layouts/backgrounds/characters/actions/style
+   - Choose layout -> auto build panels
+   - Choose panel -> configure background/style/aspect + add actors/actions
+   - Export JSON + Export Prompt (Image/Video ready)
+   ========================================================= */
+
+/* ---------- DOM helpers ---------- */
 const $ = (id) => document.getElementById(id);
-const logEl = $("log");
-function log(msg){
-  const t = new Date().toTimeString().slice(0,8);
-  logEl.textContent += `[${t}] ${msg}\n`;
-  logEl.scrollTop = logEl.scrollHeight;
+const on = (id, evt, fn) => $(id)?.addEventListener(evt, fn);
+
+function log(msg) {
+  const box = $("logBox") || $("log") || $("logOutput");
+  const t = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  if (box) {
+    box.textContent = (box.textContent ? box.textContent + "\n" : "") + t;
+    box.scrollTop = box.scrollHeight;
+  }
+  console.log(t);
 }
-let ADN = null;
-let state = {
-  series: "xomnganchuyen",
-  layoutId: null,
-  panels: [],
-  activePanelIndex: 0,
-  styleId: null,
-  aspect: "9:16",
+
+/* ---------- Safe read helpers (schema tolerant) ---------- */
+function pick(obj, keys, fallback) {
+  for (const k of keys) {
+    if (obj && obj[k] != null) return obj[k];
+  }
+  return fallback;
+}
+
+function normalizeDict(maybeDict, fallbackKey = "items") {
+  // Accept:
+  // - { items: {...} } or { backgrounds: {...} } or { characters: {...} }
+  // - direct dict: { id: {...}, id2: {...} }
+  if (!maybeDict) return {};
+  if (typeof maybeDict !== "object") return {};
+  // If it already looks like a dict of records (has many keys and each value is object)
+  const keys = Object.keys(maybeDict);
+  if (keys.length && typeof maybeDict[keys[0]] === "object") {
+    // could still be wrapper; try common wrappers first
+    const wrapped =
+      maybeDict.layouts ||
+      maybeDict.backgrounds ||
+      maybeDict.characters ||
+      maybeDict.actions ||
+      maybeDict.styles ||
+      maybeDict.items;
+    if (wrapped && typeof wrapped === "object") return wrapped;
+    return maybeDict;
+  }
+  // wrapper
+  return maybeDict[fallbackKey] || {};
+}
+
+function getTextDesc(x) {
+  return (
+    pick(x, ["desc", "description", "dna", "prompt", "text"], "") || ""
+  ).toString();
+}
+
+/* ---------- Config ---------- */
+function getQueryParam(name) {
+  const u = new URL(location.href);
+  return u.searchParams.get(name);
+}
+
+// Cho phép đổi series sau này: ?adn=xomnganchuyen
+const ADN_ID = getQueryParam("adn") || "xomnganchuyen";
+const ADN_BASE = `/adn/${ADN_ID}`;
+
+// Các file bạn vừa add
+const ADN_FILES = {
+  layouts: `${ADN_BASE}/XNC_layouts.json`,
+  backgrounds: `${ADN_BASE}/XNC_backgrounds.json`,
+  characters: `${ADN_BASE}/XNC_characters.json`,
+  actions: `${ADN_BASE}/XNC_actions.json`,
+  style: `${ADN_BASE}/XNC_style.json`
 };
-async function loadADN(){
-  const out = {};
-  for (const [k, file] of Object.entries(FILES)){
-    const url = `${ADN_PATH}/${file}`;
-    const res = await fetch(url, {cache:"no-store"});
-    if(!res.ok) throw new Error(`Không load được ${url} (${res.status})`);
-    out[k] = await res.json();
-  }
-  return out;
-}
-function objEntries(o){ return o ? Object.entries(o) : []; }
-function getLayouts(){ return ADN.layouts.layouts || ADN.layouts; }
-function getCharacters(){ return ADN.characters.characters || ADN.characters; }
-function getActions(){ return ADN.actions.actions || ADN.actions; }
-function getBackgrounds(){ return ADN.backgrounds.backgrounds || ADN.backgrounds; }
-function getStyles(){ return ADN.style.styles || ADN.style; }
 
-function ensurePanelCount(count){
-  const panels = [];
-  for(let i=0;i<count;i++){
-    const prev = state.panels[i];
-    panels.push(prev || { id:`P${i+1}`, backgroundId:null, actors:[], motionNote:"" });
-  }
-  state.panels = panels;
-  if(state.activePanelIndex >= count) state.activePanelIndex = 0;
+const DEFAULT_ASPECTS = [
+  { id: "9:16", label: "9:16 (Short)" },
+  { id: "16:9", label: "16:9 (Video)" },
+  { id: "1:1", label: "1:1 (Square)" }
+];
+
+/* ---------- Global ADN store ---------- */
+const ADN = {
+  layouts: {},
+  backgrounds: {},
+  characters: {},
+  actions: {},
+  style: {}
+};
+
+/* ---------- State ---------- */
+const state = {
+  layoutId: "",
+  aspect: "9:16",
+  styleId: "style",
+  activePanelIndex: 0,
+  panelCount: 4,
+  panels: [] // each: { backgroundId, actors:[{charId, actionId}] , motionNote:"" }
+};
+
+/* ---------- Load ADN JSONs ---------- */
+async function loadJSON(url) {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`${url} -> ${res.status}`);
+  return await res.json();
 }
 
+async function loadADN() {
+  log("Loading ADN JSON...");
+  const [layouts, backgrounds, characters, actions, style] = await Promise.all([
+    loadJSON(ADN_FILES.layouts),
+    loadJSON(ADN_FILES.backgrounds),
+    loadJSON(ADN_FILES.characters),
+    loadJSON(ADN_FILES.actions),
+    loadJSON(ADN_FILES.style)
+  ]);
+
+  ADN.layouts = normalizeDict(layouts, "layouts");
+  ADN.backgrounds = normalizeDict(backgrounds, "backgrounds");
+  ADN.characters = normalizeDict(characters, "characters");
+  ADN.actions = normalizeDict(actions, "actions");
+  ADN.style = style || {};
+
+  log("ADN loaded OK.");
+}
+
+/* ---------- Ensure panels in state ---------- */
+function ensurePanelCount(n) {
+  state.panelCount = n;
+
+  while (state.panels.length < n) {
+    state.panels.push({
+      backgroundId: "",
+      actors: [],
+      motionNote: ""
+    });
+  }
+  while (state.panels.length > n) {
+    state.panels.pop();
+  }
+
+  if (state.activePanelIndex >= n) state.activePanelIndex = 0;
+}
+
+/* ---------- UI render ---------- */
+function renderLayoutSelect() {
+  const select = $("layoutSelect");
+  if (!select) return;
+
+  const ids = Object.keys(ADN.layouts || {});
+  select.innerHTML = "";
+
+  if (!ids.length) {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "(Chưa có layout – kiểm tra XNC_layouts.json)";
+    select.appendChild(opt);
+    return;
+  }
+
+  // sort stable: 1->4 first if id naming L1/L2/L3/L4
+  ids.sort((a, b) => a.localeCompare(b, "vi", { numeric: true }));
+
+  for (const id of ids) {
+    const item = ADN.layouts[id] || {};
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = item.label || item.name || id;
+    select.appendChild(opt);
+  }
+
+  if (!state.layoutId || !ADN.layouts[state.layoutId]) {
+    state.layoutId = ids[0];
+  }
+  select.value = state.layoutId;
+
+  select.onchange = () => {
+    state.layoutId = select.value;
+    setGridTemplate(state.layoutId);
+  };
+}
+
+function renderAspectSelect() {
+  const select = $("aspectSelect") || $("aspect");
+  if (!select) return;
+
+  select.innerHTML = "";
+  for (const a of DEFAULT_ASPECTS) {
+    const opt = document.createElement("option");
+    opt.value = a.id;
+    opt.textContent = a.label;
+    select.appendChild(opt);
+  }
+  select.value = state.aspect;
+
+  select.onchange = () => {
+    state.aspect = select.value || "9:16";
+  };
+}
+
+function renderStyleSelect() {
+  const select = $("styleSelect") || $("toneSelect") || $("style");
+  if (!select) return;
+
+  // XNC_style.json có thể có {style:{...}} hoặc {styles:{...}}...
+  const styles = normalizeDict(ADN.style, "styles");
+  const ids = Object.keys(styles || {});
+  select.innerHTML = "";
+
+  if (!ids.length) {
+    const opt = document.createElement("option");
+    opt.value = "style";
+    opt.textContent = "style";
+    select.appendChild(opt);
+    select.value = "style";
+    state.styleId = "style";
+    return;
+  }
+
+  ids.sort((a, b) => a.localeCompare(b, "vi", { numeric: true }));
+  for (const id of ids) {
+    const it = styles[id] || {};
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = it.label || it.name || id;
+    select.appendChild(opt);
+  }
+
+  if (!state.styleId || !styles[state.styleId]) state.styleId = ids[0];
+  select.value = state.styleId;
+
+  select.onchange = () => {
+    state.styleId = select.value;
+  };
+}
+
+function renderBackgroundSelect() {
+  const select = $("bgSelect") || $("backgroundSelect") || $("background");
+  if (!select) return;
+
+  const ids = Object.keys(ADN.backgrounds || {});
+  select.innerHTML = "";
+
+  // placeholder
+  const ph = document.createElement("option");
+  ph.value = "";
+  ph.textContent = "-- Chọn bối cảnh --";
+  select.appendChild(ph);
+
+  ids.sort((a, b) => a.localeCompare(b, "vi", { numeric: true }));
+  for (const id of ids) {
+    const it = ADN.backgrounds[id] || {};
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = it.label || it.name || id;
+    select.appendChild(opt);
+  }
+
+  // set from active panel
+  const p = state.panels[state.activePanelIndex];
+  select.value = p?.backgroundId || "";
+
+  select.onchange = () => {
+    const panel = state.panels[state.activePanelIndex];
+    if (!panel) return;
+    panel.backgroundId = select.value || "";
+    renderPanelBackground();
+  };
+}
+
+function renderCharacterSelect() {
+  const select = $("charSelect") || $("characterSelect");
+  if (!select) return;
+
+  const ids = Object.keys(ADN.characters || {});
+  select.innerHTML = "";
+
+  const ph = document.createElement("option");
+  ph.value = "";
+  ph.textContent = "-- Chọn nhân vật --";
+  select.appendChild(ph);
+
+  ids.sort((a, b) => a.localeCompare(b, "vi", { numeric: true }));
+  for (const id of ids) {
+    const it = ADN.characters[id] || {};
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = it.name || it.label || id;
+    select.appendChild(opt);
+  }
+}
+
+function renderActionSelect() {
+  const select = $("actionSelect");
+  if (!select) return;
+
+  const ids = Object.keys(ADN.actions || {});
+  select.innerHTML = "";
+
+  const ph = document.createElement("option");
+  ph.value = "";
+  ph.textContent = "-- Chọn hành động/biểu cảm --";
+  select.appendChild(ph);
+
+  ids.sort((a, b) => a.localeCompare(b, "vi", { numeric: true }));
+  for (const id of ids) {
+    const it = ADN.actions[id] || {};
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = it.label || it.name || id;
+    select.appendChild(opt);
+  }
+}
+
+function renderPanelSelect() {
+  const select = $("panelSelect");
+  if (!select) return;
+
+  const count = state.panelCount || state.panels.length || 1;
+
+  select.innerHTML = "";
+  for (let i = 0; i < count; i++) {
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = `P${i + 1}`;
+    select.appendChild(opt);
+  }
+
+  if (typeof state.activePanelIndex !== "number") state.activePanelIndex = 0;
+  if (state.activePanelIndex < 0 || state.activePanelIndex >= count) state.activePanelIndex = 0;
+
+  select.value = String(state.activePanelIndex);
+
+  select.onchange = () => {
+    state.activePanelIndex = Number(select.value) || 0;
+    syncSidebarFromState();
+    highlightActivePanel();
+  };
+}
+
+function syncSidebarFromState() {
+  renderBackgroundSelect();
+  renderActorsEditor();
+  const note = $("motionNote");
+  if (note) note.value = state.panels[state.activePanelIndex]?.motionNote || "";
+}
+
+function highlightActivePanel() {
+  const grid = $("grid");
+  if (!grid) return;
+  const nodes = grid.querySelectorAll(".panel");
+  nodes.forEach((n) => n.classList.remove("active"));
+  const active = grid.querySelector(`.panel[data-panel-index="${state.activePanelIndex}"]`);
+  active?.classList.add("active");
+}
+
+/* ---------- Panel visuals ---------- */
+function renderPanelBackground() {
+  const grid = $("grid");
+  if (!grid) return;
+  const panels = grid.querySelectorAll(".panel");
+  panels.forEach((panelEl) => {
+    const idx = Number(panelEl.dataset.panelIndex || "0");
+    const stPanel = state.panels[idx];
+    const bgId = stPanel?.backgroundId || "";
+    const bg = bgId ? ADN.backgrounds[bgId] : null;
+    const bgDesc = bg ? (bg.preview || bg.image || bg.url || "") : "";
+
+    const bgLayer = panelEl.querySelector(".panelBg");
+    if (bgLayer) {
+      // demo: nếu có ảnh preview -> set background-image, không thì gradient ADN
+      if (bgDesc && typeof bgDesc === "string" && (bgDesc.startsWith("http") || bgDesc.startsWith("/") || bgDesc.endsWith(".png") || bgDesc.endsWith(".jpg") || bgDesc.endsWith(".jpeg") || bgDesc.endsWith(".webp"))) {
+        bgLayer.style.backgroundImage = `url("${bgDesc}")`;
+        bgLayer.style.backgroundSize = "cover";
+        bgLayer.style.backgroundPosition = "center";
+      } else {
+        bgLayer.style.backgroundImage = "";
+      }
+    }
+  });
+}
+
+/* ---------- Actors editor per panel ---------- */
+function renderActorsEditor() {
+  const wrap = $("actorsWrap") || $("actorsList") || $("actorsContainer");
+  if (!wrap) return;
+
+  const panel = state.panels[state.activePanelIndex];
+  wrap.innerHTML = "";
+
+  const list = panel?.actors || [];
+  if (!list.length) {
+    const empty = document.createElement("div");
+    empty.className = "hint";
+    empty.textContent = "Chưa có nhân vật trong panel này. Bấm +Add để thêm.";
+    wrap.appendChild(empty);
+    return;
+  }
+
+  list.forEach((a, i) => {
+    const row = document.createElement("div");
+    row.className = "actorRow";
+
+    const charSel = document.createElement("select");
+    charSel.className = "actorChar";
+    charSel.innerHTML = `<option value="">-- nhân vật --</option>`;
+    Object.keys(ADN.characters).sort((x,y)=>x.localeCompare(y,"vi",{numeric:true})).forEach((id) => {
+      const it = ADN.characters[id] || {};
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = it.name || it.label || id;
+      charSel.appendChild(opt);
+    });
+    charSel.value = a.charId || "";
+    charSel.onchange = () => {
+      a.charId = charSel.value || "";
+    };
+
+    const actSel = document.createElement("select");
+    actSel.className = "actorAction";
+    actSel.innerHTML = `<option value="">-- hành động/biểu cảm --</option>`;
+    Object.keys(ADN.actions).sort((x,y)=>x.localeCompare(y,"vi",{numeric:true})).forEach((id) => {
+      const it = ADN.actions[id] || {};
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = it.label || it.name || id;
+      actSel.appendChild(opt);
+    });
+    actSel.value = a.actionId || "";
+    actSel.onchange = () => {
+      a.actionId = actSel.value || "";
+    };
+
+    const btnDel = document.createElement("button");
+    btnDel.type = "button";
+    btnDel.className = "btnDel";
+    btnDel.textContent = "×";
+    btnDel.onclick = () => {
+      panel.actors.splice(i, 1);
+      renderActorsEditor();
+      renderActorsOnPanels();
+    };
+
+    row.appendChild(charSel);
+    row.appendChild(actSel);
+    row.appendChild(btnDel);
+    wrap.appendChild(row);
+  });
+}
+
+/* ---------- Render actor badges into panels (simple preview) ---------- */
+function renderActorsOnPanels() {
+  const grid = $("grid");
+  if (!grid) return;
+
+  const panelEls = grid.querySelectorAll(".panel");
+  panelEls.forEach((panelEl) => {
+    const idx = Number(panelEl.dataset.panelIndex || "0");
+    const stPanel = state.panels[idx];
+
+    // remove old badges
+    panelEl.querySelectorAll(".actorBadge").forEach((x) => x.remove());
+
+    (stPanel?.actors || []).forEach((a) => {
+      const name = a.charId ? (ADN.characters[a.charId]?.name || a.charId) : "NV?";
+      const badge = document.createElement("div");
+      badge.className = "actorBadge";
+      badge.textContent = name;
+      panelEl.appendChild(badge);
+    });
+  });
+}
+
+/* ---------- Layout engine (YOUR requested function, fixed) ---------- */
 function setGridTemplate(layoutId) {
-  const layouts = getLayouts();
-  const layout = layouts?.[layoutId] || null;
+  const layouts = ADN.layouts || {};
+  const layout = layouts[layoutId];
 
   const grid = $("grid");
   if (!grid) return;
 
-  // ====== panelCount an toàn ======
-  const panelCountRaw = layout?.panels ?? layout?.panelCount ?? layout?.count ?? 4;
-  const panelCount = Math.max(1, Math.min(4, Number(panelCountRaw) || 4));
+  // panel count priority
+  const panelCount = Number(
+    pick(layout, ["panels", "panelCount", "count"], 4)
+  );
 
-  // Lưu layout đang chọn
-  state.layoutId = layoutId;
-  state.panelCount = panelCount;
-
-  // ====== reset CSS grid ======
+  // reset
   grid.style.gridTemplateColumns = "";
   grid.style.gridTemplateRows = "";
   grid.style.gridTemplateAreas = "";
 
-  // ====== apply css từ layouts.json nếu có ======
+  // apply css if provided
   if (layout?.css) {
     const css = String(layout.css);
 
@@ -80,78 +503,25 @@ function setGridTemplate(layoutId) {
 
     if (cols) grid.style.gridTemplateColumns = cols[1].trim();
     if (rows) grid.style.gridTemplateRows = rows[1].trim();
-    if (areas) grid.style.gridTemplateAreas = areas[1].trim();
+    if (areas) grid.style.gridTemplateAreas = areas[1].trim().replace(/\s+/g, " ");
   } else {
-    // ====== fallback layout basic ======
+    // fallback basic
     if (panelCount === 1) {
       grid.style.gridTemplateColumns = "1fr";
       grid.style.gridTemplateRows = "1fr";
     } else if (panelCount === 2) {
-      const id = String(layoutId).toLowerCase();
-      if (id.includes("top") || id.includes("tb") || id.includes("tren") || id.includes("duoi")) {
-        grid.style.gridTemplateColumns = "1fr";
-        grid.style.gridTemplateRows = "1fr 1fr";
-      } else {
-        grid.style.gridTemplateColumns = "1fr 1fr";
-        grid.style.gridTemplateRows = "1fr";
-      }
-    } else if (panelCount === 3) {
-      const id = String(layoutId).toLowerCase();
-
-      // 3 khung thẳng hàng
-      if (id.includes("3row") || id.includes("ngang") || id.includes("row")) {
-        grid.style.gridTemplateColumns = "1fr";
-        grid.style.gridTemplateRows = "1fr 1fr 1fr";
-        grid.style.gridTemplateAreas = "";
-      } else {
-        // các dạng 2x2 nhưng dùng areas để tạo 3 panel
-        grid.style.gridTemplateColumns = "1fr 1fr";
-        grid.style.gridTemplateRows = "1fr 1fr";
-
-        if (id.includes("1top2") || id.includes("tren") || id.includes("top")) {
-          grid.style.gridTemplateAreas = `"a a" "b c"`;
-        } else if (id.includes("1bottom2") || id.includes("duoi") || id.includes("bottom")) {
-          grid.style.gridTemplateAreas = `"b c" "a a"`;
-        } else if (id.includes("1left2") || id.includes("trai") || id.includes("left")) {
-          grid.style.gridTemplateAreas = `"a b" "a c"`;
-        } else if (id.includes("1right2") || id.includes("phai") || id.includes("right")) {
-          grid.style.gridTemplateAreas = `"b a" "c a"`;
-        } else {
-          grid.style.gridTemplateAreas = `"a a" "b c"`;
-        }
-      }
+      grid.style.gridTemplateColumns = "1fr 1fr";
+      grid.style.gridTemplateRows = "1fr";
     } else {
-      // 4 khung mặc định 2x2
       grid.style.gridTemplateColumns = "1fr 1fr";
       grid.style.gridTemplateRows = "1fr 1fr";
-      grid.style.gridTemplateAreas = "";
     }
   }
 
-  // ====== đảm bảo state.panels đủ panel và có schema ======
-  if (!Array.isArray(state.panels)) state.panels = [];
-
-  const makeDefaultPanel = () => ({
-    backgroundId: "",
-    styleId: "",        // nếu bạn có style riêng từng panel
-    actors: [],         // [{ characterId, actionId }]
-    motionNote: "",     // ghi chú motion
-    notes: ""           // ghi chú khác (optional)
-  });
-
-  while (state.panels.length < panelCount) state.panels.push(makeDefaultPanel());
-  if (state.panels.length > panelCount) state.panels.length = panelCount;
-
-  // ====== đảm bảo activePanelIndex hợp lệ ======
-  if (typeof state.activePanelIndex !== "number") state.activePanelIndex = 0;
-  if (state.activePanelIndex < 0 || state.activePanelIndex >= panelCount) {
-    state.activePanelIndex = 0;
-  }
-
-  // ====== render DOM panels ======
+  // rebuild panels DOM
   grid.innerHTML = "";
 
-  const hasAreas = !!grid.style.gridTemplateAreas;
+  // Map areas for up to 4
   const areaMap = ["a", "b", "c", "d"];
 
   for (let i = 0; i < panelCount; i++) {
@@ -159,8 +529,8 @@ function setGridTemplate(layoutId) {
     p.className = "panel";
     p.dataset.panelIndex = String(i);
 
-    if (hasAreas && areaMap[i]) {
-      p.style.gridArea = areaMap[i];
+    if (grid.style.gridTemplateAreas) {
+      p.style.gridArea = areaMap[i] || "";
     }
 
     p.innerHTML = `
@@ -171,288 +541,273 @@ function setGridTemplate(layoutId) {
     p.addEventListener("click", () => {
       state.activePanelIndex = i;
       renderPanelSelect();
+      syncSidebarFromState();
       highlightActivePanel();
-
-      // chỉ sync khi panel tồn tại
-      if (state.panels?.[state.activePanelIndex]) {
-        syncSidebarFromState();
-      }
     });
 
     grid.appendChild(p);
   }
 
-  // ====== các render khác ======
-  // renderActorsOnPanels nên đọc state.panels[i].actors (đã đảm bảo tồn tại)
-  renderActorsOnPanels?.();
-  highlightActivePanel?.();
-  renderPanelSelect?.();
+  ensurePanelCount(panelCount);
 
-  // Quan trọng: gọi sync sau khi state.panels đã có đủ schema
-  if (state.panels?.[state.activePanelIndex]) {
-    syncSidebarFromState?.();
+  // re-render
+  renderPanelSelect();
+  syncSidebarFromState();
+  renderPanelBackground();
+  renderActorsOnPanels();
+  highlightActivePanel();
+
+  log(`Layout set: ${layoutId} (${panelCount} panels)`);
+}
+
+/* ---------- Add actor to active panel ---------- */
+function addActorFromUI() {
+  const charId = ($("charSelect")?.value || "").trim();
+  const actionId = ($("actionSelect")?.value || "").trim();
+
+  if (!charId) {
+    alert("Chọn nhân vật trước.");
+    return;
   }
-}
-//======================
 
-function highlightActivePanel(){
-  document.querySelectorAll(".panel").forEach(el=>{
-    const i=Number(el.dataset.panelIndex);
-    el.style.outline = (i===state.activePanelIndex) ? "3px solid rgba(99,179,109,.55)" : "none";
-  });
-}
+  const panel = state.panels[state.activePanelIndex];
+  panel.actors.push({ charId, actionId });
 
-function renderActor(charId){
-  const chars = getCharacters();
-  const c = chars[charId] || {name:charId||"Actor"};
-  const el = document.createElement("div");
-  el.className="actor";
-  el.innerHTML = `<div class="face">${(c.name||"").slice(0,1).toUpperCase()}</div><div class="badge">${c.name||charId}</div>`;
-  return el;
-}
-
-function renderActorsOnPanels(){
-  const panels = document.querySelectorAll(".panel");
-  panels.forEach(panelEl=>{
-    const i=Number(panelEl.dataset.panelIndex);
-    const pdata = state.panels[i];
-    panelEl.querySelectorAll(".actor").forEach(a=>a.remove());
-    const bg = pdata.backgroundId ? getBackgrounds()[pdata.backgroundId] : null;
-    const bgEl = panelEl.querySelector(".panelBg");
-    if(bg && bg.tint){ bgEl.style.background = bg.tint; } else { bgEl.style.background = ""; }
-    const pos=[{left:"18%",top:"18%"},{left:"60%",top:"18%"},{left:"18%",top:"55%"},{left:"60%",top:"55%"}];
-    (pdata.actors||[]).slice(0,4).forEach((a,idx)=>{
-      const el = renderActor(a.charId);
-      el.style.left=pos[idx].left; el.style.top=pos[idx].top;
-      panelEl.appendChild(el);
-    });
-  });
-}
-
-function renderLayoutSelect(){
-  const select = $("layoutSelect");
-  select.innerHTML="";
-  const layouts = getLayouts();
-  for(const [id,l] of objEntries(layouts)){
-    const opt = document.createElement("option");
-    opt.value=id;
-    opt.textContent=l.label||l.name||id;
-    select.appendChild(opt);
-  }
-  if(!state.layoutId) state.layoutId = select.options[0]?.value || null;
-  if(state.layoutId) select.value = state.layoutId;
-  select.onchange = ()=>{
-    state.layoutId = select.value;
-    log(`Layout set: ${state.layoutId}`);
-    setGridTemplate(state.layoutId);
-  };
-}
-
-function renderPanelSelect(){
-  const select = $("panelSelect");
-  select.innerHTML="";
-  state.panels.forEach((p,idx)=> select.add(new Option(p.id,String(idx))));
-  select.value=String(state.activePanelIndex);
-  select.onchange=()=>{
-    state.activePanelIndex=Number(select.value);
-    syncSidebarFromState();
-    highlightActivePanel();
-  };
-}
-
-function renderBackgroundSelect(){
-  const select = $("bgSelect");
-  select.innerHTML="";
-  select.add(new Option("— Chọn bối cảnh —",""));
-  for(const [id,b] of objEntries(getBackgrounds())){
-    select.add(new Option(b.label||b.name||id,id));
-  }
-  select.onchange=()=>{
-    state.panels[state.activePanelIndex].backgroundId = select.value || null;
-    renderActorsOnPanels();
-  };
-}
-
-function renderStyleSelect(){
-  const select = $("styleSelect");
-  select.innerHTML="";
-  for(const [id,s] of objEntries(getStyles())){
-    select.add(new Option(s.label||s.name||id,id));
-  }
-  if(!state.styleId) state.styleId = select.options[0]?.value || null;
-  if(state.styleId) select.value = state.styleId;
-  select.onchange=()=> state.styleId = select.value;
-}
-
-function renderActorsList(){
-  const wrap = $("actorsList");
-  wrap.innerHTML="";
-  const pdata = state.panels[state.activePanelIndex];
-  const actors = pdata.actors || [];
-  actors.forEach((a,idx)=>{
-    const row = document.createElement("div");
-    row.className="actorRow";
-    row.innerHTML = `<select class="charSel"></select><select class="actSel"></select><button class="iconBtn" title="Xóa">✕</button>`;
-    const charSel=row.querySelector(".charSel");
-    const actSel=row.querySelector(".actSel");
-    const del=row.querySelector(".iconBtn");
-
-    for(const [id,c] of objEntries(getCharacters())) charSel.add(new Option(c.name||id,id));
-    charSel.value = a.charId || charSel.options[0]?.value || "";
-
-    actSel.add(new Option("— Action —",""));
-    for(const [id,ac] of objEntries(getActions())) actSel.add(new Option(ac.label||ac.name||id,id));
-    actSel.value = a.actionId || "";
-
-    charSel.onchange=()=>{ a.charId = charSel.value; renderActorsOnPanels(); };
-    actSel.onchange=()=>{ a.actionId = actSel.value || null; };
-    del.onclick=()=>{ actors.splice(idx,1); renderActorsList(); renderActorsOnPanels(); };
-
-    wrap.appendChild(row);
-  });
-}
-
-function syncSidebarFromState(){
-  // Nếu chưa có panels thì thôi, đừng crash
-  if (!state.panels || !state.panels.length) return;
-
-  // Nếu activePanelId chưa set hoặc không còn tồn tại -> set về panel đầu
-  let panel = state.panels.find(p => p.id === state.activePanelId);
-  if (!panel) {
-    state.activePanelId = state.panels[0].id;
-    panel = state.panels[0];
-  }
-  const pdata = state.panels[state.activePanelIndex];
-  $("bgSelect").value = pdata.backgroundId || "";
-  $("motionNote").value = pdata.motionNote || "";
-  renderActorsList();
-}
-
-function addActor(){
-  const pdata = state.panels[state.activePanelIndex];
-  pdata.actors = pdata.actors || [];
-  const firstChar = Object.keys(getCharacters())[0] || null;
-  pdata.actors.push({charId:firstChar, actionId:null});
-  renderActorsList();
+  renderActorsEditor();
   renderActorsOnPanels();
 }
 
-function buildSceneJSON(){
-  return {
-    meta:{
-      series: state.series,
-      layout: state.layoutId,
-      aspect: state.aspect,
-      style: state.styleId,
-      createdAt: new Date().toISOString(),
-      version: "xnc_motion_comic_v1"
-    },
-    panels: state.panels.map(p=>({
-      id: p.id,
-      background: p.backgroundId,
-      motionNote: p.motionNote || "",
-      actors: (p.actors||[]).map(a=>({char:a.charId, action:a.actionId}))
-    }))
-  };
+/* ---------- Motion note ---------- */
+function bindMotionNote() {
+  const note = $("motionNote");
+  if (!note) return;
+  note.addEventListener("input", () => {
+    const panel = state.panels[state.activePanelIndex];
+    if (panel) panel.motionNote = note.value || "";
+  });
 }
 
-function buildPrompt(){
-  const style = getStyles()[state.styleId] || {};
-  const styleDesc = style.desc || style.description || style.prompt || style.text || "pastel chibi 2D, green-brown Vietnamese vibe, clean illustration, soft lighting";
-  const bgs = getBackgrounds();
-  const chars = getCharacters();
-  const actions = getActions();
-  const lines=[];
-  lines.push(`STYLE DNA (XNC): ${styleDesc}`);
-  lines.push(`ASPECT: ${state.aspect}`);
-  lines.push("");
-  state.panels.forEach((p,idx)=>{
-    const bg = p.backgroundId ? bgs[p.backgroundId] : null;
-    const bgDesc = bg ? (bg.desc||bg.description||bg.prompt||bg.label||"") : "Vietnamese rural neighborhood, pastel green-brown tones";
-    lines.push(`PANEL ${idx+1} (${p.id})`);
-    lines.push(`Background: ${bgDesc}`);
-    const actorLines = (p.actors||[]).map(a=>{
-      const c = chars[a.charId] || {name:a.charId};
-      const ac = a.actionId ? (actions[a.actionId]||{}) : {};
-      const actDesc = ac.desc || ac.description || ac.prompt || (a.actionId||"neutral pose");
-      return `- ${c.name||a.charId}: ${actDesc}`;
-    });
-    lines.push(`Actors:\n${actorLines.length?actorLines.join("\n"):"- (none)"}`);
-    if(p.motionNote) lines.push(`Motion note: ${p.motionNote}`);
-    lines.push("Constraints: no text, no subtitles, no UI, consistent characters, comic panel framing.");
+/* ---------- Build output JSON ---------- */
+function buildSceneJSON() {
+  const layouts = ADN.layouts || {};
+  const layout = layouts[state.layoutId] || {};
+
+  // style text
+  const styles = normalizeDict(ADN.style, "styles");
+  const styleObj = styles[state.styleId] || styles.style || ADN.style.style || {};
+  const styleDNA = getTextDesc(styleObj) || getTextDesc(ADN.style) || "";
+
+  const out = {
+    meta: {
+      series: ADN_ID,
+      layoutId: state.layoutId,
+      layoutLabel: layout.label || layout.name || state.layoutId,
+      aspect: state.aspect,
+      styleId: state.styleId
+    },
+    style: {
+      label: styleObj.label || styleObj.name || state.styleId,
+      dna: styleDNA
+    },
+    panels: state.panels.map((p, idx) => {
+      const bg = p.backgroundId ? ADN.backgrounds[p.backgroundId] : null;
+      return {
+        id: `P${idx + 1}`,
+        backgroundId: p.backgroundId || "",
+        backgroundLabel: bg?.label || bg?.name || "",
+        backgroundDesc: bg ? getTextDesc(bg) : "",
+        motionNote: p.motionNote || "",
+        actors: (p.actors || []).map((a) => {
+          const ch = a.charId ? ADN.characters[a.charId] : null;
+          const ac = a.actionId ? ADN.actions[a.actionId] : null;
+          return {
+            charId: a.charId || "",
+            charName: ch?.name || ch?.label || "",
+            charRole: ch?.role || "",
+            actionId: a.actionId || "",
+            actionLabel: ac?.label || ac?.name || "",
+            actionDesc: ac ? getTextDesc(ac) : ""
+          };
+        })
+      };
+    })
+  };
+
+  return out;
+}
+
+/* ---------- Build prompt (image/video) ---------- */
+function buildPrompt() {
+  const scene = buildSceneJSON();
+
+  const baseConstraints =
+    "no text, no subtitles, no UI, consistent characters, clean illustration, comic panel framing";
+
+  const lines = [];
+  if (scene.style?.dna) {
+    lines.push(`STYLE DNA (XNC): ${scene.style.dna}`);
+  } else {
+    lines.push(`STYLE DNA (XNC): pastel chibi 2D, green-brown Vietnamese vibe, clean illustration, soft lighting`);
+  }
+
+  lines.push(`ASPECT: ${scene.meta.aspect}`);
+
+  scene.panels.forEach((p) => {
     lines.push("");
+    lines.push(`PANEL ${p.id}:`);
+
+    if (p.backgroundLabel || p.backgroundDesc) {
+      const bgLine = [p.backgroundLabel, p.backgroundDesc].filter(Boolean).join(" — ");
+      lines.push(`Background: ${bgLine}`);
+    } else {
+      lines.push(`Background: (none)`);
+    }
+
+    if (p.actors?.length) {
+      lines.push(`Actors:`);
+      p.actors.forEach((a) => {
+        const part = [
+          a.charName ? `${a.charName}` : a.charId || "Unknown",
+          a.charRole ? `(${a.charRole})` : "",
+          a.actionDesc ? `— ${a.actionDesc}` : ""
+        ].filter(Boolean).join(" ");
+        lines.push(`- ${part}`);
+      });
+    } else {
+      lines.push(`Actors: (none)`);
+    }
+
+    if (p.motionNote) {
+      lines.push(`Motion note: ${p.motionNote}`);
+    }
+
+    lines.push(`Constraints: ${baseConstraints}.`);
   });
-  lines.push("MOTION COMIC NOTE: Panel borders act as masks; use overlay layer for out-of-frame actions (throw/punch/pull) across panels.");
+
   return lines.join("\n");
 }
 
-function setOutput(text){ $("output").textContent = text; }
-function downloadJson(obj){
-  const blob = new Blob([JSON.stringify(obj,null,2)], {type:"application/json;charset=utf-8"});
+/* ---------- Output UI ---------- */
+function setOutput(text) {
+  const out = $("output") || $("outputBox") || $("outputArea");
+  if (out) out.value != null ? (out.value = text) : (out.textContent = text);
+}
+
+async function copyOutput() {
+  const out = $("output") || $("outputBox") || $("outputArea");
+  const text = out?.value ?? out?.textContent ?? "";
+  if (!text) return;
+  await navigator.clipboard.writeText(text);
+  log("Copied output to clipboard.");
+}
+
+function downloadText(filename, text) {
+  const blob = new Blob([text], { type: "application/json;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href=url;
-  a.download = `xnc_scene_${new Date().toISOString().replace(/[:.]/g,"-")}.json`;
-  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
-// overlay demo
-let overlayEl=null;
-function ensureOverlay(){
-  if(overlayEl) return overlayEl;
-  overlayEl=document.createElement("div");
-  overlayEl.className="overlay";
-  document.body.appendChild(overlayEl);
-  return overlayEl;
-}
-function getPanelRect(index){
-  const panel=document.querySelector(`.panel[data-panel-index="${index}"]`);
-  return panel.getBoundingClientRect();
-}
-function flyProp(fromIdx,toIdx,kind="throw"){
-  const ov=ensureOverlay(); ov.innerHTML="";
-  const prop=document.createElement("div"); prop.className="prop"; ov.appendChild(prop);
-  const a=getPanelRect(fromIdx), b=getPanelRect(toIdx);
-  const start={x:a.left+a.width*0.70,y:a.top+a.height*0.55};
-  const end={x:b.left+b.width*0.35,y:b.top+b.height*0.45};
-  prop.style.left=`${start.x}px`; prop.style.top=`${start.y}px`;
-  const dx=end.x-start.x, dy=end.y-start.y;
-  const kf=[
-    {transform:"translate(0px,0px) rotate(0deg) scale(1)"},
-    {transform:`translate(${dx*0.55}px, ${dy*0.35-80}px) rotate(${kind==="punch"?80:120}deg) scale(1.05)`},
-    {transform:`translate(${dx}px, ${dy}px) rotate(${kind==="punch"?140:220}deg) scale(1)`},
-  ];
-  prop.animate(kf,{duration:650,easing:"cubic-bezier(.2,.8,.2,1)"});
-  setTimeout(()=>{ov.innerHTML="";},760);
+/* ---------- Action buttons (optional) ---------- */
+function wireQuickActions() {
+  // If your HTML has these IDs, we enable them.
+  on("btnThrow", "click", () => log("Action: THROW_PROP (demo)"));
+  on("btnPunch", "click", () => log("Action: PUNCH (demo)"));
+  on("btnPull", "click", () => log("Action: PULL (demo)"));
+
+  on("btnReset", "click", () => {
+    // reset state (keep ADN loaded)
+    state.layoutId = Object.keys(ADN.layouts)[0] || "";
+    state.aspect = "9:16";
+    state.styleId = "style";
+    state.activePanelIndex = 0;
+    state.panels = [];
+    ensurePanelCount(4);
+    renderLayoutSelect();
+    renderAspectSelect();
+    renderStyleSelect();
+    setGridTemplate(state.layoutId);
+    setOutput("Đã reset.");
+    log("Reset scene.");
+  });
 }
 
-async function init(){
-  log("Loading ADN JSON...");
-  ADN = await loadADN();
-  log("ADN loaded.");
-  renderLayoutSelect();
-  renderBackgroundSelect();
-  renderStyleSelect();
+/* ---------- Export buttons ---------- */
+function wireExportButtons() {
+  on("btnExportJson", "click", () => {
+    const json = buildSceneJSON();
+    setOutput(JSON.stringify(json, null, 2));
+    log("Export JSON done.");
+  });
 
-  $("aspectSelect").onchange=()=> state.aspect = $("aspectSelect").value;
-  $("btnAddActor").onclick=()=>{ addActor(); log("Actor added."); };
-  $("motionNote").addEventListener("input", ()=>{ state.panels[state.activePanelIndex].motionNote = $("motionNote").value; });
+  on("btnExportPrompt", "click", () => {
+    const prompt = buildPrompt();
+    setOutput(prompt);
+    log("Export Prompt done.");
+  });
 
-  if(state.layoutId) setGridTemplate(state.layoutId);
+  on("btnCopy", "click", copyOutput);
 
-  $("btnExportJson").onclick=()=>{ const obj=buildSceneJSON(); setOutput(JSON.stringify(obj,null,2)); window.__lastExport={type:"json",payload:obj}; log("Export JSON."); };
-  $("btnExportPrompt").onclick=()=>{ const text=buildPrompt(); setOutput(text); window.__lastExport={type:"prompt",payload:text}; log("Export Prompt."); };
+  on("btnDownload", "click", () => {
+    const out = $("output") || $("outputBox") || $("outputArea");
+    const text = out?.value ?? out?.textContent ?? "";
+    if (!text) return;
 
-  $("btnCopy").onclick=async()=>{ await navigator.clipboard.writeText($("output").textContent||""); log("Copied output."); };
-  $("btnDownload").onclick=()=>{ const last=window.__lastExport; if(!last||last.type!=="json"){ alert("Chưa có JSON. Bấm “Xuất JSON” trước."); return;} downloadJson(last.payload); log("Downloaded JSON."); };
+    const isJson = text.trim().startsWith("{") || text.trim().startsWith("[");
+    downloadText(isJson ? "xnc_scene.json" : "xnc_prompt.txt", text);
+    log("Downloaded output.");
+  });
 
-  $("btnThrow").onclick=()=>{ const from=state.activePanelIndex; const to=(from+1)%state.panels.length; flyProp(from,to,"throw"); log(`Action: THROW_PROP ${state.panels[from].id} -> ${state.panels[to].id}`); };
-  $("btnPunch").onclick=()=>{ const from=state.activePanelIndex; const to=(from+1)%state.panels.length; flyProp(from,to,"punch"); log(`Action: PUNCH ${state.panels[from].id} -> ${state.panels[to].id}`); };
-  $("btnPull").onclick=()=>{ const from=state.activePanelIndex; const to=(from+1)%state.panels.length; flyProp(from,to,"throw"); log(`Action: PULL (placeholder) ${state.panels[from].id} -> ${state.panels[to].id}`); };
-  $("btnReset").onclick=()=>{ state.panels.forEach(p=>{p.actors=[];p.backgroundId=null;p.motionNote="";}); renderActorsOnPanels(); syncSidebarFromState(); setOutput("Đã reset cảnh."); log("Scene reset."); };
-
+  on("btnAddActor", "click", () => {
+    addActorFromUI();
+  });
 }
-init().catch(err=>{
-  console.error(err);
-  alert("Lỗi load ADN: "+err.message+"\nKiểm tra đường dẫn JSON trong /public/adn/xomnganchuyen/");
-});
+
+/* ---------- Init ---------- */
+async function init() {
+  try {
+    await loadADN();
+
+    // init state defaults
+    const layoutIds = Object.keys(ADN.layouts || {});
+    if (!layoutIds.length) {
+      alert("Không tìm thấy layout. Kiểm tra XNC_layouts.json");
+      return;
+    }
+    state.layoutId = layoutIds.sort((a,b)=>a.localeCompare(b,"vi",{numeric:true}))[0];
+
+    ensurePanelCount(4);
+
+    // render dropdowns
+    renderLayoutSelect();
+    renderAspectSelect();
+    renderStyleSelect();
+    renderPanelSelect();
+    renderBackgroundSelect();
+    renderCharacterSelect();
+    renderActionSelect();
+    bindMotionNote();
+
+    // apply initial layout
+    setGridTemplate(state.layoutId);
+
+    // exports
+    wireExportButtons();
+
+    // optional actions
+    wireQuickActions();
+
+    log("Ready.");
+  } catch (err) {
+    console.error(err);
+    log("ERROR: " + (err?.message || String(err)));
+    alert("Lỗi load ADN: " + (err?.message || String(err)) + "\n\nKiểm tra:\n- Đường dẫn /adn/<series>/XNC_*.json\n- JSON có hợp lệ không\n- Hard refresh (Ctrl+F5)");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", init);
