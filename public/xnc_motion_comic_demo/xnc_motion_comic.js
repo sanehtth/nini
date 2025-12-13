@@ -50,79 +50,150 @@ function ensurePanelCount(count){
   if(state.activePanelIndex >= count) state.activePanelIndex = 0;
 }
 
-function setGridTemplate(layoutId){
+function setGridTemplate(layoutId) {
   const layouts = getLayouts();
-  const layout = layouts[layoutId];
-  const grid = $("grid");
-  const panelCount = layout?.panels || layout?.panelCount || layout?.count || 4;
+  const layout = layouts?.[layoutId] || null;
 
+  const grid = $("grid");
+  if (!grid) return;
+
+  // ====== panelCount an toàn ======
+  const panelCountRaw = layout?.panels ?? layout?.panelCount ?? layout?.count ?? 4;
+  const panelCount = Math.max(1, Math.min(4, Number(panelCountRaw) || 4));
+
+  // Lưu layout đang chọn
+  state.layoutId = layoutId;
+  state.panelCount = panelCount;
+
+  // ====== reset CSS grid ======
   grid.style.gridTemplateColumns = "";
   grid.style.gridTemplateRows = "";
   grid.style.gridTemplateAreas = "";
 
-  if(layout?.css){
-    const css = layout.css;
+  // ====== apply css từ layouts.json nếu có ======
+  if (layout?.css) {
+    const css = String(layout.css);
+
     const cols = /grid-template-columns\s*:\s*([^;]+)/i.exec(css);
     const rows = /grid-template-rows\s*:\s*([^;]+)/i.exec(css);
     const areas = /grid-template-areas\s*:\s*([^;]+)/i.exec(css);
-    if(cols) grid.style.gridTemplateColumns = cols[1].trim();
-    if(rows) grid.style.gridTemplateRows = rows[1].trim();
-    if(areas) grid.style.gridTemplateAreas = areas[1].trim();
+
+    if (cols) grid.style.gridTemplateColumns = cols[1].trim();
+    if (rows) grid.style.gridTemplateRows = rows[1].trim();
+    if (areas) grid.style.gridTemplateAreas = areas[1].trim();
   } else {
-    if(panelCount === 1){
+    // ====== fallback layout basic ======
+    if (panelCount === 1) {
       grid.style.gridTemplateColumns = "1fr";
       grid.style.gridTemplateRows = "1fr";
-    } else if(panelCount === 2){
+    } else if (panelCount === 2) {
       const id = String(layoutId).toLowerCase();
-      if(id.includes("top")||id.includes("tb")||id.includes("tren")||id.includes("duoi")){
-        grid.style.gridTemplateColumns="1fr"; grid.style.gridTemplateRows="1fr 1fr";
-      } else { grid.style.gridTemplateColumns="1fr 1fr"; grid.style.gridTemplateRows="1fr"; }
-    } else if(panelCount === 3){
-      grid.style.gridTemplateColumns="1fr 1fr"; grid.style.gridTemplateRows="1fr 1fr";
-      const id = String(layoutId).toLowerCase();
-      if(id.includes("1top2")||id.includes("tren")||id.includes("top")){
-        grid.style.gridTemplateAreas = `"a a" "b c"`;
-      } else if(id.includes("1bottom2")||id.includes("duoi")||id.includes("bottom")){
-        grid.style.gridTemplateAreas = `"b c" "a a"`;
-      } else if(id.includes("1left2")||id.includes("trai")||id.includes("left")){
-        grid.style.gridTemplateAreas = `"a b" "a c"`;
-      } else if(id.includes("1right2")||id.includes("phai")||id.includes("right")){
-        grid.style.gridTemplateAreas = `"b a" "c a"`;
-      } else if(id.includes("3row")||id.includes("ngang")){
-        grid.style.gridTemplateColumns="1fr"; grid.style.gridTemplateRows="1fr 1fr 1fr"; grid.style.gridTemplateAreas="";
+      if (id.includes("top") || id.includes("tb") || id.includes("tren") || id.includes("duoi")) {
+        grid.style.gridTemplateColumns = "1fr";
+        grid.style.gridTemplateRows = "1fr 1fr";
       } else {
-        grid.style.gridTemplateAreas = `"a a" "b c"`;
+        grid.style.gridTemplateColumns = "1fr 1fr";
+        grid.style.gridTemplateRows = "1fr";
+      }
+    } else if (panelCount === 3) {
+      const id = String(layoutId).toLowerCase();
+
+      // 3 khung thẳng hàng
+      if (id.includes("3row") || id.includes("ngang") || id.includes("row")) {
+        grid.style.gridTemplateColumns = "1fr";
+        grid.style.gridTemplateRows = "1fr 1fr 1fr";
+        grid.style.gridTemplateAreas = "";
+      } else {
+        // các dạng 2x2 nhưng dùng areas để tạo 3 panel
+        grid.style.gridTemplateColumns = "1fr 1fr";
+        grid.style.gridTemplateRows = "1fr 1fr";
+
+        if (id.includes("1top2") || id.includes("tren") || id.includes("top")) {
+          grid.style.gridTemplateAreas = `"a a" "b c"`;
+        } else if (id.includes("1bottom2") || id.includes("duoi") || id.includes("bottom")) {
+          grid.style.gridTemplateAreas = `"b c" "a a"`;
+        } else if (id.includes("1left2") || id.includes("trai") || id.includes("left")) {
+          grid.style.gridTemplateAreas = `"a b" "a c"`;
+        } else if (id.includes("1right2") || id.includes("phai") || id.includes("right")) {
+          grid.style.gridTemplateAreas = `"b a" "c a"`;
+        } else {
+          grid.style.gridTemplateAreas = `"a a" "b c"`;
+        }
       }
     } else {
-      grid.style.gridTemplateColumns="1fr 1fr"; grid.style.gridTemplateRows="1fr 1fr";
+      // 4 khung mặc định 2x2
+      grid.style.gridTemplateColumns = "1fr 1fr";
+      grid.style.gridTemplateRows = "1fr 1fr";
+      grid.style.gridTemplateAreas = "";
     }
   }
 
-  grid.innerHTML="";
-  for(let i=0;i<panelCount;i++){
+  // ====== đảm bảo state.panels đủ panel và có schema ======
+  if (!Array.isArray(state.panels)) state.panels = [];
+
+  const makeDefaultPanel = () => ({
+    backgroundId: "",
+    styleId: "",        // nếu bạn có style riêng từng panel
+    actors: [],         // [{ characterId, actionId }]
+    motionNote: "",     // ghi chú motion
+    notes: ""           // ghi chú khác (optional)
+  });
+
+  while (state.panels.length < panelCount) state.panels.push(makeDefaultPanel());
+  if (state.panels.length > panelCount) state.panels.length = panelCount;
+
+  // ====== đảm bảo activePanelIndex hợp lệ ======
+  if (typeof state.activePanelIndex !== "number") state.activePanelIndex = 0;
+  if (state.activePanelIndex < 0 || state.activePanelIndex >= panelCount) {
+    state.activePanelIndex = 0;
+  }
+
+  // ====== render DOM panels ======
+  grid.innerHTML = "";
+
+  const hasAreas = !!grid.style.gridTemplateAreas;
+  const areaMap = ["a", "b", "c", "d"];
+
+  for (let i = 0; i < panelCount; i++) {
     const p = document.createElement("div");
-    p.className="panel";
-    p.dataset.panelIndex=String(i);
-    if(grid.style.gridTemplateAreas){
-      const areaMap=["a","b","c","d"];
-      p.style.gridArea = areaMap[i] || "";
+    p.className = "panel";
+    p.dataset.panelIndex = String(i);
+
+    if (hasAreas && areaMap[i]) {
+      p.style.gridArea = areaMap[i];
     }
-    p.innerHTML = `<div class="panelBg"></div><div class="panelTag">P${i+1}</div>`;
-    p.addEventListener("click", ()=>{
-      state.activePanelIndex=i;
+
+    p.innerHTML = `
+      <div class="panelBg"></div>
+      <div class="panelTag">P${i + 1}</div>
+    `;
+
+    p.addEventListener("click", () => {
+      state.activePanelIndex = i;
       renderPanelSelect();
-      syncSidebarFromState();
       highlightActivePanel();
+
+      // chỉ sync khi panel tồn tại
+      if (state.panels?.[state.activePanelIndex]) {
+        syncSidebarFromState();
+      }
     });
+
     grid.appendChild(p);
   }
 
-  ensurePanelCount(panelCount);
-  renderActorsOnPanels();
-  highlightActivePanel();
-  renderPanelSelect();
-  syncSidebarFromState();
+  // ====== các render khác ======
+  // renderActorsOnPanels nên đọc state.panels[i].actors (đã đảm bảo tồn tại)
+  renderActorsOnPanels?.();
+  highlightActivePanel?.();
+  renderPanelSelect?.();
+
+  // Quan trọng: gọi sync sau khi state.panels đã có đủ schema
+  if (state.panels?.[state.activePanelIndex]) {
+    syncSidebarFromState?.();
+  }
 }
+//======================
 
 function highlightActivePanel(){
   document.querySelectorAll(".panel").forEach(el=>{
