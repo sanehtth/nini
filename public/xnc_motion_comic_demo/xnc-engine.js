@@ -23,11 +23,11 @@ function toArrayFromPossibles(data, keys){
 }
 
 const ADN_URLS = {
-  layouts: "/ad/xomnganchuyen/XNC_layouts.json",
-  backgrounds: "/ad/xomnganchuyen/XNC_backgrounds.json",
-  characters: "/ad/xomnganchuyen/XNC_characters.json",
-  actions: "/ad/xomnganchuyen/XNC_actions.json",
-  style: "/ad/xomnganchuyen/XNC_style.json",
+  layouts: "/adn/xomnganchuyen/XNC_layouts.json",
+  backgrounds: "/adn/xomnganchuyen/XNC_backgrounds.json",
+  characters: "/adn/xomnganchuyen/XNC_characters.json",
+  actions: "/adn/xomnganchuyen/XNC_actions.json",
+  style: "/adn/xomnganchuyen/XNC_style.json",
 };
 
 const ADN = { layouts: [], backgrounds: [], characters: [], actions: [], style: [] };
