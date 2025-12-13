@@ -1,67 +1,58 @@
 {
   "layouts": {
-    "L1_full": {
+    "1_full": {
+      "id": "1_full",
       "label": "1 khung (toàn màn hình)",
       "panels": 1,
-      "css": "grid-template-columns: 1fr; grid-template-rows: 1fr;"
+      "css": "grid-template-columns:1fr;grid-template-rows:1fr;"
     },
-
-    "L2_lr": {
-      "label": "2 khung (trái - phải)",
+    "2_tb": {
+      "id": "2_tb",
+      "label": "2 khung (trên–dưới)",
       "panels": 2,
-      "css": "grid-template-columns: 1fr 1fr; grid-template-rows: 1fr;"
+      "css": "grid-template-columns:1fr;grid-template-rows:1fr 1fr;"
     },
-    "L2_tb": {
-      "label": "2 khung (trên - dưới)",
+    "2_lr": {
+      "id": "2_lr",
+      "label": "2 khung (trái–phải)",
       "panels": 2,
-      "css": "grid-template-columns: 1fr; grid-template-rows: 1fr 1fr;"
+      "css": "grid-template-columns:1fr 1fr;grid-template-rows:1fr;"
     },
-
-    "L3_1top2": {
-      "label": "3 khung (1 trên - 2 dưới)",
+    "3_1top2": {
+      "id": "3_1top2",
+      "label": "3 khung (1 trên – 2 dưới)",
       "panels": 3,
-      "css": "grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; grid-template-areas: \"a a\" \"b c\";"
+      "css": "grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;grid-template-areas:\"a a\" \"b c\";"
     },
-    "L3_1bottom2": {
-      "label": "3 khung (1 dưới - 2 trên)",
+    "3_row": {
+      "id": "3_row",
+      "label": "3 khung ngang",
       "panels": 3,
-      "css": "grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; grid-template-areas: \"b c\" \"a a\";"
+      "css": "grid-template-columns:1fr;grid-template-rows:1fr 1fr 1fr;"
     },
-    "L3_1left2": {
-      "label": "3 khung (1 trái - 2 phải)",
-      "panels": 3,
-      "css": "grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; grid-template-areas: \"a b\" \"a c\";"
-    },
-    "L3_1right2": {
-      "label": "3 khung (1 phải - 2 trái)",
-      "panels": 3,
-      "css": "grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; grid-template-areas: \"b a\" \"c a\";"
-    },
-    "L3_vertical": {
-      "label": "3 khung (thẳng hàng dọc)",
-      "panels": 3,
-      "css": "grid-template-columns: 1fr; grid-template-rows: 1fr 1fr 1fr;"
-    },
-    "L3_horizontal": {
-      "label": "3 khung (thẳng hàng ngang)",
-      "panels": 3,
-      "css": "grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr;"
-    },
-
-    "L4_2x2": {
+    "3_2top1": {
+  "id": "3_2top1",
+  "label": "3 khung (2 trên – 1 dưới)",
+  "panels": 3,
+  "css": "grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;grid-template-areas:\"a b\" \"c c\";"
+},
+"3_1left2": {
+  "id": "3_1left2",
+  "label": "3 khung (1 trái – 2 phải)",
+  "panels": 3,
+  "css": "grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;grid-template-areas:\"a b\" \"a c\";"
+},
+"3_2left1": {
+  "id": "3_2left1",
+  "label": "3 khung (2 trái – 1 phải)",
+  "panels": 3,
+  "css": "grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;grid-template-areas:\"a b\" \"c b\";"
+},
+    "4_grid": {
+      "id": "4_grid",
       "label": "4 khung (2x2)",
       "panels": 4,
-      "css": "grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;"
-    },
-    "L4_1top3": {
-      "label": "4 khung (1 trên - 3 dưới)",
-      "panels": 4,
-      "css": "grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; grid-template-areas: \"a a a\" \"b c d\";"
-    },
-    "L4_3top1": {
-      "label": "4 khung (3 trên - 1 dưới)",
-      "panels": 4,
-      "css": "grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; grid-template-areas: \"b c d\" \"a a a\";"
+      "css": "grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;"
     }
   }
 }
