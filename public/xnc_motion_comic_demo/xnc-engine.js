@@ -1,326 +1,182 @@
-// XNC Motion Comic Engine (Cách A) - JSON-driven builder + per-panel prompt export
+// XNC Motion Comic Engine (Cách A: JSON-driven)
 const $ = (id) => document.getElementById(id);
+// ===== ADN GETTERS (fix: getLayouts is not defined) =====
+// ADN có thể đang nằm ở biến `ADN` hoặc `adn` hoặc `window.ADN` tuỳ bản bạn merge.
+// Đoạn này cố tình "chịu lỗi" để không crash.
+function _getADN(){
+  return (typeof ADN !== "undefined" && ADN) ||
+         (typeof adn !== "undefined" && adn) ||
+         (window && window.ADN) ||
+         (window && window.adn) ||
+         null;
+}
+
+function getLayouts(){      return _getADN()?.layouts      || {}; }
+function getBackgrounds(){  return _getADN()?.backgrounds  || {}; }
+function getStyles(){       return _getADN()?.styles       || {}; }
+function getCharacters(){   return _getADN()?.characters   || {}; }
+function getActions(){      return _getADN()?.actions      || {}; }
 
 function log(msg){
   const el = $("log");
   const now = new Date().toLocaleTimeString();
-  if(el) el.textContent = `[${now}] ${msg}\n` + el.textContent;
+  el.textContent = `[${now}] ${msg}\n` + el.textContent;
 }
 
-async function fetchJSON(url){
-  const res = await fetch(url, { cache: "no-store" });
-  if(!res.ok) throw new Error(`${url} (${res.status})`);
-  return await res.json();
+async function loadJSON(url){
+  const r = await fetch(url, { cache: "no-store" });
+  if(!r.ok) throw new Error(`HTTP ${r.status} when loading ${url}`);
+  return await r.json();
 }
 
-/**
- * ADN paths
- * - Bạn chỉ cần đổi ADN_BASE cho đúng folder json trong repo của bạn.
- * - Các file json có thể là array hoặc object {items:[]}. Hàm normalizeList sẽ tự xử lý.
- */
-const ADN_BASE = "/adn/xomnganchuyen"; // <-- đổi cho đúng
-const ADN_FILES = {
-  layouts:     `${ADN_BASE}/XNC_layouts.json`,
-  backgrounds: `${ADN_BASE}/XNC_backgrounds.json`,
-  characters:  `${ADN_BASE}/XNC_characters.json`,
-  actions:     `${ADN_BASE}/XNC_actions.json`,
-  styles:      `${ADN_BASE}/XNC_style.json`,
-  cameras:     `${ADN_BASE}/XNC_cameras.json`, // optional (nếu không có sẽ dùng fallback)
-  tones:       `${ADN_BASE}/XNC_tones.json`,   // optional (nếu không có sẽ dùng fallback)
-};
-
-const FALLBACK_CAMERAS = [
-  { id:"", label:"(Không bắt buộc)", desc:"" },
-  { id:"wide", label:"Wide shot", desc:"wide establishing view" },
-  { id:"medium", label:"Medium shot", desc:"waist-up" },
-  { id:"closeup", label:"Close-up", desc:"face close-up" },
-  { id:"over_shoulder", label:"Over-the-shoulder", desc:"OTS" },
-  { id:"low_angle", label:"Low angle", desc:"looking up" },
-  { id:"high_angle", label:"High angle", desc:"looking down" },
-];
-
-const FALLBACK_TONES = [
-  { id:"", label:"(Không bắt buộc)", desc:"" },
-  { id:"funny", label:"Hài hước", desc:"funny" },
-  { id:"tense", label:"Căng thẳng", desc:"tense" },
-  { id:"warm", label:"Ấm áp", desc:"warm" },
-  { id:"sad", label:"Buồn", desc:"sad" },
-  { id:"epic", label:"Kịch tính", desc:"epic" },
-];
-
-function normalizeList(data){
-  if(Array.isArray(data)) return data;
-  if(!data || typeof data !== "object") return [];
-  // common keys
-  for(const k of ["items","list","data","layouts","backgrounds","characters","actions","styles","cameras","tones"]){
-    if(Array.isArray(data[k])) return data[k];
+function toArrayFromPossibles(data, keys){
+  for(const k of keys){
+    if(Array.isArray(data?.[k])) return data[k];
+    if(data?.[k] && typeof data[k] === "object") return Object.values(data[k]);
   }
+  if(Array.isArray(data)) return data;
   return [];
 }
 
-function toId(v){ return String(v ?? "").trim(); }
-function getLabel(o){
-  return o?.label || o?.name || o?.title || o?.id || "";
+const ADN_URLS = {
+  layouts: "/adn/xomnganchuyen/XNC_layouts.json",
+  backgrounds: "/adn/xomnganchuyen/XNC_backgrounds.json",
+  characters: "/adn/xomnganchuyen/XNC_characters.json",
+  actions: "/adn/xomnganchuyen/XNC_actions.json",
+  style: "/adn/xomnganchuyen/XNC_style.json",
+};
+
+
+const CAMERA_OPTIONS = [
+  { id: "", label: "(Không bắt buộc)" },
+  { id: "wide", label: "Wide / Toàn cảnh" },
+  { id: "medium", label: "Medium / Trung cảnh" },
+  { id: "closeup", label: "Close-up / Cận mặt" },
+  { id: "over_shoulder", label: "Over-the-shoulder" },
+  { id: "low_angle", label: "Low angle / Góc thấp" },
+  { id: "high_angle", label: "High angle / Góc cao" },
+  { id: "top_down", label: "Top-down / Nhìn từ trên" },
+  { id: "dutch", label: "Dutch tilt / Nghiêng" },
+];
+
+const TONE_OPTIONS = [
+  { id: "", label: "(Không bắt buộc)" },
+  { id: "hai_huoc", label: "Hài hước" },
+  { id: "cang_thang", label: "Căng thẳng" },
+  { id: "am_ap", label: "Ấm áp" },
+  { id: "bi_an", label: "Bí ẩn" },
+  { id: "hanh_phuc", label: "Hạnh phúc" },
+  { id: "buon", label: "Buồn" },
+  { id: "ngau_nhien", label: "Ngẫu nhiên / Trung tính" },
+];
+
+
+
+const ADN = { layouts: [], backgrounds: [], characters: [], actions: [], style: [] };
+
+const state = {
+  layoutId: null,
+  panelCount: 4,
+  activePanelIndex: 0,
+  aspect: "9:16",
+  panels: [],
+
+  // Video prompt fields (tùy chọn)
+  videoMotion: "",
+  videoSeconds: 2,
+  cameraId: "",
+  toneId: "",
+  moodDetail: "",
+  baseVideoPrompt: "",
+};
+
+function normalizeLayouts(raw){
+  const arr = toArrayFromPossibles(raw, ["layouts","layout","data"]);
+  return arr.map(x => ({
+    id: x.id,
+    label: x.label || x.name || x.id,
+    panelCount: x.panelCount ?? x.panels ?? x.count ?? 4,
+    css: x.css || x.grid || null,
+  })).filter(x => x.id);
+}
+function normalizeBackgrounds(raw){
+  const arr = toArrayFromPossibles(raw, ["backgrounds","bg","data"]);
+  return arr.map(x => ({
+    id: x.id,
+    label: x.label || x.name || x.id,
+    desc: x.desc || x.description || "",
+  })).filter(x => x.id);
+}
+function normalizeCharacters(raw){
+  const obj = raw?.characters && typeof raw.characters === "object" ? raw.characters : null;
+  if(!obj) return [];
+  return Object.entries(obj).map(([id, v]) => ({ id, name: v.name || id, role: v.role || "" }));
+}
+function normalizeActions(raw){
+  const arr = toArrayFromPossibles(raw, ["actions","data"]);
+  return arr.map(x => ({ id: x.id, label: x.label || x.name || x.id, desc: x.desc || x.description || "" }))
+    .filter(x => x.id);
+}
+function normalizeStyle(raw){
+  const arr = toArrayFromPossibles(raw, ["styles","style","data"]);
+  return arr.map(x => ({ id: x.id, label: x.label || x.name || x.id, dna: x.dna || x.desc || x.description || "" }))
+    .filter(x => x.id);
 }
 
-function layoutPanelCount(layout){
-  return layout?.panels || layout?.panelCount || layout?.count || layout?.n || 4;
-}
-
-function layoutCss(layout){
-  // allow layout.css as string OR object {columns,rows,areas} OR layout.grid...
-  if(!layout) return null;
-  if(typeof layout.css === "string") return parseGridCssString(layout.css);
-  if(layout.css && typeof layout.css === "object"){
-    const c = layout.css.columns || layout.css.cols || layout.css.gridTemplateColumns;
-    const r = layout.css.rows || layout.css.gridTemplateRows;
-    const a = layout.css.areas || layout.css.gridTemplateAreas;
-    return { columns: c || "", rows: r || "", areas: a || "" };
+function ensurePanelCount(n){
+  state.panelCount = n;
+  while(state.panels.length < n){
+    state.panels.push({ backgroundId: null, styleId: null, motionNote: "", actors: [] });
   }
-  if(layout.grid && typeof layout.grid === "object"){
-    const c = layout.grid.columns || layout.grid.cols;
-    const r = layout.grid.rows;
-    const a = layout.grid.areas;
-    return { columns: c || "", rows: r || "", areas: a || "" };
+  while(state.panels.length > n) state.panels.pop();
+  if(state.activePanelIndex >= n) state.activePanelIndex = 0;
+}
+
+function getLayoutById(id){ return ADN.layouts.find(x => x.id === id) || null; }
+
+function parseCssToGrid(css){
+  if(!css) return null;
+  if(typeof css === "object"){
+    return {
+      columns: css.columns || css.cols || css.gridTemplateColumns || null,
+      rows: css.rows || css.gridTemplateRows || null,
+      areas: css.areas || css.gridTemplateAreas || null,
+    };
+  }
+  if(typeof css === "string"){
+    const cols = /grid-template-columns\s*:\s*([^;]+)/i.exec(css)?.[1]?.trim() || null;
+    const rows = /grid-template-rows\s*:\s*([^;]+)/i.exec(css)?.[1]?.trim() || null;
+    const areas = /grid-template-areas\s*:\s*([^;]+)/i.exec(css)?.[1]?.trim() || null;
+    return { columns: cols, rows: rows, areas };
   }
   return null;
 }
 
-function parseGridCssString(css){
-  const cols = /grid-template-columns\s*:\s*([^;]+)/i.exec(css);
-  const rows = /grid-template-rows\s*:\s*([^;]+)/i.exec(css);
-  const areas = /grid-template-areas\s*:\s*([^;]+)/i.exec(css);
-  return {
-    columns: cols ? cols[1].trim() : "",
-    rows: rows ? rows[1].trim() : "",
-    areas: areas ? areas[1].trim() : "",
-  };
-}
-
-const state = {
-  adn: null,
-  layouts: [],
-  backgrounds: [],
-  characters: [],
-  actions: [],
-  styles: [],
-  cameras: [],
-  tones: [],
-
-  layoutId: null,
-  aspect: "9:16",
-
-  // global scene meta
-  cameraId: "",
-  toneId: "",
-  moodDetail: "",
-  durationSec: 2,
-  baseVideoPrompt: "",
-  globalMotion: "",
-
-  activePanelIndex: 0,
-  panels: [], // [{backgroundId, styleId, motionNote, actors:[{charId, actionId}]}]
-};
-
-function ensurePanelCount(n){
-  while(state.panels.length < n){
-    state.panels.push({ backgroundId:"", styleId:"", motionNote:"", actors:[] });
-  }
-  if(state.panels.length > n) state.panels.length = n;
-  state.activePanelIndex = Math.max(0, Math.min(state.activePanelIndex, n-1));
-}
-
-function optionHTML(items, selectedId, placeholder){
-  const opts = [];
-  if(placeholder) opts.push(`<option value="">${placeholder}</option>`);
-  for(const it of items){
-    const id = toId(it.id ?? it.key ?? it.value ?? it.name ?? it.label);
-    const label = getLabel(it);
-    const sel = id === selectedId ? "selected" : "";
-    opts.push(`<option value="${escapeAttr(id)}" ${sel}>${escapeHtml(label)}</option>`);
-  }
-  return opts.join("");
-}
-
-function escapeHtml(s){
-  return String(s ?? "").replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
-}
-function escapeAttr(s){ return escapeHtml(s).replace(/"/g,"&quot;"); }
-
-function renderLayoutSelect(){
-  const sel = $("layoutSelect");
-  if(!sel) return;
-  sel.innerHTML = optionHTML(state.layouts, state.layoutId, "");
-}
-
-function renderPanelSelect(){
-  const sel = $("panelSelect");
-  if(!sel) return;
-  const n = state.panels.length;
-  const opts = [];
-  for(let i=0;i<n;i++){
-    const v = String(i);
-    const label = `P${i+1}`;
-    opts.push(`<option value="${v}" ${i===state.activePanelIndex?"selected":""}>${label}</option>`);
-  }
-  sel.innerHTML = opts.join("");
-}
-
-function renderBackgroundSelect(){
-  const sel = $("backgroundSelect");
-  if(!sel) return;
-  const p = state.panels[state.activePanelIndex];
-  sel.innerHTML = optionHTML(state.backgrounds, p?.backgroundId || "", "— Chọn bối cảnh —");
-}
-
-function renderStyleSelect(){
-  const sel = $("styleSelect");
-  if(!sel) return;
-  const p = state.panels[state.activePanelIndex];
-  sel.innerHTML = optionHTML(state.styles, p?.styleId || "", "style (mặc định)");
-}
-
-function renderCharacterSelect(){
-  const sel = $("charSelect");
-  if(!sel) return;
-  sel.innerHTML = optionHTML(state.characters, "", "— Chọn nhân vật —");
-}
-
-function renderActionSelect(){
-  const sel = $("actionSelect");
-  if(!sel) return;
-  sel.innerHTML = optionHTML(state.actions, "", "— Chọn hành động / biểu cảm —");
-}
-
-function renderCameraSelect(){
-  const sel = $("cameraSelect");
-  if(!sel) return;
-  sel.innerHTML = optionHTML(state.cameras, state.cameraId, "(Không bắt buộc)");
-}
-
-function renderToneSelect(){
-  const sel = $("toneSelect");
-  if(!sel) return;
-  sel.innerHTML = optionHTML(state.tones, state.toneId, "(Không bắt buộc)");
-}
-
-function syncSidebarFromState(){
-  const p = state.panels[state.activePanelIndex];
-  if($("aspectSelect")) $("aspectSelect").value = state.aspect;
-  if($("motionNote")) $("motionNote").value = p?.motionNote || "";
-  if($("moodDetail")) $("moodDetail").value = state.moodDetail || "";
-  if($("durationSec")) $("durationSec").value = String(state.durationSec || 2);
-  if($("baseVideoPrompt")) $("baseVideoPrompt").value = state.baseVideoPrompt || "";
-  if($("globalMotion")) $("globalMotion").value = state.globalMotion || "";
-  if($("cameraSelect")) $("cameraSelect").value = state.cameraId || "";
-  if($("toneSelect")) $("toneSelect").value = state.toneId || "";
-}
-
-function highlightActivePanel(){
-  const grid = $("grid");
-  if(!grid) return;
-  [...grid.querySelectorAll(".panel")].forEach((el)=>{
-    el.classList.toggle("active", Number(el.dataset.panelIndex) === state.activePanelIndex);
-  });
-}
-
-function renderActorList(){
-  const wrap = $("actorList");
-  if(!wrap) return;
-  const p = state.panels[state.activePanelIndex];
-  const actors = p?.actors || [];
-  wrap.innerHTML = actors.map((a,idx)=>{
-    const charSel = `<select data-kind="char" data-idx="${idx}">${optionHTML(state.characters, a.charId, "")}</select>`;
-    const actSel  = `<select data-kind="action" data-idx="${idx}">${optionHTML(state.actions, a.actionId, "")}</select>`;
-    const delBtn  = `<button class="iconBtn ghost" data-kind="del" data-idx="${idx}">×</button>`;
-    return `<div class="actorLine">${charSel}${actSel}${delBtn}</div>`;
-  }).join("");
-
-  wrap.querySelectorAll("select").forEach((sel)=>{
-    sel.addEventListener("change", ()=>{
-      const idx = Number(sel.dataset.idx);
-      const kind = sel.dataset.kind;
-      if(!Number.isFinite(idx)) return;
-      if(kind === "char") actors[idx].charId = sel.value;
-      if(kind === "action") actors[idx].actionId = sel.value;
-      renderActorsOnPanels();
-    });
-  });
-  wrap.querySelectorAll("button[data-kind='del']").forEach((btn)=>{
-    btn.addEventListener("click", ()=>{
-      const idx = Number(btn.dataset.idx);
-      actors.splice(idx,1);
-      renderActorList();
-      renderActorsOnPanels();
-    });
-  });
-}
-
-function renderActorsOnPanels(){
-  const grid = $("grid");
-  if(!grid) return;
-  const panels = [...grid.querySelectorAll(".panel")];
-  panels.forEach((panelEl)=>{
-    const i = Number(panelEl.dataset.panelIndex);
-    const p = state.panels[i];
-    // remove old chips
-    panelEl.querySelectorAll(".chip").forEach(e=>e.remove());
-    // background label
-    const bgId = p?.backgroundId;
-    const bgObj = state.backgrounds.find(b=>toId(b.id)===toId(bgId));
-    const bgLabel = bgObj ? getLabel(bgObj) : "";
-    // put a small bg label bar (optional)
-    if(bgLabel){
-      const bar = document.createElement("div");
-      bar.style.position="absolute"; bar.style.left="10px"; bar.style.bottom="10px";
-      bar.style.background="rgba(0,0,0,.18)"; bar.style.color="#fff";
-      bar.style.padding="4px 8px"; bar.style.borderRadius="10px"; bar.style.fontSize="12px";
-      bar.textContent = bgLabel;
-      panelEl.appendChild(bar);
-    }
-
-    // actor chips
-    const actors = p?.actors || [];
-    actors.slice(0,4).forEach((a,idx)=>{
-      const cObj = state.characters.find(c=>toId(c.id)===toId(a.charId));
-      const actObj = state.actions.find(ac=>toId(ac.id)===toId(a.actionId));
-      const chip = document.createElement("div");
-      chip.className = "chip";
-      chip.style.top = `${30 + idx*70}px`;
-      chip.innerHTML = `<b>${escapeHtml(getLabel(cObj)||a.charId||"")}</b><small>${escapeHtml(getLabel(actObj)||a.actionId||"")}</small>`;
-      panelEl.appendChild(chip);
-    });
-  });
-}
-
 function setGridTemplate(layoutId){
-  const layout = state.layouts.find(l=>toId(l.id)===toId(layoutId));
   const grid = $("grid");
-  if(!grid) return;
+  const layout = getLayoutById(layoutId);
+  const panelCount = layout?.panelCount ?? 4;
 
-  const panelCount = layoutPanelCount(layout) || 1;
-
-  // reset css
   grid.style.gridTemplateColumns = "";
   grid.style.gridTemplateRows = "";
   grid.style.gridTemplateAreas = "";
 
-  const css = layoutCss(layout);
-  if(css){
-    if(css.columns) grid.style.gridTemplateColumns = css.columns;
-    if(css.rows) grid.style.gridTemplateRows = css.rows;
-    if(css.areas) grid.style.gridTemplateAreas = css.areas;
-  } else {
-    // fallback: simple layouts by count
+  const g = parseCssToGrid(layout?.css);
+  if(g?.columns) grid.style.gridTemplateColumns = g.columns;
+  if(g?.rows) grid.style.gridTemplateRows = g.rows;
+  if(g?.areas) grid.style.gridTemplateAreas = g.areas;
+
+  if(!g?.columns && !g?.rows && !g?.areas){
     if(panelCount === 1){
-      grid.style.gridTemplateColumns="1fr";
-      grid.style.gridTemplateRows="1fr";
+      grid.style.gridTemplateColumns = "1fr";
+      grid.style.gridTemplateRows = "1fr";
     } else if(panelCount === 2){
-      grid.style.gridTemplateColumns="1fr 1fr";
-      grid.style.gridTemplateRows="1fr";
+      grid.style.gridTemplateColumns = "1fr 1fr";
+      grid.style.gridTemplateRows = "1fr";
     } else if(panelCount === 3){
-      grid.style.gridTemplateColumns="1fr 1fr 1fr";
-      grid.style.gridTemplateRows="1fr";
+      grid.style.gridTemplateColumns="1fr 1fr";
+      grid.style.gridTemplateRows="1fr 1fr";
+      grid.style.gridTemplateAreas = `"a a" "b c"`;
     } else {
       grid.style.gridTemplateColumns="1fr 1fr";
       grid.style.gridTemplateRows="1fr 1fr";
@@ -328,305 +184,447 @@ function setGridTemplate(layoutId){
   }
 
   grid.innerHTML = "";
+  const areaMap = ["a","b","c","d"];
   for(let i=0;i<panelCount;i++){
     const p = document.createElement("div");
     p.className = "panel";
     p.dataset.panelIndex = String(i);
-
-    if(grid.style.gridTemplateAreas){
-      const areaMap=["a","b","c","d","e","f"];
-      p.style.gridArea = areaMap[i] || "";
-    }
-
-    p.innerHTML = `<div class="panelBg"></div><div class="panelTag">P${i+1}</div>`;
+    if(grid.style.gridTemplateAreas) p.style.gridArea = areaMap[i] || "";
+    p.innerHTML = `<div class="panelTag">P${i+1}</div><div class="panelBgLabel" data-role="bgLabel"></div>`;
     p.addEventListener("click", ()=>{
       state.activePanelIndex = i;
       renderPanelSelect();
-      renderBackgroundSelect();
-      renderStyleSelect();
-      renderActorList();
       syncSidebarFromState();
       highlightActivePanel();
+      renderActorsOnPanels();
     });
     grid.appendChild(p);
   }
 
   ensurePanelCount(panelCount);
+  highlightActivePanel();
   renderPanelSelect();
-  renderBackgroundSelect();
-  renderStyleSelect();
-  renderActorList();
   syncSidebarFromState();
   renderActorsOnPanels();
-  highlightActivePanel();
+  log(`Layout set: ${layoutId} (${panelCount} panels)`);
 }
 
-function buildPanelPrompt(panelIndex){
-  const p = state.panels[panelIndex];
-  const layout = state.layouts.find(l=>toId(l.id)===toId(state.layoutId));
-  const bgObj = state.backgrounds.find(b=>toId(b.id)===toId(p?.backgroundId));
-  const styleObj = state.styles.find(s=>toId(s.id)===toId(p?.styleId));
-  const camObj = state.cameras.find(c=>toId(c.id)===toId(state.cameraId));
-  const toneObj = state.tones.find(t=>toId(t.id)===toId(state.toneId));
+function highlightActivePanel(){
+  [...$("grid").querySelectorAll(".panel")].forEach((p, idx)=> p.classList.toggle("active", idx === state.activePanelIndex));
+}
 
-  const styleLine = styleObj?.desc ? `STYLE DNA (XNC): ${styleObj.desc}` : `STYLE DNA (XNC): (missing)`;
-  const camLine = camObj?.desc ? `Camera: ${camObj.desc}` : (camObj?.label ? `Camera: ${camObj.label}` : "");
-  const toneLine = toneObj?.desc ? `Tone: ${toneObj.desc}` : (toneObj?.label ? `Tone: ${toneObj.label}` : "");
-  const moodLine = state.moodDetail ? `Mood: ${state.moodDetail}` : "";
-  const durLine = state.durationSec ? `Duration: ${state.durationSec}s` : "";
-  const baseLine = state.baseVideoPrompt ? `Base prompt: ${state.baseVideoPrompt}` : "";
-  const globalMotion = state.globalMotion ? `Global motion: ${state.globalMotion}` : "";
+function renderLayoutSelect(){
+  const sel = $("layoutSelect");
+  sel.innerHTML = "";
+  ADN.layouts.forEach(l=>{
+    const opt = document.createElement("option");
+    opt.value = l.id;
+    opt.textContent = l.label;
+    sel.appendChild(opt);
+  });
+  sel.onchange = ()=>{ state.layoutId = sel.value; setGridTemplate(state.layoutId); };
+  if(state.layoutId) sel.value = state.layoutId;
+}
 
-  const lines = [];
-  lines.push(styleLine);
-  if(camLine) lines.push(camLine);
-  if(toneLine) lines.push(toneLine);
-  if(moodLine) lines.push(moodLine);
-  if(durLine) lines.push(durLine);
-  if(baseLine) lines.push(baseLine);
+function renderPanelSelect(){
+  const sel = $("panelSelect");
+  sel.innerHTML = "";
+  for(let i=0;i<state.panelCount;i++){
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = `P${i+1}`;
+    sel.appendChild(opt);
+  }
+  sel.value = String(state.activePanelIndex);
+  sel.onchange = ()=>{ state.activePanelIndex = Number(sel.value||0); highlightActivePanel(); syncSidebarFromState(); renderActorsOnPanels(); };
+}
 
-  lines.push(`ASPECT: ${state.aspect}`);
-  lines.push(`LAYOUT: ${layout?.id || state.layoutId || ""}`);
-  lines.push(`PANEL ${panelIndex+1} (P${panelIndex+1})`);
+function renderBackgroundSelect(){
+  const sel = $("bgSelect");
+  sel.innerHTML = `<option value="">— Chọn bối cảnh —</option>`;
+  ADN.backgrounds.forEach(b=>{
+    const opt = document.createElement("option");
+    opt.value = b.id;
+    opt.textContent = b.label;
+    sel.appendChild(opt);
+  });
+  sel.onchange = ()=>{
+    const p = state.panels[state.activePanelIndex];
+    p.backgroundId = sel.value || null;
+    renderActorsOnPanels();
+  };
+}
 
-  if(bgObj) lines.push(`Background: ${bgObj.id || getLabel(bgObj)}`);
-  else if(p?.backgroundId) lines.push(`Background: ${p.backgroundId}`);
+function renderStyleSelect(){
+  const sel = $("styleSelect");
+  sel.innerHTML = `<option value="">style (mặc định)</option>`;
+  ADN.style.forEach(s=>{
+    const opt = document.createElement("option");
+    opt.value = s.id;
+    opt.textContent = s.label;
+    sel.appendChild(opt);
+  });
+  sel.onchange = ()=>{ state.panels[state.activePanelIndex].styleId = sel.value || null; };
+}
 
-  const actors = p?.actors || [];
-  if(actors.length){
-    lines.push("Actors:");
-    for(const a of actors){
-      const cObj = state.characters.find(c=>toId(c.id)===toId(a.charId));
-      const actObj = state.actions.find(ac=>toId(ac.id)===toId(a.actionId));
-      const cLabel = cObj ? getLabel(cObj) : a.charId;
-      const actLabel = actObj ? getLabel(actObj) : a.actionId;
-      lines.push(`- ${cLabel} — ${actLabel}`);
-    }
+
+function renderCameraSelect(){
+  const sel = $("cameraSelect");
+  if(!sel) return;
+  sel.innerHTML = "";
+  CAMERA_OPTIONS.forEach(o=>{
+    const opt = document.createElement("option");
+    opt.value = o.id;
+    opt.textContent = o.label;
+    sel.appendChild(opt);
+  });
+  sel.value = state.cameraId || "";
+  sel.onchange = ()=>{ state.cameraId = sel.value || ""; };
+}
+
+function renderToneSelect(){
+  const sel = $("toneSelect");
+  if(!sel) return;
+  sel.innerHTML = "";
+  TONE_OPTIONS.forEach(o=>{
+    const opt = document.createElement("option");
+    opt.value = o.id;
+    opt.textContent = o.label;
+    sel.appendChild(opt);
+  });
+  sel.value = state.toneId || "";
+  sel.onchange = ()=>{ state.toneId = sel.value || ""; };
+}
+
+function renderCharacterSelect(){
+  const sel = $("charSelect");
+  sel.innerHTML = "";
+  ADN.characters.forEach(c=>{
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = c.name;
+    sel.appendChild(opt);
+  });
+}
+function renderActionSelect(){
+  const sel = $("actionSelect");
+  sel.innerHTML = "";
+  ADN.actions.forEach(a=>{
+    const opt = document.createElement("option");
+    opt.value = a.id;
+    opt.textContent = a.label;
+    sel.appendChild(opt);
+  });
+}
+
+function syncSidebarFromState(){
+  const p = state.panels[state.activePanelIndex];
+  $("bgSelect").value = p.backgroundId || "";
+  $("styleSelect").value = p.styleId || "";
+  $("motionNote").value = p.motionNote || "";
+  $("aspectSelect").value = state.aspect || "9:16";
+  renderActorsList();
+}
+
+function renderActorsList(){
+  const wrap = $("actorsList");
+  wrap.innerHTML = "";
+  const p = state.panels[state.activePanelIndex];
+
+  if(!p.actors.length){
+    const div = document.createElement("div");
+    div.style.color = "var(--muted)";
+    div.style.fontSize = "12px";
+    div.textContent = "Chưa có actor. Bấm + Add để thêm.";
+    wrap.appendChild(div);
+    return;
   }
 
-  if(p?.motionNote) lines.push(`Motion note: ${p.motionNote}`);
-  if(globalMotion) lines.push(globalMotion);
+  p.actors.forEach((a, idx)=>{
+    const row = document.createElement("div");
+    row.className = "actorRow";
 
-  lines.push("Constraints: no text, no subtitles, no UI, consistent characters, comic panel framing.");
-  return lines.filter(Boolean).join("\n");
+    const charSel = document.createElement("select");
+    ADN.characters.forEach(c=>{
+      const opt = document.createElement("option");
+      opt.value = c.id; opt.textContent = c.name;
+      charSel.appendChild(opt);
+    });
+    charSel.value = a.charId;
+
+    const actSel = document.createElement("select");
+    ADN.actions.forEach(x=>{
+      const opt = document.createElement("option");
+      opt.value = x.id; opt.textContent = x.label;
+      actSel.appendChild(opt);
+    });
+    actSel.value = a.actionId;
+
+    charSel.onchange = ()=>{ a.charId = charSel.value; renderActorsOnPanels(); };
+    actSel.onchange = ()=>{ a.actionId = actSel.value; renderActorsOnPanels(); };
+
+    const del = document.createElement("button");
+    del.textContent = "×";
+    del.className = "ghost";
+    del.onclick = ()=>{ p.actors.splice(idx, 1); renderActorsList(); renderActorsOnPanels(); };
+
+    row.appendChild(charSel);
+    row.appendChild(actSel);
+    row.appendChild(del);
+    wrap.appendChild(row);
+  });
 }
 
-function buildFullPrompt(){
-  const layout = state.layouts.find(l=>toId(l.id)===toId(state.layoutId));
-  const blocks = [];
-  // header block uses panel 0 as reference for style line too, but style can be per panel; keep as "missing" globally
-  const styleObj0 = state.styles.find(s=>toId(s.id)===toId(state.panels[0]?.styleId));
-  const styleLine = styleObj0?.desc ? `STYLE DNA (XNC): ${styleObj0.desc}` : `STYLE DNA (XNC): (missing)`;
-  blocks.push(styleLine);
-  blocks.push(`ASPECT: ${state.aspect}`);
-  blocks.push(`LAYOUT: ${layout?.id || state.layoutId || ""}`);
-  if(state.cameraId){
-    const camObj = state.cameras.find(c=>toId(c.id)===toId(state.cameraId));
-    blocks.push(`Camera: ${camObj?.desc || camObj?.label || state.cameraId}`);
-  }
-  if(state.toneId){
-    const tObj = state.tones.find(t=>toId(t.id)===toId(state.toneId));
-    blocks.push(`Tone: ${tObj?.desc || tObj?.label || state.toneId}`);
-  }
-  if(state.moodDetail) blocks.push(`Mood: ${state.moodDetail}`);
-  if(state.durationSec) blocks.push(`Duration: ${state.durationSec}s`);
-  if(state.baseVideoPrompt) blocks.push(`Base prompt: ${state.baseVideoPrompt}`);
-  if(state.globalMotion) blocks.push(`Global motion: ${state.globalMotion}`);
-  blocks.push("Constraints: no text, no subtitles, no UI, consistent characters, comic panel framing.");
-  blocks.push("");
+function renderActorsOnPanels(){
+  const panels = [...$("grid").querySelectorAll(".panel")];
+  panels.forEach((el, idx)=>{
+    [...el.querySelectorAll(".actorChip")].forEach(x=>x.remove());
 
-  for(let i=0;i<state.panels.length;i++){
-    blocks.push(buildPanelPrompt(i));
-    blocks.push("");
-  }
-  return blocks.join("\n").trim();
+    const p = state.panels[idx];
+    const bgLabel = el.querySelector('[data-role="bgLabel"]');
+    const bg = ADN.backgrounds.find(b=>b.id === p.backgroundId);
+    bgLabel.textContent = bg ? bg.label : "";
+
+    p.actors.forEach((a, k)=>{
+      const c = ADN.characters.find(x=>x.id === a.charId);
+      const ac = ADN.actions.find(x=>x.id === a.actionId);
+      const chip = document.createElement("div");
+      chip.className = "actorChip";
+      chip.style.top = `${50 + (k*18)}%`;
+      chip.style.left = `${50 + (k%2? 18 : -18)}%`;
+      chip.innerHTML = `<div style="font-weight:800;color:#0b1410">${c?.name || a.charId}</div><small>${ac?.label || a.actionId}</small>`;
+      el.appendChild(chip);
+    });
+  });
 }
 
-function exportPromptAll(){
-  $("output").textContent = buildFullPrompt();
-}
-
-function exportPromptPanel(){
-  const idx = state.activePanelIndex ?? 0;
-  $("output").textContent = buildPanelPrompt(idx);
-}
-
-function exportJSON(){
-  const out = {
-    meta: {
-      aspect: state.aspect,
-      layoutId: state.layoutId,
-      cameraId: state.cameraId,
-      toneId: state.toneId,
-      moodDetail: state.moodDetail,
-      durationSec: state.durationSec,
-      baseVideoPrompt: state.baseVideoPrompt,
-      globalMotion: state.globalMotion,
-      updatedAt: new Date().toISOString(),
-    },
-    panels: state.panels.map((p)=>({
+function buildSceneJSON(){
+  return {
+    version: "xnc_scene_v1",
+    aspect: state.aspect,
+    layoutId: state.layoutId,
+    panels: state.panels.map((p, i)=>({
+      id: `P${i+1}`,
       backgroundId: p.backgroundId,
       styleId: p.styleId,
-      motionNote: p.motionNote,
-      actors: p.actors.map(a=>({ charId:a.charId, actionId:a.actionId })),
+      motionNote: p.motionNote || "",
+      actors: p.actors.map(a=>({ charId: a.charId, actionId: a.actionId })),
     })),
+    sources: ADN_URLS,
+    exportedAt: new Date().toISOString(),
   };
-  $("output").textContent = JSON.stringify(out, null, 2);
 }
 
-function copyOutput(){
-  const txt = $("output")?.textContent || "";
-  if(!txt) return;
-  navigator.clipboard?.writeText(txt).then(()=>log("Copied output."), ()=>log("Copy failed (permission)."));
+function buildPromptText(){
+  const scene = buildSceneJSON();
+  const styleDna = (styleId)=> styleId ? (ADN.style.find(s=>s.id===styleId)?.dna || "") : "";
+  const bgDesc = (bgId)=>{
+    const b = ADN.backgrounds.find(x=>x.id===bgId);
+    return b ? (b.desc ? `${b.label} (${b.desc})` : b.label) : "";
+  };
+  const charName = (id)=> ADN.characters.find(x=>x.id===id)?.name || id;
+  const actionDesc = (id)=>{
+    const a = ADN.actions.find(x=>x.id===id);
+    return a ? (a.desc ? `${a.label}: ${a.desc}` : a.label) : id;
+  };
+
+  const defaultStyle = ADN.style.find(s=>s.id==="style") || ADN.style[0];
+  const defaultDna = defaultStyle?.dna || "pastel chibi 2D, green-brown Vietnamese vibe, clean illustration, soft lighting";
+
+  let out = "";
+  out += `STYLE DNA (XNC): ${defaultDna}\n`;
+  out += `ASPECT: ${scene.aspect}\n`;
+  out += `LAYOUT: ${scene.layoutId}\n`;
+  out += `Constraints: no text, no subtitles, no UI, consistent characters, comic panel framing.\n\n`;
+
+  // Optional video fields (copied conceptually from makeprompt_video.html)
+  if(state.videoMotion && state.videoMotion.trim()) out += `Motion: ${state.videoMotion.trim()}\n`;
+  if(state.videoSeconds) out += `Duration: ${state.videoSeconds}s\n`;
+  if(state.cameraId){
+    const cam = CAMERA_OPTIONS.find(o=>o.id===state.cameraId);
+    out += `Camera: ${cam ? cam.label : state.cameraId}\n`;
+  }
+  if(state.toneId){
+    const tone = TONE_OPTIONS.find(o=>o.id===state.toneId);
+    out += `Tone: ${tone ? tone.label : state.toneId}\n`;
+  }
+  if(state.moodDetail && state.moodDetail.trim()) out += `Mood: ${state.moodDetail.trim()}\n`;
+  if(state.baseVideoPrompt && state.baseVideoPrompt.trim()) out += `RefPrompt: ${state.baseVideoPrompt.trim()}\n`;
+  out += "\n";
+
+  scene.panels.forEach((p)=>{
+    out += `PANEL ${p.id}\n`;
+    out += `Background: ${bgDesc(p.backgroundId) || "(none)"}\n`;
+    const sd = styleDna(p.styleId);
+    if(sd) out += `Style override: ${sd}\n`;
+    if(p.motionNote) out += `Motion note: ${p.motionNote}\n`;
+    if(p.actors.length){
+      out += `Actors:\n`;
+      p.actors.forEach(a=>{ out += `- ${charName(a.charId)} — ${actionDesc(a.actionId)}\n`; });
+    } else out += `Actors: (none)\n`;
+    out += `\n`;
+  });
+
+  return out.trim();
+}
+
+async function copyOutput(){
+  await navigator.clipboard.writeText($("output").textContent || "");
+  log("Copied output to clipboard.");
 }
 
 function downloadJSON(){
-  const txt = $("output")?.textContent || "";
-  const blob = new Blob([txt], { type:"application/json" });
+  const data = buildSceneJSON();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "xnc_output.json";
+  a.href = url; a.download = "xnc_scene.json";
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(a.href);
+  URL.revokeObjectURL(url);
+  log("Downloaded xnc_scene.json");
 }
 
 function resetAll(){
-  state.layoutId = state.layouts[0]?.id || "";
-  state.aspect = "9:16";
-  state.cameraId = "";
-  state.toneId = "";
-  state.moodDetail = "";
-  state.durationSec = 2;
-  state.baseVideoPrompt = "";
-  state.globalMotion = "";
+  state.layoutId = ADN.layouts[0]?.id || null;
   state.activePanelIndex = 0;
-  state.panels = [];
+  state.aspect = "9:16";
+  ensurePanelCount(getLayoutById(state.layoutId)?.panelCount || 4);
+  state.panels.forEach(p=>{ p.backgroundId=null; p.styleId=null; p.motionNote=""; p.actors=[]; });
+  renderLayoutSelect();
   setGridTemplate(state.layoutId);
-  $("output").textContent = "";
-  log("Reset.");
+  $("output").textContent = "Chưa có output. Chọn layout + cấu hình rồi bấm “Xuất Prompt” hoặc “Xuất JSON”.";
+  log("Reset done.");
 }
 
 async function init(){
   try{
-    $("output").textContent = "";
     log("Loading ADN JSON...");
-
-    const [layoutsRaw, bgsRaw, charsRaw, actsRaw, stylesRaw] = await Promise.all([
-      fetchJSON(ADN_FILES.layouts),
-      fetchJSON(ADN_FILES.backgrounds),
-      fetchJSON(ADN_FILES.characters),
-      fetchJSON(ADN_FILES.actions),
-      fetchJSON(ADN_FILES.styles),
+    const [l,b,c,a,s] = await Promise.all([
+      loadJSON(ADN_URLS.layouts),
+      loadJSON(ADN_URLS.backgrounds),
+      loadJSON(ADN_URLS.characters),
+      loadJSON(ADN_URLS.actions),
+      loadJSON(ADN_URLS.style),
     ]);
 
-    state.layouts = normalizeList(layoutsRaw);
-    state.backgrounds = normalizeList(bgsRaw);
-    state.characters = normalizeList(charsRaw);
-    state.actions = normalizeList(actsRaw);
-    state.styles = normalizeList(stylesRaw);
+    ADN.layouts = normalizeLayouts(l);
+    ADN.backgrounds = normalizeBackgrounds(b);
+    ADN.characters = normalizeCharacters(c);
+    ADN.actions = normalizeActions(a);
+    ADN.style = normalizeStyle(s);
 
-    // optional
-    try { state.cameras = normalizeList(await fetchJSON(ADN_FILES.cameras)); }
-    catch { state.cameras = FALLBACK_CAMERAS; }
-    try { state.tones = normalizeList(await fetchJSON(ADN_FILES.tones)); }
-    catch { state.tones = FALLBACK_TONES; }
+    log(`ADN loaded: layouts=${ADN.layouts.length}, backgrounds=${ADN.backgrounds.length}, characters=${ADN.characters.length}, actions=${ADN.actions.length}, styles=${ADN.style.length}`);
 
-    state.layoutId = state.layouts[0]?.id || "";
+    if(!ADN.layouts.length) throw new Error("No layouts in JSON");
+    state.layoutId = ADN.layouts[0].id;
+
     renderLayoutSelect();
-    renderCameraSelect();
-    renderToneSelect();
+    renderBackgroundSelect();
+    renderStyleSelect();
     renderCharacterSelect();
     renderActionSelect();
 
+    renderCameraSelect();
+    renderToneSelect();
+
+    // Bind video fields
+    const vm = $("videoMotion"); if(vm){ vm.value = state.videoMotion || ""; vm.addEventListener("input", ()=>{ state.videoMotion = vm.value || ""; }); }
+    const vs = $("videoSeconds"); if(vs){ vs.value = String(state.videoSeconds ?? 2); vs.addEventListener("input", ()=>{ const n = parseInt(vs.value,10); state.videoSeconds = Number.isFinite(n) && n>0 ? n : 2; }); }
+    const md = $("moodDetail"); if(md){ md.value = state.moodDetail || ""; md.addEventListener("input", ()=>{ state.moodDetail = md.value || ""; }); }
+    const bp = $("baseVideoPrompt"); if(bp){ bp.value = state.baseVideoPrompt || ""; bp.addEventListener("input", ()=>{ state.baseVideoPrompt = bp.value || ""; }); }
+
+
     setGridTemplate(state.layoutId);
-    log(`ADN loaded. layouts=${state.layouts.length}, backgrounds=${state.backgrounds.length}, characters=${state.characters.length}, actions=${state.actions.length}, styles=${state.styles.length}`);
+    $("btnExportPanelPrompt").onclick = () => {
+    const i = state.activePanelIndex ?? 0;       // panel đang chọn
+    const txt = buildPanelPrompt(i);
+    $("output").textContent = txt;               // hoặc output.value tùy bạn dùng <pre> hay <textarea>
+    };
 
-    // events
-    $("layoutSelect").addEventListener("change", ()=>{
-      state.layoutId = $("layoutSelect").value;
-      log(`Layout set: ${state.layoutId}`);
-      setGridTemplate(state.layoutId);
-    });
+    $("aspectSelect").onchange = ()=>{ state.aspect = $("aspectSelect").value; };
+    $("motionNote").addEventListener("input", ()=>{ state.panels[state.activePanelIndex].motionNote = $("motionNote").value || ""; });
 
-    $("panelSelect").addEventListener("change", ()=>{
-      state.activePanelIndex = Number($("panelSelect").value || 0);
-      renderBackgroundSelect();
-      renderStyleSelect();
-      renderActorList();
-      syncSidebarFromState();
-      highlightActivePanel();
-    });
-
-    $("backgroundSelect").addEventListener("change", ()=>{
-      state.panels[state.activePanelIndex].backgroundId = $("backgroundSelect").value;
-      renderActorsOnPanels();
-    });
-
-    $("styleSelect").addEventListener("change", ()=>{
-      state.panels[state.activePanelIndex].styleId = $("styleSelect").value;
-    });
-
-    $("aspectSelect").addEventListener("change", ()=>{
-      state.aspect = $("aspectSelect").value;
-    });
-
-    $("cameraSelect").addEventListener("change", ()=>{
-      state.cameraId = $("cameraSelect").value;
-    });
-
-    $("toneSelect").addEventListener("change", ()=>{
-      state.toneId = $("toneSelect").value;
-    });
-
-    $("moodDetail").addEventListener("input", ()=>{
-      state.moodDetail = $("moodDetail").value || "";
-    });
-
-    $("durationSec").addEventListener("input", ()=>{
-      const v = Number($("durationSec").value);
-      state.durationSec = Number.isFinite(v) ? v : 2;
-    });
-
-    $("baseVideoPrompt").addEventListener("input", ()=>{
-      state.baseVideoPrompt = $("baseVideoPrompt").value || "";
-    });
-
-    $("globalMotion").addEventListener("input", ()=>{
-      state.globalMotion = $("globalMotion").value || "";
-    });
-
-    $("motionNote").addEventListener("input", ()=>{
-      state.panels[state.activePanelIndex].motionNote = $("motionNote").value || "";
-    });
-
-    $("btnAddActor").addEventListener("click", ()=>{
-      const charId = $("charSelect").value;
-      const actionId = $("actionSelect").value;
-      if(!charId && !actionId) return;
+    $("btnAddActor").onclick = ()=>{
       const p = state.panels[state.activePanelIndex];
-      p.actors.push({ charId, actionId });
-      renderActorList();
+      p.actors.push({ charId: $("charSelect").value, actionId: $("actionSelect").value });
+      renderActorsList();
       renderActorsOnPanels();
-    });
+    };
+function buildPanelPrompt(panelIndex){
+  const p = state.panels[panelIndex];
+  const layout = getLayouts()?.[state.layoutId] || {};
+  const styleObj = (getStyles && getStyles()[state.styleId]) || null;
 
-    const bind = (id, fn)=>{ const el=$(id); if(el) el.addEventListener("click", fn); };
-    bind("btnExportPrompt", exportPromptAll);
-    bind("btnExportPrompt2", exportPromptAll);
-    bind("btnExportPanelPrompt", exportPromptPanel);
-    bind("btnExportPanelPrompt2", exportPromptPanel);
-    bind("btnExportJSON", exportJSON);
-    bind("btnExportJSON2", exportJSON);
-    bind("btnCopy", copyOutput);
-    bind("btnDownload", downloadJSON);
-    bind("btnReset", resetAll);
-    bind("btnReset2", resetAll);
+  const styleLine = styleObj?.desc
+    ? `STYLE DNA (XNC): ${styleObj.desc}`
+    : `STYLE DNA (XNC): ${state.styleId || "(missing)"}`;
+
+  const aspectLine = `ASPECT: ${state.aspect || "9:16"}`;
+  const layoutLine = `LAYOUT: ${layout.id || state.layoutId || "(unknown)"}`;
+
+  const bgName = (getBackgrounds && getBackgrounds()[p.backgroundId]?.label) || p.backgroundId || "(none)";
+  const panelName = `PANEL ${panelIndex + 1} (P${panelIndex + 1})`;
+
+  const actorsLines = (p.actors || []).length
+    ? (p.actors || []).map(a => {
+        const cname = (getCharacters && getCharacters()[a.charId]?.name) || a.charName || a.charId || "(char)";
+        const aname = (getActions && getActions()[a.actionId]?.label) || a.actionLabel || a.actionId || "(action)";
+        return `- ${cname} — ${aname}`;
+      }).join("\n")
+    : "- (none)";
+
+  const motionNote = (p.motionNote || "").trim();
+  const motionLine = motionNote ? `Motion: ${motionNote}` : "";
+
+  // Optional global video fields (from makeprompt_video.html)
+  const videoLines = [];
+  if(state.videoMotion && state.videoMotion.trim()) videoLines.push(`Motion: ${state.videoMotion.trim()}`);
+  if(state.videoSeconds) videoLines.push(`Duration: ${state.videoSeconds}s`);
+  if(state.cameraId){
+    const cam = CAMERA_OPTIONS.find(o=>o.id===state.cameraId);
+    videoLines.push(`Camera: ${cam ? cam.label : state.cameraId}`);
+  }
+  if(state.toneId){
+    const tone = TONE_OPTIONS.find(o=>o.id===state.toneId);
+    videoLines.push(`Tone: ${tone ? tone.label : state.toneId}`);
+  }
+  if(state.moodDetail && state.moodDetail.trim()) videoLines.push(`Mood: ${state.moodDetail.trim()}`);
+  if(state.baseVideoPrompt && state.baseVideoPrompt.trim()) videoLines.push(`RefPrompt: ${state.baseVideoPrompt.trim()}`);
+
+  const constraints = `Constraints: no text, no subtitles, no UI, consistent characters, comic panel framing.`;
+
+  return [
+    styleLine,
+    aspectLine,
+    layoutLine,
+    "",
+    panelName,
+    `Background: ${bgName}`,
+    "Actors:",
+    actorsLines,
+    ...videoLines,
+    motionLine ? motionLine : null,
+    constraints
+  ].filter(Boolean).join("\n");
+}
+
+    const exportPrompt = ()=>{ $("output").textContent = buildPromptText(); log("Prompt exported."); };
+    const exportJSON = ()=>{ $("output").textContent = JSON.stringify(buildSceneJSON(), null, 2); log("JSON exported."); };
+
+    $("btnExportPrompt").onclick = exportPrompt;
+    $("btnExportPrompt2").onclick = exportPrompt;
+    $("btnExportJSON").onclick = exportJSON;
+    $("btnExportJSON2").onclick = exportJSON;
+    $("btnCopy").onclick = copyOutput;
+    $("btnDownload").onclick = downloadJSON;
+    $("btnReset").onclick = resetAll;
 
   } catch(err){
     console.error(err);
     log(`ERROR: ${err.message}`);
-    $("output").textContent = `Lỗi load JSON.\n${err.message}\n\nKiểm tra ADN_BASE & file paths trong xnc-engine.js.`;
+    $("output").textContent = `Lỗi load JSON.\n${err.message}\n\nKiểm tra đường dẫn ADN_URLS trong xnc-engine.js (folder /ad/xomnganchuyen/...).`;
   }
 }
 
