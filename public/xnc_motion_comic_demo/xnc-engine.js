@@ -433,6 +433,11 @@ async function init(){
     renderActionSelect();
 
     setGridTemplate(state.layoutId);
+    $("btnExportPanelPrompt").onclick = () => {
+    const i = state.activePanelIndex ?? 0;       // panel đang chọn
+    const txt = buildPanelPrompt(i);
+    $("output").textContent = txt;               // hoặc output.value tùy bạn dùng <pre> hay <textarea>
+    };
 
     $("aspectSelect").onchange = ()=>{ state.aspect = $("aspectSelect").value; };
     $("motionNote").addEventListener("input", ()=>{ state.panels[state.activePanelIndex].motionNote = $("motionNote").value || ""; });
