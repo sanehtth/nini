@@ -30,7 +30,7 @@
   "panels": 3,
   "css": "grid-template-columns: 1fr; grid-template-rows: 1fr 1fr 1fr;"
     },
-    "3_col":{
+    "3_row":{
   "id": "3_row",  
   "label": "3 khung ngang",
   "panels": 3,
@@ -62,6 +62,7 @@
     }
   }
 }
+
 
 
 
