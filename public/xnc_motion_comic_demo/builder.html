@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XNC Motion Comic Engine</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">XNC</div>
+      <div class="title">
+        <div class="h1">Motion Comic Engine</div>
+        <div class="sub">Chọn layout → cấu hình panel → xuất JSON / prompt (image & video). Chạy local, không cần AI.</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <label class="ctrl">
+        <span>Layout</span>
+        <select id="layoutSelect"></select>
+      </label>
+
+      <button class="btn" id="btnThrow">Ném dép vượt khung</button>
+      <button class="btn" id="btnPunch">Đấm vượt khung</button>
+      <button class="btn" id="btnPull">Kéo áo vượt khung</button>
+      <button class="btn ghost" id="btnReset">Reset cảnh</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="stage">
+      <div id="grid" class="grid"></div>
+      <div class="footerNote">ADN màu: xanh lá + nâu (nông nghiệp, đất đai, hòa bình). Panel là mask; “vượt khung” là overlay.</div>
+    </section>
+
+    <aside class="sidebar">
+      <div class="card">
+        <div class="cardTitle">Cấu hình Scene</div>
+        <div class="cardBody">
+          <label class="ctrl full">
+            <span>Chọn Panel để chỉnh</span>
+            <select id="panelSelect"></select>
+          </label>
+
+          <label class="ctrl full">
+            <span>Bối cảnh (background)</span>
+            <select id="bgSelect"></select>
+          </label>
+
+          <div class="split">
+            <label class="ctrl">
+              <span>Tone / Style</span>
+              <select id="styleSelect"></select>
+            </label>
+            <label class="ctrl">
+              <span>Tỉ lệ</span>
+              <select id="aspectSelect">
+                <option value="9:16">9:16 (Short)</option>
+                <option value="16:9">16:9 (Video)</option>
+                <option value="1:1">1:1</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="rowHead">
+            <div>Nhân vật trong panel</div>
+            <button class="btn small" id="btnAddActor">+ Add</button>
+          </div>
+          <div id="actorsList" class="actors"></div>
+
+          <div class="hr"></div>
+
+          <label class="ctrl full">
+            <span>Ghi chú motion (tùy chọn)</span>
+            <textarea id="motionNote" rows="3" placeholder="Ví dụ: camera push-in nhẹ; tay ném dép bay qua viền; phản ứng jaw-drop..."></textarea>
+          </label>
+
+          <div class="hr"></div>
+
+          <div class="exportRow">
+            <button class="btn" id="btnExportJson">Xuất JSON</button>
+            <button class="btn" id="btnExportPrompt">Xuất Prompt</button>
+          </div>
+
+          <div class="output">
+            <div class="outHead">
+              <div class="outTitle">Output</div>
+              <div class="outBtns">
+                <button class="btn small ghost" id="btnCopy">Copy</button>
+                <button class="btn small ghost" id="btnDownload">Download .json</button>
+              </div>
+            </div>
+            <pre id="output" class="pre">Chưa có output. Hãy cấu hình và bấm “Xuất JSON” hoặc “Xuất Prompt”.</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cardTitle">Log</div>
+        <div class="cardBody">
+          <pre id="log" class="pre log"></pre>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cardTitle">Assets</div>
+        <div class="cardBody smallText">
+          Demo đang dùng placeholder hình khối để chạy nhanh. Khi bạn có PNG nhân vật thật, chỉ cần thay <code>img</code> trong <code>renderActor()</code>.
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script type="module" src="xnc_motion_comic.js"></script>
+</body>
+</html>
