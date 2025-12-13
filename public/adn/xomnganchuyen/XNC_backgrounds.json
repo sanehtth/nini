@@ -1,0 +1,24 @@
+﻿{
+  "version": "1.0",
+  "series_id": "XNC",
+  "backgrounds": [
+    {
+      "id": "xnc_riverside_night",
+      "label": "Bờ sông đêm (cúp điện)",
+      "desc_en": "Vietnamese countryside riverside at night, wooden bridge, faint moonlight, soft mist, green-brown palette, cozy but spooky",
+      "tags": ["night", "spooky", "riverside"]
+    },
+    {
+      "id": "xnc_village_day",
+      "label": "Xóm quê ban ngày",
+      "desc_en": "Vietnamese rural neighborhood, small houses, palm trees, dirt road, warm soft daylight, pastel green-brown tones",
+      "tags": ["day", "village"]
+    },
+    {
+      "id": "xnc_shoe_cabinet_corner",
+      "label": "Góc tủ giày (trong nhà)",
+      "desc_en": "small Vietnamese home interior corner, wooden shoe cabinet, simple tiles, warm indoor light, comedic focus object",
+      "tags": ["interior", "prop"]
+    }
+  ]
+}

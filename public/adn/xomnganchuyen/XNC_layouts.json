@@ -1,0 +1,17 @@
+﻿{
+  "version": "1.0",
+  "series_id": "XNC",
+  "layouts": [
+    { "id": "L1_full", "label": "1 khung", "slots": 1 },
+    { "id": "L2_lr", "label": "2 khung (trái-phải)", "slots": 2 },
+    { "id": "L2_tb", "label": "2 khung (trên-dưới)", "slots": 2 },
+
+    { "id": "L3_1top2bot", "label": "3 khung (1 trên, 2 dưới)", "slots": 3 },
+    { "id": "L3_2top1bot", "label": "3 khung (2 trên, 1 dưới)", "slots": 3 },
+    { "id": "L3_1left2right", "label": "3 khung (1 trái, 2 phải)", "slots": 3 },
+    { "id": "L3_2left1right", "label": "3 khung (2 trái, 1 phải)", "slots": 3 },
+    { "id": "L3_row", "label": "3 khung thẳng hàng", "slots": 3 },
+
+    { "id": "L4_grid", "label": "4 khung (2x2)", "slots": 4 }
+  ]
+}
