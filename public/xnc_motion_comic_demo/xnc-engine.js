@@ -443,6 +443,47 @@ async function init(){
       renderActorsList();
       renderActorsOnPanels();
     };
+function buildPanelPrompt(panelIndex){
+  const p = state.panels[panelIndex];
+  const layout = getLayouts()?.[state.layoutId] || {};
+  const styleObj = (getStyles && getStyles()[state.styleId]) || null;
+
+  const styleLine = styleObj?.desc
+    ? `STYLE DNA (XNC): ${styleObj.desc}`
+    : `STYLE DNA (XNC): ${state.styleId || "(missing)"}`;
+
+  const aspectLine = `ASPECT: ${state.aspect || "9:16"}`;
+  const layoutLine = `LAYOUT: ${layout.id || state.layoutId || "(unknown)"}`;
+
+  const bgName = (getBackgrounds && getBackgrounds()[p.backgroundId]?.label) || p.backgroundId || "(none)";
+  const panelName = `PANEL ${panelIndex + 1} (P${panelIndex + 1})`;
+
+  const actorsLines = (p.actors || []).length
+    ? (p.actors || []).map(a => {
+        const cname = (getCharacters && getCharacters()[a.charId]?.name) || a.charName || a.charId || "(char)";
+        const aname = (getActions && getActions()[a.actionId]?.label) || a.actionLabel || a.actionId || "(action)";
+        return `- ${cname} — ${aname}`;
+      }).join("\n")
+    : "- (none)";
+
+  const motionNote = (p.motionNote || "").trim();
+  const motionLine = motionNote ? `Motion: ${motionNote}` : "";
+
+  const constraints = `Constraints: no text, no subtitles, no UI, consistent characters, comic panel framing.`;
+
+  return [
+    styleLine,
+    aspectLine,
+    layoutLine,
+    "",
+    panelName,
+    `Background: ${bgName}`,
+    "Actors:",
+    actorsLines,
+    motionLine ? motionLine : null,
+    constraints
+  ].filter(Boolean).join("\n");
+}
 
     const exportPrompt = ()=>{ $("output").textContent = buildPromptText(); log("Prompt exported."); };
     const exportJSON = ()=>{ $("output").textContent = JSON.stringify(buildSceneJSON(), null, 2); log("JSON exported."); };
