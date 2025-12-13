@@ -1,91 +1,34 @@
-﻿{
-  "characters": {
-    "bolo": {
-      "name": "Bô-lô",
+{
+  "version": "1.0",
+  "series_id": "XNC",
+  "characters": [
+    {
+      "id": "bolo",
+      "name": "Bô-Lô",
       "role": "Thánh soi",
-      "signatures": [
-        {
-          "id": "bolo_glasses",
-          "label": "Chỉnh kính + soi",
-          "desc": "He adjusts his small glasses, eyebrows raised, hands on hips, preparing to analyze the situation with confident-but-comedic intensity."
-        },
-        {
-          "id": "bolo_pointing",
-          "label": "Chỉ tay phân tích",
-          "desc": "He points forward as if explaining a chart, smirking slightly, leaning in with fake confidence."
-        },
-        {
-          "id": "bolo_fall",
-          "label": "Làm lố rồi té",
-          "desc": "He poses cool for half a second before slipping, tiny motion lines showing his clumsiness."
-        }
-      ]
+      "base_desc_en": "Vietnamese primary school boy, small but tries to look cool, blue shirt, brown pants, short messy hair, tiny round glasses",
+      "preferred_actions": ["adjust_glasses", "point_accuse", "smirk_proud"]
     },
-
-    "bala": {
-      "name": "Ba-la",
+    {
+      "id": "bala",
+      "name": "Ba-La",
       "role": "Thánh đồn",
-      "signatures": [
-        {
-          "id": "bala_hasty",
-          "label": "Hớt hải chạy tới",
-          "desc": "He rushes in with wide-open mouth, waving his hands, shaking with gossip excitement."
-        },
-        {
-          "id": "bala_mouth_cover",
-          "label": "Lỡ lời che miệng",
-          "desc": "After leaking a secret, he covers his mouth with both hands, eyes widened in panic."
-        },
-        {
-          "id": "bala_wave_talk",
-          "label": "Quơ tay nói liên mồm",
-          "desc": "He waves both hands rapidly while talking nonstop, leaning forward, breathless."
-        }
-      ]
+      "base_desc_en": "Vietnamese primary school boy, slightly chubby, red shirt, black shorts, messy hair, big mouth expression, talkative",
+      "preferred_actions": ["scratch_head", "cover_mouth_panic", "jaw_drop_shock"]
     },
-
-    "tumlum": {
-      "name": "Tùm-lum",
+    {
+      "id": "tumlum",
+      "name": "Tùm-Lum",
       "role": "Thánh điệu",
-      "signatures": [
-        {
-          "id": "tumlum_pose",
-          "label": "Pose thời trang lỗi",
-          "desc": "She strikes an exaggerated fashion pose, holding her giant hair roller proudly with misplaced confidence."
-        },
-        {
-          "id": "tumlum_spin",
-          "label": "Xoay người catwalk",
-          "desc": "She spins 360 degrees as if on a runway, messy hair swinging, expression half-serious half-derpy."
-        },
-        {
-          "id": "tumlum_defend_style",
-          "label": "Chống nạnh bảo vệ style",
-          "desc": "She puts hands on hips, tilts head up, insisting her quirky style is 'ahead of its time'."
-        }
-      ]
+      "base_desc_en": "Vietnamese primary school girl, long messy hair with big rollers, bright yellow outfit, quirky fashion, confident pose, high-fashion vibe but comedic",
+      "preferred_actions": ["smirk_proud", "jaw_drop_shock"]
     },
-
-    "tumla": {
-      "name": "Tùm-la",
+    {
+      "id": "tumla",
+      "name": "Tùm-La",
       "role": "Thánh báo",
-      "signatures": [
-        {
-          "id": "tumla_launch",
-          "label": "Lao tới xử lý",
-          "desc": "She dashes forward like a rocket, eyes sparkling with determination, bow bouncing."
-        },
-        {
-          "id": "tumla_slam",
-          "label": "Đập bàn hành động",
-          "desc": "She slams her hands on the table energetically, announcing she's taking charge."
-        },
-        {
-          "id": "tumla_chill_chaos",
-          "label": "Gây chuyện mặt tỉnh",
-          "desc": "She performs chaotic actions while keeping a perfectly calm face."
-        }
-      ]
+      "base_desc_en": "Vietnamese primary school girl, short hair with big bow, red polka dot top, energetic stance, mischievous eyes",
+      "preferred_actions": ["side_eye_glance", "point_accuse", "jaw_drop_shock"]
     }
-  }
+  ]
 }
