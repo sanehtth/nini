@@ -30,15 +30,12 @@
   "panels": 3,
   "css": "grid-template-columns: 1fr; grid-template-rows: 1fr 1fr 1fr;"
     },
-   {
-  id: "3_col",
-  label: "3 khung ngang",
-  panelCount: 3,
-  css: {
-    columns: "1fr 1fr 1fr",
-    rows: "1fr"
-  }
-},
+    "3_col":{
+  "id": "3_row",  
+  "label": "3 khung ngang",
+  "panels": 3,
+  "css": "grid-template-columns: "1fr 1fr 1fr"; grid-template-rows: 1fr;"
+  },
     "3_2top1": {
   "id": "3_2top1",
   "label": "3 khung (2 trên – 1 dưới)",
@@ -65,5 +62,6 @@
     }
   }
 }
+
 
 
