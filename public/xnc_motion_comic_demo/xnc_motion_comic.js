@@ -3,7 +3,7 @@ const ADN_PATH = "/adn/xomnganchuyen";
 const FILES = {
   characters: "XNC_characters.json",
   actions: "XNC_actions.json",
-  backgrounds: "XNC_background.json",
+  backgrounds: "XNC_backgrounds.json",
   layouts: "XNC_layouts.json",
   style: "XNC_style.json",
 };
