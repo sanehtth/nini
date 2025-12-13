@@ -1,383 +1,54 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
   <title>XNC Motion Comic Engine</title>
-  <style>
-    :root{
-      --bg:#0e1412;
-      --card:#141c18;
-      --card2:#0f1513;
-      --stroke:#223229;
-      --stroke2:#2c3f34;
-      --txt:#e9f3ee;
-      --muted:#9cb3a7;
-      --accent:#7bd389;
-      --accent2:#58b86b;
-      --danger:#ff6b6b;
-      --panel:#e9e0cf;
-      --panel2:#e6dcc7;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: radial-gradient(1200px 600px at 10% 10%, #1a2a22 0%, var(--bg) 55%) fixed;
-      color:var(--txt);
-    }
-    header{
-      position:sticky; top:0; z-index:50;
-      backdrop-filter: blur(10px);
-      background: linear-gradient(180deg, rgba(15,22,19,.92), rgba(15,22,19,.72));
-      border-bottom:1px solid rgba(255,255,255,.06);
-      padding:12px 14px;
-      display:flex;
-      gap:12px;
-      align-items:center;
-      justify-content:space-between;
-    }
-    .brand{
-      display:flex; gap:10px; align-items:center;
-      min-width: 280px;
-    }
-    .logo{
-      width:38px;height:38px;border-radius:10px;
-      background: linear-gradient(135deg, #2a5a41, #1f3a2c);
-      border:1px solid rgba(255,255,255,.10);
-      display:grid; place-items:center;
-      font-weight:800;
-    }
-    .titleWrap .h1{font-weight:800; letter-spacing:.2px;}
-    .titleWrap .sub{color:var(--muted); font-size:12.5px; margin-top:2px;}
-    .controls{
-      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-    label.ctrl{
-      display:flex; gap:8px; align-items:center;
-      color:var(--muted); font-size:13px;
-      background: rgba(255,255,255,.04);
-      border:1px solid rgba(255,255,255,.07);
-      padding:7px 10px;
-      border-radius:12px;
-    }
-    select, input, textarea, button{
-      font: inherit;
-    }
-    select, input, textarea{
-      color:var(--txt);
-      background: rgba(0,0,0,.22);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:10px;
-      padding:8px 10px;
-      outline:none;
-    }
-    select:focus, input:focus, textarea:focus{
-      border-color: rgba(123,211,137,.55);
-      box-shadow: 0 0 0 3px rgba(123,211,137,.12);
-    }
-    .btn{
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.06);
-      color:var(--txt);
-      padding:9px 12px;
-      cursor:pointer;
-      transition: .15s ease;
-      font-weight:700;
-    }
-    .btn:hover{ transform: translateY(-1px); border-color: rgba(123,211,137,.35); }
-    .btn.primary{
-      background: linear-gradient(180deg, rgba(123,211,137,.22), rgba(88,184,107,.12));
-      border-color: rgba(123,211,137,.35);
-    }
-    .btn.ghost{
-      background: rgba(255,255,255,.04);
-    }
-    main{
-      display:grid;
-      grid-template-columns: 1.25fr .95fr;
-      gap:14px;
-      padding:14px;
-      align-items:start;
-    }
-    .stage{
-      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
-      border:1px solid rgba(255,255,255,.07);
-      border-radius:18px;
-      padding:12px;
-      min-height: 520px;
-    }
-    #grid{
-      width:100%;
-      display:grid;
-      gap:12px;
-      border-radius:16px;
-      padding:12px;
-      background: rgba(0,0,0,.18);
-      border:1px dashed rgba(255,255,255,.10);
-      min-height: 460px;
-    }
-    .panel{
-      position:relative;
-      border-radius:18px;
-      border:1px solid rgba(0,0,0,.22);
-      overflow:hidden;
-      background: radial-gradient(800px 240px at 20% 20%, rgba(255,255,255,.30), rgba(255,255,255,.08)),
-                  linear-gradient(180deg, var(--panel), var(--panel2));
-      box-shadow: 0 10px 24px rgba(0,0,0,.35);
-      cursor:pointer;
-      outline: 2px solid transparent;
-    }
-    .panel.active{
-      outline-color: rgba(123,211,137,.65);
-      box-shadow: 0 12px 30px rgba(0,0,0,.38), 0 0 0 4px rgba(123,211,137,.10);
-    }
-    .panelTag{
-      position:absolute; top:10px; left:10px;
-      background: rgba(0,0,0,.35);
-      border:1px solid rgba(255,255,255,.12);
-      color:#fff;
-      font-size:12px;
-      padding:4px 8px;
-      border-radius:999px;
-    }
-    .panelBgLabel{
-      position:absolute; bottom:10px; left:10px; right:10px;
-      font-size:12px;
-      color: rgba(0,0,0,.75);
-      background: rgba(255,255,255,.35);
-      border:1px solid rgba(0,0,0,.10);
-      padding:6px 10px;
-      border-radius:12px;
-      text-overflow: ellipsis;
-      overflow:hidden;
-      white-space:nowrap;
-    }
-    .actorsLayer{
-      position:absolute; inset:0;
-      pointer-events:none;
-    }
-    .actorChip{
-      position:absolute;
-      left:50%; top:50%;
-      transform: translate(-50%,-50%);
-      min-width: 170px;
-      max-width: 88%;
-      padding:10px 12px;
-      border-radius:18px;
-      background: rgba(255,255,255,.45);
-      border:1px solid rgba(0,0,0,.12);
-      color: rgba(0,0,0,.82);
-      font-weight:800;
-      text-align:center;
-      backdrop-filter: blur(6px);
-      box-shadow: 0 10px 18px rgba(0,0,0,.18);
-    }
-    .actorChip small{
-      display:block;
-      font-weight:700;
-      margin-top:4px;
-      opacity:.85;
-    }
-
-    /* overlay “vượt khung” demo */
-    #overlay{
-      position:fixed;
-      inset:0;
-      pointer-events:none;
-      z-index:9999;
-    }
-    .fxProp{
-      position:absolute;
-      width:70px; height:70px;
-      border-radius:18px;
-      background: rgba(255,255,255,.75);
-      border: 1px solid rgba(0,0,0,.12);
-      box-shadow: 0 20px 30px rgba(0,0,0,.25);
-      display:grid; place-items:center;
-      color: rgba(0,0,0,.8);
-      font-weight:900;
-    }
-    .sidebar{
-      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
-      border:1px solid rgba(255,255,255,.07);
-      border-radius:18px;
-      padding:12px;
-    }
-    .card{
-      background: rgba(0,0,0,.20);
-      border:1px solid rgba(255,255,255,.07);
-      border-radius:16px;
-      padding:12px;
-      margin-bottom:12px;
-    }
-    .cardTitle{ font-weight:900; margin-bottom:10px; }
-    .row{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-    .row1{ display:grid; grid-template-columns: 1fr; gap:10px; }
-    .ctrlFull label{ display:block; color:var(--muted); font-size:12px; margin:0 0 6px; }
-    textarea{ width:100%; min-height:70px; resize:vertical; }
-    .actorRow{
-      display:grid;
-      grid-template-columns: 1fr 1fr auto;
-      gap:8px;
-      align-items:center;
-      margin-top:10px;
-    }
-    .actorRow .xBtn{
-      width:36px; height:36px;
-      border-radius:12px;
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.10);
-      cursor:pointer;
-      color:var(--txt);
-      font-weight:900;
-    }
-    .actorRow .xBtn:hover{ border-color: rgba(255,107,107,.45); }
-    .actionsBar{
-      display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;
-    }
-    .outBox{
-      width:100%;
-      background: rgba(0,0,0,.28);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:14px;
-      padding:10px;
-      min-height: 110px;
-      color: #e9f3ee;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size: 12px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .logBox{
-      height:150px; overflow:auto;
-      background: rgba(0,0,0,.28);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:14px;
-      padding:10px;
-      color:#d7efe1;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size: 12px;
-      white-space: pre-wrap;
-    }
-    .muted{ color:var(--muted); font-size:12px; }
-    .pill{
-      display:inline-flex; gap:6px; align-items:center;
-      padding:5px 9px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.05);
-      color:var(--muted);
-      font-size:12px;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="./green-theme.css" />
 </head>
+
 <body>
-  <header>
-    <div class="brand">
-      <div class="logo">XNC</div>
-      <div class="titleWrap">
-        <div class="h1">Motion Comic Engine</div>
-        <div class="sub">Chọn layout → cấu hình panel → xuất JSON / prompt (image & video). Chạy local, không cần AI.</div>
-      </div>
-    </div>
+<header class="toolbar">
+  <div class="brand">
+    <b>XNC</b> Motion Comic Engine
+  </div>
 
-    <div class="controls">
-      <label class="ctrl">
-        <span>Layout</span>
-        <select id="layoutSelect"></select>
-      </label>
+  <label>
+    Layout:
+    <select id="layoutSelect"></select>
+  </label>
 
-      <button class="btn primary" id="btnThrow">Ném dép vượt khung</button>
-      <button class="btn primary" id="btnPunch">Đấm vượt khung</button>
-      <button class="btn primary" id="btnPull">Kéo áo vượt khung</button>
-      <button class="btn ghost" id="btnReset">Reset cảnh</button>
-    </div>
-  </header>
+  <button id="btnReset">Reset</button>
+</header>
 
-  <main>
-    <section class="stage">
-      <div class="muted">
-        <span class="pill">ADN màu: xanh lá + nâu</span>
-        <span class="pill">Panel = mask</span>
-        <span class="pill">“Vượt khung” = overlay</span>
-      </div>
-      <div id="grid"></div>
-    </section>
+<main class="main">
+  <section class="stage">
+    <div id="grid" class="grid"></div>
+  </section>
 
-    <aside class="sidebar">
-      <div class="card">
-        <div class="cardTitle">Cấu hình Scene</div>
+  <aside class="sidebar">
+    <h3>Cấu hình Scene</h3>
 
-        <div class="row1 ctrlFull">
-          <div>
-            <label>Chọn Panel để chỉnh</label>
-            <select id="panelSelect"></select>
-          </div>
-        </div>
+    <label>
+      Panel đang chọn
+      <select id="panelSelect"></select>
+    </label>
 
-        <div class="row ctrlFull" style="margin-top:10px;">
-          <div>
-            <label>Bối cảnh (background)</label>
-            <select id="bgSelect"></select>
-          </div>
-          <div>
-            <label>Tỉ lệ</label>
-            <select id="aspectSelect">
-              <option value="9:16">9:16 (Short)</option>
-              <option value="16:9">16:9 (Video)</option>
-              <option value="1:1">1:1 (Square)</option>
-            </select>
-          </div>
-        </div>
+    <label>
+      Nhân vật
+      <select id="actorSelect"></select>
+    </label>
 
-        <div class="row ctrlFull" style="margin-top:10px;">
-          <div>
-            <label>Tone / Style</label>
-            <select id="styleSelect"></select>
-          </div>
-          <div>
-            <label>Ghi chú</label>
-            <input id="sceneNote" placeholder="VD: camera push-in nhẹ, ánh trăng mờ, rung nhẹ..." />
-          </div>
-        </div>
+    <input id="actorAction" placeholder="Hành động / biểu cảm" />
 
-        <div style="margin-top:12px; display:flex; align-items:center; justify-content:space-between;">
-          <div class="muted">Nhân vật trong panel</div>
-          <button class="btn" id="btnAddActor">+ Add</button>
-        </div>
+    <button id="btnAddActor">+ Add actor</button>
 
-        <div id="actorsList"></div>
+    <button id="btnExportPrompt">Xuất Prompt</button>
 
-        <div class="row1 ctrlFull" style="margin-top:12px;">
-          <div>
-            <label>Motion note (tùy chọn)</label>
-            <textarea id="motionNote" placeholder="VD: tay ném dép bay qua viền trắng; phản ứng jaw-drop; rung nhẹ..."></textarea>
-          </div>
-        </div>
+    <pre id="output"></pre>
+  </aside>
+</main>
 
-        <div class="actionsBar">
-          <button class="btn" id="btnExportJson">Xuất JSON</button>
-          <button class="btn" id="btnExportPrompt">Xuất Prompt</button>
-          <button class="btn ghost" id="btnCopy">Copy</button>
-          <button class="btn ghost" id="btnDownload">Download.json</button>
-        </div>
-
-        <div style="margin-top:10px;" class="muted">Output</div>
-        <div id="output" class="outBox">Chưa có output. Hãy cấu hình và bấm “Xuất JSON” hoặc “Xuất Prompt”.</div>
-      </div>
-
-      <div class="card">
-        <div class="cardTitle">Log</div>
-        <div id="log" class="logBox"></div>
-      </div>
-    </aside>
-  </main>
-
-  <div id="overlay"></div>
-
-  <script src="./xnc_motion_comic.js"></script>
+<script src="xnc-engine.js"></script>
 </body>
 </html>
