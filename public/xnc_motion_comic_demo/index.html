@@ -1,54 +1,168 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <title>XNC Motion Comic Engine</title>
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="./green-theme.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>XNC Motion Comic Engine (JSON-driven)</title>
+  <style>
+    :root{
+      --bg:#0f1412; --panel:#1b231f; --card:#121916; --stroke:#2a352f;
+      --text:#e7efe9; --muted:#a9b7ae; --accent:#7fd08f; --accent2:#2b7a4b;
+      --paper:#f2eee3;
+      --r:16px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    body{margin:0;background:radial-gradient(1200px 700px at 10% 10%, #1d2a22, var(--bg));color:var(--text)}
+    header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg, rgba(15,20,18,.92), rgba(15,20,18,.65));backdrop-filter: blur(8px);
+      border-bottom:1px solid rgba(127,208,143,.18);}
+    .bar{display:flex;gap:12px;align-items:center;padding:14px 18px;}
+    .logo{display:flex;align-items:center;gap:10px;font-weight:700}
+    .badge{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#c5ffd1);display:grid;place-items:center;color:#0f1412;font-weight:900}
+    .sub{color:var(--muted);font-size:12px;margin-top:2px}
+    .grow{flex:1}
+    .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    label.ctrl{display:flex;gap:8px;align-items:center;background:rgba(18,25,22,.7);border:1px solid rgba(127,208,143,.18);
+      padding:8px 10px;border-radius:12px}
+    label.ctrl span{font-size:12px;color:var(--muted)}
+    select,input,button,textarea{
+      background:rgba(0,0,0,.25);color:var(--text);border:1px solid rgba(255,255,255,.12);
+      border-radius:10px;padding:8px 10px;outline:none
+    }
+    select{padding-right:28px}
+    button{cursor:pointer;border:1px solid rgba(127,208,143,.28);background:linear-gradient(180deg, rgba(127,208,143,.18), rgba(43,122,75,.12));
+      color:var(--text);border-radius:12px;padding:9px 12px;font-weight:600}
+    button.ghost{background:transparent;border-color:rgba(255,255,255,.14);color:var(--muted)}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    main{display:grid;grid-template-columns: 1.25fr .95fr;gap:16px;padding:16px 18px}
+    @media(max-width:1100px){main{grid-template-columns:1fr}}
+    .stage{background:rgba(0,0,0,.18);border:1px solid rgba(127,208,143,.18);border-radius:var(--r);padding:14px}
+    .hint{color:var(--muted);font-size:12px;margin-bottom:10px}
+    #grid{display:grid;gap:10px;background:rgba(255,255,255,.05);padding:10px;border-radius:var(--r);border:1px dashed rgba(255,255,255,.12)}
+    .panel{
+      position:relative;border-radius:18px;overflow:hidden;border:2px solid rgba(0,0,0,.25);
+      background:var(--paper);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      min-height:120px;
+    }
+    .panel.active{outline:3px solid rgba(127,208,143,.55)}
+    .panelTag{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.25);backdrop-filter:blur(6px);
+      color:#fff;border:1px solid rgba(255,255,255,.25);padding:4px 8px;border-radius:999px;font-size:12px}
+    .panelBgLabel{position:absolute;left:12px;bottom:10px;right:12px;font-size:12px;color:rgba(0,0,0,.55)}
+    .actorChip{
+      position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+      padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.92);
+      border:1px solid rgba(0,0,0,.08);box-shadow:0 10px 22px rgba(0,0,0,.18);
+      min-width:140px;text-align:center
+    }
+    .actorChip small{display:block;color:rgba(0,0,0,.55);margin-top:2px}
+    .sidebar{background:rgba(0,0,0,.18);border:1px solid rgba(127,208,143,.18);border-radius:var(--r);padding:14px}
+    .cardTitle{font-weight:800;margin-bottom:10px}
+    .row{display:grid;grid-template-columns: 1fr 1fr;gap:10px}
+    .full{grid-column:1/-1}
+    .actorsList{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .actorRow{display:grid;grid-template-columns: 1fr 1fr 34px;gap:8px;align-items:center}
+    .actorRow button{padding:8px;border-radius:10px}
+    textarea{width:100%;min-height:70px;resize:vertical}
+    .outBar{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    pre#output{white-space:pre-wrap;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.12);padding:10px;border-radius:12px;
+      color:var(--text);min-height:120px;max-height:320px;overflow:auto;font-size:12px}
+    .log{margin-top:10px}
+    pre#log{white-space:pre-wrap;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.12);padding:10px;border-radius:12px;
+      color:var(--muted);min-height:80px;max-height:160px;overflow:auto;font-size:12px}
+  </style>
 </head>
-
 <body>
-<header class="toolbar">
-  <div class="brand">
-    <b>XNC</b> Motion Comic Engine
+<header>
+  <div class="bar">
+    <div class="logo">
+      <div class="badge">XNC</div>
+      <div>
+        <div>Motion Comic Engine</div>
+        <div class="sub">Cách A: Layout/Style/Background/Character/Action đều load từ JSON</div>
+      </div>
+    </div>
+
+    <div class="grow"></div>
+
+    <div class="controls">
+      <label class="ctrl"><span>Layout</span>
+        <select id="layoutSelect"></select>
+      </label>
+
+      <button id="btnExportPrompt">Xuất Prompt</button>
+      <button id="btnExportJSON" class="ghost">Xuất JSON</button>
+      <button id="btnCopy" class="ghost">Copy</button>
+      <button id="btnDownload" class="ghost">Download.json</button>
+      <button id="btnReset" class="ghost">Reset</button>
+    </div>
   </div>
-
-  <label>
-    Layout:
-    <select id="layoutSelect"></select>
-  </label>
-
-  <button id="btnReset">Reset</button>
 </header>
 
-<main class="main">
+<main>
   <section class="stage">
-    <div id="grid" class="grid"></div>
+    <div class="hint">Click panel để chọn. Actor chip là placeholder (thay bằng PNG thật sau).</div>
+    <div id="grid"></div>
   </section>
 
   <aside class="sidebar">
-    <h3>Cấu hình Scene</h3>
+    <div class="cardTitle">Cấu hình Scene</div>
 
-    <label>
-      Panel đang chọn
-      <select id="panelSelect"></select>
-    </label>
+    <div class="row">
+      <label class="ctrl full"><span>Panel đang chọn</span>
+        <select id="panelSelect"></select>
+      </label>
 
-    <label>
-      Nhân vật
-      <select id="actorSelect"></select>
-    </label>
+      <label class="ctrl"><span>Bối cảnh</span>
+        <select id="bgSelect"></select>
+      </label>
 
-    <input id="actorAction" placeholder="Hành động / biểu cảm" />
+      <label class="ctrl"><span>Style</span>
+        <select id="styleSelect"></select>
+      </label>
 
-    <button id="btnAddActor">+ Add actor</button>
+      <label class="ctrl"><span>Tỉ lệ</span>
+        <select id="aspectSelect">
+          <option value="9:16">9:16 (Short)</option>
+          <option value="16:9">16:9 (Video)</option>
+          <option value="1:1">1:1</option>
+        </select>
+      </label>
+    </div>
 
-    <button id="btnExportPrompt">Xuất Prompt</button>
+    <div class="row">
+      <label class="ctrl full"><span>Ghi chú motion (tùy chọn)</span>
+        <input id="motionNote" placeholder="VD: camera push-in nhẹ; tay ném dép bay qua viền; rung nhẹ..." />
+      </label>
+    </div>
 
-    <pre id="output"></pre>
+    <div style="margin-top:10px;color:var(--muted);font-size:12px">Nhân vật trong panel</div>
+    <div class="actorsList" id="actorsList"></div>
+
+    <div class="row" style="margin-top:10px">
+      <label class="ctrl"><span>Nhân vật</span>
+        <select id="charSelect"></select>
+      </label>
+      <label class="ctrl"><span>Hành động / biểu cảm</span>
+        <select id="actionSelect"></select>
+      </label>
+      <button id="btnAddActor">+ Add</button>
+    </div>
+
+    <div class="outBar">
+      <button id="btnExportPrompt2">Xuất Prompt</button>
+      <button id="btnExportJSON2" class="ghost">Xuất JSON</button>
+    </div>
+
+    <div style="margin-top:10px;color:var(--muted);font-size:12px">Output</div>
+    <pre id="output">Chưa có output. Chọn layout + cấu hình rồi bấm “Xuất Prompt” hoặc “Xuất JSON”.</pre>
+
+    <div class="log">
+      <div style="color:var(--muted);font-size:12px;margin-bottom:6px">Log</div>
+      <pre id="log"></pre>
+    </div>
   </aside>
 </main>
 
-<script src="xnc-engine.js"></script>
+<script src="./xnc-engine.js"></script>
 </body>
 </html>
