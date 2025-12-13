@@ -242,6 +242,15 @@ function renderActorsList(){
 }
 
 function syncSidebarFromState(){
+  // Nếu chưa có panels thì thôi, đừng crash
+  if (!state.panels || !state.panels.length) return;
+
+  // Nếu activePanelId chưa set hoặc không còn tồn tại -> set về panel đầu
+  let panel = state.panels.find(p => p.id === state.activePanelId);
+  if (!panel) {
+    state.activePanelId = state.panels[0].id;
+    panel = state.panels[0];
+  }
   const pdata = state.panels[state.activePanelIndex];
   $("bgSelect").value = pdata.backgroundId || "";
   $("motionNote").value = pdata.motionNote || "";
