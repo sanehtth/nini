@@ -19,17 +19,32 @@ async function loadLayouts(){
 /* ================= UI ================= */
 
 function renderLayoutSelect(){
-  const sel = $("layout");
+  const sel = $("layoutSelect");
+  if(!sel) return;
+
   sel.innerHTML = "";
-  Object.values(state.layouts).forEach(l=>{
+
+  const layouts = getLayouts(); // từ XNC_layouts.json
+
+  Object.values(layouts).forEach(l=>{
     const opt = document.createElement("option");
     opt.value = l.id;
-    opt.textContent = l.label;
+    opt.textContent = l.label || l.id;
     sel.appendChild(opt);
   });
-  sel.onchange = e => setGridTemplate(e.target.value);
-  setGridTemplate(sel.value);
+
+  sel.onchange = ()=>{
+    state.layoutId = sel.value;
+    setGridTemplate(sel.value);
+  };
+
+  // auto chọn layout đầu tiên
+  if(!state.layoutId){
+    state.layoutId = sel.value;
+    setGridTemplate(sel.value);
+  }
 }
+
 
 /* ================= GRID ================= */
 
