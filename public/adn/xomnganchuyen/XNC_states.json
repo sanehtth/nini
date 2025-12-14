@@ -1,7 +1,13 @@
-﻿{
+{
   "version": "1.0",
   "series_id": "XNC",
   "states": [
+    {
+      "id": "neutral",
+      "label": "Bình thường",
+      "desc_en": "neutral facial expression, relaxed posture, calm breathing",
+      "intensity": "none"
+    },
     {
       "id": "annoyed_grumpy",
       "label": "Nóng giận mặt đỏ, gầm gừ",
@@ -40,7 +46,7 @@
     },
     {
       "id": "embarrassed_melt",
-      "label": "Quê, muốn độn thổ",
+      "label": "Quê... muốn độn thổ",
       "desc_en": "face blushing, eyes looking down, awkward smile, body shrinking inward",
       "intensity": "med"
     },
