@@ -46,11 +46,11 @@ const ADN_URLS = {
   backgrounds: "/adn/xomnganchuyen/XNC_backgrounds.json",
   characters: "/adn/xomnganchuyen/XNC_characters.json",
   actions: "/adn/xomnganchuyen/XNC_actions.json",
-  states: "/adn/xomnganchuyen/XNC_states.json",   // NEW
+  faces: "/adn/xomnganchuyen/XNC_faces.json",   // NEW (faces)
   style: "/adn/xomnganchuyen/XNC_style.json",
 };
 
-const ADN = { layouts: [], backgrounds: [], characters: [], actions: [], states: [], style: [] };
+const ADN = { layouts: [], backgrounds: [], characters: [], actions: [], faces: [], style: [] };
 
 // ADN guardrails
 const TONE_LOCKED_ID = "A";
@@ -138,8 +138,8 @@ function normalizeActions(raw){
     variants: (x.variants && typeof x.variants === "object") ? x.variants : null
   })).filter(x => x.id);
 }
-function normalizeStates(raw){
-  const arr = toArrayFromPossibles(raw, ["states","data"]);
+function normalizeFaces(raw){
+  const arr = toArrayFromPossibles(raw, ["faces","data"]);
   return arr.map(x => ({
     id: x.id,
     label: x.label || x.name || x.id,
@@ -363,17 +363,17 @@ function renderActionSelect(){
     sel.appendChild(opt);
   });
 }
-function renderStateSelect(){
-  const sel = $("stateSelect");
+function renderFaceSelect(){
+  const sel = $("faceSelect");
   if(!sel) return;
   sel.innerHTML = "";
-  ADN.states.forEach(s=>{
+  ADN.faces.forEach(s=>{
     const opt = document.createElement("option");
     opt.value = s.id;
     opt.textContent = s.label;
     sel.appendChild(opt);
   });
-  if(ADN.states.some(x=>x.id==="neutral")) sel.value = "neutral";
+  if(ADN.faces.some(x=>x.id==="neutral")) sel.value = "neutral";
 }
 
 // ===== SIDEBAR SYNC =====
@@ -426,16 +426,16 @@ function renderActorsList(){
     actSel.value = a.actionId;
 
     const stateSel = document.createElement("select");
-    ADN.states.forEach(s=>{
+    ADN.faces.forEach(s=>{
       const opt = document.createElement("option");
       opt.value = s.id; opt.textContent = s.label;
       stateSel.appendChild(opt);
     });
-    stateSel.value = a.stateId || (ADN.states.some(x=>x.id==="neutral") ? "neutral" : (ADN.states[0]?.id || ""));
+    stateSel.value = a.faceId || (ADN.faces.some(x=>x.id==="neutral") ? "neutral" : (ADN.faces[0]?.id || ""));
 
     charSel.onchange = ()=>{ a.charId = charSel.value; renderActorsOnPanels(); };
     actSel.onchange  = ()=>{ a.actionId = actSel.value; renderActorsOnPanels(); };
-    stateSel.onchange= ()=>{ a.stateId = stateSel.value; renderActorsOnPanels(); };
+    stateSel.onchange= ()=>{ a.faceId = stateSel.value; renderActorsOnPanels(); };
 
     const del = document.createElement("button");
     del.textContent = "×";
@@ -463,7 +463,7 @@ function renderActorsOnPanels(){
     p.actors.forEach((a, k)=>{
       const c = ADN.characters.find(x=>x.id === a.charId);
       const ac = ADN.actions.find(x=>x.id === a.actionId);
-      const st = ADN.states.find(x=>x.id === a.stateId);
+      const st = ADN.faces.find(x=>x.id === a.faceId);
 
       const chip = document.createElement("div");
       chip.className = "actorChip";
@@ -480,7 +480,7 @@ function renderActorsOnPanels(){
 // ===== PROMPT HELPERS =====
 function _char(id){ return ADN.characters.find(x=>x.id===id) || null; }
 function _action(id){ return ADN.actions.find(x=>x.id===id) || null; }
-function _state(id){ return ADN.states.find(x=>x.id===id) || null; }
+function _face(id){ return ADN.faces.find(x=>x.id===id) || null; }
 
 function characterLine(c){
   if(!c) return "";
@@ -499,9 +499,9 @@ function actionLine(actionObj, charId){
   return actionObj.label;
 }
 
-function stateLine(stateObj){
-  if(!stateObj) return "";
-  return stateObj.desc_en ? `${stateObj.label}: ${stateObj.desc_en}` : stateObj.label;
+function faceLine(faceObj){
+  if(!faceObj) return "";
+  return faceObj.desc_en ? `${faceObj.label}: ${faceObj.desc_en}` : faceObj.label;
 }
 
 // ===== EXPORT JSON + PROMPTS =====
@@ -520,7 +520,7 @@ function buildSceneJSON(){
       durationSec: p.durationSec ?? 1.5,
       moodDetail: p.moodDetail || "",
       refPrompt: p.refPrompt || "",
-      actors: p.actors.map(a=>({ charId: a.charId, actionId: a.actionId, stateId: a.stateId || "" })),
+      actors: p.actors.map(a=>({ charId: a.charId, actionId: a.actionId, faceId: a.faceId || "" })),
     })),
     sources: ADN_URLS,
     exportedAt: new Date().toISOString(),
@@ -563,9 +563,9 @@ function buildPromptText(){
       p.actors.forEach(a=>{
         const c = _char(a.charId);
         const ac = _action(a.actionId);
-        const st = _state(a.stateId || "neutral");
+        const st = _face(a.faceId || "neutral");
         out += `- ${characterLine(c)}\n  Action: ${actionLine(ac, a.charId)}\n`;
-        if(st) out += `  State: ${stateLine(st)}\n`;
+        if(st) out += `  Face: ${faceLine(st)}\n`;
       });
     } else {
       out += `Actors: (none)\n`;
@@ -596,12 +596,12 @@ function buildPanelPrompt(panelIndex){
     ? (p.actors || []).map(a => {
         const c = _char(a.charId);
         const ac = _action(a.actionId);
-        const st = _state(a.stateId || "neutral");
+        const st = _face(a.faceId || "neutral");
         const lines = [
           `- ${characterLine(c)}`,
           `  Action: ${actionLine(ac, a.charId)}`,
         ];
-        if(st) lines.push(`  State: ${stateLine(st)}`);
+        if(st) lines.push(`  Face: ${faceLine(st)}`);
         return lines.join("\n");
       }).join("\n")
     : "- (none)";
@@ -673,7 +673,7 @@ async function init(){
       loadJSON(ADN_URLS.backgrounds),
       loadJSON(ADN_URLS.characters),
       loadJSON(ADN_URLS.actions),
-      loadJSON(ADN_URLS.states),
+      loadJSON(ADN_URLS.faces),
       loadJSON(ADN_URLS.style),
     ]);
 
@@ -681,10 +681,10 @@ async function init(){
     ADN.backgrounds = normalizeBackgrounds(b);
     ADN.characters = normalizeCharacters(c);
     ADN.actions = normalizeActions(a);
-    ADN.states = normalizeStates(st);
+    ADN.faces = normalizeStates(st);
     ADN.style = normalizeStyle(s);
 
-    log(`ADN loaded: layouts=${ADN.layouts.length}, backgrounds=${ADN.backgrounds.length}, characters=${ADN.characters.length}, actions=${ADN.actions.length}, states=${ADN.states.length}, styles=${ADN.style.length}`);
+    log(`ADN loaded: layouts=${ADN.layouts.length}, backgrounds=${ADN.backgrounds.length}, characters=${ADN.characters.length}, actions=${ADN.actions.length}, states=${ADN.faces.length}, styles=${ADN.style.length}`);
 
     if(!ADN.layouts.length) throw new Error("No layouts in JSON");
     state.layoutId = ADN.layouts[0].id;
@@ -694,7 +694,7 @@ async function init(){
     renderStyleSelect();
     renderCharacterSelect();
     renderActionSelect();
-    renderStateSelect();
+    renderFaceSelect();
     renderCameraAngleSelect();
     renderCameraMoveSelect();
 
@@ -717,11 +717,11 @@ async function init(){
 
     $("btnAddActor").onclick = ()=>{
       const p = state.panels[state.activePanelIndex];
-      const defaultState = $("stateSelect")?.value || (ADN.states.some(x=>x.id==="neutral") ? "neutral" : (ADN.states[0]?.id || ""));
+      const defaultFace = $("faceSelect")?.value || (ADN.faces.some(x=>x.id==="neutral") ? "neutral" : (ADN.faces[0]?.id || ""));
       p.actors.push({
         charId: $("charSelect").value,
         actionId: $("actionSelect").value,
-        stateId: defaultState
+        faceId: defaultFace
       });
       renderActorsList();
       renderActorsOnPanels();
