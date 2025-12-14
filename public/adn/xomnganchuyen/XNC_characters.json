@@ -5,6 +5,7 @@
     {
       "id": "bolo",
       "name": "Bô-Lô",
+      "gender": "male",
       "role": "Thánh soi",
       "base_desc_en": "Vietnamese primary school boy, small but tries to look cool, blue shirt, brown pants, short messy hair, tiny round glasses",
       "preferred_actions": ["adjust_glasses", "point_accuse", "smirk_proud"]
@@ -12,6 +13,7 @@
     {
       "id": "bala",
       "name": "Ba-La",
+      "gender": "male",
       "role": "Thánh đồn",
       "base_desc_en": "Vietnamese primary school boy, slightly chubby, red shirt, black shorts, messy hair, big mouth expression, talkative",
       "preferred_actions": ["scratch_head", "cover_mouth_panic", "jaw_drop_shock"]
@@ -19,6 +21,7 @@
     {
       "id": "tumlum",
       "name": "Tùm-Lum",
+      "gender": "female",
       "role": "Thánh điệu",
       "base_desc_en": "Vietnamese primary school girl, long messy hair with big rollers, bright yellow outfit, quirky fashion, confident pose, high-fashion vibe but comedic",
       "preferred_actions": ["smirk_proud", "jaw_drop_shock"]
@@ -26,9 +29,11 @@
     {
       "id": "tumla",
       "name": "Tùm-La",
+      "gender": "female",
       "role": "Thánh báo",
       "base_desc_en": "Vietnamese primary school girl, short hair with big bow, red polka dot top, energetic stance, mischievous eyes",
       "preferred_actions": ["side_eye_glance", "point_accuse", "jaw_drop_shock"]
     }
   ]
 }
+
