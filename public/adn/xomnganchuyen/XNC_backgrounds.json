@@ -1,24 +1,57 @@
-﻿{
-  "version": "1.0",
+{
+  "version": "1.1",
   "series_id": "XNC",
   "backgrounds": [
     {
       "id": "xnc_riverside_night",
       "label": "Bờ sông đêm (cúp điện)",
-      "desc_en": "Vietnamese countryside riverside at night, wooden bridge, faint moonlight, soft mist, green-brown palette, cozy but spooky",
+      "desc_en": "Vietnamese countryside riverside at night, wooden bridge, faint moonlight, soft mist, green-brown palette, cozy but slightly spooky, pastel 2D chibi, no text",
       "tags": ["night", "spooky", "riverside"]
     },
     {
       "id": "xnc_village_day",
       "label": "Xóm quê ban ngày",
-      "desc_en": "Vietnamese rural neighborhood, small houses, palm trees, dirt road, warm soft daylight, pastel green-brown tones",
+      "desc_en": "Vietnamese rural neighborhood, small houses, palm trees, dirt road, warm soft daylight, pastel green-brown tones, 2D chibi background, no text",
       "tags": ["day", "village"]
     },
     {
       "id": "xnc_shoe_cabinet_corner",
       "label": "Góc tủ giày (trong nhà)",
-      "desc_en": "small Vietnamese home interior corner, wooden shoe cabinet, simple tiles, warm indoor light, comedic focus object",
+      "desc_en": "small Vietnamese home interior corner, wooden shoe cabinet, simple tiles, warm indoor light, comedic focus object, pastel 2D chibi, no text",
       "tags": ["interior", "prop"]
+    },
+
+    /* ===== BACKGROUND MỚI ===== */
+
+    {
+      "id": "xnc_school_gate_vn",
+      "label": "Cổng trường Việt Nam",
+      "desc_en": "Vietnamese primary school gate, yellow walls, green trees, cement schoolyard, soft daylight, pastel green-brown palette, 2D chibi background, no text",
+      "tags": ["school", "day", "outside"]
+    },
+    {
+      "id": "xnc_classroom_vn",
+      "label": "Lớp học Việt Nam",
+      "desc_en": "Vietnamese classroom interior, wooden desks, green chalkboard, windows with daylight, ceiling fan, pastel green-brown tone, 2D chibi style, no text",
+      "tags": ["classroom", "school", "interior"]
+    },
+    {
+      "id": "xnc_pho_ba_tam",
+      "label": "Quán phở bà Tám",
+      "desc_en": "cozy Vietnamese pho street stall, plastic stools, steaming pot, warm yellow light, evening vibe, green-brown palette, pastel 2D chibi, no readable text",
+      "tags": ["street_food", "evening", "vn"]
+    },
+    {
+      "id": "xnc_sidewalk_vn",
+      "label": "Vỉa hè đường phố",
+      "desc_en": "Vietnamese sidewalk street, motorbike silhouettes, small shops, trees, soft haze, pastel green-brown palette, simplified 2D chibi background, no text",
+      "tags": ["street", "day"]
+    },
+    {
+      "id": "xnc_rice_field",
+      "label": "Cánh đồng lúa",
+      "desc_en": "Vietnamese rice field countryside, green rice plants, brown dirt path, distant trees, soft sunset light, calm atmosphere, pastel 2D chibi, no text",
+      "tags": ["countryside", "sunset"]
     }
   ]
 }
