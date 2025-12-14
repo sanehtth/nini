@@ -104,9 +104,17 @@ function normalizeBackgrounds(raw){
   })).filter(x => x.id);
 }
 function normalizeCharacters(raw){
-  const obj = raw?.characters && typeof raw.characters === "object" ? raw.characters : null;
-  if(!obj) return [];
-  return Object.entries(obj).map(([id, v]) => ({ id, name: v.name || id, role: v.role || "" }));
+  // Supports both formats:
+  // 1) { "characters": [ {id,name,gender,role,base_desc_en,...}, ... ] }
+  // 2) { "characters": { "bolo": {...}, "bala": {...} } }
+  const arr = toArrayFromPossibles(raw, ["characters","character","data"]);
+  return arr.map(x => ({
+    id: x.id,
+    name: x.name || x.label || x.id,
+    gender: x.gender || x.sex || "",
+    role: x.role || "",
+    base_desc_en: x.base_desc_en || x.desc_en || x.base_desc || x.desc || "",
+  })).filter(x => x.id);
 }
 function normalizeActions(raw){
   const arr = toArrayFromPossibles(raw, ["actions","data"]);
@@ -448,7 +456,14 @@ function buildPromptText(){
     const b = ADN.backgrounds.find(x=>x.id===bgId);
     return b ? (b.desc ? `${b.label} (${b.desc})` : b.label) : "";
   };
-  const charName = (id)=> ADN.characters.find(x=>x.id===id)?.name || id;
+  const charObj = (id)=> ADN.characters.find(x=>x.id===id) || null;
+  const charLine = (id)=>{
+    const c = charObj(id);
+    if(!c) return id;
+    const g = c.gender ? ` (${c.gender})` : "";
+    const b = c.base_desc_en ? ` — ${c.base_desc_en}` : "";
+    return `${c.name || id}${g}${b}`;
+  };
   const actionDesc = (id)=>{
     const a = ADN.actions.find(x=>x.id===id);
     return a ? (a.desc ? `${a.label}: ${a.desc}` : a.label) : id;
@@ -477,7 +492,8 @@ function buildPromptText(){
     if(p.refPrompt) out += `Reference prompt: ${p.refPrompt}\n`;
     if(p.actors.length){
       out += `Actors:\n`;
-      p.actors.forEach(a=>{ out += `- ${charName(a.charId)} — ${actionDesc(a.actionId)}\n`; });
+      p.actors.forEach(a=>{ out += `- ${charLine(a.charId)}
+  Action: ${actionDesc(a.actionId)}\n`; });
     } else out += `Actors: (none)\n`;
     out += `\n`;
   });
@@ -591,25 +607,41 @@ async function init(){
     };
 function buildPanelPrompt(panelIndex){
   const p = state.panels[panelIndex];
-  const layout = getLayouts()?.[state.layoutId] || {};
-  const styleObj = (getStyles && getStyles()[state.styleId]) || null;
 
-  const styleLine = styleObj?.desc
-    ? `STYLE DNA (XNC): ${styleObj.desc}`
-    : `STYLE DNA (XNC): ${state.styleId || "(missing)"}`;
+  // NOTE: buildPanelPrompt should use the normalized ADN arrays (not object indexing)
+  const styleDna = (styleId)=> styleId ? (ADN.style.find(s=>s.id===styleId)?.dna || "") : "";
+  const bgDesc = (bgId)=>{
+    const b = ADN.backgrounds.find(x=>x.id===bgId);
+    return b ? (b.desc ? `${b.label} (${b.desc})` : b.label) : "";
+  };
+  const actionLabel = (id)=>{
+    const a = ADN.actions.find(x=>x.id===id);
+    return a ? (a.desc ? `${a.label}: ${a.desc}` : a.label) : id;
+  };
+  const charObj = (id)=> ADN.characters.find(x=>x.id===id) || null;
+  const charLine = (id)=>{
+    const c = charObj(id);
+    if(!c) return id;
+    const g = c.gender ? ` (${c.gender})` : "";
+    const b = c.base_desc_en ? ` — ${c.base_desc_en}` : "";
+    return `${c.name || id}${g}${b}`;
+  };
 
-  const aspectLine = `ASPECT: ${state.aspect || "9:16"}`;
-  const layoutLine = `LAYOUT: ${layout.id || state.layoutId || "(unknown)"}`;
+  const defaultStyle = ADN.style.find(s=>s.id==="style") || ADN.style[0];
+  const defaultDna = defaultStyle?.dna || "pastel chibi 2D, green-brown Vietnamese vibe, clean illustration, soft lighting";
+  const styleOverride = styleDna(p.styleId);
 
-  const bgName = (getBackgrounds && getBackgrounds()[p.backgroundId]?.label) || p.backgroundId || "(none)";
+  const bgLine = bgDesc(p.backgroundId) || "(none)";
   const panelName = `PANEL ${panelIndex + 1} (P${panelIndex + 1})`;
 
   const actorsLines = (p.actors || []).length
     ? (p.actors || []).map(a => {
-        const cname = (getCharacters && getCharacters()[a.charId]?.name) || a.charName || a.charId || "(char)";
-        const aname = (getActions && getActions()[a.actionId]?.label) || a.actionLabel || a.actionId || "(action)";
-        return `- ${cname} — ${aname}`;
-      }).join("\n")
+        const cLine = charLine(a.charId);
+        const act = actionLabel(a.actionId);
+        return `- ${cLine}
+  Action: ${act}`;
+      }).join("
+")
     : "- (none)";
 
   const motionNote = (p.motionNote || "").trim();
@@ -618,13 +650,14 @@ function buildPanelPrompt(panelIndex){
   const constraints = `Constraints: no text, no subtitles, no UI, consistent characters, comic panel framing.`;
 
   return [
-    styleLine,
-    aspectLine,
-    layoutLine,
+    `STYLE DNA (XNC): ${defaultDna}`,
+    styleOverride ? `Style override: ${styleOverride}` : null,
+    `TONE: XNC-${TONE_LOCKED_ID} (locked)`,
+    `ASPECT: ${state.aspect || "9:16"}`,
+    `LAYOUT: ${state.layoutId || "(unknown)"}`,
     "",
     panelName,
-    `Background: ${bgName}`,
-    `Tone: XNC-${TONE_LOCKED_ID} (locked)`,
+    `Background: ${bgLine}`,
     (p.cameraAngle?`Camera angle: ${p.cameraAngle}`:null),
     (p.cameraMove?`Camera move: ${p.cameraMove}`:null),
     (p.durationSec?`Duration: ${p.durationSec}s`:null),
@@ -634,7 +667,8 @@ function buildPanelPrompt(panelIndex){
     actorsLines,
     motionLine ? motionLine : null,
     constraints
-  ].filter(Boolean).join("\n");
+  ].filter(Boolean).join("
+");
 }
 
     const exportPrompt = ()=>{ $("output").textContent = buildPromptText(); log("Prompt exported."); };
