@@ -681,7 +681,7 @@ async function init(){
     ADN.backgrounds = normalizeBackgrounds(b);
     ADN.characters = normalizeCharacters(c);
     ADN.actions = normalizeActions(a);
-    ADN.faces = normalizeStates(st);
+    ADN.faces = normalizeFaces(st);
     ADN.style = normalizeStyle(s);
 
     log(`ADN loaded: layouts=${ADN.layouts.length}, backgrounds=${ADN.backgrounds.length}, characters=${ADN.characters.length}, actions=${ADN.actions.length}, states=${ADN.faces.length}, styles=${ADN.style.length}`);
