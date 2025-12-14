@@ -20,9 +20,6 @@
       "desc_en": "small Vietnamese home interior corner, wooden shoe cabinet, simple tiles, warm indoor light, comedic focus object, pastel 2D chibi, no text",
       "tags": ["interior", "prop"]
     },
-
-    /* ===== BACKGROUND MỚI ===== */
-
     {
       "id": "xnc_school_gate_vn",
       "label": "Cổng trường Việt Nam",
@@ -55,3 +52,4 @@
     }
   ]
 }
+
