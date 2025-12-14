@@ -1,8 +1,9 @@
-// XNC Motion Comic Engine (Cách A: JSON-driven)
+// XNC Motion Comic Engine (JSON-driven) — FULL (gender + states + action variants)
+// Drop-in replacement for xnc-engine.js
+
 const $ = (id) => document.getElementById(id);
-// ===== ADN GETTERS (fix: getLayouts is not defined) =====
-// ADN có thể đang nằm ở biến `ADN` hoặc `adn` hoặc `window.ADN` tuỳ bản bạn merge.
-// Đoạn này cố tình "chịu lỗi" để không crash.
+
+// ===== ADN GETTERS (tolerant) =====
 function _getADN(){
   return (typeof ADN !== "undefined" && ADN) ||
          (typeof adn !== "undefined" && adn) ||
@@ -10,15 +11,16 @@ function _getADN(){
          (window && window.adn) ||
          null;
 }
-
 function getLayouts(){      return _getADN()?.layouts      || {}; }
 function getBackgrounds(){  return _getADN()?.backgrounds  || {}; }
 function getStyles(){       return _getADN()?.styles       || {}; }
 function getCharacters(){   return _getADN()?.characters   || {}; }
 function getActions(){      return _getADN()?.actions      || {}; }
+function getStates(){       return _getADN()?.states       || {}; }
 
 function log(msg){
   const el = $("log");
+  if(!el) return;
   const now = new Date().toLocaleTimeString();
   el.textContent = `[${now}] ${msg}\n` + el.textContent;
 }
@@ -38,18 +40,20 @@ function toArrayFromPossibles(data, keys){
   return [];
 }
 
+// ===== ADN URLS =====
 const ADN_URLS = {
   layouts: "/adn/xomnganchuyen/XNC_layouts.json",
   backgrounds: "/adn/xomnganchuyen/XNC_backgrounds.json",
   characters: "/adn/xomnganchuyen/XNC_characters.json",
   actions: "/adn/xomnganchuyen/XNC_actions.json",
+  states: "/adn/xomnganchuyen/XNC_states.json",   // NEW
   style: "/adn/xomnganchuyen/XNC_style.json",
 };
 
-const ADN = { layouts: [], backgrounds: [], characters: [], actions: [], style: [] };
+const ADN = { layouts: [], backgrounds: [], characters: [], actions: [], states: [], style: [] };
 
 // ADN guardrails
-const TONE_LOCKED_ID = "A"; // khóa tone theo ADN XNC
+const TONE_LOCKED_ID = "A";
 
 const CAMERA_ANGLES = [
   {id:"", label:"(auto / none)"},
@@ -86,6 +90,7 @@ const state = {
   panels: [],
 };
 
+// ===== NORMALIZERS =====
 function normalizeLayouts(raw){
   const arr = toArrayFromPossibles(raw, ["layouts","layout","data"]);
   return arr.map(x => ({
@@ -104,33 +109,67 @@ function normalizeBackgrounds(raw){
   })).filter(x => x.id);
 }
 function normalizeCharacters(raw){
-  // Supports both formats:
-  // 1) { "characters": [ {id,name,gender,role,base_desc_en,...}, ... ] }
-  // 2) { "characters": { "bolo": {...}, "bala": {...} } }
-  const arr = toArrayFromPossibles(raw, ["characters","character","data"]);
-  return arr.map(x => ({
-    id: x.id,
-    name: x.name || x.label || x.id,
-    gender: x.gender || x.sex || "",
-    role: x.role || "",
-    base_desc_en: x.base_desc_en || x.desc_en || x.base_desc || x.desc || "",
-  })).filter(x => x.id);
+  const arr = toArrayFromPossibles(raw, ["characters","data"]);
+  if(arr.length){
+    return arr.map(v => ({
+      id: v.id,
+      name: v.name || v.label || v.id,
+      role: v.role || "",
+      gender: v.gender || "",
+      base_desc_en: v.base_desc_en || v.desc_en || v.desc || v.description || ""
+    })).filter(x => x.id);
+  }
+  const obj = raw?.characters && typeof raw.characters === "object" ? raw.characters : null;
+  if(!obj) return [];
+  return Object.entries(obj).map(([id, v]) => ({
+    id,
+    name: v.name || id,
+    role: v.role || "",
+    gender: v.gender || "",
+    base_desc_en: v.base_desc_en || v.desc_en || v.desc || v.description || ""
+  }));
 }
 function normalizeActions(raw){
   const arr = toArrayFromPossibles(raw, ["actions","data"]);
-  return arr.map(x => ({ id: x.id, label: x.label || x.name || x.id, desc: x.desc || x.description || "" }))
-    .filter(x => x.id);
+  return arr.map(x => ({
+    id: x.id,
+    label: x.label || x.name || x.id,
+    desc_en: x.desc_en || x.desc || x.description || "",
+    variants: (x.variants && typeof x.variants === "object") ? x.variants : null
+  })).filter(x => x.id);
+}
+function normalizeStates(raw){
+  const arr = toArrayFromPossibles(raw, ["states","data"]);
+  return arr.map(x => ({
+    id: x.id,
+    label: x.label || x.name || x.id,
+    desc_en: x.desc_en || x.desc || x.description || "",
+    intensity: x.intensity || ""
+  })).filter(x => x.id);
 }
 function normalizeStyle(raw){
   const arr = toArrayFromPossibles(raw, ["styles","style","data"]);
-  return arr.map(x => ({ id: x.id, label: x.label || x.name || x.id, dna: x.dna || x.desc || x.description || "" }))
-    .filter(x => x.id);
+  return arr.map(x => ({
+    id: x.id,
+    label: x.label || x.name || x.id,
+    dna: x.dna || x.desc || x.description || ""
+  })).filter(x => x.id);
 }
 
 function ensurePanelCount(n){
   state.panelCount = n;
   while(state.panels.length < n){
-    state.panels.push({ backgroundId: null, styleId: null, motionNote: "", cameraAngle: "", cameraMove: "", durationSec: 1.5, moodDetail: "", refPrompt: "", actors: [] });
+    state.panels.push({
+      backgroundId: null,
+      styleId: null,
+      motionNote: "",
+      cameraAngle: "",
+      cameraMove: "",
+      durationSec: 1.5,
+      moodDetail: "",
+      refPrompt: "",
+      actors: []
+    });
   }
   while(state.panels.length > n) state.panels.pop();
   if(state.activePanelIndex >= n) state.activePanelIndex = 0;
@@ -188,7 +227,7 @@ function setGridTemplate(layoutId){
   }
 
   grid.innerHTML = "";
-  const areaMap = ["a","b","c","d"];
+  const areaMap = ["a","b","c","d","e","f","g","h"];
   for(let i=0;i<panelCount;i++){
     const p = document.createElement("div");
     p.className = "panel";
@@ -217,6 +256,7 @@ function highlightActivePanel(){
   [...$("grid").querySelectorAll(".panel")].forEach((p, idx)=> p.classList.toggle("active", idx === state.activePanelIndex));
 }
 
+// ===== RENDER SELECTS =====
 function renderLayoutSelect(){
   const sel = $("layoutSelect");
   sel.innerHTML = "";
@@ -226,21 +266,7 @@ function renderLayoutSelect(){
     opt.textContent = l.label;
     sel.appendChild(opt);
   });
-  sel.onchange = ()=>{ state.layoutId = sel.value; setGridTemplate(state.layoutId);
-
-    // per-panel fields
-    const motionEl = $("motionNote");
-    if(motionEl) motionEl.oninput = ()=>{ state.panels[state.activePanelIndex].motionNote = motionEl.value; };
-
-    const durEl = $("panelDuration");
-    if(durEl) durEl.oninput = ()=>{ state.panels[state.activePanelIndex].durationSec = Number(durEl.value||1.5); };
-
-    const moodEl = $("moodDetail");
-    if(moodEl) moodEl.oninput = ()=>{ state.panels[state.activePanelIndex].moodDetail = moodEl.value; };
-
-    const refEl = $("refPrompt");
-    if(refEl) refEl.oninput = ()=>{ state.panels[state.activePanelIndex].refPrompt = refEl.value; };
- };
+  sel.onchange = ()=>{ state.layoutId = sel.value; setGridTemplate(state.layoutId); };
   if(state.layoutId) sel.value = state.layoutId;
 }
 
@@ -254,7 +280,12 @@ function renderPanelSelect(){
     sel.appendChild(opt);
   }
   sel.value = String(state.activePanelIndex);
-  sel.onchange = ()=>{ state.activePanelIndex = Number(sel.value||0); highlightActivePanel(); syncSidebarFromState(); renderActorsOnPanels(); };
+  sel.onchange = ()=>{
+    state.activePanelIndex = Number(sel.value||0);
+    highlightActivePanel();
+    syncSidebarFromState();
+    renderActorsOnPanels();
+  };
 }
 
 function renderBackgroundSelect(){
@@ -285,7 +316,6 @@ function renderStyleSelect(){
   sel.onchange = ()=>{ state.panels[state.activePanelIndex].styleId = sel.value || null; };
 }
 
-
 function renderCameraAngleSelect(){
   const sel = $("cameraAngleSelect");
   if(!sel) return;
@@ -296,12 +326,8 @@ function renderCameraAngleSelect(){
     opt.textContent = c.label;
     sel.appendChild(opt);
   });
-  sel.onchange = ()=>{
-    const p = state.panels[state.activePanelIndex];
-    p.cameraAngle = sel.value || "";
-  };
+  sel.onchange = ()=>{ state.panels[state.activePanelIndex].cameraAngle = sel.value || ""; };
 }
-
 function renderCameraMoveSelect(){
   const sel = $("cameraMoveSelect");
   if(!sel) return;
@@ -312,16 +338,12 @@ function renderCameraMoveSelect(){
     opt.textContent = c.label;
     sel.appendChild(opt);
   });
-  sel.onchange = ()=>{
-    const p = state.panels[state.activePanelIndex];
-    p.cameraMove = sel.value || "";
-  };
+  sel.onchange = ()=>{ state.panels[state.activePanelIndex].cameraMove = sel.value || ""; };
 }
-
-
 
 function renderCharacterSelect(){
   const sel = $("charSelect");
+  if(!sel) return;
   sel.innerHTML = "";
   ADN.characters.forEach(c=>{
     const opt = document.createElement("option");
@@ -332,6 +354,7 @@ function renderCharacterSelect(){
 }
 function renderActionSelect(){
   const sel = $("actionSelect");
+  if(!sel) return;
   sel.innerHTML = "";
   ADN.actions.forEach(a=>{
     const opt = document.createElement("option");
@@ -340,7 +363,20 @@ function renderActionSelect(){
     sel.appendChild(opt);
   });
 }
+function renderStateSelect(){
+  const sel = $("stateSelect");
+  if(!sel) return;
+  sel.innerHTML = "";
+  ADN.states.forEach(s=>{
+    const opt = document.createElement("option");
+    opt.value = s.id;
+    opt.textContent = s.label;
+    sel.appendChild(opt);
+  });
+  if(ADN.states.some(x=>x.id==="neutral")) sel.value = "neutral";
+}
 
+// ===== SIDEBAR SYNC =====
 function syncSidebarFromState(){
   const p = state.panels[state.activePanelIndex];
   $("bgSelect").value = p.backgroundId || "";
@@ -389,8 +425,17 @@ function renderActorsList(){
     });
     actSel.value = a.actionId;
 
+    const stateSel = document.createElement("select");
+    ADN.states.forEach(s=>{
+      const opt = document.createElement("option");
+      opt.value = s.id; opt.textContent = s.label;
+      stateSel.appendChild(opt);
+    });
+    stateSel.value = a.stateId || (ADN.states.some(x=>x.id==="neutral") ? "neutral" : (ADN.states[0]?.id || ""));
+
     charSel.onchange = ()=>{ a.charId = charSel.value; renderActorsOnPanels(); };
-    actSel.onchange = ()=>{ a.actionId = actSel.value; renderActorsOnPanels(); };
+    actSel.onchange  = ()=>{ a.actionId = actSel.value; renderActorsOnPanels(); };
+    stateSel.onchange= ()=>{ a.stateId = stateSel.value; renderActorsOnPanels(); };
 
     const del = document.createElement("button");
     del.textContent = "×";
@@ -399,6 +444,7 @@ function renderActorsList(){
 
     row.appendChild(charSel);
     row.appendChild(actSel);
+    row.appendChild(stateSel);
     row.appendChild(del);
     wrap.appendChild(row);
   });
@@ -417,19 +463,51 @@ function renderActorsOnPanels(){
     p.actors.forEach((a, k)=>{
       const c = ADN.characters.find(x=>x.id === a.charId);
       const ac = ADN.actions.find(x=>x.id === a.actionId);
+      const st = ADN.states.find(x=>x.id === a.stateId);
+
       const chip = document.createElement("div");
       chip.className = "actorChip";
       chip.style.top = `${50 + (k*18)}%`;
       chip.style.left = `${50 + (k%2? 18 : -18)}%`;
-      chip.innerHTML = `<div style="font-weight:800;color:#0b1410">${c?.name || a.charId}</div><small>${ac?.label || a.actionId}</small>`;
+      chip.innerHTML =
+        `<div style="font-weight:800;color:#0b1410">${c?.name || a.charId}</div>
+         <small>${ac?.label || a.actionId}${st ? " · " + st.label : ""}</small>`;
       el.appendChild(chip);
     });
   });
 }
 
+// ===== PROMPT HELPERS =====
+function _char(id){ return ADN.characters.find(x=>x.id===id) || null; }
+function _action(id){ return ADN.actions.find(x=>x.id===id) || null; }
+function _state(id){ return ADN.states.find(x=>x.id===id) || null; }
+
+function characterLine(c){
+  if(!c) return "";
+  const parts = [];
+  if(c.gender) parts.push(`${c.gender} child character`);
+  parts.push(c.name);
+  if(c.base_desc_en) parts.push(c.base_desc_en);
+  return parts.filter(Boolean).join(", ");
+}
+
+function actionLine(actionObj, charId){
+  if(!actionObj) return "";
+  const v = actionObj.variants?.[charId];
+  const desc = (v && String(v).trim()) ? String(v).trim() : (actionObj.desc_en || "");
+  if(desc) return `${actionObj.label}: ${desc}`;
+  return actionObj.label;
+}
+
+function stateLine(stateObj){
+  if(!stateObj) return "";
+  return stateObj.desc_en ? `${stateObj.label}: ${stateObj.desc_en}` : stateObj.label;
+}
+
+// ===== EXPORT JSON + PROMPTS =====
 function buildSceneJSON(){
   return {
-    version: "xnc_scene_v1",
+    version: "xnc_scene_v2",
     aspect: state.aspect,
     layoutId: state.layoutId,
     panels: state.panels.map((p, i)=>({
@@ -442,7 +520,7 @@ function buildSceneJSON(){
       durationSec: p.durationSec ?? 1.5,
       moodDetail: p.moodDetail || "",
       refPrompt: p.refPrompt || "",
-      actors: p.actors.map(a=>({ charId: a.charId, actionId: a.actionId })),
+      actors: p.actors.map(a=>({ charId: a.charId, actionId: a.actionId, stateId: a.stateId || "" })),
     })),
     sources: ADN_URLS,
     exportedAt: new Date().toISOString(),
@@ -451,26 +529,15 @@ function buildSceneJSON(){
 
 function buildPromptText(){
   const scene = buildSceneJSON();
-  const styleDna = (styleId)=> styleId ? (ADN.style.find(s=>s.id===styleId)?.dna || "") : "";
+
+  const defaultStyle = ADN.style.find(s=>s.id==="style") || ADN.style[0];
+  const defaultDna = defaultStyle?.dna || "pastel chibi 2D, Vietnamese vibe, clean illustration, soft lighting";
+
   const bgDesc = (bgId)=>{
     const b = ADN.backgrounds.find(x=>x.id===bgId);
     return b ? (b.desc ? `${b.label} (${b.desc})` : b.label) : "";
   };
-  const charObj = (id)=> ADN.characters.find(x=>x.id===id) || null;
-  const charLine = (id)=>{
-    const c = charObj(id);
-    if(!c) return id;
-    const g = c.gender ? ` (${c.gender})` : "";
-    const b = c.base_desc_en ? ` — ${c.base_desc_en}` : "";
-    return `${c.name || id}${g}${b}`;
-  };
-  const actionDesc = (id)=>{
-    const a = ADN.actions.find(x=>x.id===id);
-    return a ? (a.desc ? `${a.label}: ${a.desc}` : a.label) : id;
-  };
-
-  const defaultStyle = ADN.style.find(s=>s.id==="style") || ADN.style[0];
-  const defaultDna = defaultStyle?.dna || "pastel chibi 2D, green-brown Vietnamese vibe, clean illustration, soft lighting";
+  const styleDna = (styleId)=> styleId ? (ADN.style.find(s=>s.id===styleId)?.dna || "") : "";
 
   let out = "";
   out += `STYLE DNA (XNC): ${defaultDna}\n`;
@@ -484,23 +551,84 @@ function buildPromptText(){
     out += `Background: ${bgDesc(p.backgroundId) || "(none)"}\n`;
     const sd = styleDna(p.styleId);
     if(sd) out += `Style override: ${sd}\n`;
-    if(p.motionNote) out += `Motion note: ${p.motionNote}\n`;
     if(p.cameraAngle) out += `Camera angle: ${p.cameraAngle}\n`;
     if(p.cameraMove) out += `Camera move: ${p.cameraMove}\n`;
     if(p.durationSec) out += `Duration: ${p.durationSec}s\n`;
     if(p.moodDetail) out += `Mood: ${p.moodDetail}\n`;
+    if(p.motionNote) out += `Motion note: ${p.motionNote}\n`;
     if(p.refPrompt) out += `Reference prompt: ${p.refPrompt}\n`;
+
     if(p.actors.length){
       out += `Actors:\n`;
-      p.actors.forEach(a=>{ out += `- ${charLine(a.charId)}
-  Action: ${actionDesc(a.actionId)}\n`; });
-    } else out += `Actors: (none)\n`;
+      p.actors.forEach(a=>{
+        const c = _char(a.charId);
+        const ac = _action(a.actionId);
+        const st = _state(a.stateId || "neutral");
+        out += `- ${characterLine(c)}\n  Action: ${actionLine(ac, a.charId)}\n`;
+        if(st) out += `  State: ${stateLine(st)}\n`;
+      });
+    } else {
+      out += `Actors: (none)\n`;
+    }
     out += `\n`;
   });
 
   return out.trim();
 }
 
+function buildPanelPrompt(panelIndex){
+  const p = state.panels[panelIndex];
+  const layout = getLayoutById(state.layoutId) || {};
+  const styleObj = ADN.style.find(s=>s.id === (p.styleId || "")) || (ADN.style.find(s=>s.id==="style") || ADN.style[0]);
+
+  const styleLine = styleObj?.dna
+    ? `STYLE DNA (XNC): ${styleObj.dna}`
+    : `STYLE DNA (XNC): ${state.styleId || "(missing)"}`;
+
+  const aspectLine = `ASPECT: ${state.aspect || "9:16"}`;
+  const layoutLine = `LAYOUT: ${layout.id || state.layoutId || "(unknown)"}`;
+
+  const bg = ADN.backgrounds.find(b=>b.id === p.backgroundId);
+  const bgName = bg ? (bg.desc ? `${bg.label} (${bg.desc})` : bg.label) : (p.backgroundId || "(none)");
+  const panelName = `PANEL ${panelIndex + 1} (P${panelIndex + 1})`;
+
+  const actorBlocks = (p.actors || []).length
+    ? (p.actors || []).map(a => {
+        const c = _char(a.charId);
+        const ac = _action(a.actionId);
+        const st = _state(a.stateId || "neutral");
+        const lines = [
+          `- ${characterLine(c)}`,
+          `  Action: ${actionLine(ac, a.charId)}`,
+        ];
+        if(st) lines.push(`  State: ${stateLine(st)}`);
+        return lines.join("\n");
+      }).join("\n")
+    : "- (none)";
+
+  const constraints = `Constraints: no text, no subtitles, no UI, consistent characters, comic panel framing.`;
+
+  return [
+    styleLine,
+    aspectLine,
+    layoutLine,
+    "",
+    panelName,
+    `Background: ${bgName}`,
+    `Tone: XNC-${TONE_LOCKED_ID} (locked)`,
+    (p.cameraAngle?`Camera angle: ${p.cameraAngle}`:null),
+    (p.cameraMove?`Camera move: ${p.cameraMove}`:null),
+    (p.durationSec?`Duration: ${p.durationSec}s`:null),
+    (p.moodDetail?`Mood: ${p.moodDetail}`:null),
+    (p.refPrompt?`Reference prompt: ${p.refPrompt}`:null),
+    (p.motionNote?`Motion: ${p.motionNote}`:null),
+    "Actors:",
+    actorBlocks,
+    constraints
+  ].filter(Boolean).join("\n");
+}
+
+// ===== UTILS =====
 async function copyOutput(){
   await navigator.clipboard.writeText($("output").textContent || "");
   log("Copied output to clipboard.");
@@ -524,35 +652,28 @@ function resetAll(){
   state.activePanelIndex = 0;
   state.aspect = "9:16";
   ensurePanelCount(getLayoutById(state.layoutId)?.panelCount || 4);
-  state.panels.forEach(p=>{ p.backgroundId=null; p.styleId=null; p.motionNote=""; p.actors=[]; });
+  state.panels.forEach(p=>{
+    p.backgroundId=null; p.styleId=null; p.motionNote="";
+    p.cameraAngle=""; p.cameraMove=""; p.durationSec=1.5;
+    p.moodDetail=""; p.refPrompt="";
+    p.actors=[];
+  });
   renderLayoutSelect();
   setGridTemplate(state.layoutId);
-
-    // per-panel fields
-    const motionEl = $("motionNote");
-    if(motionEl) motionEl.oninput = ()=>{ state.panels[state.activePanelIndex].motionNote = motionEl.value; };
-
-    const durEl = $("panelDuration");
-    if(durEl) durEl.oninput = ()=>{ state.panels[state.activePanelIndex].durationSec = Number(durEl.value||1.5); };
-
-    const moodEl = $("moodDetail");
-    if(moodEl) moodEl.oninput = ()=>{ state.panels[state.activePanelIndex].moodDetail = moodEl.value; };
-
-    const refEl = $("refPrompt");
-    if(refEl) refEl.oninput = ()=>{ state.panels[state.activePanelIndex].refPrompt = refEl.value; };
-
   $("output").textContent = "Chưa có output. Chọn layout + cấu hình rồi bấm “Xuất Prompt” hoặc “Xuất JSON”.";
   log("Reset done.");
 }
 
+// ===== INIT =====
 async function init(){
   try{
     log("Loading ADN JSON...");
-    const [l,b,c,a,s] = await Promise.all([
+    const [l,b,c,a,st,s] = await Promise.all([
       loadJSON(ADN_URLS.layouts),
       loadJSON(ADN_URLS.backgrounds),
       loadJSON(ADN_URLS.characters),
       loadJSON(ADN_URLS.actions),
+      loadJSON(ADN_URLS.states),
       loadJSON(ADN_URLS.style),
     ]);
 
@@ -560,9 +681,10 @@ async function init(){
     ADN.backgrounds = normalizeBackgrounds(b);
     ADN.characters = normalizeCharacters(c);
     ADN.actions = normalizeActions(a);
+    ADN.states = normalizeStates(st);
     ADN.style = normalizeStyle(s);
 
-    log(`ADN loaded: layouts=${ADN.layouts.length}, backgrounds=${ADN.backgrounds.length}, characters=${ADN.characters.length}, actions=${ADN.actions.length}, styles=${ADN.style.length}`);
+    log(`ADN loaded: layouts=${ADN.layouts.length}, backgrounds=${ADN.backgrounds.length}, characters=${ADN.characters.length}, actions=${ADN.actions.length}, states=${ADN.states.length}, styles=${ADN.style.length}`);
 
     if(!ADN.layouts.length) throw new Error("No layouts in JSON");
     state.layoutId = ADN.layouts[0].id;
@@ -572,12 +694,12 @@ async function init(){
     renderStyleSelect();
     renderCharacterSelect();
     renderActionSelect();
+    renderStateSelect();
     renderCameraAngleSelect();
     renderCameraMoveSelect();
 
     setGridTemplate(state.layoutId);
 
-    // per-panel fields
     const motionEl = $("motionNote");
     if(motionEl) motionEl.oninput = ()=>{ state.panels[state.activePanelIndex].motionNote = motionEl.value; };
 
@@ -590,86 +712,26 @@ async function init(){
     const refEl = $("refPrompt");
     if(refEl) refEl.oninput = ()=>{ state.panels[state.activePanelIndex].refPrompt = refEl.value; };
 
-    $("btnExportPanelPrompt").onclick = () => {
-    const i = state.activePanelIndex ?? 0;       // panel đang chọn
-    const txt = buildPanelPrompt(i);
-    $("output").textContent = txt;               // hoặc output.value tùy bạn dùng <pre> hay <textarea>
-    };
-
-    $("aspectSelect").onchange = ()=>{ state.aspect = $("aspectSelect").value; };
-    $("motionNote").addEventListener("input", ()=>{ state.panels[state.activePanelIndex].motionNote = $("motionNote").value || ""; });
+    const aspectEl = $("aspectSelect");
+    if(aspectEl) aspectEl.onchange = ()=>{ state.aspect = aspectEl.value; };
 
     $("btnAddActor").onclick = ()=>{
       const p = state.panels[state.activePanelIndex];
-      p.actors.push({ charId: $("charSelect").value, actionId: $("actionSelect").value });
+      const defaultState = $("stateSelect")?.value || (ADN.states.some(x=>x.id==="neutral") ? "neutral" : (ADN.states[0]?.id || ""));
+      p.actors.push({
+        charId: $("charSelect").value,
+        actionId: $("actionSelect").value,
+        stateId: defaultState
+      });
       renderActorsList();
       renderActorsOnPanels();
     };
-function buildPanelPrompt(panelIndex){
-  const p = state.panels[panelIndex];
 
-  // NOTE: buildPanelPrompt should use the normalized ADN arrays (not object indexing)
-  const styleDna = (styleId)=> styleId ? (ADN.style.find(s=>s.id===styleId)?.dna || "") : "";
-  const bgDesc = (bgId)=>{
-    const b = ADN.backgrounds.find(x=>x.id===bgId);
-    return b ? (b.desc ? `${b.label} (${b.desc})` : b.label) : "";
-  };
-  const actionLabel = (id)=>{
-    const a = ADN.actions.find(x=>x.id===id);
-    return a ? (a.desc ? `${a.label}: ${a.desc}` : a.label) : id;
-  };
-  const charObj = (id)=> ADN.characters.find(x=>x.id===id) || null;
-  const charLine = (id)=>{
-    const c = charObj(id);
-    if(!c) return id;
-    const g = c.gender ? ` (${c.gender})` : "";
-    const b = c.base_desc_en ? ` — ${c.base_desc_en}` : "";
-    return `${c.name || id}${g}${b}`;
-  };
-
-  const defaultStyle = ADN.style.find(s=>s.id==="style") || ADN.style[0];
-  const defaultDna = defaultStyle?.dna || "pastel chibi 2D, green-brown Vietnamese vibe, clean illustration, soft lighting";
-  const styleOverride = styleDna(p.styleId);
-
-  const bgLine = bgDesc(p.backgroundId) || "(none)";
-  const panelName = `PANEL ${panelIndex + 1} (P${panelIndex + 1})`;
-
-  const actorsLines = (p.actors || []).length
-    ? (p.actors || []).map(a => {
-        const cLine = charLine(a.charId);
-        const act = actionLabel(a.actionId);
-        return `- ${cLine}
-  Action: ${act}`;
-      }).join("
-")
-    : "- (none)";
-
-  const motionNote = (p.motionNote || "").trim();
-  const motionLine = motionNote ? `Motion: ${motionNote}` : "";
-
-  const constraints = `Constraints: no text, no subtitles, no UI, consistent characters, comic panel framing.`;
-
-  return [
-    `STYLE DNA (XNC): ${defaultDna}`,
-    styleOverride ? `Style override: ${styleOverride}` : null,
-    `TONE: XNC-${TONE_LOCKED_ID} (locked)`,
-    `ASPECT: ${state.aspect || "9:16"}`,
-    `LAYOUT: ${state.layoutId || "(unknown)"}`,
-    "",
-    panelName,
-    `Background: ${bgLine}`,
-    (p.cameraAngle?`Camera angle: ${p.cameraAngle}`:null),
-    (p.cameraMove?`Camera move: ${p.cameraMove}`:null),
-    (p.durationSec?`Duration: ${p.durationSec}s`:null),
-    (p.moodDetail?`Mood: ${p.moodDetail}`:null),
-    (p.refPrompt?`Reference prompt: ${p.refPrompt}`:null),
-    "Actors:",
-    actorsLines,
-    motionLine ? motionLine : null,
-    constraints
-  ].filter(Boolean).join("
-");
-}
+    $("btnExportPanelPrompt").onclick = () => {
+      const i = state.activePanelIndex ?? 0;
+      $("output").textContent = buildPanelPrompt(i);
+      log("Panel prompt exported.");
+    };
 
     const exportPrompt = ()=>{ $("output").textContent = buildPromptText(); log("Prompt exported."); };
     const exportJSON = ()=>{ $("output").textContent = JSON.stringify(buildSceneJSON(), null, 2); log("JSON exported."); };
@@ -685,7 +747,7 @@ function buildPanelPrompt(panelIndex){
   } catch(err){
     console.error(err);
     log(`ERROR: ${err.message}`);
-    $("output").textContent = `Lỗi load JSON.\n${err.message}\n\nKiểm tra đường dẫn ADN_URLS trong xnc-engine.js (folder /ad/xomnganchuyen/...).`;
+    $("output").textContent = `Lỗi load JSON.\n${err.message}\n\nKiểm tra đường dẫn ADN_URLS trong xnc-engine.js.`;
   }
 }
 
