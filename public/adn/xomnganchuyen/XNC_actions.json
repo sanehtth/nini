@@ -1,34 +1,27 @@
-﻿{
-  "version": "1.0",
+{
+  "version": "1.1",
   "series_id": "XNC",
   "actions": [
     {
+      "id": "idle_stand",
+      "label": "Đứng bình thường",
+      "desc_en": "stands relaxed, neutral body posture, arms resting naturally",
+      "intensity": "low",
+      "camera_hint": "wide"
+    },
+    {
       "id": "adjust_glasses",
       "label": "Chỉnh kính soi",
-      "desc_en": "adjusts glasses with two fingers, eyebrows raised, analytical smirk, confident-but-comedic",
+      "desc_en": "adjusts glasses with two fingers, confident posture, slight lean-in toward the viewer",
       "intensity": "low",
       "camera_hint": "closeup"
     },
     {
       "id": "scratch_head",
       "label": "Gãi đầu lúng túng",
-      "desc_en": "scratches head while talking, confused face, mouth slightly open, nervous",
+      "desc_en": "scratches head while talking, hesitant body language, slight shoulder shrug",
       "intensity": "low",
       "camera_hint": "medium"
-    },
-    {
-      "id": "side_eye_glance",
-      "label": "Liếc xéo",
-      "desc_en": "side-eye glance with tilted head, annoyed and mischievous expression",
-      "intensity": "low",
-      "camera_hint": "closeup"
-    },
-    {
-      "id": "jaw_drop_shock",
-      "label": "Há mồm sốc",
-      "desc_en": "jaw drops in shock, eyes widen, frozen for a beat, comedic exaggeration",
-      "intensity": "high",
-      "camera_hint": "closeup"
     },
     {
       "id": "point_accuse",
@@ -38,16 +31,9 @@
       "camera_hint": "medium"
     },
     {
-      "id": "cover_mouth_panic",
-      "label": "Che miệng hoảng",
-      "desc_en": "covers mouth with both hands after blurting something out, eyes widened in panic",
-      "intensity": "med",
-      "camera_hint": "closeup"
-    },
-    {
-      "id": "smirk_proud",
-      "label": "Cười khịa tự hào",
-      "desc_en": "smirks proudly, chin up, hands on hips, trying to look cool but slightly silly",
+      "id": "hands_on_hips",
+      "label": "Chống nạnh",
+      "desc_en": "hands on hips, chest slightly forward, confident stance",
       "intensity": "low",
       "camera_hint": "medium"
     }

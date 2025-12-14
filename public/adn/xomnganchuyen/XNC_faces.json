@@ -1,0 +1,96 @@
+{
+  "version": "1.0",
+  "series_id": "XNC",
+  "faces": [
+    {
+      "id": "neutral",
+      "label": "Bình thường",
+      "desc_en": "neutral facial expression, relaxed eyelids, calm breathing",
+      "intensity": "none"
+    },
+    {
+      "id": "annoyed_grumpy",
+      "label": "Nóng giận mặt đỏ, gầm gừ",
+      "desc_en": "face flushed red, brows furrowed, jaw clenched, low growling expression",
+      "intensity": "high"
+    },
+    {
+      "id": "cold_indifferent",
+      "label": "Thờ ơ lạnh đạm, ngó đi chỗ khác",
+      "desc_en": "emotionless face, half-lidded eyes, head turned away, dismissive look",
+      "intensity": "low"
+    },
+    {
+      "id": "furious_explode",
+      "label": "Tức bốc khói",
+      "desc_en": "vein popping, eyes wide, explosive rage, steam-like anger effect",
+      "intensity": "very_high"
+    },
+    {
+      "id": "frustrated_stomp",
+      "label": "Bực mình dậm chân tại chỗ",
+      "desc_en": "puffed cheeks, frustrated pout, intense annoyance (face-focused)",
+      "intensity": "med"
+    },
+    {
+      "id": "yelling_in_face",
+      "label": "Lớn tiếng hét vào mặt người ta",
+      "desc_en": "mouth wide open shouting, intense eye contact, aggressive expression",
+      "intensity": "very_high"
+    },
+    {
+      "id": "slightly_scared",
+      "label": "Rén nhẹ",
+      "desc_en": "nervous eyes, slight trembling lips, cautious fearful expression",
+      "intensity": "low"
+    },
+    {
+      "id": "embarrassed_melt",
+      "label": "Quê... muốn độn thổ",
+      "desc_en": "face blushing, eyes looking down, awkward smile, embarrassed expression",
+      "intensity": "med"
+    },
+    {
+      "id": "sweet_pleading",
+      "label": "Mặt nịnh nọt",
+      "desc_en": "soft eyes, forced sweet smile, pleading look",
+      "intensity": "low"
+    },
+    {
+      "id": "extreme_flattery",
+      "label": "Siêu cấp nịnh nọt",
+      "desc_en": "overly exaggerated sweet smile, sparkling eyes, fake admiration expression",
+      "intensity": "med_high"
+    },
+    {
+      "id": "cold_gangster",
+      "label": "Mặt ngầu lạnh tanh",
+      "desc_en": "stone-cold face, sharp eyes, intimidating calm expression",
+      "intensity": "med"
+    },
+    {
+      "id": "side_eye_glance",
+      "label": "Liếc xéo",
+      "desc_en": "side-eye glance with tilted head, annoyed and mischievous expression",
+      "intensity": "low"
+    },
+    {
+      "id": "jaw_drop_shock",
+      "label": "Há mồm sốc",
+      "desc_en": "jaw drops in shock, eyes widen, frozen for a beat, comedic exaggeration",
+      "intensity": "high"
+    },
+    {
+      "id": "cover_mouth_panic",
+      "label": "Che miệng hoảng",
+      "desc_en": "eyes widened in panic, embarrassed panic expression (hands may cover mouth)",
+      "intensity": "med"
+    },
+    {
+      "id": "smirk_proud",
+      "label": "Cười khịa tự hào",
+      "desc_en": "smirking proudly, chin slightly up, smug teasing expression",
+      "intensity": "low"
+    }
+  ]
+}

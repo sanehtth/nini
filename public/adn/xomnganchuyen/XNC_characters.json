@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "series_id": "XNC",
   "characters": [
     {
@@ -8,7 +8,14 @@
       "gender": "male",
       "role": "Thánh soi",
       "base_desc_en": "Vietnamese primary school boy, small but tries to look cool, blue shirt, brown pants, short messy hair, tiny round glasses",
-      "preferred_actions": ["adjust_glasses", "point_accuse", "smirk_proud"]
+      "preferred_actions": [
+        "adjust_glasses",
+        "point_accuse"
+      ],
+      "preferred_faces": [
+        "smirk_proud",
+        "cold_gangster"
+      ]
     },
     {
       "id": "bala",
@@ -16,7 +23,13 @@
       "gender": "male",
       "role": "Thánh đồn",
       "base_desc_en": "Vietnamese primary school boy, slightly chubby, red shirt, black shorts, messy hair, big mouth expression, talkative",
-      "preferred_actions": ["scratch_head", "cover_mouth_panic", "jaw_drop_shock"]
+      "preferred_actions": [
+        "scratch_head"
+      ],
+      "preferred_faces": [
+        "cover_mouth_panic",
+        "jaw_drop_shock"
+      ]
     },
     {
       "id": "tumlum",
@@ -24,7 +37,13 @@
       "gender": "female",
       "role": "Thánh điệu",
       "base_desc_en": "Vietnamese primary school girl, long messy hair with big rollers, bright yellow outfit, quirky fashion, confident pose, high-fashion vibe but comedic",
-      "preferred_actions": ["smirk_proud", "jaw_drop_shock"]
+      "preferred_actions": [
+        "idle_stand"
+      ],
+      "preferred_faces": [
+        "smirk_proud",
+        "sweet_pleading"
+      ]
     },
     {
       "id": "tumla",
@@ -32,8 +51,13 @@
       "gender": "female",
       "role": "Thánh báo",
       "base_desc_en": "Vietnamese primary school girl, short hair with big bow, red polka dot top, energetic stance, mischievous eyes",
-      "preferred_actions": ["side_eye_glance", "point_accuse", "jaw_drop_shock"]
+      "preferred_actions": [
+        "point_accuse"
+      ],
+      "preferred_faces": [
+        "side_eye_glance",
+        "jaw_drop_shock"
+      ]
     }
   ]
 }
-
