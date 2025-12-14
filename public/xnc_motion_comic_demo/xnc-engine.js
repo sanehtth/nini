@@ -46,33 +46,37 @@ const ADN_URLS = {
   style: "/adn/xomnganchuyen/XNC_style.json",
 };
 
-
-const CAMERA_OPTIONS = [
-  { id: "", label: "(Không bắt buộc)" },
-  { id: "wide", label: "Wide / Toàn cảnh" },
-  { id: "medium", label: "Medium / Trung cảnh" },
-  { id: "closeup", label: "Close-up / Cận mặt" },
-  { id: "over_shoulder", label: "Over-the-shoulder" },
-  { id: "low_angle", label: "Low angle / Góc thấp" },
-  { id: "high_angle", label: "High angle / Góc cao" },
-  { id: "top_down", label: "Top-down / Nhìn từ trên" },
-  { id: "dutch", label: "Dutch tilt / Nghiêng" },
-];
-
-const TONE_OPTIONS = [
-  { id: "", label: "(Không bắt buộc)" },
-  { id: "hai_huoc", label: "Hài hước" },
-  { id: "cang_thang", label: "Căng thẳng" },
-  { id: "am_ap", label: "Ấm áp" },
-  { id: "bi_an", label: "Bí ẩn" },
-  { id: "hanh_phuc", label: "Hạnh phúc" },
-  { id: "buon", label: "Buồn" },
-  { id: "ngau_nhien", label: "Ngẫu nhiên / Trung tính" },
-];
-
-
-
 const ADN = { layouts: [], backgrounds: [], characters: [], actions: [], style: [] };
+
+// ADN guardrails
+const TONE_LOCKED_ID = "A"; // khóa tone theo ADN XNC
+
+const CAMERA_ANGLES = [
+  {id:"", label:"(auto / none)"},
+  {id:"establishing_wide", label:"Establishing wide (toàn cảnh)"},
+  {id:"wide", label:"Wide (rộng)"},
+  {id:"medium", label:"Medium (trung)"},
+  {id:"closeup", label:"Close-up (cận)"},
+  {id:"extreme_closeup", label:"Extreme close-up (siêu cận)"},
+  {id:"over_shoulder", label:"Over-the-shoulder (qua vai)"},
+  {id:"low_angle", label:"Low angle (từ dưới lên)"},
+  {id:"high_angle", label:"High angle (từ trên xuống)"},
+  {id:"top_down", label:"Top-down (thẳng từ trên)"},
+  {id:"dutch_tilt", label:"Dutch tilt (nghiêng)"}
+];
+
+const CAMERA_MOVES = [
+  {id:"", label:"(static / none)"},
+  {id:"push_in", label:"Push-in (tiến gần)"},
+  {id:"pull_out", label:"Pull-out (lùi xa)"},
+  {id:"pan_left", label:"Pan left"},
+  {id:"pan_right", label:"Pan right"},
+  {id:"tilt_up", label:"Tilt up"},
+  {id:"tilt_down", label:"Tilt down"},
+  {id:"dolly", label:"Dolly (trượt)"},
+  {id:"handheld", label:"Handheld (rung nhẹ)"},
+  {id:"shake", label:"Shake (rung mạnh)"}
+];
 
 const state = {
   layoutId: null,
@@ -80,14 +84,6 @@ const state = {
   activePanelIndex: 0,
   aspect: "9:16",
   panels: [],
-
-  // Video prompt fields (tùy chọn)
-  videoMotion: "",
-  videoSeconds: 2,
-  cameraId: "",
-  toneId: "",
-  moodDetail: "",
-  baseVideoPrompt: "",
 };
 
 function normalizeLayouts(raw){
@@ -126,7 +122,7 @@ function normalizeStyle(raw){
 function ensurePanelCount(n){
   state.panelCount = n;
   while(state.panels.length < n){
-    state.panels.push({ backgroundId: null, styleId: null, motionNote: "", actors: [] });
+    state.panels.push({ backgroundId: null, styleId: null, motionNote: "", cameraAngle: "", cameraMove: "", durationSec: 1.5, moodDetail: "", refPrompt: "", actors: [] });
   }
   while(state.panels.length > n) state.panels.pop();
   if(state.activePanelIndex >= n) state.activePanelIndex = 0;
@@ -222,7 +218,21 @@ function renderLayoutSelect(){
     opt.textContent = l.label;
     sel.appendChild(opt);
   });
-  sel.onchange = ()=>{ state.layoutId = sel.value; setGridTemplate(state.layoutId); };
+  sel.onchange = ()=>{ state.layoutId = sel.value; setGridTemplate(state.layoutId);
+
+    // per-panel fields
+    const motionEl = $("motionNote");
+    if(motionEl) motionEl.oninput = ()=>{ state.panels[state.activePanelIndex].motionNote = motionEl.value; };
+
+    const durEl = $("panelDuration");
+    if(durEl) durEl.oninput = ()=>{ state.panels[state.activePanelIndex].durationSec = Number(durEl.value||1.5); };
+
+    const moodEl = $("moodDetail");
+    if(moodEl) moodEl.oninput = ()=>{ state.panels[state.activePanelIndex].moodDetail = moodEl.value; };
+
+    const refEl = $("refPrompt");
+    if(refEl) refEl.oninput = ()=>{ state.panels[state.activePanelIndex].refPrompt = refEl.value; };
+ };
   if(state.layoutId) sel.value = state.layoutId;
 }
 
@@ -268,33 +278,39 @@ function renderStyleSelect(){
 }
 
 
-function renderCameraSelect(){
-  const sel = $("cameraSelect");
+function renderCameraAngleSelect(){
+  const sel = $("cameraAngleSelect");
   if(!sel) return;
   sel.innerHTML = "";
-  CAMERA_OPTIONS.forEach(o=>{
+  CAMERA_ANGLES.forEach(c=>{
     const opt = document.createElement("option");
-    opt.value = o.id;
-    opt.textContent = o.label;
+    opt.value = c.id;
+    opt.textContent = c.label;
     sel.appendChild(opt);
   });
-  sel.value = state.cameraId || "";
-  sel.onchange = ()=>{ state.cameraId = sel.value || ""; };
+  sel.onchange = ()=>{
+    const p = state.panels[state.activePanelIndex];
+    p.cameraAngle = sel.value || "";
+  };
 }
 
-function renderToneSelect(){
-  const sel = $("toneSelect");
+function renderCameraMoveSelect(){
+  const sel = $("cameraMoveSelect");
   if(!sel) return;
   sel.innerHTML = "";
-  TONE_OPTIONS.forEach(o=>{
+  CAMERA_MOVES.forEach(c=>{
     const opt = document.createElement("option");
-    opt.value = o.id;
-    opt.textContent = o.label;
+    opt.value = c.id;
+    opt.textContent = c.label;
     sel.appendChild(opt);
   });
-  sel.value = state.toneId || "";
-  sel.onchange = ()=>{ state.toneId = sel.value || ""; };
+  sel.onchange = ()=>{
+    const p = state.panels[state.activePanelIndex];
+    p.cameraMove = sel.value || "";
+  };
 }
+
+
 
 function renderCharacterSelect(){
   const sel = $("charSelect");
@@ -322,6 +338,11 @@ function syncSidebarFromState(){
   $("bgSelect").value = p.backgroundId || "";
   $("styleSelect").value = p.styleId || "";
   $("motionNote").value = p.motionNote || "";
+  const ca = $("cameraAngleSelect"); if(ca) ca.value = p.cameraAngle || "";
+  const cm = $("cameraMoveSelect"); if(cm) cm.value = p.cameraMove || "";
+  const dur = $("panelDuration"); if(dur) dur.value = String(p.durationSec ?? 1.5);
+  const md = $("moodDetail"); if(md) md.value = p.moodDetail || "";
+  const rp = $("refPrompt"); if(rp) rp.value = p.refPrompt || "";
   $("aspectSelect").value = state.aspect || "9:16";
   renderActorsList();
 }
@@ -408,6 +429,11 @@ function buildSceneJSON(){
       backgroundId: p.backgroundId,
       styleId: p.styleId,
       motionNote: p.motionNote || "",
+      cameraAngle: p.cameraAngle || "",
+      cameraMove: p.cameraMove || "",
+      durationSec: p.durationSec ?? 1.5,
+      moodDetail: p.moodDetail || "",
+      refPrompt: p.refPrompt || "",
       actors: p.actors.map(a=>({ charId: a.charId, actionId: a.actionId })),
     })),
     sources: ADN_URLS,
@@ -433,24 +459,10 @@ function buildPromptText(){
 
   let out = "";
   out += `STYLE DNA (XNC): ${defaultDna}\n`;
+  out += `TONE: XNC-${TONE_LOCKED_ID} (locked)\n`;
   out += `ASPECT: ${scene.aspect}\n`;
   out += `LAYOUT: ${scene.layoutId}\n`;
   out += `Constraints: no text, no subtitles, no UI, consistent characters, comic panel framing.\n\n`;
-
-  // Optional video fields (copied conceptually from makeprompt_video.html)
-  if(state.videoMotion && state.videoMotion.trim()) out += `Motion: ${state.videoMotion.trim()}\n`;
-  if(state.videoSeconds) out += `Duration: ${state.videoSeconds}s\n`;
-  if(state.cameraId){
-    const cam = CAMERA_OPTIONS.find(o=>o.id===state.cameraId);
-    out += `Camera: ${cam ? cam.label : state.cameraId}\n`;
-  }
-  if(state.toneId){
-    const tone = TONE_OPTIONS.find(o=>o.id===state.toneId);
-    out += `Tone: ${tone ? tone.label : state.toneId}\n`;
-  }
-  if(state.moodDetail && state.moodDetail.trim()) out += `Mood: ${state.moodDetail.trim()}\n`;
-  if(state.baseVideoPrompt && state.baseVideoPrompt.trim()) out += `RefPrompt: ${state.baseVideoPrompt.trim()}\n`;
-  out += "\n";
 
   scene.panels.forEach((p)=>{
     out += `PANEL ${p.id}\n`;
@@ -458,6 +470,11 @@ function buildPromptText(){
     const sd = styleDna(p.styleId);
     if(sd) out += `Style override: ${sd}\n`;
     if(p.motionNote) out += `Motion note: ${p.motionNote}\n`;
+    if(p.cameraAngle) out += `Camera angle: ${p.cameraAngle}\n`;
+    if(p.cameraMove) out += `Camera move: ${p.cameraMove}\n`;
+    if(p.durationSec) out += `Duration: ${p.durationSec}s\n`;
+    if(p.moodDetail) out += `Mood: ${p.moodDetail}\n`;
+    if(p.refPrompt) out += `Reference prompt: ${p.refPrompt}\n`;
     if(p.actors.length){
       out += `Actors:\n`;
       p.actors.forEach(a=>{ out += `- ${charName(a.charId)} — ${actionDesc(a.actionId)}\n`; });
@@ -494,6 +511,20 @@ function resetAll(){
   state.panels.forEach(p=>{ p.backgroundId=null; p.styleId=null; p.motionNote=""; p.actors=[]; });
   renderLayoutSelect();
   setGridTemplate(state.layoutId);
+
+    // per-panel fields
+    const motionEl = $("motionNote");
+    if(motionEl) motionEl.oninput = ()=>{ state.panels[state.activePanelIndex].motionNote = motionEl.value; };
+
+    const durEl = $("panelDuration");
+    if(durEl) durEl.oninput = ()=>{ state.panels[state.activePanelIndex].durationSec = Number(durEl.value||1.5); };
+
+    const moodEl = $("moodDetail");
+    if(moodEl) moodEl.oninput = ()=>{ state.panels[state.activePanelIndex].moodDetail = moodEl.value; };
+
+    const refEl = $("refPrompt");
+    if(refEl) refEl.oninput = ()=>{ state.panels[state.activePanelIndex].refPrompt = refEl.value; };
+
   $("output").textContent = "Chưa có output. Chọn layout + cấu hình rồi bấm “Xuất Prompt” hoặc “Xuất JSON”.";
   log("Reset done.");
 }
@@ -525,18 +556,24 @@ async function init(){
     renderStyleSelect();
     renderCharacterSelect();
     renderActionSelect();
-
-    renderCameraSelect();
-    renderToneSelect();
-
-    // Bind video fields
-    const vm = $("videoMotion"); if(vm){ vm.value = state.videoMotion || ""; vm.addEventListener("input", ()=>{ state.videoMotion = vm.value || ""; }); }
-    const vs = $("videoSeconds"); if(vs){ vs.value = String(state.videoSeconds ?? 2); vs.addEventListener("input", ()=>{ const n = parseInt(vs.value,10); state.videoSeconds = Number.isFinite(n) && n>0 ? n : 2; }); }
-    const md = $("moodDetail"); if(md){ md.value = state.moodDetail || ""; md.addEventListener("input", ()=>{ state.moodDetail = md.value || ""; }); }
-    const bp = $("baseVideoPrompt"); if(bp){ bp.value = state.baseVideoPrompt || ""; bp.addEventListener("input", ()=>{ state.baseVideoPrompt = bp.value || ""; }); }
-
+    renderCameraAngleSelect();
+    renderCameraMoveSelect();
 
     setGridTemplate(state.layoutId);
+
+    // per-panel fields
+    const motionEl = $("motionNote");
+    if(motionEl) motionEl.oninput = ()=>{ state.panels[state.activePanelIndex].motionNote = motionEl.value; };
+
+    const durEl = $("panelDuration");
+    if(durEl) durEl.oninput = ()=>{ state.panels[state.activePanelIndex].durationSec = Number(durEl.value||1.5); };
+
+    const moodEl = $("moodDetail");
+    if(moodEl) moodEl.oninput = ()=>{ state.panels[state.activePanelIndex].moodDetail = moodEl.value; };
+
+    const refEl = $("refPrompt");
+    if(refEl) refEl.oninput = ()=>{ state.panels[state.activePanelIndex].refPrompt = refEl.value; };
+
     $("btnExportPanelPrompt").onclick = () => {
     const i = state.activePanelIndex ?? 0;       // panel đang chọn
     const txt = buildPanelPrompt(i);
@@ -578,21 +615,6 @@ function buildPanelPrompt(panelIndex){
   const motionNote = (p.motionNote || "").trim();
   const motionLine = motionNote ? `Motion: ${motionNote}` : "";
 
-  // Optional global video fields (from makeprompt_video.html)
-  const videoLines = [];
-  if(state.videoMotion && state.videoMotion.trim()) videoLines.push(`Motion: ${state.videoMotion.trim()}`);
-  if(state.videoSeconds) videoLines.push(`Duration: ${state.videoSeconds}s`);
-  if(state.cameraId){
-    const cam = CAMERA_OPTIONS.find(o=>o.id===state.cameraId);
-    videoLines.push(`Camera: ${cam ? cam.label : state.cameraId}`);
-  }
-  if(state.toneId){
-    const tone = TONE_OPTIONS.find(o=>o.id===state.toneId);
-    videoLines.push(`Tone: ${tone ? tone.label : state.toneId}`);
-  }
-  if(state.moodDetail && state.moodDetail.trim()) videoLines.push(`Mood: ${state.moodDetail.trim()}`);
-  if(state.baseVideoPrompt && state.baseVideoPrompt.trim()) videoLines.push(`RefPrompt: ${state.baseVideoPrompt.trim()}`);
-
   const constraints = `Constraints: no text, no subtitles, no UI, consistent characters, comic panel framing.`;
 
   return [
@@ -602,9 +624,14 @@ function buildPanelPrompt(panelIndex){
     "",
     panelName,
     `Background: ${bgName}`,
+    `Tone: XNC-${TONE_LOCKED_ID} (locked)`,
+    (p.cameraAngle?`Camera angle: ${p.cameraAngle}`:null),
+    (p.cameraMove?`Camera move: ${p.cameraMove}`:null),
+    (p.durationSec?`Duration: ${p.durationSec}s`:null),
+    (p.moodDetail?`Mood: ${p.moodDetail}`:null),
+    (p.refPrompt?`Reference prompt: ${p.refPrompt}`:null),
     "Actors:",
     actorsLines,
-    ...videoLines,
     motionLine ? motionLine : null,
     constraints
   ].filter(Boolean).join("\n");

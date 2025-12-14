@@ -120,6 +120,31 @@
         <select id="styleSelect"></select>
       </label>
 
+      <div class="subTitle">Shot settings (theo Panel)</div>
+
+      <label class="ctrl"><span>Góc camera</span>
+        <select id="cameraAngleSelect"></select>
+      </label>
+
+      <label class="ctrl"><span>Camera move</span>
+        <select id="cameraMoveSelect"></select>
+      </label>
+
+      <label class="ctrl"><span>Thời lượng panel (giây)</span>
+        <input id="panelDuration" type="number" min="0.2" max="10" step="0.1" value="1.5" />
+      </label>
+
+      <label class="ctrl full"><span>Mood chi tiết (tuỳ chọn)</span>
+        <textarea id="moodDetail" rows="2" placeholder="VD: hồi hộp nhưng hài, ánh trăng mờ, gió nhẹ..."></textarea>
+      </label>
+
+      <label class="ctrl full"><span>Prompt mẫu (tuỳ chọn)</span>
+        <textarea id="refPrompt" rows="3" placeholder="Paste prompt mẫu của AI khác để tham khảo. Engine sẽ giữ ADN XNC, không cho lệch style."></textarea>
+      </label>
+
+      <div class="hint">Tone: <b>XNC-A</b> (locked theo ADN)</div>
+
+
       <label class="ctrl"><span>Tỉ lệ</span>
         <select id="aspectSelect">
           <option value="9:16">9:16 (Short)</option>
@@ -134,28 +159,6 @@
         <input id="motionNote" placeholder="VD: camera push-in nhẹ; tay ném dép bay qua viền; rung nhẹ..." />
       </label>
     </div>
-    <div class="row" style="margin-top:10px">
-      <div style="margin:6px 0;color:var(--muted);font-size:12px">Góc nhìn, tone cảm xúc & mood (tùy chọn)</div>
-      <label class="ctrl full"><span>Mô tả chuyển động (video motion)</span>
-        <textarea id="videoMotion" rows="3" placeholder="VD: camera đứng yên; nhân vật bước 1-2 bước; tay chỉ; miệng nói nhưng không cần sync thoại..."></textarea>
-      </label>
-      <label class="ctrl"><span>Độ dài video (giây)</span>
-        <input id="videoSeconds" type="number" min="1" step="1" value="2" />
-      </label>
-      <label class="ctrl"><span>Góc nhìn / camera</span>
-        <select id="cameraSelect"></select>
-      </label>
-      <label class="ctrl"><span>Tone cảm xúc / màu chính</span>
-        <select id="toneSelect"></select>
-      </label>
-      <label class="ctrl full"><span>Mood chi tiết (tùy chọn)</span>
-        <textarea id="moodDetail" rows="2" placeholder="VD: hơi căng thẳng nhưng vẫn pastel, cảm giác học đường Việt Nam..."></textarea>
-      </label>
-      <label class="ctrl full"><span>Prompt mẫu VIDEO từ AI khác (tùy chọn)</span>
-        <textarea id="baseVideoPrompt" rows="2" placeholder="Dán prompt video từ Sora / Flow / Meta / ... (nếu có)"></textarea>
-      </label>
-    </div>
-
 
     <div style="margin-top:10px;color:var(--muted);font-size:12px">Nhân vật trong panel</div>
     <div class="actorsList" id="actorsList"></div>
