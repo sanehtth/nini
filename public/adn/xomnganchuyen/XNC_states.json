@@ -1,0 +1,66 @@
+﻿{
+  "version": "1.0",
+  "series_id": "XNC",
+  "states": [
+    {
+      "id": "annoyed_grumpy",
+      "label": "Nóng giận mặt đỏ, gầm gừ",
+      "desc_en": "face flushed red, brows furrowed, jaw clenched, low growling expression, tense posture",
+      "intensity": "high"
+    },
+    {
+      "id": "cold_indifferent",
+      "label": "Thờ ơ lạnh đạm, ngó đi chỗ khác",
+      "desc_en": "emotionless face, half-lidded eyes, head turned away, dismissive body language",
+      "intensity": "low"
+    },
+    {
+      "id": "furious_explode",
+      "label": "Tức bốc khói",
+      "desc_en": "vein popping, eyes wide, steam-like anger, fists clenched, explosive rage",
+      "intensity": "very_high"
+    },
+    {
+      "id": "frustrated_stomp",
+      "label": "Bực mình dậm chân tại chỗ",
+      "desc_en": "stomping feet repeatedly, puffed cheeks, frustrated pout, exaggerated annoyance",
+      "intensity": "med"
+    },
+    {
+      "id": "yelling_in_face",
+      "label": "Lớn tiếng hét vào mặt người ta",
+      "desc_en": "leaning forward, mouth wide open shouting, aggressive pointing, intense eye contact",
+      "intensity": "very_high"
+    },
+    {
+      "id": "slightly_scared",
+      "label": "Rén nhẹ",
+      "desc_en": "shoulders slightly hunched, nervous eyes, hesitant posture, subtle fear expression",
+      "intensity": "low"
+    },
+    {
+      "id": "embarrassed_melt",
+      "label": "Quê, muốn độn thổ",
+      "desc_en": "face blushing, eyes looking down, awkward smile, body shrinking inward",
+      "intensity": "med"
+    },
+    {
+      "id": "sweet_pleading",
+      "label": "Mặt nịnh nọt",
+      "desc_en": "soft eyes, forced sweet smile, head slightly tilted, pleading expression",
+      "intensity": "low"
+    },
+    {
+      "id": "extreme_flattery",
+      "label": "Siêu cấp nịnh nọt",
+      "desc_en": "overly exaggerated sweet smile, sparkling eyes, clasped hands, fake admiration",
+      "intensity": "med_high"
+    },
+    {
+      "id": "cold_gangster",
+      "label": "Mặt ngầu lạnh tanh",
+      "desc_en": "stone-cold face, sharp eyes, relaxed but dominant posture, intimidating calm",
+      "intensity": "med"
+    }
+  ]
+}
