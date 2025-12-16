@@ -152,7 +152,38 @@
     </header>
 
     <main class="char-body">
-      <section>
+      
+
+  <section class="card" id="adnSection">
+    <h2>Kết nối ADN / character.json</h2>
+    <div class="row">
+      <label for="adnUrl">URL hoặc đường dẫn character.json</label>
+      <input id="adnUrl" type="text" value="adn/xomnganchuyen/character.json" />
+      <button id="loadAdnBtn" type="button">Tải danh sách</button>
+    </div>
+    <div class="row">
+      <label for="adnCharacterSelect">Chọn nhân vật từ ADN</label>
+      <select id="adnCharacterSelect">
+        <option value="">(chưa tải)</option>
+      </select>
+      <button id="loadSelectedBtn" type="button">Nạp vào form</button>
+    </div>
+    <div class="row">
+      <label for="importFile">Import character.json từ máy</label>
+      <input id="importFile" type="file" accept="application/json" />
+      <button id="importFileBtn" type="button">Import</button>
+    </div>
+    <div class="row">
+      <label for="modeMerge3d">Trường 3D (tùy chọn)</label>
+      <textarea id="char3dJson" placeholder='Ví dụ: {"modelUrl":"...","rig":"...","voice":"..."}'></textarea>
+    </div>
+    <p class="hint">
+      Gợi ý: bạn có thể dùng section này để quản lý cùng lúc nhân vật 2D (Xom1000chuyen) và metadata 3D. 
+      Export sẽ đóng gói trong cùng một object.
+    </p>
+  </section>
+
+<section>
         <div class="char-section-title">Thông tin nhân vật</div>
         <p class="char-help">
           Điền các field ngắn gọn, sau đó bấm <strong>"Tạo prompt nhân vật"</strong>.
