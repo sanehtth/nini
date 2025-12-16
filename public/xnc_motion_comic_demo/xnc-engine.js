@@ -105,7 +105,7 @@ function normalizeBackgrounds(raw){
   return arr.map(x => ({
     id: x.id,
     label: x.label || x.name || x.id,
-    desc: x.desc || x.description || "",
+    desc: x.desc_en || x.desc || x.description || "",
   })).filter(x => x.id);
 }
 function normalizeCharacters(raw){
