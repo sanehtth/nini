@@ -1,3 +1,6 @@
+function byId(id){return document.getElementById(id);} 
+function toast(msg){console.log(msg); alert(msg);} 
+
 // character.js
 
 // Mảng lưu tất cả nhân vật trong session
@@ -201,4 +204,163 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Render mảng rỗng ban đầu
   renderCharactersJson();
+});
+
+
+// ===== ADN / character.json helpers =====
+let adnCharactersCache = null;
+
+function safeJsonParse(str, fallback = {}) {
+  try { return JSON.parse(str); } catch (_) { return fallback; }
+}
+
+function normalizeCharacter(obj) {
+  // Normalize a character record to the form schema used on this page
+  const c = obj || {};
+  return {
+    id: c.id || c.charId || "",
+    name: c.name || c.charName || "",
+    summary: c.summary || c.charSummary || "",
+    ageRole: c.ageRole || c.charAgeRole || "",
+    appearance: c.appearance || c.charAppearance || "",
+    outfit: c.outfit || c.charOutfit || "",
+    tools: c.tools || c.charTools || "",
+    palette: c.palette || c.charPalette || "",
+    artStyle: c.artStyle || c.charArtStyle || "",
+    imagePath: c.imagePath || c.charImagePath || "",
+    promptFinal: c.promptFinal || c.charPromptFinal || "",
+    // optional 3D payload
+    threeD: c.threeD || c.three_d || c.model3d || c.model3D || null
+  };
+}
+
+function fillFormFromCharacter(c0) {
+  const c = normalizeCharacter(c0);
+  byId("charId").value = c.id;
+  byId("charName").value = c.name;
+  byId("charSummary").value = c.summary;
+  byId("charAgeRole").value = c.ageRole;
+  byId("charAppearance").value = c.appearance;
+  byId("charOutfit").value = c.outfit;
+  byId("charTools").value = c.tools;
+  byId("charPalette").value = c.palette;
+  byId("charArtStyle").value = c.artStyle;
+  byId("charImagePath").value = c.imagePath;
+  byId("charPromptFinal").value = c.promptFinal;
+  byId("char3dJson").value = c.threeD ? JSON.stringify(c.threeD, null, 2) : "";
+}
+
+async function loadAdnFromUrl(url) {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error("Không tải được: " + res.status);
+  const data = await res.json();
+  // Accept {characters:[...]} OR [...]
+  const list = Array.isArray(data) ? data : (data.characters || data.items || []);
+  adnCharactersCache = list.map(normalizeCharacter);
+  return adnCharactersCache;
+}
+
+function populateAdnSelect(list) {
+  const sel = byId("adnCharacterSelect");
+  sel.innerHTML = "";
+  const opt0 = document.createElement("option");
+  opt0.value = "";
+  opt0.textContent = "(chọn nhân vật)";
+  sel.appendChild(opt0);
+
+  (list || []).forEach((c, idx) => {
+    const opt = document.createElement("option");
+    opt.value = String(idx);
+    opt.textContent = (c.name ? c.name : "(no-name)") + (c.id ? " — " + c.id : "");
+    sel.appendChild(opt);
+  });
+}
+
+function buildCharacterObjectFromForm() {
+  const threeD = safeJsonParse(byId("char3dJson").value, null);
+  return {
+    id: byId("charId").value.trim(),
+    name: byId("charName").value.trim(),
+    summary: byId("charSummary").value.trim(),
+    ageRole: byId("charAgeRole").value.trim(),
+    appearance: byId("charAppearance").value.trim(),
+    outfit: byId("charOutfit").value.trim(),
+    tools: byId("charTools").value.trim(),
+    palette: byId("charPalette").value.trim(),
+    artStyle: byId("charArtStyle").value.trim(),
+    imagePath: byId("charImagePath").value.trim(),
+    promptFinal: byId("charPromptFinal").value,
+    ...(threeD ? { threeD } : {})
+  };
+}
+
+// Hook ADN UI
+document.addEventListener("DOMContentLoaded", () => {
+  const loadBtn = byId("loadAdnBtn");
+  const loadSelectedBtn = byId("loadSelectedBtn");
+  const importBtn = byId("importFileBtn");
+
+  loadBtn?.addEventListener("click", async () => {
+    const url = byId("adnUrl").value.trim();
+    try {
+      const list = await loadAdnFromUrl(url);
+      populateAdnSelect(list);
+      toast("Đã tải " + list.length + " nhân vật từ ADN");
+    } catch (e) {
+      console.error(e);
+      toast("Lỗi tải ADN: " + (e?.message || e));
+    }
+  });
+
+  loadSelectedBtn?.addEventListener("click", () => {
+    const idxStr = byId("adnCharacterSelect").value;
+    if (!idxStr) return toast("Chưa chọn nhân vật");
+    const idx = Number(idxStr);
+    const c = adnCharactersCache?.[idx];
+    if (!c) return toast("Không tìm thấy nhân vật");
+    fillFormFromCharacter(c);
+    toast("Đã nạp: " + (c.name || c.id || "nhân vật"));
+  });
+
+  importBtn?.addEventListener("click", async () => {
+    const fileInput = byId("importFile");
+    const file = fileInput?.files?.[0];
+    if (!file) return toast("Chưa chọn file JSON");
+    try {
+      const txt = await file.text();
+      const data = JSON.parse(txt);
+      const list = Array.isArray(data) ? data : (data.characters || data.items || []);
+      adnCharactersCache = list.map(normalizeCharacter);
+      populateAdnSelect(adnCharactersCache);
+      toast("Import thành công: " + adnCharactersCache.length + " nhân vật");
+    } catch (e) {
+      console.error(e);
+      toast("Import lỗi: " + (e?.message || e));
+    }
+  });
+
+  // Patch existing addToJson behavior: keep original, but ensure we save 3D too when adding.
+  const addBtn = byId("addToJsonBtn");
+  if (addBtn) {
+    addBtn.addEventListener("click", () => {
+      try {
+        const c = buildCharacterObjectFromForm();
+        // Append to current JSON output if it's an array or has {characters:[]}
+        const outEl = byId("charJsonOutput");
+        const current = safeJsonParse(outEl.value, null);
+        let next;
+        if (Array.isArray(current)) {
+          next = [...current, c];
+        } else if (current && typeof current === "object") {
+          const arr = Array.isArray(current.characters) ? current.characters : [];
+          next = { ...current, characters: [...arr, c] };
+        } else {
+          next = { characters: [c] };
+        }
+        outEl.value = JSON.stringify(next, null, 2);
+      } catch (e) {
+        console.error(e);
+      }
+    }, { capture: true });
+  }
 });
