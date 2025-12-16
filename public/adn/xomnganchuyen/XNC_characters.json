@@ -70,6 +70,23 @@
   "artStyle": "pastel chibi 2D, Vietnamese family life",
   "prompt": "Vietnamese middle-aged father, afraid of wife vibe, humorous, warm family style"
     },
+{
+  "id": "xnc_chu_tu",
+  "name": "Chú Tư",
+  "ageRole": "Khoảng 45–50 tuổi, hàng xóm nhà Bolo",
+  "summary": "Người đàn ông hiền, sợ vợ, hay lén lút và thường xuyên rơi vào tình huống dở khóc dở cười",
+  "appearance": "Dáng người gầy, hơi khom lưng, mặt mệt mỏi, mắt hay liếc ngang dọc, biểu cảm lúng túng",
+  "outfit": "Áo sơ mi ngắn tay cũ, quần vải sờn, dép nhựa hoặc dép lê",
+  "personality": [
+    "sợ vợ",
+    "lươn lẹo",
+    "hay chống chế",
+    "hiền nhưng không lanh",
+    "rất hợp vai hài"
+  ],
+  "artStyle": "Pastel chibi 2D, Vietnamese countryside vibe",
+  "prompt": "Vietnamese middle-aged man, age around 45–50, thin body, slightly hunched posture, awkward and guilty expression, clearly afraid of his wife, nervous smile, scratching head, eyes looking sideways. Wearing simple worn short-sleeve shirt, old trousers, plastic sandals. Body language shows hesitation and comedy. Vietnamese family house interior, warm indoor light. Style: pastel chibi 2D, Vietnamese countryside vibe, clean illustration, expressive facial acting, humorous, no text."
+},
 
     {
       "id": "tumla",
