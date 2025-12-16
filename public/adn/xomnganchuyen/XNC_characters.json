@@ -58,6 +58,18 @@
   "artStyle": "pastel chibi 2D, Vietnamese family life",
   "prompt": "Vietnamese middle-aged mother, low bun hair, floral blouse, apron, warm kitchen light, cozy family vibe, pastel chibi 2D, not Korean"
     },
+    {
+  "id": "dad_bolo",
+  "name": "Ba Bolo",
+  "summary": "Ông bố Việt hiền lành, thương con, sợ vợ một cách đáng yêu",
+  "ageRole": "45–50-year-old Vietnamese father",
+  "appearance": "slightly thin body, hunched posture, tired gentle face, short hair with gray",
+  "personality": "kind, humorous, obedient, secretly proud of family",
+  "outfit": "old T-shirt or simple button shirt, shorts, rubber sandals",
+  "colorPalette": "warm brown, faded blue, gray",
+  "artStyle": "pastel chibi 2D, Vietnamese family life",
+  "prompt": "Vietnamese middle-aged father, afraid of wife vibe, humorous, warm family style"
+    },
 
     {
       "id": "tumla",
