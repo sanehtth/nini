@@ -46,6 +46,20 @@
       ]
     },
     {
+  "id": "mom_bolo",
+  "name": "Mẹ Bolo",
+  "summary": "Người mẹ Việt truyền thống, thương con theo cách rất đời",
+  "ageRole": "45-year-old Vietnamese mother",
+  "appearance": "round gentle face, low bun hair, simple floral blouse, kitchen apron",
+  "personality": "caring, subtly biased toward daughters, warm but practical",
+  "outfit": "simple floral blouse, apron",
+  "tools": "ladle, chopsticks, rice bowl",
+  "colorPalette": "warm brown, pastel green, rice yellow",
+  "artStyle": "pastel chibi 2D, Vietnamese family life",
+  "prompt": "Vietnamese middle-aged mother, low bun hair, floral blouse, apron, warm kitchen light, cozy family vibe, pastel chibi 2D, not Korean"
+    },
+
+    {
       "id": "tumla",
       "name": "Tùm-La",
       "gender": "female",
