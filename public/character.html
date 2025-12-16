@@ -191,61 +191,73 @@
         </p>
 
         <div class="char-grid-2">
-          <!-- Cột trái: form input -->
-          <div>
-            <div class="char-field">
-              <label for="charId">ID nhân vật <span style="color:#e11d48">*</span></label>
+          <!-- Cột trái: thông tin nhân vật (2D / Xom1000chuyen) -->
+          <div class="char-col">
+            <div class="char-form-group">
+              <label for="charId">ID nhân vật *</label>
               <input id="charId" class="char-input" type="text" placeholder="Kha_001, Luna_01..." />
-              <small>Nếu để trống, tool sẽ tự tạo ID theo timestamp.</small>
+              <div class="char-note">Nếu để trống, tool sẽ tự tạo ID theo timestamp.</div>
             </div>
 
-            <div class="char-field">
+            <div class="char-form-group">
               <label for="charName">Tên nhân vật</label>
               <input id="charName" class="char-input" type="text" placeholder="A Kha, Luna, ..." />
             </div>
 
-            <div class="char-field">
+            <div class="char-form-group">
               <label for="charSummary">Mô tả nhân vật (thô)</label>
-              <textarea id="charSummary" class="char-textarea" placeholder="Ví dụ: Cậu bé tóc đen, dáng người nhỏ, phong cách fantasy rừng tối..."></textarea>
+              <textarea id="charSummary" class="char-textarea" rows="3" placeholder="Ví dụ: Cậu bé tóc đen, dáng người nhỏ, phong cách fantasy rừng tối..."></textarea>
             </div>
 
-            <div class="char-field">
+            <div class="char-form-group">
               <label for="charAgeRole">Tuổi / vai trò (1 dòng)</label>
-              <input id="charAgeRole" class="char-input" type="text"
-                     placeholder="A 12–14-year-old ancient steampunk crafter boy." />
+              <input id="charAgeRole" class="char-input" type="text" placeholder="A 12–14-year-old ancient steampunk crafter boy" />
             </div>
 
-            <div class="char-field">
+            <div class="char-form-group">
               <label for="charAppearance">Hair / appearance</label>
-              <textarea id="charAppearance" class="char-textarea"
-                placeholder="Long green hair, low ponytail, messy; bronze gear earring (left only)..."></textarea>
+              <textarea id="charAppearance" class="char-textarea" rows="3" placeholder="Long green hair, low ponytail, messy; bronze gear earring (left only)..."></textarea>
             </div>
 
-            <div class="char-field">
+            <div class="char-form-group">
               <label for="charOutfit">Outfit / clothing</label>
-              <textarea id="charOutfit" class="char-textarea"
-                placeholder="Poncho-like tunic with geometric patterns, leather straps, tool harness..."></textarea>
+              <textarea id="charOutfit" class="char-textarea" rows="3" placeholder="Layered tunic, leather belt, worn boots, small satchel..."></textarea>
+            </div>
+          </div>
+
+          <!-- Cột phải: asset + style + 3D (tuỳ chọn) -->
+          <div class="char-col">
+            <div class="char-form-group">
+              <label for="charImagePath">Hình minh hoạ (path)</label>
+              <input id="charImagePath" class="char-input" type="text" placeholder="public/assets/character/<ID>_<Name>.webp" />
+              <div class="char-note">Nếu để trống, hệ thống sẽ tự tạo theo ID + Name.</div>
             </div>
 
-            <div class="char-field">
+            <div class="char-form-group">
               <label for="charTools">Tools &amp; props</label>
-              <textarea id="charTools" class="char-textarea"
-                placeholder="Small glowing energy core gear, mini bombs, scrolls, brass+wood hybrid tools..."></textarea>
+              <textarea id="charTools" class="char-textarea" rows="3" placeholder="Small glowing energy core gear, mini bombs, scrolls, brass+wood hybrid tools..."></textarea>
             </div>
 
-            <div class="char-field">
-              <label for="charPalette">Color palette</label>
-              <input id="charPalette" class="char-input" type="text"
-                     placeholder="Forest green, brown leather, antique brass, teal glow" />
+            <div class="char-form-group">
+              <label for="charColorPalette">Color palette</label>
+              <input id="charColorPalette" class="char-input" type="text" placeholder="Forest green, brown leather, antique brass, teal glow" />
             </div>
 
-            <div class="char-field">
+            <div class="char-form-group">
               <label for="charArtStyle">Artstyle &amp; layout</label>
-              <input id="charArtStyle" class="char-input" type="text"
-                placeholder="Anime, ancient-steampunk fantasy hybrid, detailed reference sheet with organized labeled panels." />
+              <input id="charArtStyle" class="char-input" type="text" placeholder="Anime, ancient-steampunk fantasy hybrid, detailed reference sheet" />
             </div>
 
-            <div class="char-actions-row">
+            <div class="char-form-group">
+              <label for="modelUrl">Trường 3D (tuỳ chọn)</label>
+              <textarea id="modelUrl" class="char-textarea" rows="3" placeholder='Ví dụ:
+{"modelUrl":"...","rig":"...","engine":"threejs"}'></textarea>
+              <div class="char-note">Gợi ý: nếu bạn dùng chung tool này để quản lý nhân vật 2D (Xom1000chuyen) và metadata 3D. Export sẽ đóng gói trong cùng một object.</div>
+            </div>
+          </div>
+        </div>
+
+      <div class="char-actions-row">
               <button id="buildPromptBtn" class="main-btn" type="button">
                 🧪 Tạo prompt nhân vật
               </button>
