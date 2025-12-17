@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "series": "Xom1000Chuyen",
+    "version": "1.0"
+  },
+  "prompts": [
+    {
+      "prompt_id": "P_T11_APPLE_HOOK",
+      "name": "Hook táo xuyên khung",
+      "type": "image_to_video",
+      "character": "Bolo",
+      "face": "Vui vẻ rạng rỡ",
+      "action": "Chụp táo xuyên khung",
+      "background": "Vườn cây nhà Bolo",
+      "camera": "close-up",
+      "style": "XNC pastel comic",
+      "prompt_vi": "Cận cảnh tay Bolo chụp trái táo xanh vừa xuyên qua khung truyện tranh, motion blur nhẹ, cảm giác bắt trúng khoảnh khắc, ánh sáng chiều ấm, phong cách Xóm Ngàn Chuyện pastel comic, không chữ, không logo.",
+      "note": "Freeze frame 0.2s + SFX whoosh+phập"
+    }
+  ]
+}

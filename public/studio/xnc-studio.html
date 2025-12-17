@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XNC Studio - Prompt & Motion Comic Composer</title>
+  <style>
+    :root { --bg:#0b0f14; --card:#111826; --muted:#7f8ea3; --text:#e7eefc; --line:#1f2a3b; --accent:#4da3ff; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:linear-gradient(180deg,#070a0f,#0b0f14);color:var(--text)}
+    header{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:center;justify-content:space-between}
+    header h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.2px}
+    header .hint{font-size:12px;color:var(--muted)}
+    .wrap{max-width:1200px;margin:0 auto;padding:14px 14px 28px}
+    .tabs{display:flex;gap:8px;margin:10px 0 14px}
+    .tabbtn{border:1px solid var(--line);background:transparent;color:var(--text);padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:650}
+    .tabbtn.active{background:var(--card);border-color:#2a3a55;box-shadow:0 0 0 1px rgba(77,163,255,.18) inset}
+    .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:12px}
+    .card{background:rgba(17,24,38,.7);border:1px solid var(--line);border-radius:14px;padding:12px}
+    .card h2{margin:0 0 10px;font-size:13px;color:#cfe0ff}
+    label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
+    input, select, textarea{width:100%;padding:10px 10px;border-radius:10px;border:1px solid #223049;background:#0c121d;color:var(--text)}
+    textarea{min-height:120px;resize:vertical}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .btnbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    button{border:1px solid #2a3a55;background:#0c121d;color:var(--text);padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:650}
+    button.primary{background:linear-gradient(180deg,#2a77ff,#205fe0);border-color:#2c6fff}
+    button.ghost{background:transparent}
+    .small{font-size:12px;color:var(--muted);line-height:1.35}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px}
+    .list{display:flex;flex-direction:column;gap:8px}
+    .scene{border:1px dashed #2a3a55;border-radius:12px;padding:10px;background:rgba(12,18,29,.5)}
+    .scene-head{display:flex;gap:8px;align-items:center;justify-content:space-between}
+    .scene-head strong{font-size:13px}
+    .scene-actions{display:flex;gap:6px}
+    .mini{padding:7px 9px;font-size:12px;border-radius:9px}
+    .drop{border:1px dashed #3a5178;border-radius:12px;padding:10px;margin-top:8px}
+    .drop.drag{border-color:var(--accent);box-shadow:0 0 0 2px rgba(77,163,255,.18)}
+    .preview{margin-top:8px;border-radius:12px;overflow:hidden;border:1px solid #223049;background:#000}
+    video{width:100%;height:auto;display:block;max-height:280px}
+    .footer{margin-top:10px;color:var(--muted);font-size:12px}
+    .hidden{display:none}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #2a3a55;color:#cfe0ff;font-size:12px}
+    .topbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px}
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>XNC Studio</h1>
+    <div class="hint">Tab 1 tạo prompt + lưu ID. Tab 2 ghép khung motion comic từ clip bạn thả vào.</div>
+  </div>
+  <div class="pill" id="labelsStatus">Đang tải labels…</div>
+</header>
+
+<div class="wrap">
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="prompt">TAB 1 · TẠO PROMPT VIDEO</button>
+    <button class="tabbtn" data-tab="compose">TAB 2 · GHÉP KHUNG MOTION COMIC</button>
+  </div>
+
+  <section id="tab-prompt">
+    <div class="grid">
+      <div class="card">
+        <h2>Thông tin prompt</h2>
+        <label>Tên prompt</label>
+        <input id="pName" placeholder="VD: Hook táo xuyên khung" />
+
+        <div class="row">
+          <div>
+            <label>Prompt ID (tự sinh, bạn có thể sửa)</label>
+            <input id="pId" class="mono" placeholder="P_T11_APPLE_HOOK" />
+          </div>
+          <div>
+            <label>Type</label>
+            <select id="pType">
+              <option value="image_to_video">image_to_video</option>
+              <option value="text_to_image">text_to_image</option>
+              <option value="text_to_video">text_to_video</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Nhân vật (label)</label>
+            <select id="pChar"></select>
+          </div>
+          <div>
+            <label>Biểu cảm (label)</label>
+            <select id="pFace"></select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Hành động (label)</label>
+            <select id="pAction"></select>
+          </div>
+          <div>
+            <label>Bối cảnh (label)</label>
+            <select id="pBg"></select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Góc máy</label>
+            <select id="pCam"></select>
+          </div>
+          <div>
+            <label>Phong cách</label>
+            <select id="pStyle"></select>
+          </div>
+        </div>
+
+        <label>Ghi chú (note)</label>
+        <input id="pNote" placeholder="VD: Freeze 0.2s + whoosh + phập" />
+
+        <div class="btnbar">
+          <button class="primary" id="btnGen">Generate Prompt</button>
+          <button id="btnCopy">Copy Prompt</button>
+          <button id="btnSave">Save Prompt (Local)</button>
+          <button id="btnExportPrompts">Export prompts.json</button>
+          <button class="ghost" id="btnNew">New Prompt</button>
+        </div>
+
+        <div class="footer">
+          <div class="small">
+            Lưu prompt vào LocalStorage (nhẹ). Video/clip bạn tự quản bằng thư mục. Tab 2 chỉ ghép.
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Prompt output</h2>
+        <label>Prompt VI</label>
+        <textarea id="pOut" placeholder="Nhấn Generate Prompt…"></textarea>
+        <label>Prompt JSON (preview)</label>
+        <textarea id="pJson" class="mono" readonly></textarea>
+
+        <label>Kho prompts (Local)</label>
+        <div class="list" id="promptList"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-compose" class="hidden">
+    <div class="grid">
+      <div class="card">
+        <div class="topbar">
+          <h2>Scenes</h2>
+          <div class="scene-actions">
+            <button class="mini primary" id="btnAddScene">+ Add scene</button>
+            <button class="mini" id="btnExportProject">Export project.json</button>
+            <button class="mini ghost" id="btnImportProject">Import project.json</button>
+            <input id="fileImportProject" type="file" accept="application/json" class="hidden" />
+          </div>
+        </div>
+
+        <div class="small">
+          Mỗi scene mặc định 5s. Thả clip MP4 vào từng scene. Tool sẽ lưu cấu hình ghép (layout, trim, fit) để bạn export JSON.
+        </div>
+
+        <div style="height:10px"></div>
+        <div class="list" id="sceneList"></div>
+      </div>
+
+      <div class="card">
+        <h2>Project preview & settings</h2>
+
+        <div class="row">
+          <div>
+            <label>Aspect</label>
+            <select id="projAspect">
+              <option>9:16</option>
+              <option>16:9</option>
+              <option>1:1</option>
+            </select>
+          </div>
+          <div>
+            <label>FPS</label>
+            <input id="projFps" type="number" value="30" min="12" max="60" />
+          </div>
+        </div>
+
+        <label>Max seconds / scene</label>
+        <input id="projMaxSec" type="number" value="5" min="1" max="20" />
+
+        <label>Title</label>
+        <input id="projTitle" placeholder="VD: T11 - Trả mẹ lại cho tao (Teaser)" />
+
+        <div class="btnbar">
+          <button id="btnSaveProject">Save project (Local)</button>
+          <button class="ghost" id="btnClearProject">Clear project</button>
+        </div>
+
+        <label>Project JSON (preview)</label>
+        <textarea id="projJson" class="mono" readonly></textarea>
+
+        <div class="footer small">
+          Ghi chú: Browser không xuất MP4 trực tiếp trong bản minimal này. Bạn export project.json để ghép bằng tool riêng / CapCut / pipeline của bạn.
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="xnc-studio.js"></script>
+</body>
+</html>

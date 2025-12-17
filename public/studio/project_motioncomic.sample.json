@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "aspect": "9:16",
+    "fps": 30,
+    "max_scene_sec": 5,
+    "title": "T11 - Trả mẹ lại cho tao (Teaser)"
+  },
+  "scenes": [
+    {
+      "scene_auto_id": "AUTO_001",
+      "name": "S01 Hook táo",
+      "duration_sec": 5,
+      "layout": {
+        "type": "single_full"
+      },
+      "prompt_ref": "P_T11_APPLE_HOOK",
+      "clip": {
+        "src": "Tap_11/hook/S01_hook.mp4",
+        "trim_in": 0.0,
+        "trim_out": 5.0,
+        "fit": "cover",
+        "pan": {
+          "x": 0,
+          "y": 0,
+          "scale": 1.0
+        }
+      },
+      "sfx": [
+        {
+          "name": "whoosh",
+          "at": 0.1,
+          "gain": 0.9
+        },
+        {
+          "name": "phap_snap",
+          "at": 0.25,
+          "gain": 1.0
+        }
+      ],
+      "text": [
+        {
+          "value": "Ủa?",
+          "at": 0.15,
+          "dur": 0.7,
+          "style": "comic_pop"
+        }
+      ],
+      "notes": "Hook dừng lướt"
+    }
+  ]
+}

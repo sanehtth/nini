@@ -1,0 +1,63 @@
+{
+  "characters": [
+    "Bolo",
+    "Bala",
+    "Ba-La",
+    "Tùm-La",
+    "Tùm-Lum",
+    "Mẹ Bolo",
+    "Bố Bolo",
+    "Chú Tư"
+  ],
+  "faces": [
+    "Bình thường",
+    "Vui vẻ rạng rỡ",
+    "Cảm động biết ơn",
+    "Miễn cưỡng đồng ý",
+    "Bối rối ngập ngừng",
+    "Đau bụng mà ráng nhịn",
+    "Hoảng sợ lo âu",
+    "Nóng giận mặt đỏ, gầm gừ",
+    "Thờ ơ lạnh đạm",
+    "Tức bốc khói",
+    "Bực mình dậm chân tại chỗ",
+    "Lớn tiếng hét vào mặt người ta",
+    "Rén nhẹ",
+    "Quê... muốn độn thổ",
+    "Mặt nịnh nọt",
+    "Siêu cấp nịnh nọt",
+    "Mặt ngầu lạnh tanh"
+  ],
+  "actions": [
+    "Chụp táo xuyên khung",
+    "Ném táo xuyên khung",
+    "Chuyền đồ sau lưng (xuyên khung)",
+    "Giật mình",
+    "Cười khẩy",
+    "Khựng lại (freeze 0.3s)",
+    "Gãi đầu ngượng",
+    "Bị cà khịa",
+    "Gắp đồ ăn",
+    "Rửa chén (XOẢNG)"
+  ],
+  "backgrounds": [
+    "Vườn cây nhà Bolo",
+    "Gian bếp nhà Bolo",
+    "Bàn ăn nhà Bolo",
+    "Cổng nhà / sân trước",
+    "Cầu gỗ (tập 10)"
+  ],
+  "cameras": [
+    "wide",
+    "medium",
+    "close-up",
+    "top-view",
+    "over-shoulder"
+  ],
+  "styles": [
+    "XNC pastel comic",
+    "Motion comic clean",
+    "Cinematic comic",
+    "Chibi slice-of-life"
+  ]
+}
