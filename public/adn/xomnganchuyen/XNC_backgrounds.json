@@ -70,6 +70,16 @@
       ]
     },
     {
+  "id": "xnc_garden_bolo",
+  "name": "Vườn cây nhà Bolo",
+  "type": "outdoor",
+  "description": "Vườn nhà Việt nhỏ, nhiều chậu cây, bonsai và cây ăn trái, hơi lộn xộn nhưng ấm cúng",
+  "mood": ["đời thường", "ấm áp", "hài hước"],
+  "lighting": "ánh sáng tự nhiên buổi chiều",
+  "artStyle": "Pastel 2D comic, Vietnamese countryside vibe",
+  "prompt": "Vietnamese family backyard garden, small cozy garden with many potted plants, bonsai and fruit trees, slightly messy, cement ground, brick wall, warm afternoon light, pastel 2D comic style, no people, no text"
+    },
+    {
       "id": "xnc_rice_field",
       "label": "Cánh đồng lúa",
       "desc_en": "Vietnamese rice field countryside, green rice plants, brown dirt path, distant trees, soft sunset light, calm atmosphere, pastel 2D chibi, no text",
