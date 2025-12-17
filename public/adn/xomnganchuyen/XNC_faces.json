@@ -6,91 +6,148 @@
       "id": "neutral",
       "label": "Bình thường",
       "desc_en": "neutral facial expression, relaxed eyelids, calm breathing",
-      "intensity": "none"
+      "intensity": "none",
+      "desc_vi": "Bình thường"
     },
     {
       "id": "annoyed_grumpy",
       "label": "Nóng giận mặt đỏ, gầm gừ",
       "desc_en": "face flushed red, brows furrowed, jaw clenched, low growling expression",
-      "intensity": "high"
+      "intensity": "high",
+      "desc_vi": "Nóng giận mặt đỏ, gầm gừ"
     },
     {
       "id": "cold_indifferent",
       "label": "Thờ ơ lạnh đạm, ngó đi chỗ khác",
       "desc_en": "emotionless face, half-lidded eyes, head turned away, dismissive look",
-      "intensity": "low"
+      "intensity": "low",
+      "desc_vi": "Thờ ơ lạnh đạm, ngó đi chỗ khác"
     },
     {
       "id": "furious_explode",
       "label": "Tức bốc khói",
       "desc_en": "vein popping, eyes wide, explosive rage, steam-like anger effect",
-      "intensity": "very_high"
+      "intensity": "very_high",
+      "desc_vi": "Tức bốc khói"
     },
     {
       "id": "frustrated_stomp",
       "label": "Bực mình dậm chân tại chỗ",
       "desc_en": "puffed cheeks, frustrated pout, intense annoyance (face-focused)",
-      "intensity": "med"
+      "intensity": "med",
+      "desc_vi": "Bực mình dậm chân tại chỗ"
     },
     {
       "id": "yelling_in_face",
       "label": "Lớn tiếng hét vào mặt người ta",
       "desc_en": "mouth wide open shouting, intense eye contact, aggressive expression",
-      "intensity": "very_high"
+      "intensity": "very_high",
+      "desc_vi": "Lớn tiếng hét vào mặt người ta"
     },
     {
       "id": "slightly_scared",
       "label": "Rén nhẹ",
       "desc_en": "nervous eyes, slight trembling lips, cautious fearful expression",
-      "intensity": "low"
+      "intensity": "low",
+      "desc_vi": "Rén nhẹ"
     },
     {
       "id": "embarrassed_melt",
       "label": "Quê... muốn độn thổ",
       "desc_en": "face blushing, eyes looking down, awkward smile, embarrassed expression",
-      "intensity": "med"
+      "intensity": "med",
+      "desc_vi": "Quê... muốn độn thổ"
     },
     {
       "id": "sweet_pleading",
       "label": "Mặt nịnh nọt",
       "desc_en": "soft eyes, forced sweet smile, pleading look",
-      "intensity": "low"
+      "intensity": "low",
+      "desc_vi": "Mặt nịnh nọt"
     },
     {
       "id": "extreme_flattery",
       "label": "Siêu cấp nịnh nọt",
       "desc_en": "overly exaggerated sweet smile, sparkling eyes, fake admiration expression",
-      "intensity": "med_high"
+      "intensity": "med_high",
+      "desc_vi": "Siêu cấp nịnh nọt"
     },
     {
       "id": "cold_gangster",
       "label": "Mặt ngầu lạnh tanh",
       "desc_en": "stone-cold face, sharp eyes, intimidating calm expression",
-      "intensity": "med"
+      "intensity": "med",
+      "desc_vi": "Mặt ngầu lạnh tanh"
     },
     {
       "id": "side_eye_glance",
       "label": "Liếc xéo",
       "desc_en": "side-eye glance with tilted head, annoyed and mischievous expression",
-      "intensity": "low"
+      "intensity": "low",
+      "desc_vi": "Liếc xéo"
     },
     {
       "id": "jaw_drop_shock",
       "label": "Há mồm sốc",
       "desc_en": "jaw drops in shock, eyes widen, frozen for a beat, comedic exaggeration",
-      "intensity": "high"
+      "intensity": "high",
+      "desc_vi": "Há mồm sốc"
     },
     {
       "id": "cover_mouth_panic",
       "label": "Che miệng hoảng",
       "desc_en": "eyes widened in panic, embarrassed panic expression (hands may cover mouth)",
-      "intensity": "med"
+      "intensity": "med",
+      "desc_vi": "Che miệng hoảng"
     },
     {
       "id": "smirk_proud",
       "label": "Cười khịa tự hào",
       "desc_en": "smirking proudly, chin slightly up, smug teasing expression",
+      "intensity": "low",
+      "desc_vi": "Cười khịa tự hào"
+    },
+    {
+      "id": "joy_bright",
+      "label": "Vui vẻ rạng rỡ",
+      "desc_vi": "mắt cười cong, má ửng hồng nhẹ, nụ cười to và sáng, năng lượng tích cực",
+      "desc_en": "bright joyful smile, crescent eyes, slight blush, upbeat positive energy",
+      "intensity": "medium"
+    },
+    {
+      "id": "touched_grateful",
+      "label": "Cảm động biết ơn",
+      "desc_vi": "ánh mắt long lanh, nụ cười dịu, hơi xúc động như muốn rưng rưng",
+      "desc_en": "soft smile with watery eyes, touched and grateful, slightly teary but warm",
       "intensity": "low"
+    },
+    {
+      "id": "reluctant_yes",
+      "label": "Miễn cưỡng đồng ý",
+      "desc_vi": "mím môi, thở dài nhẹ, mắt liếc sang, gật đầu cho có, vẻ không cam tâm",
+      "desc_en": "tight-lipped, small sigh, sideways glance, reluctant nod, unwilling agreement",
+      "intensity": "low"
+    },
+    {
+      "id": "awkward_hesitant",
+      "label": "Bối rối ngập ngừng",
+      "desc_vi": "cười gượng, mắt đảo qua lại, chân mày nhíu nhẹ, tay gãi đầu/đứng lúng túng",
+      "desc_en": "awkward forced smile, darting eyes, slight brow pinch, hesitant and flustered",
+      "intensity": "medium"
+    },
+    {
+      "id": "stomachache_grimace",
+      "label": "Đau bụng mà ráng nhịn",
+      "desc_vi": "mặt nhăn nhó, mồ hôi nhẹ, mím môi chịu đựng, bụng quặn nhưng cố tỏ ra bình thường",
+      "desc_en": "pain grimace, slight sweat, clenched lips, trying to act normal despite stomach cramps",
+      "intensity": "high"
+    },
+    {
+      "id": "scared_anxious",
+      "label": "Hoảng sợ lo âu",
+      "desc_vi": "mắt mở to, đồng tử co, miệng há nhẹ, vai co rút, run run",
+      "desc_en": "wide eyes, tense pupils, small open mouth, shoulders hunched, trembling anxious fear",
+      "intensity": "high"
     }
   ]
 }
