@@ -5,6 +5,7 @@
 */
 const LS_PROMPTS = "xnc_prompts_registry_v1";
 const LS_PROJECT = "xnc_project_v1";
+const LS_SAVED = "xnc_saved_scenes_v1";
 
 const $ = (sel) => document.querySelector(sel);
 const el = (tag, cls) => { const n=document.createElement(tag); if(cls) n.className=cls; return n; };
@@ -39,6 +40,19 @@ function writeLocal(key, val) {
   localStorage.setItem(key, JSON.stringify(val));
 }
 
+function readSaved() {
+  return readLocal(LS_SAVED, { meta: { aspect: "9:16", fps: 30, max_scene_sec: 5, title: "" }, scenes: [] });
+}
+function writeSaved(obj) {
+  writeLocal(LS_SAVED, obj);
+}
+function updateSavedCount() {
+  const saved = readSaved();
+  const n = saved.scenes?.length || 0;
+  const elCount = document.querySelector("#savedCount");
+  if (elCount) elCount.textContent = `Saved: ${n}`;
+}
+
 let LABELS = null;
 
 // ---------- Tabs ----------
@@ -56,7 +70,7 @@ document.querySelectorAll(".tabbtn").forEach(btn=>{
 // ---------- Load labels ----------
 async function loadLabels() {
   try {
-    const res = await fetch("xnc-labels.json");
+    const res = await fetch(new URL('./xnc-labels.json', window.location.href).toString());
     LABELS = await res.json();
     $("#labelsStatus").textContent = "Labels: OK";
     bindLabelOptions();
@@ -258,11 +272,13 @@ function renderScenes() {
     const acts = el("div","scene-actions");
     const up = el("button","mini"); up.textContent="↑";
     const dn = el("button","mini"); dn.textContent="↓";
+    const btnSave = el("button","mini primary"); btnSave.textContent="Save";
     const del = el("button","mini"); del.textContent="Del";
     up.addEventListener("click", ()=> moveScene(idx, -1));
     dn.addEventListener("click", ()=> moveScene(idx, +1));
+    btnSave.addEventListener("click", ()=> saveSceneToSaved(idx));
     del.addEventListener("click", ()=> removeScene(idx));
-    acts.appendChild(up); acts.appendChild(dn); acts.appendChild(del);
+    acts.appendChild(up); acts.appendChild(dn); acts.appendChild(btnSave); acts.appendChild(del);
 
     head.appendChild(left); head.appendChild(acts);
     box.appendChild(head);
@@ -350,6 +366,14 @@ function renderScenes() {
     });
 
     box.appendChild(drop);
+    // Saved marker
+    const savedNow = readSaved();
+    const isSaved = (savedNow.scenes || []).some(s => s.scene_auto_id === sc.scene_auto_id);
+    if (isSaved) {
+      const mark = el("div","small");
+      mark.textContent = "✓ Scene đã được lưu vào SAVED";
+      box.appendChild(mark);
+    }
     box.appendChild(fileInput);
 
     if(sc._objectUrl) {
@@ -402,6 +426,37 @@ function moveScene(idx, delta) {
   setProject(p);
   loadProject();
 }
+
+function normalizeProjectMetaFromUI(meta) {
+  meta.aspect = document.querySelector("#projAspect")?.value || meta.aspect || "9:16";
+  meta.fps = Number(document.querySelector("#projFps")?.value || meta.fps || 30);
+  meta.max_scene_sec = Number(document.querySelector("#projMaxSec")?.value || meta.max_scene_sec || 5);
+  meta.title = document.querySelector("#projTitle")?.value || meta.title || "";
+  return meta;
+}
+
+function saveSceneToSaved(sceneIndex) {
+  const project = getProject();
+  const sc = project.scenes[sceneIndex];
+  if (!sc) return;
+
+  if (!sc.clip?.src) {
+    alert("Scene này chưa có clip. Hãy thả clip vào trước khi Save.");
+    return;
+  }
+
+  const saved = readSaved();
+  saved.meta = normalizeProjectMetaFromUI(saved.meta || {});
+
+  const idx = (saved.scenes || []).findIndex(s => s.scene_auto_id === sc.scene_auto_id);
+  if (idx >= 0) saved.scenes[idx] = sc;
+  else saved.scenes.push(sc);
+
+  writeSaved(saved);
+  updateSavedCount();
+  renderScenes();
+  updateSavedCount();
+}
 function removeScene(idx) {
   const p = getProject();
   p.scenes.splice(idx,1);
@@ -426,6 +481,20 @@ $("#btnClearProject").addEventListener("click", ()=>{
 $("#btnExportProject").addEventListener("click", ()=>{
   const p = getProject();
   downloadJson(`project_${nowStamp()}.json`, p);
+});
+
+$("#btnExportSaved").addEventListener("click", ()=>{
+  const saved = readSaved();
+  saved.meta = normalizeProjectMetaFromUI(saved.meta || {});
+  downloadJson(`saved_project_${nowStamp()}.json`, saved);
+
+  // Clear local after export
+  localStorage.removeItem(LS_SAVED);
+  localStorage.removeItem(LS_PROJECT);
+
+  updateSavedCount();
+  loadProject();
+  alert("Đã export toàn bộ SAVED và xoá dữ liệu local.");
 });
 
 $("#btnImportProject").addEventListener("click", ()=> $("#fileImportProject").click());

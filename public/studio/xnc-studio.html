@@ -153,13 +153,15 @@
           <div class="scene-actions">
             <button class="mini primary" id="btnAddScene">+ Add scene</button>
             <button class="mini" id="btnExportProject">Export project.json</button>
+            <button class="mini" id="btnExportSaved">Export SAVED & Clear</button>
+            <span class="pill" id="savedCount" style="margin-left:6px">Saved: 0</span>
             <button class="mini ghost" id="btnImportProject">Import project.json</button>
             <input id="fileImportProject" type="file" accept="application/json" class="hidden" />
           </div>
         </div>
 
         <div class="small">
-          Mỗi scene mặc định 5s. Thả clip MP4 vào từng scene. Tool sẽ lưu cấu hình ghép (layout, trim, fit) để bạn export JSON.
+          Mỗi scene mặc định 5s. Thả clip MP4 vào từng scene. Tool sẽ lưu cấu hình ghép (layout, trim, fit). Bấm "Save" trên từng scene để đưa vào kho SAVED; khi export sẽ xuất toàn bộ SAVED và xoá khỏi local.
         </div>
 
         <div style="height:10px"></div>
@@ -206,6 +208,6 @@
   </section>
 </div>
 
-<script src="xnc-studio.js"></script>
+<script src="./xnc-studio.js"></script>
 </body>
 </html>
