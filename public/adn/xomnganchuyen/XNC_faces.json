@@ -143,6 +143,41 @@
       "intensity": "high"
     },
     {
+  "id": "sad_melancholy",
+  "label": "Buồn thẩn thờ",
+  "desc_vi": "Ánh mắt lơ đãng, môi cụp xuống nhẹ, hơi thở dài, biểu cảm buồn xa xăm.",
+  "desc_en": "melancholy stares, lowered eyelids, subtle frown, distant sadness expression.",
+  "intensity": "medium"
+},
+{
+  "id": "sad_disappointed",
+  "label": "Thất vọng",
+  "desc_vi": "Môi mím lại, vai rũ xuống, ánh mắt nhìn xuống đầy thất vọng.",
+  "desc_en": "tight lips, drooping shoulders, downward gaze full of disappointment.",
+  "intensity": "high"
+},
+{
+  "id": "surprised_wide",
+  "label": "Ngạc nhiên",
+  "desc_vi": "Mắt mở to, chân mày nhướng lên, miệng hơi mở kiểu bất ngờ.",
+  "desc_en": "wide-open eyes, raised brows, slightly open mouth in surprise.",
+  "intensity": "high"
+},
+{
+  "id": "excited_eager",
+  "label": "Háo hức",
+  "desc_vi": "Mắt sáng rực, nụ cười mím môi, đầu hơi chúi tới phía trước đầy phấn khích.",
+  "desc_en": "eyes shining, eager smile, head leaning forward with excitement.",
+  "intensity": "medium"
+},
+{
+  "id": "hope_waiting",
+  "label": "Chờ mong",
+  "desc_vi": "Ánh mắt hướng lên, tay siết nhẹ, môi cười hồi hộp đầy hi vọng.",
+  "desc_en": "hopeful gaze upward, light smile, hands tightening with anticipation.",
+  "intensity": "low"
+},
+    {
       "id": "scared_anxious",
       "label": "Hoảng sợ lo âu",
       "desc_vi": "mắt mở to, đồng tử co, miệng há nhẹ, vai co rút, run run",
