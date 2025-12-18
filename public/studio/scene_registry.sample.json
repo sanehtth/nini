@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "version": "1.0",
+    "title": "XNC Motion Comic Sample Project",
+    "aspect": "9:16",
+    "fps": 30,
+    "max_scene_sec": 5,
+    "note_vi": "File mẫu cho XNC Studio: danh sách scene được lưu từ tab Compose."
+  },
+  "scenes": [
+    {
+      "scene_auto_id": "AUTO_01_SAMPLE",
+      "name": "S01 - Hook ném táo",
+      "duration_sec": 3,
+      "layout": {
+        "type": "single_full"
+      },
+      "prompt_ref": "P_T12_APPLE_HOOK",
+      "clip": {
+        "src": "tumla_throw_apple.mp4",
+        "trim_in": 0,
+        "trim_out": 3,
+        "fit": "cover",
+        "pan": {
+          "x": 0,
+          "y": 0,
+          "scale": 1
+        }
+      },
+      "object_id": "apple_green",
+      "motion_id": "throw_forward",
+      "hand_id": "hand_tumla_child_female",
+      "hand_pose_id": "throw_light",
+      "face_id": "happy_bright",
+      "sfx": [
+        {
+          "time": 0.1,
+          "id": "whoosh_soft"
+        },
+        {
+          "time": 0.8,
+          "id": "hit_soft"
+        }
+      ],
+      "text": [
+        {
+          "time": 0.2,
+          "content_vi": "Sinh nhật hôm nay, tao lo!",
+          "pos": "bottom",
+          "style": "subtitle"
+        }
+      ],
+      "notes": "Scene mẫu: Tum-La ném 1 trái táo ra phía trước, dùng làm hook short."
+    }
+  ]
+}

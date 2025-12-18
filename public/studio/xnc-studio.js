@@ -5,7 +5,6 @@
 */
 const LS_PROMPTS = "xnc_prompts_registry_v1";
 const LS_PROJECT = "xnc_project_v1";
-const LS_SAVED = "xnc_saved_scenes_v1";
 
 const $ = (sel) => document.querySelector(sel);
 const el = (tag, cls) => { const n=document.createElement(tag); if(cls) n.className=cls; return n; };
@@ -40,20 +39,11 @@ function writeLocal(key, val) {
   localStorage.setItem(key, JSON.stringify(val));
 }
 
-function readSaved() {
-  return readLocal(LS_SAVED, { meta: { aspect: "9:16", fps: 30, max_scene_sec: 5, title: "" }, scenes: [] });
-}
-function writeSaved(obj) {
-  writeLocal(LS_SAVED, obj);
-}
-function updateSavedCount() {
-  const saved = readSaved();
-  const n = saved.scenes?.length || 0;
-  const elCount = document.querySelector("#savedCount");
-  if (elCount) elCount.textContent = `Saved: ${n}`;
-}
-
 let LABELS = null;
+let OBJECTS = null;
+let MOTIONS = null;
+let FACES_FULL = null;
+let HANDS = null;
 
 // ---------- Tabs ----------
 document.querySelectorAll(".tabbtn").forEach(btn=>{
@@ -70,7 +60,7 @@ document.querySelectorAll(".tabbtn").forEach(btn=>{
 // ---------- Load labels ----------
 async function loadLabels() {
   try {
-    const res = await fetch(new URL('./xnc-labels.json', window.location.href).toString());
+    const res = await fetch("xnc-labels.json");
     LABELS = await res.json();
     $("#labelsStatus").textContent = "Labels: OK";
     bindLabelOptions();
@@ -89,6 +79,25 @@ function fillSelect(sel, items) {
     sel.appendChild(opt);
   });
 }
+
+function fillSelectData(sel, arr, valueKey, labelKey, includeEmpty=true) {
+  if (!sel) return;
+  sel.innerHTML = "";
+  if (includeEmpty) {
+    const blank = document.createElement("option");
+    blank.value = "";
+    blank.textContent = "(none)";
+    sel.appendChild(blank);
+  }
+  (arr || []).forEach(o=>{
+    const opt = document.createElement("option");
+    const v = o[valueKey];
+    opt.value = v;
+    opt.textContent = o[labelKey] || v;
+    sel.appendChild(opt);
+  });
+}
+
 function bindLabelOptions() {
   fillSelect($("#pChar"), LABELS.characters);
   fillSelect($("#pFace"), LABELS.faces);
@@ -96,6 +105,23 @@ function bindLabelOptions() {
   fillSelect($("#pBg"), LABELS.backgrounds);
   fillSelect($("#pCam"), LABELS.cameras);
   fillSelect($("#pStyle"), LABELS.styles);
+
+  // Extra dropdowns if present
+  if (OBJECTS?.objects) {
+    fillSelectData($("#pObject"), OBJECTS.objects, "id", "label_vi");
+  }
+  if (MOTIONS?.motions) {
+    fillSelectData($("#pMotion"), MOTIONS.motions, "id", "label_vi");
+  }
+  if (HANDS?.hands) {
+    fillSelectData($("#pHand"), HANDS.hands, "id", "label_vi");
+  }
+  if (HANDS?.poses) {
+    fillSelectData($("#pHandPose"), HANDS.poses, "id", "label_vi");
+  }
+  if (FACES_FULL?.faces && $("#pFaceFull")) {
+    fillSelectData($("#pFaceFull"), FACES_FULL.faces, "id", "label_vi");
+  }
 }
 
 // ---------- Prompt generator ----------
@@ -107,15 +133,49 @@ function buildPromptVI() {
   const cam = $("#pCam").value;
   const st = $("#pStyle").value;
 
-  return [
+  const objId = $("#pObject")?.value || "";
+  const motId = $("#pMotion")?.value || "";
+  const handId = $("#pHand")?.value || "";
+  const handPoseId = $("#pHandPose")?.value || "";
+  const faceFullId = $("#pFaceFull")?.value || "";
+
+  const parts = [
     `Nhân vật: ${c}.`,
     `Biểu cảm: ${f}.`,
     `Hành động: ${a}.`,
     `Bối cảnh: ${bg}.`,
     `Góc máy: ${cam}.`,
-    `Phong cách: ${st}.`,
-    `Tông: hài đời thường, Việt Nam, motion comic sạch, nền rõ, nhân vật rõ, không chữ, không logo, tránh vibe Hàn/Idol.`
-  ].join(" ");
+    `Phong cách: ${st}.`
+  ];
+
+  if (faceFullId && FACES_FULL?.faces) {
+    const ff = FACES_FULL.faces.find(x=>x.id===faceFullId);
+    if (ff) parts.push(`Biểu cảm chi tiết: ${ff.label_vi} (${ff.id}).`);
+  }
+
+  if (objId && OBJECTS?.objects) {
+    const obj = OBJECTS.objects.find(x=>x.id===objId);
+    if (obj) parts.push(`Vật thể: ${obj.label_vi} (${obj.id}).`);
+  }
+
+  if (motId && MOTIONS?.motions) {
+    const m = MOTIONS.motions.find(x=>x.id===motId);
+    if (m) parts.push(`Kiểu chuyển động: ${m.label_vi} (${m.id}).`);
+  }
+
+  if (handId && HANDS?.hands) {
+    const h = HANDS.hands.find(x=>x.id===handId);
+    if (h) parts.push(`Bàn tay: ${h.label_vi} (${h.id}).`);
+  }
+
+  if (handPoseId && HANDS?.poses) {
+    const hp = HANDS.poses.find(x=>x.id===handPoseId);
+    if (hp) parts.push(`Tư thế tay: ${hp.label_vi} (${hp.id}).`);
+  }
+
+  parts.push(`Tông: hài đời thường, Việt Nam, motion comic sạch, nền rõ, nhân vật rõ, không chữ, không logo, tránh vibe Hàn/Idol.`);
+
+  return parts.join(" ");
 }
 
 function currentPromptObj() {
@@ -125,10 +185,15 @@ function currentPromptObj() {
     type: $("#pType").value,
     character: $("#pChar").value,
     face: $("#pFace").value,
+    face_full: $("#pFaceFull") ? $("#pFaceFull").value : "",
     action: $("#pAction").value,
     background: $("#pBg").value,
     camera: $("#pCam").value,
     style: $("#pStyle").value,
+    object_id: $("#pObject") ? $("#pObject").value : "",
+    motion_id: $("#pMotion") ? $("#pMotion").value : "",
+    hand_id: $("#pHand") ? $("#pHand").value : "",
+    hand_pose_id: $("#pHandPose") ? $("#pHandPose").value : "",
     prompt_vi: $("#pOut").value.trim(),
     note: ($("#pNote").value || "").trim(),
     updated_at: new Date().toISOString()
@@ -141,10 +206,15 @@ function setPromptObj(p) {
   $("#pType").value = p.type || "image_to_video";
   $("#pChar").value = p.character || (LABELS?.characters?.[0] || "");
   $("#pFace").value = p.face || (LABELS?.faces?.[0] || "");
+  if ($("#pFaceFull")) $("#pFaceFull").value = p.face_full || "";
   $("#pAction").value = p.action || (LABELS?.actions?.[0] || "");
   $("#pBg").value = p.background || (LABELS?.backgrounds?.[0] || "");
   $("#pCam").value = p.camera || (LABELS?.cameras?.[0] || "");
   $("#pStyle").value = p.style || (LABELS?.styles?.[0] || "");
+  if ($("#pObject")) $("#pObject").value = p.object_id || "";
+  if ($("#pMotion")) $("#pMotion").value = p.motion_id || "";
+  if ($("#pHand")) $("#pHand").value = p.hand_id || "";
+  if ($("#pHandPose")) $("#pHandPose").value = p.hand_pose_id || "";
   $("#pNote").value = p.note || "";
   $("#pOut").value = p.prompt_vi || "";
   $("#pJson").value = JSON.stringify(p, null, 2);
@@ -221,7 +291,17 @@ function refreshPromptList() {
     item.appendChild(head);
 
     const meta = el("div","small");
-    meta.textContent = `${p.character || ""} · ${p.face || ""} · ${p.action || ""} · ${p.background || ""}`;
+    const bits = [];
+    if (p.character) bits.push(p.character);
+    if (p.face) bits.push(p.face);
+    if (p.face_full) bits.push(`face:${p.face_full}`);
+    if (p.action) bits.push(p.action);
+    if (p.object_id) bits.push(`obj:${p.object_id}`);
+    if (p.motion_id) bits.push(`mot:${p.motion_id}`);
+    if (p.hand_id) bits.push(`hand:${p.hand_id}`);
+    if (p.hand_pose_id) bits.push(`pose:${p.hand_pose_id}`);
+    if (p.background) bits.push(p.background);
+    meta.textContent = bits.join(" · ");
     item.appendChild(meta);
 
     wrap.appendChild(item);
@@ -247,6 +327,11 @@ function defaultScene(n) {
     layout: {type:"single_full"},
     prompt_ref: "",
     clip: {src:"", trim_in:0, trim_out:maxSec, fit:"cover", pan:{x:0,y:0,scale:1}},
+    object_id: "",
+    motion_id: "",
+    hand_id: "",
+    hand_pose_id: "",
+    face_id: "",
     sfx: [],
     text: [],
     notes: ""
@@ -272,13 +357,11 @@ function renderScenes() {
     const acts = el("div","scene-actions");
     const up = el("button","mini"); up.textContent="↑";
     const dn = el("button","mini"); dn.textContent="↓";
-    const btnSave = el("button","mini primary"); btnSave.textContent="Save";
     const del = el("button","mini"); del.textContent="Del";
     up.addEventListener("click", ()=> moveScene(idx, -1));
     dn.addEventListener("click", ()=> moveScene(idx, +1));
-    btnSave.addEventListener("click", ()=> saveSceneToSaved(idx));
     del.addEventListener("click", ()=> removeScene(idx));
-    acts.appendChild(up); acts.appendChild(dn); acts.appendChild(btnSave); acts.appendChild(del);
+    acts.appendChild(up); acts.appendChild(dn); acts.appendChild(del);
 
     head.appendChild(left); head.appendChild(acts);
     box.appendChild(head);
@@ -311,6 +394,43 @@ function renderScenes() {
 
     r1.appendChild(c1); r1.appendChild(c2);
     box.appendChild(r1);
+
+    // Object / Motion / Hands / Face (optional per scene)
+    const rObj = el("div","row");
+    const o1 = el("div"); const o2 = el("div");
+    const o3 = el("div"); const o4 = el("div");
+
+    const lObj = el("label"); lObj.textContent = "Object ID";
+    const sObj = el("select"); sObj.id = "";
+    if (OBJECTS?.objects) fillSelectData(sObj, OBJECTS.objects, "id", "label_vi");
+    sObj.value = sc.object_id || "";
+    sObj.addEventListener("change", ()=>{ sc.object_id = sObj.value; saveProjectAndRefresh(project); });
+    o1.appendChild(lObj); o1.appendChild(sObj);
+
+    const lMot = el("label"); lMot.textContent = "Motion ID";
+    const sMot = el("select");
+    if (MOTIONS?.motions) fillSelectData(sMot, MOTIONS.motions, "id", "label_vi");
+    sMot.value = sc.motion_id || "";
+    sMot.addEventListener("change", ()=>{ sc.motion_id = sMot.value; saveProjectAndRefresh(project); });
+    o2.appendChild(lMot); o2.appendChild(sMot);
+
+    const lHand = el("label"); lHand.textContent = "Hand ID";
+    const sHand = el("select");
+    if (HANDS?.hands) fillSelectData(sHand, HANDS.hands, "id", "label_vi");
+    sHand.value = sc.hand_id || "";
+    sHand.addEventListener("change", ()=>{ sc.hand_id = sHand.value; saveProjectAndRefresh(project); });
+    o3.appendChild(lHand); o3.appendChild(sHand);
+
+    const lPose = el("label"); lPose.textContent = "Hand pose";
+    const sPose = el("select");
+    if (HANDS?.poses) fillSelectData(sPose, HANDS.poses, "id", "label_vi");
+    sPose.value = sc.hand_pose_id || "";
+    sPose.addEventListener("change", ()=>{ sc.hand_pose_id = sPose.value; saveProjectAndRefresh(project); });
+    o4.appendChild(lPose); o4.appendChild(sPose);
+
+    rObj.appendChild(o1); rObj.appendChild(o2);
+    rObj.appendChild(o3); rObj.appendChild(o4);
+    box.appendChild(rObj);
 
     const r2 = el("div","row");
     const d1 = el("div"); const d2 = el("div");
@@ -366,14 +486,6 @@ function renderScenes() {
     });
 
     box.appendChild(drop);
-    // Saved marker
-    const savedNow = readSaved();
-    const isSaved = (savedNow.scenes || []).some(s => s.scene_auto_id === sc.scene_auto_id);
-    if (isSaved) {
-      const mark = el("div","small");
-      mark.textContent = "✓ Scene đã được lưu vào SAVED";
-      box.appendChild(mark);
-    }
     box.appendChild(fileInput);
 
     if(sc._objectUrl) {
@@ -426,37 +538,6 @@ function moveScene(idx, delta) {
   setProject(p);
   loadProject();
 }
-
-function normalizeProjectMetaFromUI(meta) {
-  meta.aspect = document.querySelector("#projAspect")?.value || meta.aspect || "9:16";
-  meta.fps = Number(document.querySelector("#projFps")?.value || meta.fps || 30);
-  meta.max_scene_sec = Number(document.querySelector("#projMaxSec")?.value || meta.max_scene_sec || 5);
-  meta.title = document.querySelector("#projTitle")?.value || meta.title || "";
-  return meta;
-}
-
-function saveSceneToSaved(sceneIndex) {
-  const project = getProject();
-  const sc = project.scenes[sceneIndex];
-  if (!sc) return;
-
-  if (!sc.clip?.src) {
-    alert("Scene này chưa có clip. Hãy thả clip vào trước khi Save.");
-    return;
-  }
-
-  const saved = readSaved();
-  saved.meta = normalizeProjectMetaFromUI(saved.meta || {});
-
-  const idx = (saved.scenes || []).findIndex(s => s.scene_auto_id === sc.scene_auto_id);
-  if (idx >= 0) saved.scenes[idx] = sc;
-  else saved.scenes.push(sc);
-
-  writeSaved(saved);
-  updateSavedCount();
-  renderScenes();
-  updateSavedCount();
-}
 function removeScene(idx) {
   const p = getProject();
   p.scenes.splice(idx,1);
@@ -481,20 +562,6 @@ $("#btnClearProject").addEventListener("click", ()=>{
 $("#btnExportProject").addEventListener("click", ()=>{
   const p = getProject();
   downloadJson(`project_${nowStamp()}.json`, p);
-});
-
-$("#btnExportSaved").addEventListener("click", ()=>{
-  const saved = readSaved();
-  saved.meta = normalizeProjectMetaFromUI(saved.meta || {});
-  downloadJson(`saved_project_${nowStamp()}.json`, saved);
-
-  // Clear local after export
-  localStorage.removeItem(LS_SAVED);
-  localStorage.removeItem(LS_PROJECT);
-
-  updateSavedCount();
-  loadProject();
-  alert("Đã export toàn bộ SAVED và xoá dữ liệu local.");
 });
 
 $("#btnImportProject").addEventListener("click", ()=> $("#fileImportProject").click());
