@@ -13,6 +13,19 @@
       ]
     },
     {
+      "id": "xnc_sidewalk_milkshop_morning",
+      "label": "Vỉa hè quán sữa Hai Ngàn (sáng)",
+      "desc_en": "Vietnamese street sidewalk milk stall in the morning, simple metal cart with sign 'SỮA TƯƠI HAI NGÀN', glass jars and metal milk cans, small plastic stools and low tables on the pavement, modest shopfront with faded paint behind, trees and power lines above, wide composition that works for both 16:9 and 9:16 cropping, warm soft daylight, pastel 2D chibi background, no characters, no text overlay.",
+      "tags": ["day", "street", "shop", "milk", "sidewalk"]
+    },
+    {
+      "id": "xnc_fishing_village_morning",
+      "label": "Làng câu cá buổi sáng",
+      "desc_en": "Quiet Vietnamese fishing village in the early morning, calm river or pond with small wooden boats, simple stilt houses with tin or thatched roofs, fishing nets hanging to dry, narrow dirt path along the water, low vegetation and lily pads near the shore, light morning mist and soft golden sunlight, wide composition suitable for both 16:9 and 9:16 crops, pastel green-brown palette, 2D chibi background, no text.",
+      "tags": ["day", "village", "fishing", "river", "morning"]
+    },
+    
+    {
       "id": "xnc_village_day",
       "label": "Xóm quê ban ngày",
       "desc_en": "Vietnamese rural neighborhood, small houses, palm trees, dirt road, warm soft daylight, pastel green-brown tones, 2D chibi background, no text",
