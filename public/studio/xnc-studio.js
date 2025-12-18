@@ -163,7 +163,13 @@ function buildPromptVI() {
   const handId = $("#pHand")?.value || "";
   const handPoseId = $("#pHandPose")?.value || "";
   const faceFullId = $("#pFaceFull")?.value || "";
+const objectCount = document.getElementById('pObjectCount').value.trim();
+const camNote = document.getElementById('pCamNote').value.trim();
+if (camNote) {
+  prompt_vi += ` Ghi chú góc máy: ${camNote}.`;
+}
 
+   
   const parts = [
     `Nhân vật: ${c}.`,
     `Biểu cảm: ${f}.`,
@@ -177,6 +183,10 @@ function buildPromptVI() {
     const ff = FACES_FULL.faces.find(x=>x.id===faceFullId);
     if (ff) parts.push(`Biểu cảm chi tiết: ${ff.label_vi} (${ff.id}).`);
   }
+if (object && objectCount) {
+  prompt_vi += ` Số lượng: ${objectCount}.`;
+  prompt_en += ` Quantity: ${objectCount}.`;
+}
 
   if (objId && OBJECTS?.objects) {
     const obj = OBJECTS.objects.find(x=>x.id===objId);
