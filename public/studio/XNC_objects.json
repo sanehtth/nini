@@ -1,0 +1,322 @@
+{
+  "version": "1.0",
+  "description": "XomNguoiChuyen modular throwable / interactive objects",
+  "objects": [
+    {
+      "id": "apple_green",
+      "label_vi": "Trái táo xanh",
+      "label_en": "green apple",
+      "category": "fruit",
+      "size": "small",
+      "weight": "light",
+      "default_motions": [
+        "throw_forward",
+        "arc_up"
+      ],
+      "default_sfx": [
+        "whoosh_soft",
+        "hit_soft"
+      ]
+    },
+    {
+      "id": "apple_red",
+      "label_vi": "Trái táo đỏ",
+      "label_en": "red apple",
+      "category": "fruit",
+      "size": "small",
+      "weight": "light",
+      "default_motions": [
+        "throw_forward",
+        "arc_up"
+      ],
+      "default_sfx": [
+        "whoosh_soft",
+        "hit_soft"
+      ]
+    },
+    {
+      "id": "ball_football",
+      "label_vi": "Trái bóng đá",
+      "label_en": "football",
+      "category": "ball",
+      "size": "medium",
+      "weight": "medium",
+      "default_motions": [
+        "arc_long",
+        "curve_left_to_right"
+      ],
+      "default_sfx": [
+        "whoosh_medium",
+        "bounce_hard"
+      ]
+    },
+    {
+      "id": "ball_baseball",
+      "label_vi": "Bóng chày",
+      "label_en": "baseball",
+      "category": "ball",
+      "size": "small",
+      "weight": "medium",
+      "default_motions": [
+        "throw_fast",
+        "curve_right_to_left"
+      ],
+      "default_sfx": [
+        "whoosh_fast",
+        "hit_hard"
+      ]
+    },
+    {
+      "id": "slipper_rubber",
+      "label_vi": "Dép tổ ong",
+      "label_en": "rubber slipper",
+      "category": "slipper",
+      "size": "small",
+      "weight": "light",
+      "default_motions": [
+        "throw_spin",
+        "arc_up"
+      ],
+      "default_sfx": [
+        "whoosh_fast",
+        "slap_soft"
+      ]
+    },
+    {
+      "id": "shoe_sneaker",
+      "label_vi": "Giày thể thao",
+      "label_en": "sneaker",
+      "category": "shoe",
+      "size": "medium",
+      "weight": "medium",
+      "default_motions": [
+        "throw_forward",
+        "drop_center"
+      ],
+      "default_sfx": [
+        "whoosh_medium",
+        "thud_soft"
+      ]
+    },
+    {
+      "id": "brick_small",
+      "label_vi": "Viên gạch nhỏ",
+      "label_en": "small brick",
+      "category": "solid",
+      "size": "small",
+      "weight": "heavy",
+      "default_motions": [
+        "throw_heavy",
+        "drop_center"
+      ],
+      "default_sfx": [
+        "whoosh_heavy",
+        "impact_hard"
+      ]
+    },
+    {
+      "id": "paper_ball",
+      "label_vi": "Cuộn giấy vo tròn",
+      "label_en": "crumpled paper ball",
+      "category": "paper",
+      "size": "small",
+      "weight": "light",
+      "default_motions": [
+        "floaty_throw",
+        "arc_up"
+      ],
+      "default_sfx": [
+        "whoosh_soft"
+      ]
+    },
+    {
+      "id": "bottle_plastic",
+      "label_vi": "Chai nhựa",
+      "label_en": "plastic bottle",
+      "category": "bottle",
+      "size": "medium",
+      "weight": "light",
+      "default_motions": [
+        "throw_forward",
+        "bounce_multi"
+      ],
+      "default_sfx": [
+        "whoosh_soft",
+        "plastic_hit"
+      ]
+    },
+    {
+      "id": "bowl_rice",
+      "label_vi": "Chén cơm",
+      "label_en": "bowl of rice",
+      "category": "bowl",
+      "size": "small",
+      "weight": "medium",
+      "default_motions": [
+        "drop_center",
+        "arc_short"
+      ],
+      "default_sfx": [
+        "ceramic_clink"
+      ]
+    },
+    {
+      "id": "chopsticks_pair",
+      "label_vi": "Đôi đũa",
+      "label_en": "pair of chopsticks",
+      "category": "kitchen",
+      "size": "small",
+      "weight": "light",
+      "default_motions": [
+        "spin_forward",
+        "throw_forward"
+      ],
+      "default_sfx": [
+        "whoosh_soft",
+        "wood_tap"
+      ]
+    },
+    {
+      "id": "fish_small",
+      "label_vi": "Con cá nhỏ",
+      "label_en": "small fish",
+      "category": "food",
+      "size": "small",
+      "weight": "medium",
+      "default_motions": [
+        "arc_up",
+        "drop_center"
+      ],
+      "default_sfx": [
+        "splash_soft"
+      ]
+    },
+    {
+      "id": "book_small",
+      "label_vi": "Cuốn vở nhỏ",
+      "label_en": "notebook",
+      "category": "school",
+      "size": "medium",
+      "weight": "medium",
+      "default_motions": [
+        "throw_forward",
+        "spin_flat"
+      ],
+      "default_sfx": [
+        "whoosh_medium",
+        "paper_hit"
+      ]
+    },
+    {
+      "id": "toy_bear",
+      "label_vi": "Gấu bông",
+      "label_en": "plush bear",
+      "category": "toy",
+      "size": "medium",
+      "weight": "light",
+      "default_motions": [
+        "floaty_throw",
+        "arc_up"
+      ],
+      "default_sfx": [
+        "whoosh_soft",
+        "soft_impact"
+      ]
+    },
+    {
+      "id": "umbrella_folded",
+      "label_vi": "Ô gấp",
+      "label_en": "folded umbrella",
+      "category": "daily_item",
+      "size": "medium",
+      "weight": "medium",
+      "default_motions": [
+        "throw_forward",
+        "curve_right_to_left"
+      ],
+      "default_sfx": [
+        "whoosh_medium"
+      ]
+    },
+    {
+      "id": "helmet_plastic",
+      "label_vi": "Nón bảo hiểm nhựa",
+      "label_en": "plastic helmet",
+      "category": "daily_item",
+      "size": "medium",
+      "weight": "medium",
+      "default_motions": [
+        "throw_heavy",
+        "bounce_once"
+      ],
+      "default_sfx": [
+        "whoosh_heavy",
+        "thud_hard"
+      ]
+    },
+    {
+      "id": "pillow_small",
+      "label_vi": "Gối nhỏ",
+      "label_en": "small pillow",
+      "category": "soft",
+      "size": "medium",
+      "weight": "light",
+      "default_motions": [
+        "floaty_throw",
+        "drop_center"
+      ],
+      "default_sfx": [
+        "whoosh_soft",
+        "soft_impact"
+      ]
+    },
+    {
+      "id": "rock_small",
+      "label_vi": "Hòn đá nhỏ",
+      "label_en": "small stone",
+      "category": "solid",
+      "size": "small",
+      "weight": "heavy",
+      "default_motions": [
+        "throw_fast",
+        "arc_short"
+      ],
+      "default_sfx": [
+        "whoosh_heavy",
+        "impact_hard"
+      ]
+    },
+    {
+      "id": "snack_bag",
+      "label_vi": "Gói bim bim",
+      "label_en": "snack bag",
+      "category": "snack",
+      "size": "small",
+      "weight": "light",
+      "default_motions": [
+        "throw_forward",
+        "bounce_multi"
+      ],
+      "default_sfx": [
+        "whoosh_soft",
+        "plastic_rustle"
+      ]
+    },
+    {
+      "id": "balloon_water",
+      "label_vi": "Bóng nước",
+      "label_en": "water balloon",
+      "category": "toy",
+      "size": "small",
+      "weight": "medium",
+      "default_motions": [
+        "arc_up",
+        "drop_center"
+      ],
+      "default_sfx": [
+        "whoosh_soft",
+        "splash_big"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "version": "1.0",
+  "description": "Reusable motion patterns for thrown / moving objects in XNC",
+  "motions": [
+    {
+      "id": "throw_forward",
+      "label_vi": "Ném thẳng về phía trước",
+      "desc_en": "object moves from character toward camera or center in a straight line",
+      "path": "linear",
+      "axis": "z",
+      "speed": "medium"
+    },
+    {
+      "id": "throw_fast",
+      "label_vi": "Ném rất nhanh",
+      "desc_en": "fast straight throw with strong motion blur",
+      "path": "linear",
+      "axis": "z",
+      "speed": "fast"
+    },
+    {
+      "id": "throw_heavy",
+      "label_vi": "Quăng nặng tay",
+      "desc_en": "heavier, slower arc, feels weighty",
+      "path": "linear",
+      "axis": "z",
+      "speed": "slow"
+    },
+    {
+      "id": "arc_up",
+      "label_vi": "Ném vòng cung lên",
+      "desc_en": "object travels in a short upward arc then comes down",
+      "path": "arc",
+      "axis": "xz",
+      "speed": "medium"
+    },
+    {
+      "id": "arc_long",
+      "label_vi": "Ném vòng cung xa",
+      "desc_en": "longer, higher arc across the screen",
+      "path": "arc",
+      "axis": "xz",
+      "speed": "medium"
+    },
+    {
+      "id": "arc_short",
+      "label_vi": "Quăng đoạn ngắn",
+      "desc_en": "shorter arc, stays close to character",
+      "path": "arc",
+      "axis": "xz",
+      "speed": "short"
+    },
+    {
+      "id": "curve_left_to_right",
+      "label_vi": "Bay cong trái sang phải",
+      "desc_en": "object curves from left side of frame to right side",
+      "path": "curve",
+      "axis": "xy",
+      "speed": "medium"
+    },
+    {
+      "id": "curve_right_to_left",
+      "label_vi": "Bay cong phải sang trái",
+      "desc_en": "object curves from right side of frame to left side",
+      "path": "curve",
+      "axis": "xy",
+      "speed": "medium"
+    },
+    {
+      "id": "floaty_throw",
+      "label_vi": "Ném nhẹ bay bay",
+      "desc_en": "soft throw with a floaty feeling, often for light objects",
+      "path": "float",
+      "axis": "xz",
+      "speed": "slow"
+    },
+    {
+      "id": "rain_down",
+      "label_vi": "Rơi như mưa xuống",
+      "desc_en": "many copies fall from the top of the frame like rain",
+      "path": "rain",
+      "axis": "y",
+      "speed": "medium"
+    },
+    {
+      "id": "bounce_once",
+      "label_vi": "Nảy một cái",
+      "desc_en": "object hits ground or surface then bounces once",
+      "path": "bounce",
+      "axis": "y",
+      "speed": "medium"
+    },
+    {
+      "id": "bounce_multi",
+      "label_vi": "Nảy nhiều lần",
+      "desc_en": "object bounces several times across the floor",
+      "path": "bounce",
+      "axis": "xy",
+      "speed": "medium"
+    },
+    {
+      "id": "drop_center",
+      "label_vi": "Rơi ngay giữa khung",
+      "desc_en": "object drops almost straight down into the center of the frame",
+      "path": "drop",
+      "axis": "y",
+      "speed": "medium"
+    },
+    {
+      "id": "spin_forward",
+      "label_vi": "Vừa quay vừa bay tới",
+      "desc_en": "object spins forward while moving toward camera",
+      "path": "spin",
+      "axis": "z",
+      "speed": "medium"
+    },
+    {
+      "id": "spin_flat",
+      "label_vi": "Xoay phẳng như đĩa",
+      "desc_en": "object spins flat around its center, like a flying disc",
+      "path": "spin",
+      "axis": "xy",
+      "speed": "medium"
+    }
+  ]
+}

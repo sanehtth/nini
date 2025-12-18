@@ -1,0 +1,192 @@
+{
+  "version": "1.0",
+  "description": "Hand styles and poses for Xom1000Chuyen motion comic",
+  "hands": [
+    {
+      "id": "hand_tumla_child_female",
+      "label_vi": "Tay Tum-La (bé gái)",
+      "owner": "tumla",
+      "gender": "female",
+      "age": "child",
+      "style": "2d_pastel",
+      "default_poses": [
+        "tap_screen",
+        "throw_light",
+        "point_forward"
+      ]
+    },
+    {
+      "id": "hand_tumlum_child_female",
+      "label_vi": "Tay Tum-Lum (bé gái)",
+      "owner": "tumlum",
+      "gender": "female",
+      "age": "child",
+      "style": "2d_pastel",
+      "default_poses": [
+        "tap_screen",
+        "grab_object",
+        "wave"
+      ]
+    },
+    {
+      "id": "hand_bolo_child_male",
+      "label_vi": "Tay Bô-Lô (bé trai)",
+      "owner": "bolo",
+      "gender": "male",
+      "age": "child",
+      "style": "2d_pastel",
+      "default_poses": [
+        "throw_strong",
+        "point_accuse",
+        "cross_arms"
+      ]
+    },
+    {
+      "id": "hand_bala_child_male",
+      "label_vi": "Tay Ba-La (bé trai)",
+      "owner": "bala",
+      "gender": "male",
+      "age": "child",
+      "style": "2d_pastel",
+      "default_poses": [
+        "hold_bowl",
+        "grab_food",
+        "scratch_head"
+      ]
+    },
+    {
+      "id": "hand_mom_bolo_adult_female",
+      "label_vi": "Tay mẹ Bô-Lô",
+      "owner": "mom_bolo",
+      "gender": "female",
+      "age": "adult",
+      "style": "2d_pastel",
+      "default_poses": [
+        "hold_chopsticks",
+        "point_warning",
+        "hold_plate"
+      ]
+    },
+    {
+      "id": "hand_co_haingàn",
+      "label_vi": "Tay cô Hai Ngàn",
+      "owner": "co_haingan",
+      "gender": "female",
+      "age": "adult",
+      "style": "2d_pastel",
+      "default_poses": [
+        "hold_cup",
+        "pour_milk",
+        "wave_customers"
+      ]
+    },
+    {
+      "id": "hand_generic_female",
+      "label_vi": "Tay phụ nữ (generic)",
+      "owner": "generic",
+      "gender": "female",
+      "age": "adult",
+      "style": "2d_pastel",
+      "default_poses": [
+        "tap_screen",
+        "swipe_screen",
+        "knock_screen"
+      ]
+    },
+    {
+      "id": "hand_generic_male",
+      "label_vi": "Tay đàn ông (generic)",
+      "owner": "generic",
+      "gender": "male",
+      "age": "adult",
+      "style": "2d_pastel",
+      "default_poses": [
+        "knock_door",
+        "throw_heavy",
+        "grab_object"
+      ]
+    }
+  ],
+  "poses": [
+    {
+      "id": "tap_screen",
+      "label_vi": "Chạm màn hình",
+      "desc_en": "index finger tapping forward on screen, like pressing a phone"
+    },
+    {
+      "id": "swipe_screen",
+      "label_vi": "Vuốt màn hình",
+      "desc_en": "flat hand swiping across screen"
+    },
+    {
+      "id": "knock_screen",
+      "label_vi": "Gõ mạnh",
+      "desc_en": "knocking motion toward the glass or screen"
+    },
+    {
+      "id": "throw_light",
+      "label_vi": "Ném nhẹ",
+      "desc_en": "light throw motion, used for small or soft objects"
+    },
+    {
+      "id": "throw_strong",
+      "label_vi": "Quăng mạnh",
+      "desc_en": "stronger throw motion, more force and blur"
+    },
+    {
+      "id": "grab_object",
+      "label_vi": "Chộp lấy vật",
+      "desc_en": "hand grabbing an incoming object"
+    },
+    {
+      "id": "hold_bowl",
+      "label_vi": "Cầm chén",
+      "desc_en": "holding a small bowl with one hand"
+    },
+    {
+      "id": "hold_plate",
+      "label_vi": "Cầm dĩa",
+      "desc_en": "holding a plate with one hand"
+    },
+    {
+      "id": "hold_chopsticks",
+      "label_vi": "Cầm đũa",
+      "desc_en": "hand holding chopsticks, ready to pick food"
+    },
+    {
+      "id": "point_forward",
+      "label_vi": "Chỉ thẳng phía trước",
+      "desc_en": "index finger pointing straight toward camera"
+    },
+    {
+      "id": "point_warning",
+      "label_vi": "Chỉ cảnh cáo",
+      "desc_en": "strict pointing gesture, used by adults when scolding"
+    },
+    {
+      "id": "point_accuse",
+      "label_vi": "Chỉ mặt tố cáo",
+      "desc_en": "accusing point toward another character"
+    },
+    {
+      "id": "wave",
+      "label_vi": "Vẫy tay",
+      "desc_en": "hand waving in greeting"
+    },
+    {
+      "id": "wave_customers",
+      "label_vi": "Vẫy khách",
+      "desc_en": "waving customers to come closer"
+    },
+    {
+      "id": "scratch_head",
+      "label_vi": "Gãi đầu",
+      "desc_en": "scratching head in confusion"
+    },
+    {
+      "id": "cross_arms",
+      "label_vi": "Khoanh tay",
+      "desc_en": "arms crossed in front of chest (pose hint)"
+    }
+  ]
+}

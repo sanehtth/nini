@@ -1,0 +1,241 @@
+{
+  "version": "1.1",
+  "description": "Face expression library for Xom1000Chuyen motion comic",
+  "faces": [
+    {
+      "id": "neutral",
+      "label_vi": "Bình thường",
+      "label_en": "neutral",
+      "intensity": 1,
+      "tags": [
+        "default",
+        "calm"
+      ]
+    },
+    {
+      "id": "happy_soft",
+      "label_vi": "Vui nhẹ",
+      "label_en": "soft smile",
+      "intensity": 2,
+      "tags": [
+        "happy",
+        "warm"
+      ]
+    },
+    {
+      "id": "happy_bright",
+      "label_vi": "Vui vẻ rạng rỡ",
+      "label_en": "bright happy",
+      "intensity": 3,
+      "tags": [
+        "happy",
+        "excited"
+      ]
+    },
+    {
+      "id": "laugh_big",
+      "label_vi": "Cười ha hả",
+      "label_en": "big laugh",
+      "intensity": 4,
+      "tags": [
+        "happy",
+        "funny"
+      ]
+    },
+    {
+      "id": "angry_red",
+      "label_vi": "Nóng giận mặt đỏ lên",
+      "label_en": "angry red face",
+      "intensity": 4,
+      "tags": [
+        "angry",
+        "strong"
+      ]
+    },
+    {
+      "id": "angry_smoke",
+      "label_vi": "Tức bốc khói",
+      "label_en": "steam anger",
+      "intensity": 5,
+      "tags": [
+        "angry",
+        "comic"
+      ]
+    },
+    {
+      "id": "annoyed_stomp",
+      "label_vi": "Bực mình dậm chân",
+      "label_en": "annoyed stomp",
+      "intensity": 3,
+      "tags": [
+        "annoyed",
+        "childish"
+      ]
+    },
+    {
+      "id": "cold_indifferent",
+      "label_vi": "Thờ ơ lạnh đạm",
+      "label_en": "cold indifferent",
+      "intensity": 2,
+      "tags": [
+        "cold",
+        "cool"
+      ]
+    },
+    {
+      "id": "shy_soft",
+      "label_vi": "Rén nhẹ",
+      "label_en": "mild shy",
+      "intensity": 2,
+      "tags": [
+        "shy",
+        "soft"
+      ]
+    },
+    {
+      "id": "embarrassed_deep",
+      "label_vi": "Quê… muốn độn thổ",
+      "label_en": "deep embarrassment",
+      "intensity": 4,
+      "tags": [
+        "embarrassed"
+      ]
+    },
+    {
+      "id": "nervous_awkward",
+      "label_vi": "Bối rối ngập ngừng",
+      "label_en": "nervous awkward",
+      "intensity": 3,
+      "tags": [
+        "awkward",
+        "shy"
+      ]
+    },
+    {
+      "id": "stomach_pain_hold",
+      "label_vi": "Đau bụng mà ráng nhịn",
+      "label_en": "stomach pain holding",
+      "intensity": 3,
+      "tags": [
+        "pain",
+        "comic"
+      ]
+    },
+    {
+      "id": "scared_low",
+      "label_vi": "Hoảng sợ lo âu",
+      "label_en": "anxious scared",
+      "intensity": 3,
+      "tags": [
+        "scared",
+        "worried"
+      ]
+    },
+    {
+      "id": "scared_high",
+      "label_vi": "Sợ xanh mặt",
+      "label_en": "terrified",
+      "intensity": 5,
+      "tags": [
+        "scared",
+        "strong"
+      ]
+    },
+    {
+      "id": "grateful_soft",
+      "label_vi": "Cảm động biết ơn",
+      "label_en": "touched grateful",
+      "intensity": 3,
+      "tags": [
+        "grateful",
+        "warm"
+      ]
+    },
+    {
+      "id": "hopeful_wait",
+      "label_vi": "Háo hức chờ mong",
+      "label_en": "eager and hopeful",
+      "intensity": 3,
+      "tags": [
+        "hopeful",
+        "excited"
+      ]
+    },
+    {
+      "id": "disappointed",
+      "label_vi": "Thất vọng",
+      "label_en": "disappointed",
+      "intensity": 3,
+      "tags": [
+        "sad"
+      ]
+    },
+    {
+      "id": "sad_blank",
+      "label_vi": "Buồn thẫn thờ",
+      "label_en": "blank sadness",
+      "intensity": 3,
+      "tags": [
+        "sad",
+        "quiet"
+      ]
+    },
+    {
+      "id": "smug",
+      "label_vi": "Mặt ngầu lạnh tanh",
+      "label_en": "cool smug",
+      "intensity": 3,
+      "tags": [
+        "cool",
+        "smug"
+      ]
+    },
+    {
+      "id": "flatter_soft",
+      "label_vi": "Mặt nịnh nọt",
+      "label_en": "flattering",
+      "intensity": 3,
+      "tags": [
+        "flatter",
+        "comic"
+      ]
+    },
+    {
+      "id": "flatter_super",
+      "label_vi": "Siêu cấp nịnh nọt",
+      "label_en": "super flattering",
+      "intensity": 4,
+      "tags": [
+        "flatter",
+        "over_the_top"
+      ]
+    },
+    {
+      "id": "surprised",
+      "label_vi": "Ngạc nhiên",
+      "label_en": "surprised",
+      "intensity": 3,
+      "tags": [
+        "surprised"
+      ]
+    },
+    {
+      "id": "focused",
+      "label_vi": "Tập trung",
+      "label_en": "focused",
+      "intensity": 2,
+      "tags": [
+        "serious"
+      ]
+    },
+    {
+      "id": "sleepy",
+      "label_vi": "Buồn ngủ",
+      "label_en": "sleepy",
+      "intensity": 2,
+      "tags": [
+        "tired"
+      ]
+    }
+  ]
+}
