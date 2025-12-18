@@ -60,8 +60,33 @@ document.querySelectorAll(".tabbtn").forEach(btn=>{
 // ---------- Load labels ----------
 async function loadLabels() {
   try {
-    const res = await fetch("xnc-labels.json");
+    const base = new URL('.', window.location.href);
+
+    // Core labels (characters, faces, actions, backgrounds...)
+    const res = await fetch(new URL('./xnc-labels.json', base).toString());
     LABELS = await res.json();
+
+    // Optional extra libraries (objects, motions, faces, hands)
+    try {
+      const rObj = await fetch(new URL('./XNC_objects.json', base).toString());
+      if (rObj.ok) OBJECTS = await rObj.json();
+    } catch (e) { console.warn("No XNC_objects.json", e); }
+
+    try {
+      const rMot = await fetch(new URL('./XNC_motions.json', base).toString());
+      if (rMot.ok) MOTIONS = await rMot.json();
+    } catch (e) { console.warn("No XNC_motions.json", e); }
+
+    try {
+      const rFace = await fetch(new URL('./XNC_faces.json', base).toString());
+      if (rFace.ok) FACES_FULL = await rFace.json();
+    } catch (e) { console.warn("No XNC_faces.json", e); }
+
+    try {
+      const rHands = await fetch(new URL('./XNC_hands.json', base).toString());
+      if (rHands.ok) HANDS = await rHands.json();
+    } catch (e) { console.warn("No XNC_hands.json", e); }
+
     $("#labelsStatus").textContent = "Labels: OK";
     bindLabelOptions();
     refreshPromptList();
@@ -120,7 +145,7 @@ function bindLabelOptions() {
     fillSelectData($("#pHandPose"), HANDS.poses, "id", "label_vi");
   }
   if (FACES_FULL?.faces && $("#pFaceFull")) {
-    fillSelectData($("#pFaceFull"), FACES_FULL.faces, "id", "label_vi");
+    fillSelectData($("#pFaceFull"), FACES_FULL.faces, "id", "label");
   }
 }
 

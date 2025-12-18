@@ -1,241 +1,126 @@
 {
-  "version": "1.1",
-  "description": "Face expression library for Xom1000Chuyen motion comic",
+  "version": "1.0",
+  "series_id": "XNC",
   "faces": [
     {
       "id": "neutral",
-      "label_vi": "Bình thường",
-      "label_en": "neutral",
-      "intensity": 1,
-      "tags": [
-        "default",
-        "calm"
-      ]
+      "label": "Bình thường",
+      "desc_en": "neutral facial expression, relaxed eyelids, calm breathing",
+      "intensity": "none"
     },
     {
-      "id": "happy_soft",
-      "label_vi": "Vui nhẹ",
-      "label_en": "soft smile",
-      "intensity": 2,
-      "tags": [
-        "happy",
-        "warm"
-      ]
-    },
-    {
-      "id": "happy_bright",
-      "label_vi": "Vui vẻ rạng rỡ",
-      "label_en": "bright happy",
-      "intensity": 3,
-      "tags": [
-        "happy",
-        "excited"
-      ]
-    },
-    {
-      "id": "laugh_big",
-      "label_vi": "Cười ha hả",
-      "label_en": "big laugh",
-      "intensity": 4,
-      "tags": [
-        "happy",
-        "funny"
-      ]
-    },
-    {
-      "id": "angry_red",
-      "label_vi": "Nóng giận mặt đỏ lên",
-      "label_en": "angry red face",
-      "intensity": 4,
-      "tags": [
-        "angry",
-        "strong"
-      ]
-    },
-    {
-      "id": "angry_smoke",
-      "label_vi": "Tức bốc khói",
-      "label_en": "steam anger",
-      "intensity": 5,
-      "tags": [
-        "angry",
-        "comic"
-      ]
-    },
-    {
-      "id": "annoyed_stomp",
-      "label_vi": "Bực mình dậm chân",
-      "label_en": "annoyed stomp",
-      "intensity": 3,
-      "tags": [
-        "annoyed",
-        "childish"
-      ]
+      "id": "annoyed_grumpy",
+      "label": "Nóng giận mặt đỏ, gầm gừ",
+      "desc_en": "face flushed red, brows furrowed, jaw clenched, low growling expression",
+      "intensity": "high"
     },
     {
       "id": "cold_indifferent",
-      "label_vi": "Thờ ơ lạnh đạm",
-      "label_en": "cold indifferent",
-      "intensity": 2,
-      "tags": [
-        "cold",
-        "cool"
-      ]
+      "label": "Thờ ơ lạnh đạm, ngó đi chỗ khác",
+      "desc_en": "emotionless face, half-lidded eyes, head turned away, dismissive look",
+      "intensity": "low"
     },
     {
-      "id": "shy_soft",
-      "label_vi": "Rén nhẹ",
-      "label_en": "mild shy",
-      "intensity": 2,
-      "tags": [
-        "shy",
-        "soft"
-      ]
+      "id": "furious_explode",
+      "label": "Tức bốc khói",
+      "desc_en": "vein popping, eyes wide, explosive rage, steam-like anger effect",
+      "intensity": "very_high"
     },
     {
-      "id": "embarrassed_deep",
-      "label_vi": "Quê… muốn độn thổ",
-      "label_en": "deep embarrassment",
-      "intensity": 4,
-      "tags": [
-        "embarrassed"
-      ]
+      "id": "frustrated_stomp",
+      "label": "Bực mình dậm chân tại chỗ",
+      "desc_en": "puffed cheeks, frustrated pout, intense annoyance (face-focused)",
+      "intensity": "med"
     },
     {
-      "id": "nervous_awkward",
-      "label_vi": "Bối rối ngập ngừng",
-      "label_en": "nervous awkward",
-      "intensity": 3,
-      "tags": [
-        "awkward",
-        "shy"
-      ]
+      "id": "yelling_in_face",
+      "label": "Lớn tiếng hét vào mặt người ta",
+      "desc_en": "mouth wide open shouting, intense eye contact, aggressive expression",
+      "intensity": "very_high"
     },
     {
-      "id": "stomach_pain_hold",
-      "label_vi": "Đau bụng mà ráng nhịn",
-      "label_en": "stomach pain holding",
-      "intensity": 3,
-      "tags": [
-        "pain",
-        "comic"
-      ]
+      "id": "slightly_scared",
+      "label": "Rén nhẹ",
+      "desc_en": "nervous eyes, slight trembling lips, cautious fearful expression",
+      "intensity": "low"
     },
     {
-      "id": "scared_low",
-      "label_vi": "Hoảng sợ lo âu",
-      "label_en": "anxious scared",
-      "intensity": 3,
-      "tags": [
-        "scared",
-        "worried"
-      ]
+      "id": "embarrassed_melt",
+      "label": "Quê... muốn độn thổ",
+      "desc_en": "face blushing, eyes looking down, awkward smile, embarrassed expression",
+      "intensity": "med"
     },
     {
-      "id": "scared_high",
-      "label_vi": "Sợ xanh mặt",
-      "label_en": "terrified",
-      "intensity": 5,
-      "tags": [
-        "scared",
-        "strong"
-      ]
+      "id": "sweet_pleading",
+      "label": "Mặt nịnh nọt",
+      "desc_en": "soft eyes, forced sweet smile, pleading look",
+      "intensity": "low"
     },
     {
-      "id": "grateful_soft",
-      "label_vi": "Cảm động biết ơn",
-      "label_en": "touched grateful",
-      "intensity": 3,
-      "tags": [
-        "grateful",
-        "warm"
-      ]
+      "id": "extreme_flattery",
+      "label": "Siêu cấp nịnh nọt",
+      "desc_en": "overly exaggerated sweet smile, sparkling eyes, fake admiration expression",
+      "intensity": "med_high"
     },
     {
-      "id": "hopeful_wait",
-      "label_vi": "Háo hức chờ mong",
-      "label_en": "eager and hopeful",
-      "intensity": 3,
-      "tags": [
-        "hopeful",
-        "excited"
-      ]
+      "id": "cold_gangster",
+      "label": "Mặt ngầu lạnh tanh",
+      "desc_en": "stone-cold face, sharp eyes, intimidating calm expression",
+      "intensity": "med"
     },
     {
-      "id": "disappointed",
-      "label_vi": "Thất vọng",
-      "label_en": "disappointed",
-      "intensity": 3,
-      "tags": [
-        "sad"
-      ]
+      "id": "side_eye_glance",
+      "label": "Liếc xéo",
+      "desc_en": "side-eye glance with tilted head, annoyed and mischievous expression",
+      "intensity": "low"
     },
     {
-      "id": "sad_blank",
-      "label_vi": "Buồn thẫn thờ",
-      "label_en": "blank sadness",
-      "intensity": 3,
-      "tags": [
-        "sad",
-        "quiet"
-      ]
+      "id": "jaw_drop_shock",
+      "label": "Há mồm sốc",
+      "desc_en": "jaw drops in shock, eyes widen, frozen for a beat, comedic exaggeration",
+      "intensity": "high"
     },
     {
-      "id": "smug",
-      "label_vi": "Mặt ngầu lạnh tanh",
-      "label_en": "cool smug",
-      "intensity": 3,
-      "tags": [
-        "cool",
-        "smug"
-      ]
+      "id": "cover_mouth_panic",
+      "label": "Che miệng hoảng",
+      "desc_en": "eyes widened in panic, embarrassed panic expression (hands may cover mouth)",
+      "intensity": "med"
     },
     {
-      "id": "flatter_soft",
-      "label_vi": "Mặt nịnh nọt",
-      "label_en": "flattering",
-      "intensity": 3,
-      "tags": [
-        "flatter",
-        "comic"
-      ]
+      "id": "smirk_proud",
+      "label": "Cười khịa tự hào",
+      "desc_en": "smirking proudly, chin slightly up, smug teasing expression",
+      "intensity": "low"
     },
     {
-      "id": "flatter_super",
-      "label_vi": "Siêu cấp nịnh nọt",
-      "label_en": "super flattering",
-      "intensity": 4,
-      "tags": [
-        "flatter",
-        "over_the_top"
-      ]
+      "id": "happy_charming",
+      "label": "Cười tỏa nắng / Quyến rũ",
+      "desc_en": "bright charming smile, eyes gently curved, confident and radiant look",
+      "intensity": "medium_high"
     },
     {
-      "id": "surprised",
-      "label_vi": "Ngạc nhiên",
-      "label_en": "surprised",
-      "intensity": 3,
-      "tags": [
-        "surprised"
-      ]
+      "id": "love_struck",
+      "label": "Mê mẩn / Say nắng",
+      "desc_en": "eyes sparkling with tiny hearts, strong blush, dreamy lost-in-love expression",
+      "intensity": "very_high"
     },
     {
-      "id": "focused",
-      "label_vi": "Tập trung",
-      "label_en": "focused",
-      "intensity": 2,
-      "tags": [
-        "serious"
-      ]
+      "id": "fanatic_scream",
+      "label": "Fan cuồng / Cháy hết mình",
+      "desc_en": "eyes wide, mouth open shouting, overexcited fan energy bursting out",
+      "intensity": "very_high"
     },
     {
-      "id": "sleepy",
-      "label_vi": "Buồn ngủ",
-      "label_en": "sleepy",
-      "intensity": 2,
-      "tags": [
-        "tired"
-      ]
+      "id": "innocent_blank",
+      "label": "Ngây thơ vô số tội",
+      "desc_en": "wide open eyes, blank but cute look, seems not understanding the situation",
+      "intensity": "low"
+    },
+    {
+      "id": "smug_sarcastic",
+      "label": "Tự mãn mỉa mai",
+      "desc_en": "one-sided smirk, eyebrow slightly raised, subtle mocking expression",
+      "intensity": "medium"
     }
   ]
 }
