@@ -150,6 +150,7 @@ function bindLabelOptions() {
 }
 
 // ---------- Prompt generator ----------
+
 function buildPromptVI() {
   const c = $("#pChar").value;
   const f = $("#pFace").value;
@@ -163,55 +164,71 @@ function buildPromptVI() {
   const handId = $("#pHand")?.value || "";
   const handPoseId = $("#pHandPose")?.value || "";
   const faceFullId = $("#pFaceFull")?.value || "";
-const objectCount = document.getElementById('pObjectCount').value.trim();
-const camNote = document.getElementById('pCamNote').value.trim();
-if (camNote) {
-  prompt_vi += ` Ghi chú góc máy: ${camNote}.`;
-}
 
-   
-  const parts = [
-    `Nhân vật: ${c}.`,
-    `Biểu cảm: ${f}.`,
-    `Hành động: ${a}.`,
-    `Bối cảnh: ${bg}.`,
-    `Góc máy: ${cam}.`,
-    `Phong cách: ${st}.`
-  ];
+  const objectCountEl = document.getElementById("pObjectCount");
+  const objectCount = objectCountEl ? objectCountEl.value.trim() : "";
+  const camNoteEl = document.getElementById("pCamNote");
+  const camNote = camNoteEl ? camNoteEl.value.trim() : "";
+
+  const parts = [];
+
+  if (c)  parts.push(`Nhân vật: ${c}.`);
+  if (f)  parts.push(`Biểu cảm: ${f}.`);
+  if (a)  parts.push(`Hành động: ${a}.`);
+  if (bg) parts.push(`Bối cảnh: ${bg}.`);
+  if (cam) parts.push(`Góc máy: ${cam}.`);
+  if (st)  parts.push(`Phong cách: ${st}.`);
+
+  if (camNote) {
+    parts.push(`Ghi chú góc máy: ${camNote}.`);
+  }
 
   if (faceFullId && FACES_FULL?.faces) {
-    const ff = FACES_FULL.faces.find(x=>x.id===faceFullId);
-    if (ff) parts.push(`Biểu cảm chi tiết: ${ff.label_vi} (${ff.id}).`);
+    const ff = FACES_FULL.faces.find(x => x.id === faceFullId);
+    if (ff) {
+      const label = ff.label_vi || ff.label || ff.id;
+      parts.push(`Biểu cảm chi tiết: ${label} (${ff.id}).`);
+    }
   }
-if (object && objectCount) {
-  prompt_vi += ` Số lượng: ${objectCount}.`;
-  prompt_en += ` Quantity: ${objectCount}.`;
-}
 
   if (objId && OBJECTS?.objects) {
-    const obj = OBJECTS.objects.find(x=>x.id===objId);
-    if (obj) parts.push(`Vật thể: ${obj.label_vi} (${obj.id}).`);
+    const obj = OBJECTS.objects.find(x => x.id === objId);
+    if (obj) {
+      let line = `Vật thể: ${obj.label_vi || obj.label || obj.id}`;
+      if (objectCount) {
+        line += `, số lượng: ${objectCount}`;
+      }
+      line += ".";
+      parts.push(line);
+    }
   }
 
   if (motId && MOTIONS?.motions) {
-    const m = MOTIONS.motions.find(x=>x.id===motId);
-    if (m) parts.push(`Kiểu chuyển động: ${m.label_vi} (${m.id}).`);
+    const m = MOTIONS.motions.find(x => x.id === motId);
+    if (m) {
+      parts.push(`Kiểu chuyển động: ${m.label_vi || m.label || m.id}.`);
+    }
   }
 
   if (handId && HANDS?.hands) {
-    const h = HANDS.hands.find(x=>x.id===handId);
-    if (h) parts.push(`Bàn tay: ${h.label_vi} (${h.id}).`);
+    const h = HANDS.hands.find(x => x.id === handId);
+    if (h) {
+      parts.push(`Bàn tay: ${h.label_vi || h.label || h.id}.`);
+    }
   }
 
   if (handPoseId && HANDS?.poses) {
-    const hp = HANDS.poses.find(x=>x.id===handPoseId);
-    if (hp) parts.push(`Tư thế tay: ${hp.label_vi} (${hp.id}).`);
+    const hp = HANDS.poses.find(x => x.id === handPoseId);
+    if (hp) {
+      parts.push(`Tư thế tay: ${hp.label_vi || hp.label || hp.id}.`);
+    }
   }
 
-  parts.push(`Tông: hài đời thường, Việt Nam, motion comic sạch, nền rõ, nhân vật rõ, không chữ, không logo, tránh vibe Hàn/Idol.`);
+  parts.push("Tông: hài đời thường, Việt Nam, motion comic sạch, nền rõ, nhân vật rõ, không chữ, không logo, tránh vibe Hàn/Idol.");
 
   return parts.join(" ");
 }
+
 
 function currentPromptObj() {
   return {
