@@ -169,6 +169,9 @@ function buildPromptVI() {
   const objectCount = objectCountEl ? objectCountEl.value.trim() : "";
   const camNoteEl = document.getElementById("pCamNote");
   const camNote = camNoteEl ? camNoteEl.value.trim() : "";
+  const ratio = document.getElementById("pRatio").value;
+
+   prompt += ` Tỉ lệ khung hình: ${ratio}.`;
 
   const parts = [];
 
