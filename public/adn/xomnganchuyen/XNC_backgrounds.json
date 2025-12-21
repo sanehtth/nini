@@ -24,7 +24,61 @@
       "desc_en": "Quiet Vietnamese fishing village in the early morning, calm river or pond with small wooden boats, simple stilt houses with tin or thatched roofs, fishing nets hanging to dry, narrow dirt path along the water, low vegetation and lily pads near the shore, light morning mist and soft golden sunlight, wide composition suitable for both 16:9 and 9:16 crops, pastel green-brown palette, 2D chibi background, no text.",
       "tags": ["day", "village", "fishing", "river", "morning"]
     },
-    
+    {
+      "id": "xnc_bactu_house_interior_main",
+      "label": "Nội thất nhà gỗ Bác Tư (Góc rộng)",
+      "desc_en": "Interior of a traditional Vietnamese three-room wooden house (Nha Ba Gian), dark and mysterious atmosphere, wooden columns and furniture, shafts of sunlight (#F9F2A1) streaming through cracks in the door illuminating floating dust motes, dominant dark brown palette (#795C43, #A07856), spooky but cozy antique vibe, pastel 2D chibi background, no text",
+      "tags": [
+        "interior",
+        "home",
+        "vintage",
+        "mystery"
+      ]
+    },
+    {
+      "id": "xnc_bactu_altar_corner",
+      "label": "Góc bàn thờ gia tiên (Nhà Bác Tư)",
+      "desc_en": "Close-up of a traditional Vietnamese ancestor altar (Ban Tho), dark red wood with intricate carvings, incense bowl, candle holders, fruit tray, solemn and slightly intimidating atmosphere for kids, warm dim lighting, pastel 2D chibi background, no text",
+      "tags": [
+        "interior",
+        "altar",
+        "culture",
+        "spooky"
+      ]
+    },
+    {
+      "id": "xnc_bactu_wine_jar_shelf",
+      "label": "Kệ rượu thuốc (Hũ rượu rắn/tắc kè)",
+      "desc_en": "Wooden shelf displaying a large glass jar of medicinal wine (Ruou thuoc), inside is a snake or gecko suspended in yellow liquid (#E8C38F), looking distorted and funny-scary, dusty old books and radio cassette player nearby, vintage Vietnamese home corner, pastel 2D chibi style, no text",
+      "tags": [
+        "interior",
+        "prop",
+        "comedy",
+        "object"
+      ]
+    },
+    {
+      "id": "xnc_harvest_field_straw",
+      "label": "Cánh đồng sau mùa gặt (Đống rơm)",
+      "desc_en": "Vietnamese countryside harvested rice field, dry golden stubble on the ground, many large haystacks piled high like mountains, rustic brown and gold palette, open sky, peaceful afternoon atmosphere, warm lighting, pastel 2D chibi background, no text",
+      "tags": [
+        "countryside",
+        "harvest",
+        "straw",
+        "day"
+      ]
+    },
+    {
+      "id": "xnc_bactu_rambutan_garden",
+      "label": "Vườn chôm chôm chín đỏ (Nhà Bác Tư)",
+      "desc_en": "Vietnamese fruit garden, rambutan trees full of ripe red fruit hanging from branches, lush green foliage, rough wooden tree trunks, dappled sunlight filtering through leaves, dominant green and brown palette with bright red accents (#FF6240), pastel 2D chibi background, no text",
+      "tags": [
+        "garden",
+        "fruit",
+        "nature",
+        "day"
+      ]
+    },
     {
       "id": "xnc_village_day",
       "label": "Xóm quê ban ngày",
