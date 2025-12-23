@@ -87,7 +87,70 @@
   "artStyle": "Pastel chibi 2D, Vietnamese countryside vibe",
   "prompt": "Vietnamese middle-aged man, age around 45–50, thin body, slightly hunched posture, awkward and guilty expression, clearly afraid of his wife, nervous smile, scratching head, eyes looking sideways. Wearing simple worn short-sleeve shirt, old trousers, plastic sandals. Body language shows hesitation and comedy. Vietnamese family house interior, warm indoor light. Style: pastel chibi 2D, Vietnamese countryside vibe, clean illustration, expressive facial acting, humorous, no text."
 },
-
+{
+      "id": "thief_chicken",
+      "name": "Tên Trộm Gà",
+      "ageRole": "Thanh niên, phản diện hài hước",
+      "summary": "Kẻ trộm xui xẻo, chuyên đi bắt gà hàng xóm nhưng toàn bị phát hiện hoặc bị gà rượt lại.",
+      "appearance": "Đội mũ nồi hoặc trùm đầu, đeo mặt nạ che mắt kiểu hoạt hình, đi khom lưng lén lút, vai vác bao tải (có con gà lòi đầu ra).",
+      "outfit": "Áo thun kẻ sọc đen trắng (kiểu tù nhân hoạt hình) hoặc đồ đen bó sát, quần tối màu, giày sneaker cũ.",
+      "personality": [
+        "lén lút",
+        "xui xẻo",
+        "hay giật mình",
+        "tấu hài"
+      ],
+      "artStyle": "Pastel chibi 2D, comedic cartoon style",
+      "prompt": "Cartoon thief character, sneaky pose, wearing a black eye mask and striped black-and-white shirt, carrying a burlap sack on shoulder with a chicken head peeking out. Expression is mischievous but nervous. Comedic villain vibe, full body, pastel chibi 2D style, white background."
+    },
+    {
+      "id": "ba_tam_pho",
+      "name": "Bà Tám Bán Phở",
+      "ageRole": "Trung niên, khoảng 50 tuổi",
+      "summary": "Bà chủ quán phở đầu ngõ, kiêm 'đài phát thanh' của xóm. Biết tuốt mọi chuyện trong nhà ngoài phố.",
+      "appearance": "Dáng người đậm đà phúc hậu, tóc xoăn ngắn (kiểu các bà thím), mặt hay cười hớn hở để tám chuyện.",
+      "outfit": "Mặc đồ bộ vải lanh in hoa sặc sỡ (đặc trưng các mẹ ở nhà), đi dép lê.",
+      "personality": [
+        "nhiều chuyện",
+        "hào sảng",
+        "hay cười lớn",
+        "thích buôn dưa lê"
+      ],
+      "artStyle": "Pastel chibi 2D, Vietnamese daily life",
+      "prompt": "Vietnamese middle-aged woman, chubby and friendly, short curly hair (ajumma style). Wearing colorful floral pajamas (Do Bo - Vietnamese home wear), standing in a relaxed pose as if gossiping. Expressive face, wide mouth chatting. Pastel chibi 2D style, authentic Vietnamese countryside vibe."
+    },
+    {
+      "id": "hai_ngan",
+      "name": "Cô Hai Ngàn",
+      "ageRole": "Thiếu nữ, khoảng 20-25 tuổi",
+      "summary": "Cô gái bán sữa (sữa đậu nành/sữa bò) hiền lành, nết na, là 'crush' của nhiều thanh niên trong xóm.",
+      "appearance": "Gương mặt trái xoan xinh xắn, dịu dàng, tóc đen dài buộc thấp hoặc tết đuôi sam.",
+      "outfit": "Đội nón lá, mặc áo bà ba màu nâu đất giản dị, quần lụa đen, tay ôm bình sữa nhôm lớn.",
+      "personality": [
+        "dịu dàng",
+        "chăm chỉ",
+        "e thẹn",
+        "ngây thơ"
+      ],
+      "artStyle": "Pastel chibi 2D, Vietnamese rustic beauty",
+      "prompt": "Beautiful Vietnamese young woman, gentle and shy expression. Wearing a traditional brown shirt (ao ba ba) and black trousers, wearing a conical hat (non la). Holding a large metal milk churn. Rustic countryside beauty, soft lighting, pastel chibi 2D style."
+    },
+    {
+      "id": "shipper_guy",
+      "name": "Anh Shipper",
+      "ageRole": "Thanh niên năng động",
+      "summary": "Anh giao hàng xuất hiện mọi lúc mọi nơi, luôn vội vã nhưng nhiệt tình.",
+      "appearance": "Mắt sáng, miệng cười tươi rói, dáng vẻ nhanh nhẹn, luôn ngồi trên xe máy hoặc cầm gói hàng.",
+      "outfit": "Đồng phục màu vàng nổi bật (áo khoác và mũ bảo hiểm 3/4 màu vàng), thùng hàng 'Giao Hàng Nhanh' phía sau xe.",
+      "personality": [
+        "nhanh nhảu",
+        "nhiệt tình",
+        "luôn vội vàng",
+        "vui vẻ"
+      ],
+      "artStyle": "Pastel chibi 2D, energetic cartoon style",
+      "prompt": "Delivery driver character riding a scooter, wearing a bright yellow uniform jacket and yellow helmet. Big yellow delivery box on the back of the bike with text 'GIAO HANG'. Cheerful expression, waving hand, motion lines indicating speed. Cute pastel chibi 2D style, white background."
+    },
     {
       "id": "tumla",
       "name": "Tùm-La",
