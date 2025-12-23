@@ -121,6 +121,41 @@
       "label": "Tự mãn mỉa mai",
       "desc_en": "one-sided smirk, eyebrow slightly raised, subtle mocking expression",
       "intensity": "medium"
+    },
+    {
+      "id": "happy_charming",
+      "label": "Cười tỏa nắng / Quyến rũ",
+      "desc_vi": "Nụ cười tỏa nắng rạng rỡ, ánh mắt cong nhẹ quyến rũ và tự tin",
+      "desc_en": "bright charming smile, eyes gently curved, confident and radiant look",
+      "intensity": "medium_high"
+    },
+    {
+      "id": "love_struck",
+      "label": "Mê mẩn / Say nắng",
+      "desc_vi": "Mắt lấp lánh hình trái tim, mặt đỏ bừng, biểu cảm mơ màng say đắm",
+      "desc_en": "eyes sparkling with tiny hearts, strong blush, dreamy lost-in-love expression",
+      "intensity": "very_high"
+    },
+    {
+      "id": "fanatic_scream",
+      "label": "Fan cuồng / Cháy hết mình",
+      "desc_vi": "Mắt mở trừng, miệng há to la hét, bùng nổ năng lượng phấn khích tột độ",
+      "desc_en": "eyes wide, mouth open shouting, overexcited fan energy bursting out",
+      "intensity": "very_high"
+    },
+    {
+      "id": "innocent_blank",
+      "label": "Ngây thơ vô số tội",
+      "desc_vi": "Mắt mở to, mặt nghệt ra ngây thơ nhưng dễ thương, như không hiểu chuyện gì",
+      "desc_en": "wide open eyes, blank but cute look, seems not understanding the situation",
+      "intensity": "low"
+    },
+    {
+      "id": "smug_sarcastic",
+      "label": "Tự mãn mỉa mai",
+      "desc_vi": "Cười nhếch mép, nhướng mày nhẹ, vẻ mặt châm chọc mỉa mai",
+      "desc_en": "one-sided smirk, eyebrow slightly raised, subtle mocking expression",
+      "intensity": "medium"
     }
   ]
 }
