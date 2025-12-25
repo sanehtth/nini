@@ -155,11 +155,14 @@
     
     // === CẤU HÌNH TÊN KEY (SỬA Ở ĐÂY NẾU ADMIN PANEL LƯU TÊN KHÁC) ===
     // Bạn hãy sửa lại 3 dòng này cho khớp với cách bạn lưu trong localStorage
-    const KEYS = {
-        google: 'gemini',  // Ví dụ: 'google_key'
-        openai: 'openai',  // Ví dụ: 'openai_key'
-        grok:   'grok'     // Ví dụ: 'grok_key'
-    };
+   // const PROFILE_ID = "default"; // nếu bạn lưu profile khác thì đổi ở đây
+
+const KEYS = {
+  gemini: `lq_api_${PROFILE_ID}_gemini`,
+  openai: `lq_api_${PROFILE_ID}_openai`,
+  grok:   `lq_api_${PROFILE_ID}_grok`,
+};
+
     
     let charData = [];
     let currentMode = 'funny';
@@ -308,4 +311,5 @@
 
 </body>
 </html>
+
 
