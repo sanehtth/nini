@@ -3,58 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xóm Ngàn Chuyện Studio - Nini Funny</title>
+    <title>Xóm Ngàn Chuyện Studio - DNA Version</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="green-theme.css">
+    
+    <style>
+        /* =================================================================
+           CSS RIÊNG CHO TRANG TOOL (GHI ĐÈ ĐỂ KHỚP STYLE ADMIN PANEL)
+           DNA Colors: Green #8CCB7A | Brown #B9885D | Yellow #F4E8A2
+           ================================================================= */
+        
+        /* 1. NỀN & KHUNG BAO (Giống Admin Panel) */
+        body {
+            background: linear-gradient(135deg, #CDECC1 0%, #F4E8A2 100%); /* Gradient Xanh -> Vàng */
+            font-family: 'Segoe UI', sans-serif;
+            color: #5D4037; /* Chữ màu nâu đất */
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .studio-card {
+            background: rgba(255, 255, 255, 0.95);
+            width: 100%;
+            max-width: 1000px;
+            border-radius: 30px; /* Bo góc cực lớn như Admin */
+            box-shadow: 0 20px 50px rgba(139, 94, 60, 0.15); /* Bóng màu nâu nhẹ */
+            overflow: hidden;
+            border: 4px solid #fff;
+        }
+
+        /* 2. HEADER (Màu Xanh DNA #8CCB7A) */
+        .studio-header {
+            background: #8CCB7A;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+
+        .header-title h2 { margin: 0; font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .header-title p { margin: 5px 0 0; font-size: 13px; opacity: 0.9; color: #F4E8A2; }
+
+        .admin-badge {
+            background: #B9885D; /* Nâu */
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+        }
+
+        /* 3. LAYOUT NỘI DUNG */
+        .studio-body {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr; /* Chia cột: Input to hơn, Kết quả nhỏ hơn */
+            gap: 40px;
+        }
+
+        /* 4. INPUT STYLES (Mềm mại) */
+        .input-group { margin-bottom: 20px; }
+        .label-dna {
+            display: block;
+            color: #8CCB7A;
+            font-weight: 800;
+            margin-bottom: 8px;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .input-dna {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #E0E0E0;
+            border-radius: 15px; /* Bo tròn input */
+            background: #FAFAFA;
+            font-size: 14px;
+            transition: 0.3s;
+            color: #5D4037;
+        }
+
+        .input-dna:focus {
+            border-color: #8CCB7A;
+            background: #fff;
+            outline: none;
+            box-shadow: 0 0 0 4px #CDECC1;
+        }
+
+        /* 5. CHARACTER ROW */
+        .char-row-dna {
+            background: #F1F8E9;
+            border: 1px dashed #8CCB7A;
+            padding: 10px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* 6. BUTTONS (Style Viên thuốc - Pill Shape) */
+        .btn-dna-primary {
+            background: #B9885D; /* Màu Nâu chủ đạo */
+            color: white;
+            border: none;
+            padding: 15px;
+            width: 100%;
+            border-radius: 50px; /* Pill shape */
+            font-weight: 800;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #8D6E63; /* Hiệu ứng 3D */
+            transition: transform 0.1s;
+            text-transform: uppercase;
+        }
+
+        .btn-dna-primary:hover {
+            transform: translateY(2px);
+            box-shadow: 0 4px 0 #8D6E63;
+            background: #A1887F;
+        }
+
+        .btn-dna-secondary {
+            background: white;
+            border: 2px solid #8CCB7A;
+            color: #8CCB7A;
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn-dna-secondary:hover { background: #F1F8E9; }
+
+        .btn-remove-dna {
+            background: #ef9a9a; color: #c62828;
+            width: 30px; height: 30px; border-radius: 50%; border: none; font-weight: bold; cursor: pointer;
+        }
+
+        /* 7. RESULT BOX (Giống bảng đen hoặc giấy cũ) */
+        .result-box-dna {
+            background: #FFFDE7; /* Giấy vàng cũ */
+            border: 2px dashed #F4E8A2;
+            border-radius: 20px;
+            padding: 20px;
+            height: fit-content;
+        }
+        
+        .prompt-display {
+            background: #3E2723; /* Nâu đen (như bảng gỗ) */
+            color: #C8F3E0; /* Chữ phấn xanh */
+            padding: 20px;
+            border-radius: 15px;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            min-height: 200px;
+            white-space: pre-wrap;
+            position: relative;
+        }
+
+        .copy-tag {
+            position: absolute; top: -10px; right: -10px;
+            background: #8CCB7A; color: white; padding: 5px 15px;
+            border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .studio-body { grid-template-columns: 1fr; }
+            .studio-card { border-radius: 15px; margin: 10px; width: auto; }
+        }
+    </style>
 </head>
 <body>
 
-<header>
-    <h1>🎬 Xóm Ngàn Chuyện Studio</h1>
-    <div class="subtitle">Trình tạo Prompt chuẩn Asset (Background & Character)</div>
-    <div class="user-info">
-        <span>Admin Mode</span>
-        <button class="profile-btn">Settings</button>
-    </div>
-</header>
-
-<div class="container studio-container">
-    
-    <div id="statusBar" class="alert" style="display:block">
-        🔄 Đang kết nối tới kho dữ liệu...
+<div class="studio-card">
+    <div class="studio-header">
+        <div class="header-title">
+            <h2>🎬 Xóm Ngàn Chuyện Studio</h2>
+            <p>Trình tạo Prompt chuẩn Asset & DNA Brand</p>
+        </div>
+        <div class="admin-badge">Admin Mode</div>
     </div>
 
-    <div class="studio-grid">
+    <div id="statusBar" style="background:#C8F3E0; color:#2E7D32; padding:10px; text-align:center; font-size:13px; display:none;">
+        🔄 Đang kết nối dữ liệu...
+    </div>
+
+    <div class="studio-body">
         
-        <div class="studio-panel">
+        <div class="form-section">
             
             <div class="input-group">
-                <label class="section-label">1. CHỌN BỐI CẢNH</label>
-                <select id="bgSelect" class="studio-input">
-                    <option>-- Đang tải... --</option>
+                <label class="label-dna">1. Chọn Bối Cảnh (Background)</label>
+                <select id="bgSelect" class="input-dna">
+                    <option>-- Đang tải dữ liệu --</option>
                 </select>
-                <input type="text" id="customBg" class="studio-input" placeholder="Hoặc nhập bối cảnh tùy chỉnh...">
+                <input type="text" id="customBg" class="input-dna" style="margin-top:10px" placeholder="Hoặc nhập bối cảnh tùy chỉnh...">
             </div>
 
             <div class="input-group">
-                <label class="section-label">2. ĐỘI HÌNH NHÂN VẬT</label>
-                <div id="charList" class="char-list"></div>
-                <button class="sub-btn w-100" onclick="addChar()">+ Thêm nhân vật</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <label class="label-dna" style="margin:0">2. Đội Hình Nhân Vật</label>
+                    <button class="btn-dna-secondary" onclick="addChar()">+ Thêm</button>
+                </div>
+                <div id="charList"></div>
             </div>
 
             <div class="input-group">
-                <label class="section-label">3. HÀNH ĐỘNG / CỐT TRUYỆN</label>
-                <textarea id="actionInput" class="studio-input" rows="3" placeholder="Mô tả: TùmLa đang lén ăn cá nướng, mặt lấm lét..."></textarea>
+                <label class="label-dna">3. Hành Động / Cốt Truyện</label>
+                <textarea id="actionInput" class="input-dna" rows="3" placeholder="Ví dụ: TùmLa đang lén ăn cá nướng, mặt lấm lét..."></textarea>
             </div>
 
             <div class="input-group">
-                <label class="section-label">4. CẤU HÌNH ẢNH</label>
-                <div class="config-row">
-                    <select id="styleSelect" class="studio-input">
+                <label class="label-dna">4. Cấu Hình Ảnh</label>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <select id="styleSelect" class="input-dna">
                         <option value="video">🎬 Video Hài (Sáng/Vui)</option>
                         <option value="podcast">🎙️ Podcast (Tối/Ma mị)</option>
                     </select>
-                    <select id="ratioSelect" class="studio-input">
+                    <select id="ratioSelect" class="input-dna">
                         <option value="--ar 16:9">YouTube (16:9)</option>
                         <option value="--ar 9:16">Shorts (9:16)</option>
                         <option value="--ar 1:1">Vuông (1:1)</option>
@@ -62,35 +236,31 @@
                 </div>
             </div>
 
-            <button class="main-btn w-100" onclick="generate()">⚡ TẠO PROMPT NGAY</button>
+            <button class="btn-dna-primary" onclick="generate()">⚡ TẠO PROMPT NGAY</button>
         </div>
 
-        <div class="studio-panel result-panel">
-            <label class="section-label">KẾT QUẢ PROMPT</label>
-            <div class="prompt-card">
-                <div id="finalPrompt" class="prompt-content">
-                    (Kết quả sẽ hiện ở đây...)
+        <div class="result-section">
+            <div class="result-box-dna">
+                <label class="label-dna">Kết Quả Prompt</label>
+                <div class="prompt-display">
+                    <div id="finalPrompt">(Kết quả sẽ hiện ở đây...)</div>
+                    <button class="copy-tag" onclick="copyPrompt()">📋 COPY</button>
                 </div>
-                <button class="copy-btn-floating" onclick="copyPrompt()">📋 Copy</button>
-            </div>
-            
-            <div class="tips-box">
-                <strong>💡 Tips:</strong>
-                <ul>
-                    <li>Chọn <strong>Podcast</strong> để có ảnh tối, ma mị.</li>
-                    <li>Chọn <strong>Video Hài</strong> để có ảnh sáng, rực rỡ.</li>
-                    <li>Thêm nhiều nhân vật để ảnh sinh động hơn.</li>
-                </ul>
+                <div style="margin-top:15px; font-size:13px; color:#5D4037;">
+                    <strong>💡 Tips:</strong>
+                    <ul style="padding-left:20px; margin-top:5px;">
+                        <li>Prompt đã tích hợp sẵn mã màu DNA (#8CCB7A, #B9885D).</li>
+                        <li>Chọn Podcast để có ánh sáng đêm "Ma mị nhưng ấm cúng".</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
-
 </div>
 
 <script>
-    // CẤU HÌNH ĐƯỜNG DẪN (Sửa lại cho đúng thư mục của bạn)
+    // CẤU HÌNH ĐƯỜNG DẪN (GIỮ NGUYÊN)
     const DATA_PATH = "adn/xomnganchuyen/"; 
-    
     const BG_URL = DATA_PATH + "XNC_backgrounds.json";
     const CHAR_URL = DATA_PATH + "XNC_characters.json";
 
@@ -98,26 +268,17 @@
 
     window.onload = async () => {
         const status = document.getElementById('statusBar');
+        status.style.display = 'block';
         try {
             const [bgRes, charRes] = await Promise.all([fetch(BG_URL), fetch(CHAR_URL)]);
             if(!bgRes.ok || !charRes.ok) throw new Error("Lỗi đọc file JSON");
-
-            const bgJson = await bgRes.json();
-            const charJson = await charRes.json();
-
-            bgData = bgJson.backgrounds || [];
-            charData = charJson.characters || [];
-
-            populateBg();
-            addChar();
-            
-            status.innerHTML = `✅ <strong>Sẵn sàng!</strong> Đã tải ${bgData.length} bối cảnh & ${charData.length} nhân vật.`;
-            status.style.background = "#dcfce7"; 
-            status.style.color = "#15803d";
-
+            bgData = (await bgRes.json()).backgrounds || [];
+            charData = (await charRes.json()).characters || [];
+            populateBg(); addChar();
+            status.style.display = 'none';
         } catch (e) {
-            console.error(e);
-            status.innerHTML = `⚠️ <strong>Lỗi kết nối:</strong> Không tìm thấy dữ liệu tại '${DATA_PATH}'.`;
+            status.innerHTML = `⚠️ Lỗi kết nối: ${e.message}`;
+            status.style.background = "#FFCDD2"; status.style.color = "#C62828";
         }
     };
 
@@ -135,7 +296,7 @@
 
     function addChar() {
         const div = document.createElement('div');
-        div.className = 'char-row-studio';
+        div.className = 'char-row-dna';
         let opts = `<option value="">-- Chọn nhân vật --</option>`;
         charData.forEach(c => {
             let desc = c.prompt || c.base_desc_en || c.desc_en || (c.appearance + " " + c.outfit);
@@ -143,24 +304,21 @@
             opts += `<option value="${c.id}" data-desc="${desc}">${c.name}</option>`;
         });
         div.innerHTML = `
-            <select class="studio-input char-sel">${opts}</select>
-            <input type="text" class="studio-input char-act" placeholder="Hành động...">
-            <button class="remove-btn" onclick="this.parentElement.remove()">×</button>
+            <select class="input-dna char-sel" style="border:none; background:transparent;">${opts}</select>
+            <input type="text" class="input-dna char-act" style="border:none; background:white; width:40%;" placeholder="Hành động...">
+            <button class="btn-remove-dna" onclick="this.parentElement.remove()">×</button>
         `;
         document.getElementById('charList').appendChild(div);
     }
-//============== cap nhat them style DNA cua xom =====================
-   function generate() {
-        // 1. LẤY BỐI CẢNH
+
+    function generate() {
         const bgSel = document.getElementById('bgSelect');
         const customBg = document.getElementById('customBg').value;
         const bgDesc = customBg || bgSel.options[bgSel.selectedIndex]?.dataset.desc || "";
-        
         if(!bgDesc) { alert("Chưa chọn bối cảnh!"); return; }
 
-        // 2. LẤY NHÂN VẬT (Vòng lặp qua danh sách)
         let chars = [];
-        document.querySelectorAll('.char-row-studio').forEach(row => {
+        document.querySelectorAll('.char-row-dna').forEach(row => {
             const sel = row.querySelector('.char-sel');
             const act = row.querySelector('.char-act').value;
             if(sel.value) {
@@ -170,30 +328,20 @@
             }
         });
 
-        // 3. LẤY CẤU HÌNH INPUT
         const action = document.getElementById('actionInput').value;
         const style = document.getElementById('styleSelect').value;
         const ratio = document.getElementById('ratioSelect').value;
 
-        // --- CẬP NHẬT: THÊM DNA MÀU SẮC CỦA XÓM ---
-        // Định nghĩa bảng màu chuẩn từ file style.json của bạn
+        // DNA PALETTE CỐ ĐỊNH
         const brandDNA = "**BRAND PALETTE:** Primary Green (#8CCB7A), Earthy Brown (#B9885D), Accent Yellow (#F4E8A2). Soft Pastel Tones (#CDECC1, #D8BFA8).";
-
-        // --- CẬP NHẬT: MOOD & LIGHTING DỰA TRÊN STYLE ---
-        let moodSettings = "";
         
+        let moodSettings = "";
         if (style === 'podcast') {
-            // Podcast: Tối, Ma mị nhưng vẫn giữ chất Xóm (Dùng màu Nâu + Vàng làm điểm sáng trong đêm)
-            moodSettings = `**MOOD & ATMOSPHERE:** Mysterious, Spooky but cozy, Storytelling vibe.
-**LIGHTING & COLOR:** Dim lighting, Vignette effect. Dark Night Blue atmosphere mixed with Warm Brown (#B9885D) shadows and soft Yellow (#F4E8A2) highlights (lantern/moon/candle).
-**VISUALS:** Microphone icon in corner (optional).`;
+            moodSettings = `**MOOD & ATMOSPHERE:** Mysterious, Spooky but cozy, Storytelling vibe.\n**LIGHTING & COLOR:** Dim lighting, Vignette effect. Dark Night Blue atmosphere mixed with Warm Brown (#B9885D) shadows and soft Yellow (#F4E8A2) highlights.`;
         } else {
-            // Video Hài: Sáng, Rực rỡ (Dùng màu Xanh + Vàng làm chủ đạo)
-            moodSettings = `**MOOD & ATMOSPHERE:** Bright, Energetic, Funny, High Contrast, Cartoon motion lines.
-**LIGHTING & COLOR:** Sunny daylight. Dominant Fresh Green (#8CCB7A) and bright Sunny Yellow (#F4E8A2). Vibrant and colorful.`;
+            moodSettings = `**MOOD & ATMOSPHERE:** Bright, Energetic, Funny, High Contrast, Cartoon motion lines.\n**LIGHTING & COLOR:** Sunny daylight. Dominant Fresh Green (#8CCB7A) and bright Sunny Yellow (#F4E8A2).`;
         }
 
-        // 4. TẠO PROMPT CUỐI CÙNG
         const final = `
 (YouTube Thumbnail), 2D animation style, Vietnamese countryside aesthetic, pastel chibi art.
 ${brandDNA}
@@ -205,24 +353,18 @@ ${chars.join("\n")}
 
 ${moodSettings}
 
-High quality, 8k resolution, detailed art. ${ratio} --niji 6
-        `.trim();
+High quality, 8k resolution. ${ratio} --niji 6`.trim();
 
-        // 5. HIỂN THỊ KẾT QUẢ
         document.getElementById('finalPrompt').innerText = final;
     }
-//==========het ham cap nhat DNA=====================
+
     function copyPrompt() {
         navigator.clipboard.writeText(document.getElementById('finalPrompt').innerText);
-        const btn = document.querySelector('.copy-btn-floating');
-        btn.innerText = "Đã Copy!";
-        btn.style.background = "#15803d";
-        setTimeout(() => { btn.innerText = "📋 Copy"; btn.style.background = "#e11d48"; }, 2000);
+        const btn = document.querySelector('.copy-tag');
+        btn.innerText = "ĐÃ COPY!"; btn.style.background = "#1B5E20";
+        setTimeout(() => { btn.innerText = "📋 COPY"; btn.style.background = "#8CCB7A"; }, 2000);
     }
 </script>
 
 </body>
 </html>
-
-
-
