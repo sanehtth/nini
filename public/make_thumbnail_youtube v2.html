@@ -1,244 +1,199 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xóm Ngàn Chuyện Studio V3 - Asset Manager</title>
+    <title>Xóm Ngàn Chuyện Studio V6 - Local Path</title>
     <style>
-        :root { --primary: #FFD700; --bg: #121212; --panel: #1e1e1e; --text: #e0e0e0; --accent: #FF4500; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; line-height: 1.5; }
-        .container { max-width: 1000px; margin: 0 auto; background: var(--panel); padding: 30px; border-radius: 12px; border: 1px solid #333; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        h1 { text-align: center; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-top: 0; }
-        .subtitle { text-align: center; color: #888; font-size: 0.9em; margin-bottom: 25px; }
-
-        /* INPUT SECTIONS */
-        .section-title { color: #fff; font-weight: bold; margin: 20px 0 10px 0; border-left: 4px solid var(--primary); padding-left: 10px; text-transform: uppercase; font-size: 0.9rem; }
-        select, textarea, input { width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; color: #fff; border-radius: 6px; font-size: 14px; margin-bottom: 10px; }
-        select:focus, textarea:focus, input:focus { border-color: var(--primary); outline: none; }
+        :root { --primary: #FFD700; --bg: #121212; --panel: #1e1e1e; --text: #e0e0e0; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: var(--panel); padding: 30px; border-radius: 12px; border: 1px solid #333; }
+        h1 { text-align: center; color: var(--primary); margin-top: 0; }
+        .status-bar { text-align: center; font-size: 0.9em; margin-bottom: 20px; padding: 10px; background: #252525; border-radius: 6px; }
         
-        /* DYNAMIC CHARACTER LIST */
-        .char-row { display: grid; grid-template-columns: 2fr 1fr auto; gap: 10px; align-items: center; background: #252525; padding: 10px; border-radius: 6px; margin-bottom: 8px; border: 1px dashed #444; }
-        .btn-add { background: #333; color: var(--primary); border: 1px dashed var(--primary); padding: 8px; width: 100%; cursor: pointer; border-radius: 6px; font-weight: bold; transition: 0.3s; }
-        .btn-add:hover { background: #2a2a2a; }
-        .btn-remove { background: #ff4444; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-
-        /* MAIN BUTTON */
-        .btn-generate { background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; font-weight: 800; font-size: 1.1rem; padding: 15px; border: none; width: 100%; border-radius: 8px; cursor: pointer; text-transform: uppercase; margin-top: 20px; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3); }
-        .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4); }
-
-        /* RESULT AREA */
-        #resultArea { margin-top: 30px; display: none; animation: fadeIn 0.5s; }
-        .result-card { background: #252525; padding: 20px; border-radius: 8px; border-left: 4px solid var(--primary); margin-bottom: 20px; }
-        .result-card.podcast { border-left-color: #9C27B0; }
-        .result-card.video { border-left-color: #FF4500; }
+        /* FORM ELEMENTS */
+        .section-header { color: #fff; font-weight: bold; margin: 20px 0 10px; border-left: 3px solid var(--primary); padding-left: 10px; }
+        select, input, textarea { width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; color: #fff; border-radius: 6px; margin-bottom: 10px; box-sizing: border-box; }
+        select:focus, input:focus, textarea:focus { border-color: var(--primary); outline: none; }
         
-        .prompt-box { background: #111; color: #a5d6a7; font-family: monospace; padding: 15px; border-radius: 6px; margin-top: 10px; white-space: pre-wrap; position: relative; border: 1px solid #333; font-size: 13px; }
-        .copy-btn { position: absolute; top: 5px; right: 5px; background: #333; color: white; border: 1px solid #555; padding: 4px 10px; font-size: 11px; cursor: pointer; border-radius: 4px; }
-        .copy-btn:hover { background: #555; }
+        /* CHARACTERS */
+        .char-row { display: grid; grid-template-columns: 2fr 1fr auto; gap: 10px; margin-bottom: 10px; }
+        .btn-add { width: 100%; padding: 10px; background: #333; color: var(--primary); border: 1px dashed var(--primary); cursor: pointer; border-radius: 6px; }
+        .btn-remove { background: #ff4444; color: white; border: none; width: 30px; border-radius: 4px; cursor: pointer; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* BUTTONS */
+        .btn-gen { width: 100%; padding: 15px; background: linear-gradient(135deg, #FFD700, #FFA500); color: black; font-weight: bold; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer; margin-top: 20px; }
+        .btn-gen:hover { transform: translateY(-2px); }
+
+        /* RESULT */
+        #resultArea { margin-top: 30px; display: none; }
+        .prompt-box { background: #111; padding: 15px; border-radius: 6px; border: 1px solid #444; color: #a5d6a7; font-family: monospace; white-space: pre-wrap; position: relative; }
+        .copy-btn { position: absolute; top: 10px; right: 10px; background: #333; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Xóm Ngàn Chuyện Studio V3</h1>
-    <p class="subtitle">Trình tạo Prompt chuẩn Asset (Background & Character)</p>
+    <h1>🎬 Xóm Ngàn Chuyện Studio V6</h1>
+    
+    <div id="statusBar" class="status-bar">
+        🔄 Đang tải dữ liệu từ server...
+    </div>
 
-    <div class="section-title">1. Chọn Bối Cảnh (Background)</div>
-    <select id="bgSelect">
-        <option value="">-- Chọn bối cảnh có sẵn --</option>
-        </select>
-    <input type="text" id="customBg" placeholder="Hoặc nhập bối cảnh tùy chỉnh (nếu không có trong list)...">
+    <div class="section-header">1. CHỌN BỐI CẢNH</div>
+    <select id="bgSelect"><option>-- Đang tải... --</option></select>
+    <input type="text" id="customBg" placeholder="Hoặc nhập bối cảnh tùy chỉnh...">
 
-    <div class="section-title">2. Chọn Nhân Vật (Characters)</div>
-    <div id="charContainer">
-        </div>
-    <button class="btn-add" onclick="addCharRow()">+ Thêm nhân vật vào cảnh</button>
+    <div class="section-header">2. CHỌN NHÂN VẬT</div>
+    <div id="charList"></div>
+    <button class="btn-add" onclick="addChar()">+ Thêm nhân vật</button>
 
-    <div class="section-title">3. Hành động / Cốt truyện</div>
-    <textarea id="actionInput" rows="3" placeholder="Mô tả hành động cụ thể: Ví dụ: TùmLa đang lén cầm con cá nướng, mặt lấm lét nhìn quanh..."></textarea>
+    <div class="section-header">3. CỐT TRUYỆN / HÀNH ĐỘNG</div>
+    <textarea id="actionInput" rows="3" placeholder="Mô tả: TùmLa đang lén ăn cá nướng, mặt lấm lét..."></textarea>
 
-    <div class="section-title">4. Loại nội dung</div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <select id="typeSelect">
-            <option value="video">🎬 Video Hài / Shorts (Sáng, Vui)</option>
-            <option value="podcast">🎙️ Podcast / Chuyện ma (Tối, Chill)</option>
+    <div class="section-header">4. CẤU HÌNH</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <select id="styleSelect">
+            <option value="video">🎬 Video Hài (Sáng/Vui)</option>
+            <option value="podcast">🎙️ Podcast (Tối/Ma mị)</option>
         </select>
         <select id="ratioSelect">
-            <option value="--ar 16:9">Ngang (YouTube 16:9)</option>
-            <option value="--ar 9:16">Dọc (Shorts 9:16)</option>
+            <option value="--ar 16:9">YouTube Ngang (16:9)</option>
+            <option value="--ar 9:16">Shorts Dọc (9:16)</option>
+            <option value="--ar 1:1">Vuông (1:1)</option>
         </select>
     </div>
 
-    <button class="btn-generate" onclick="generatePrompt()">⚡ TẠO PROMPT NGAY</button>
+    <button class="btn-gen" onclick="generate()">⚡ TẠO PROMPT</button>
 
-    <div id="resultArea"></div>
+    <div id="resultArea">
+        <div class="section-header">KẾT QUẢ:</div>
+        <div class="prompt-box">
+            <div id="finalPrompt"></div>
+            <button class="copy-btn" onclick="copyPrompt()">COPY</button>
+        </div>
+    </div>
 </div>
 
 <script>
-    // ================= DỮ LIỆU TỪ FILE JSON CỦA BẠN =================
+    // ============================================================
+    // CẤU HÌNH ĐƯỜNG DẪN (QUAN TRỌNG)
+    // Dựa vào ảnh bạn gửi, file JSON nằm trong folder "adn/xomnganchuyen/"
+    // Nếu bạn đặt file HTML này CÙNG CHỖ với file JSON, hãy sửa dòng dưới thành: "./"
     
-    const backgrounds = [
-        { id: "xnc_riverside_night", label: "Bờ sông đêm (cúp điện)", desc: "Vietnamese countryside riverside at night, wooden bridge, faint moonlight, soft mist, green-brown palette, cozy but slightly spooky, pastel 2D chibi" },
-        { id: "xnc_sidewalk_milkshop_morning", label: "Vỉa hè quán sữa Hai Ngàn (sáng)", desc: "Vietnamese street sidewalk milk stall in the morning, simple metal cart with sign 'SỮA TƯƠI HAI NGÀN', glass jars, small plastic stools, warm soft daylight, pastel 2D chibi background" },
-        { id: "xnc_fishing_village_morning", label: "Làng câu cá buổi sáng", desc: "Quiet Vietnamese fishing village in the early morning, calm river, simple stilt houses, fishing nets, light morning mist, pastel green-brown palette, 2D chibi background" },
-        { id: "xnc_bactu_house_interior_main", label: "Nội thất nhà gỗ Bác Tư", desc: "Interior of a traditional Vietnamese three-room wooden house, dark and mysterious, wooden columns, shafts of sunlight streaming through cracks, dark brown palette, spooky but cozy antique vibe" },
-        { id: "xnc_bactu_altar_corner", label: "Góc bàn thờ gia tiên", desc: "Close-up of a traditional Vietnamese ancestor altar, dark red wood, incense bowl, candle holders, solemn atmosphere, warm dim lighting" },
-        { id: "xnc_harvest_field_straw", label: "Cánh đồng sau mùa gặt (Đống rơm)", desc: "Vietnamese countryside harvested rice field, dry golden stubble, large haystacks piled high, rustic brown and gold palette, peaceful afternoon" },
-        { id: "xnc_bactu_rambutan_garden", label: "Vườn chôm chôm chín đỏ", desc: "Vietnamese fruit garden, rambutan trees full of ripe red fruit, lush green foliage, dappled sunlight, green and brown palette with bright red accents" },
-        { id: "xnc_garden_bolo", label: "Vườn cây nhà Bolo", desc: "Vietnamese family backyard garden, small cozy garden with many potted plants, bonsai and fruit trees, slightly messy, warm afternoon light" },
-        { id: "xnc_kitchen_vn", label: "Bếp Việt Nam", desc: "Vietnamese home kitchen interior, simple tiled floor, gas stove, rice cooker, hanging utensils, warm indoor light, cozy family vibe" }
-    ];
+    const DATA_PATH = "adn/xomnganchuyen/"; 
+    
+    // ============================================================
 
-    const characters = [
-        { id: "bolo", name: "Bô-Lô (Thánh soi)", desc: "Vietnamese primary school boy, small, blue shirt, brown pants, short messy hair, tiny round glasses" },
-        { id: "bala", name: "Ba-La (Thánh đồn)", desc: "Vietnamese primary school boy, slightly chubby, red shirt, black shorts, messy hair, big mouth expression" },
-        { id: "tumlum", name: "Tùm-Lum (Thánh điệu)", desc: "Vietnamese primary school girl, long messy hair with big rollers, bright yellow outfit, quirky fashion" },
-        { id: "tumla", name: "Tùm-La (Thánh báo)", desc: "Vietnamese primary school girl, short hair with big bow, red polka dot top, energetic stance" },
-        { id: "mom_bolo", name: "Mẹ Bolo", desc: "Vietnamese middle-aged mother, round gentle face, low bun hair, simple floral blouse, kitchen apron, warm brown palette" },
-        { id: "dad_bolo", name: "Ba Bolo", desc: "Vietnamese middle-aged father, slightly thin body, hunched posture, tired gentle face, old T-shirt, shorts, rubber sandals" },
-        { id: "xnc_chu_tu", name: "Chú Tư (Sợ vợ)", desc: "Vietnamese middle-aged man, thin body, hunched posture, awkward and guilty expression, wearing worn short-sleeve shirt and old trousers" },
-        { id: "thief_chicken", name: "Tên Trộm Gà", desc: "Cartoon thief character, sneaky pose, wearing a black eye mask and striped black-and-white shirt, carrying a burlap sack" },
-        { id: "hai_ngan", name: "Cô Hai Ngàn", desc: "Beautiful Vietnamese young woman, gentle expression, wearing traditional brown shirt (ao ba ba) and conical hat (non la), holding milk churn" },
-        { id: "shipper_guy", name: "Anh Shipper", desc: "Delivery driver character, bright yellow uniform jacket and yellow helmet, cheerful expression" },
-        { id: "ba_tam_pho", name: "Bà Tám Bán Phở", desc: "Vietnamese middle-aged woman, chubby and friendly, short curly hair, wearing colorful floral pajamas (Do Bo)" }
-    ];
+    const BG_URL = DATA_PATH + "XNC_backgrounds.json";
+    const CHAR_URL = DATA_PATH + "XNC_characters.json";
 
-    // ================= LOGIC JAVASCRIPT =================
+    let bgData = [];
+    let charData = [];
 
-    // 1. Khởi tạo dữ liệu vào Dropdown
-    window.onload = function() {
-        const bgSelect = document.getElementById('bgSelect');
-        backgrounds.forEach(bg => {
-            let option = document.createElement('option');
-            option.value = bg.id;
-            option.text = bg.label;
-            option.dataset.desc = bg.desc;
-            bgSelect.appendChild(option);
-        });
+    window.onload = async () => {
+        const status = document.getElementById('statusBar');
+        try {
+            // Thử load file
+            const [bgRes, charRes] = await Promise.all([fetch(BG_URL), fetch(CHAR_URL)]);
+            
+            if(!bgRes.ok || !charRes.ok) {
+                // Nếu lỗi, thử load kiểu cùng thư mục (phòng hờ bạn di chuyển file)
+                throw new Error("Không tìm thấy file ở đường dẫn: " + DATA_PATH);
+            }
 
-        // Thêm mặc định 1 nhân vật
-        addCharRow();
+            const bgJson = await bgRes.json();
+            const charJson = await charRes.json();
+
+            bgData = bgJson.backgrounds || [];
+            charData = charJson.characters || [];
+
+            populateBg();
+            addChar();
+            
+            status.innerHTML = `✅ <strong>Đã kết nối!</strong> Tìm thấy ${bgData.length} bối cảnh và ${charData.length} nhân vật.`;
+            status.style.color = "#4CAF50";
+            status.style.border = "1px solid #4CAF50";
+
+        } catch (e) {
+            console.error(e);
+            status.innerHTML = `⚠️ <strong>Lỗi:</strong> Không đọc được file JSON.<br>Hãy đảm bảo file HTML và thư mục 'adn' nằm đúng vị trí.<br>(${e.message})`;
+            status.style.color = "#FF4444";
+        }
     };
 
-    // 2. Hàm thêm dòng chọn nhân vật
-    function addCharRow() {
-        const container = document.getElementById('charContainer');
+    function populateBg() {
+        const sel = document.getElementById('bgSelect');
+        sel.innerHTML = '<option value="">-- Chọn bối cảnh có sẵn --</option>';
+        bgData.forEach(bg => {
+            const opt = document.createElement('option');
+            opt.value = bg.id;
+            opt.dataset.desc = bg.prompt || bg.desc_en || bg.desc || ""; 
+            opt.text = bg.label || bg.name || bg.id;
+            sel.appendChild(opt);
+        });
+    }
+
+    function addChar() {
         const div = document.createElement('div');
         div.className = 'char-row';
-        
-        // Dropdown nhân vật
-        let selectHTML = `<select class="char-select" onchange="updateCharDesc(this)">
-                            <option value="">-- Chọn nhân vật --</option>`;
-        characters.forEach(c => {
-            selectHTML += `<option value="${c.id}" data-desc="${c.desc}">${c.name}</option>`;
+        let opts = `<option value="">-- Chọn nhân vật --</option>`;
+        charData.forEach(c => {
+            let desc = c.prompt || c.base_desc_en || c.desc_en || (c.appearance + " " + c.outfit);
+            desc = desc ? desc.replace(/"/g, '&quot;') : "";
+            opts += `<option value="${c.id}" data-desc="${desc}">${c.name}</option>`;
         });
-        selectHTML += `</select>`;
-
-        // Input hành động riêng lẻ (Option)
-        let actionHTML = `<input type="text" class="char-action" placeholder="Hành động (Vd: đang cười)...">`;
-        
-        // Nút xóa
-        let removeBtn = `<button class="btn-remove" onclick="removeCharRow(this)">×</button>`;
-
-        div.innerHTML = selectHTML + actionHTML + removeBtn;
-        container.appendChild(div);
+        div.innerHTML = `
+            <select class="char-sel">${opts}</select>
+            <input type="text" class="char-act" placeholder="Hành động (Vd: cười, sợ hãi)...">
+            <button class="btn-remove" onclick="this.parentElement.remove()">×</button>
+        `;
+        document.getElementById('charList').appendChild(div);
     }
 
-    function removeCharRow(btn) {
-        btn.parentElement.remove();
-    }
-
-    // 3. Hàm tạo Prompt
-    function generatePrompt() {
-        // Lấy thông tin Background
-        const bgSelect = document.getElementById('bgSelect');
+    function generate() {
+        const bgSel = document.getElementById('bgSelect');
         const customBg = document.getElementById('customBg').value;
-        let bgDesc = customBg ? customBg : (bgSelect.options[bgSelect.selectedIndex].dataset.desc || "");
+        const bgDesc = customBg || bgSel.options[bgSel.selectedIndex]?.dataset.desc || "";
         
-        if (!bgDesc) { alert("Vui lòng chọn hoặc nhập Bối cảnh!"); return; }
+        if(!bgDesc) { alert("Chưa chọn bối cảnh!"); return; }
 
-        // Lấy thông tin Nhân vật
-        let charPrompts = [];
-        let charNames = [];
-        const rows = document.querySelectorAll('.char-row');
-        rows.forEach(row => {
-            const select = row.querySelector('.char-select');
-            const action = row.querySelector('.char-action').value;
-            if (select.value) {
-                const baseDesc = select.options[select.selectedIndex].dataset.desc;
-                const name = select.options[select.selectedIndex].text.split('(')[0].trim();
-                charNames.push(name);
-                // Ghép mô tả gốc + hành động cụ thể
-                charPrompts.push(`CHARACTER (${name}): ${baseDesc}, ${action || "standing"}`);
+        let chars = [];
+        document.querySelectorAll('.char-row').forEach(row => {
+            const sel = row.querySelector('.char-sel');
+            const act = row.querySelector('.char-act').value;
+            if(sel.value) {
+                const name = sel.options[sel.selectedIndex].text;
+                const desc = sel.options[sel.selectedIndex].dataset.desc;
+                chars.push(`CHARACTER (${name}): ${desc}. ACTION: ${act || "standing"}`);
             }
         });
 
-        // Lấy cốt truyện & Cấu hình
-        const mainAction = document.getElementById('actionInput').value;
-        const type = document.getElementById('typeSelect').value;
+        const action = document.getElementById('actionInput').value;
+        const style = document.getElementById('styleSelect').value;
         const ratio = document.getElementById('ratioSelect').value;
 
-        // Xây dựng Prompt
-        let finalPrompt = "";
-        let titleGoiY = "";
-        let textGoiY = "";
-        let styleKeywords = "";
+        let mood = style === 'podcast' 
+            ? "**MOOD:** Mysterious, Spooky, Dim Lighting, Storytelling vibe. Visuals: Vignette, Microphone icon, Dark Blue/Purple tones."
+            : "**MOOD:** Bright, Energetic, Funny, High Contrast, Cartoon motion lines.";
 
-        if (type === 'podcast') {
-            // STYLE PODCAST
-            styleKeywords = "Atmosphere: Mysterious, Spooky but cozy, Dim lighting, Storytelling vibe. Visual Elements: Vignette, Soft glow.";
-            titleGoiY = `Chuyện Ma ${charNames.join(" & ")}: ${mainAction.substring(0, 20)}...`;
-            textGoiY = "CHUYỆN ĐÊM KHUYA / KINH DỊ?!";
-        } else {
-            // STYLE VIDEO
-            styleKeywords = "Atmosphere: Bright, Energetic, Funny, High Contrast. Visual Elements: Exaggerated expressions, Dynamic motion lines.";
-            titleGoiY = `Cười Xỉu: ${charNames.join(" & ")} - ${mainAction.substring(0, 20)}...`;
-            textGoiY = "CƯỜI XỈU / TOANG RỒI!";
-        }
-
-        finalPrompt = `
+        const final = `
 (YouTube Thumbnail), 2D animation style, Vietnamese countryside aesthetic, pastel chibi art.
-
-**SCENE SETTING (BACKGROUND):**
-${bgDesc}
-
-**CHARACTERS & ACTION:**
-${charPrompts.join("\n")}
-**MAIN EVENT:** ${mainAction}
-
-**STYLE & MOOD:**
-${styleKeywords}
-High quality, 8k resolution, detailed art. ${ratio} --niji 6
+**BACKGROUND:** ${bgDesc}
+**CHARACTERS:**
+${chars.join("\n")}
+**SCENE EVENT:** ${action}
+${mood}
+High quality, 8k resolution. ${ratio} --niji 6
         `.trim();
 
-        // Hiển thị kết quả
-        const resultArea = document.getElementById('resultArea');
-        resultArea.style.display = 'block';
-        resultArea.innerHTML = `
-            <div class="result-card ${type}">
-                <h3>🎉 KẾT QUẢ (${type.toUpperCase()})</h3>
-                <p><strong>Tiêu đề gợi ý:</strong> ${titleGoiY}</p>
-                <p><strong>Chữ trên ảnh:</strong> <span style="color:${type === 'podcast' ? '#E1BEE7' : '#FFD700'}">${textGoiY}</span></p>
-                <label>Copy Prompt này vào Midjourney/Leonardo:</label>
-                <div class="prompt-box">
-${finalPrompt}
-                    <button class="copy-btn" onclick="copyToClipboard(this)">Copy</button>
-                </div>
-            </div>
-        `;
+        document.getElementById('finalPrompt').innerText = final;
+        document.getElementById('resultArea').style.display = 'block';
     }
 
-    function copyToClipboard(btn) {
-        const text = btn.parentElement.firstChild.textContent;
-        navigator.clipboard.writeText(text);
-        btn.innerText = "Đã Copy!";
-        setTimeout(() => btn.innerText = "Copy", 2000);
-    }
-
-    function updateCharDesc(select) {
-        // Có thể mở rộng để preview nhân vật nếu cần
+    function copyPrompt() {
+        navigator.clipboard.writeText(document.getElementById('finalPrompt').innerText);
+        alert("Đã copy Prompt!");
     }
 </script>
 
