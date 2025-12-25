@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XNC Podcast Studio Pro (V19 Final)</title>
+    <title>XNC Podcast Studio Pro (V19)</title>
     <link rel="stylesheet" href="/public/style.css">
     <link rel="stylesheet" href="/public/green-theme.css">
     
@@ -48,7 +48,6 @@
         .asset-item:hover { border-color: #8CCB7A; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .asset-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
         .btn-add-mini { background: #8CCB7A; color: white; border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .btn-add-mini:hover { background: #558B2F; }
 
         /* WORKSPACE (TIMELINE) */
         .workspace { background: #FFFDE7; padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
@@ -69,7 +68,7 @@
             display: flex; align-items: center; gap: 15px; flex-shrink: 0;
         }
         .btn-main { padding: 10px 20px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; }
-        .btn-play { background: #FF5722; color: white; width: 50px; height: 50px; border-radius: 50%; font-size: 20px; padding: 0; border: none; cursor: pointer;}
+        .btn-play { background: #FF5722; color: white; width: 50px; height: 50px; border-radius: 50%; font-size: 20px; padding: 0; }
         .btn-save { background: #5D4037; color: white; margin-left: auto; }
         .btn-export { background: white; color: #263238; }
 
@@ -82,7 +81,7 @@
 <div class="studio-card">
     <div class="studio-header">
         <div style="display:flex; align-items:center; gap:10px;">
-            <h3 style="margin:0">🎛️ Studio V19 <span style="font-size:12px; opacity:0.8">(Final Fixed)</span></h3>
+            <h3 style="margin:0">🎛️ Studio V19</h3>
             <span id="projID" class="proj-id">ID: NEW</span>
             <input type="text" id="projName" class="proj-input" placeholder="Tên dự án (Vd: Tap 1)..." value="Du_An_Moi">
         </div>
@@ -96,8 +95,8 @@
     <div class="main-layout">
         <div class="sidebar">
             <div class="tab-bar">
-                <button class="tab-btn active" onclick="switchTab('library')">📚 Thư Viện (SFX)</button>
-                <button class="tab-btn" onclick="switchTab('tts')">🗣️ Tạo Giọng</button>
+                <button class="tab-btn active" onclick="switchTab('library', this)">📚 Thư Viện (SFX)</button>
+                <button class="tab-btn" onclick="switchTab('tts', this)">🗣️ Tạo Giọng</button>
             </div>
 
             <div id="tab-library" class="sidebar-content active">
@@ -166,27 +165,117 @@
     let timeline = [];      // [{assetId, type, name}]
     let audioContext = new (window.AudioContext || window.webkitAudioContext)();
     
+    
+    // === API KEY SOURCE (per-provider: local/firebase) ===
+    const SRC_KEYS = {
+        openai: "nini_api_source_openai",
+        gemini: "nini_api_source_gemini",
+    };
+
+    function getSource(provider) {
+        return localStorage.getItem(SRC_KEYS[provider]) || "local";
+    }
+    function setSource(provider, value) {
+        localStorage.setItem(SRC_KEYS[provider], value);
+    }
+
+    function getLocalKey(provider) {
+        const k = `lq_api_${PROFILE_ID}_${provider}`;
+        return localStorage.getItem(k) || "";
+    }
+
+    async function getFirebaseKey(provider) {
+        try {
+            if (!window.auth || !window.db) return "";
+            const user = auth.currentUser;
+            if (!user) return "";
+            const ref = db.ref(`users/${user.uid}/api`);
+            const snap = await ref.once("value");
+            const val = snap.val() || {};
+            return (val[provider] || "").trim();
+        } catch (e) {
+            console.warn("Firebase key read failed:", e);
+            return "";
+        }
+    }
+
+    async function resolveKey(provider) {
+        const mode = getSource(provider);
+        if (mode === "firebase") {
+            const fb = await getFirebaseKey(provider);
+            if (fb) return { key: fb, from: "firebase" };
+            const local = getLocalKey(provider);
+            return { key: local, from: local ? "local(fallback)" : "none" };
+        } else {
+            const local = getLocalKey(provider);
+            if (local) return { key: local, from: "local" };
+            const fb = await getFirebaseKey(provider);
+            return { key: fb, from: fb ? "firebase(fallback)" : "none" };
+        }
+    }
+
+    async function refreshKeyUI() {
+        const statusDiv = document.getElementById('apiStatus');
+        const hint = document.getElementById('keyHint');
+
+        const selO = document.getElementById("srcOpenAI");
+        const selG = document.getElementById("srcGemini");
+        if (selO) selO.value = getSource("openai");
+        if (selG) selG.value = getSource("gemini");
+
+        const openai = await resolveKey("openai");
+        openaiKey = openai.key || "";
+
+        if (statusDiv) {
+            statusDiv.innerHTML = openaiKey
+              ? `✅ OpenAI key OK (${openai.from})`
+              : `⚠️ Chưa có OpenAI key (${openai.from})`;
+        }
+
+        if (hint) {
+            const fbReady = (window.auth && window.db && window.auth.currentUser) ? "Firebase OK" : "Firebase chưa sẵn (chưa init/login)";
+            hint.textContent = fbReady;
+        }
+    }
+
+    function initKeySourceSelectors() {
+        const selO = document.getElementById("srcOpenAI");
+        const selG = document.getElementById("srcGemini");
+
+        if (selO) {
+            selO.value = getSource("openai");
+            selO.addEventListener("change", async () => {
+                setSource("openai", selO.value);
+                await refreshKeyUI();
+            });
+        }
+        if (selG) {
+            selG.value = getSource("gemini");
+            selG.addEventListener("change", async () => {
+                setSource("gemini", selG.value);
+                await refreshKeyUI();
+            });
+        }
+    }
+
+
     // INIT
     window.onload = () => {
         // Generate ID
         document.getElementById('projID').innerText = "ID: " + Date.now().toString().slice(-6);
         
-        // Load Key
-        const k1 = `lq_api_${PROFILE_ID}_openai`;
-        openaiKey = localStorage.getItem(k1);
-        const statusDiv = document.getElementById('apiStatus');
-        if(openaiKey) {
-            statusDiv.innerHTML = "✅ OpenAI OK"; statusDiv.style.background = "#DCEDC8"; statusDiv.style.color = "#33691E";
-        } else {
-            statusDiv.innerHTML = "⚠️ No Key"; statusDiv.style.background = "#FFCDD2"; statusDiv.style.color = "#C62828";
-        }
-    }
+        // Init key source selectors + status
+        initKeySourceSelectors();
+        refreshKeyUI();
+ });
+        if (selG) selG.addEventListener("change", async () => { setSource("gemini", selG.value); await refreshKeyUI(); });
 
-    function switchTab(tab) {
+        refreshKeyUI();
+function switchTab(tab, btnEl) {
         document.querySelectorAll('.sidebar-content').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
         document.getElementById('tab-'+tab).classList.add('active');
-        event.target.classList.add('active');
+        if (btnEl) btnEl.classList.add('active');
     }
 
     // === 1. ASSET MANAGEMENT (LIBRARY) ===
@@ -255,6 +344,13 @@
     // === 2. TTS GENERATION ===
     async function generateTTS() {
         const text = document.getElementById('ttsInput').value;
+        // Ensure key loaded (OpenAI)
+        if (!openaiKey) {
+            try {
+                const r = await resolveKey('openai');
+                openaiKey = r.key || '';
+            } catch (_) {}
+        }
         const voice = document.getElementById('ttsVoice').value;
         if(!text || !openaiKey) return alert("Kiểm tra nội dung hoặc API Key!");
 
@@ -285,21 +381,33 @@
         } catch(e) { alert(e.message); }
     }
 
+       
     // === 3. TIMELINE LOGIC (FIXED) ===
     function addToTimeline(assetId) {
         const asset = assetsLibrary.find(a => a.id === assetId);
-        if(!asset) return;
-
+        if (!asset) return;
         timeline.push({ assetId: asset.id });
+        renderTimeline();
+    }
+
+    function removeTimelineItem(index) {
+        if (index < 0 || index >= timeline.length) return;
+        timeline.splice(index, 1);
+        renderTimeline();
+    }
+
+    function moveItem(index, dir) {
+        const target = index + dir;
+        if (target < 0 || target >= timeline.length) return;
+        [timeline[index], timeline[target]] = [timeline[target], timeline[index]];
         renderTimeline();
     }
 
     function renderTimeline() {
         const container = document.getElementById('timelineContainer');
-        container.innerHTML = ""; // Xóa cũ
-        
-        // KIỂM TRA RỖNG (FIXED)
-        if(timeline.length === 0) {
+        container.innerHTML = "";
+
+        if (timeline.length === 0) {
             container.innerHTML = `
                 <div id="emptyMsg" style="text-align:center; color:#ccc; margin-top:100px;">
                     Chưa có gì hết trơn.<br>Bấm dấu [+] bên thư viện để thêm vào nha!
@@ -309,36 +417,32 @@
 
         timeline.forEach((item, index) => {
             const asset = assetsLibrary.find(a => a.id === item.assetId);
-            if(!asset) return;
+            if (!asset) return;
 
             const div = document.createElement('div');
-            div.className = `timeline-block ${asset.type === 'voice' ? 'block-voice' : 'block-sfx'}`;
+            div.className = 'timeline-item';
             div.innerHTML = `
-                <div style="font-weight:bold; color:#666;">${index+1}</div>
-                <div style="flex-grow:1; font-size:14px; font-weight:500;">${asset.name}</div>
-                <button style="border:none; background:none; cursor:pointer;" onclick="moveItem(${index}, -1)">⬆</button>
-                <button style="border:none; background:none; cursor:pointer;" onclick="moveItem(${index}, 1)">⬇</button>
-                <button style="border:none; background:none; cursor:pointer; color:red; margin-left:10px;" onclick="removeTimelineItem(${index})">✖</button>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <b>${index+1}. ${asset.name}</b>
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <button class="btn-mini" onclick="moveItem(${index}, -1)" title="Lên">⬆</button>
+                    <button class="btn-mini" onclick="moveItem(${index},  1)" title="Xuống">⬇</button>
+                    <button style="border:none; background:none; cursor:pointer; color:#f44336; font-weight:bold; margin-left:10px;" onclick="removeTimelineItem(${index})" title="Xoá">✖</button>
+                  </div>
+                </div>
+                <div style="font-size:12px; opacity:.75; margin-top:4px;">${asset.type.toUpperCase()}</div>
             `;
             container.appendChild(div);
         });
     }
 
-    // NÚT DI CHUYỂN (FIXED: ĐÃ THÊM VÀO)
-    function moveItem(index, dir) {
-        if(index + dir < 0 || index + dir >= timeline.length) return;
-        [timeline[index], timeline[index+dir]] = [timeline[index+dir], timeline[index]];
-        renderTimeline();
-    }
-
-    function removeTimelineItem(index) { timeline.splice(index, 1); renderTimeline(); }
-
-    // === 4. SAVE & LOAD SYSTEM (FIXED) ===
-    async function saveProjectToFile() {
+function saveProjectToFile() {
         const name = document.getElementById('projName').value || "Project";
         const btn = document.querySelector('.btn-save');
         btn.innerText = "⏳ Đang nén...";
 
+        // Convert all blobs to Base64 to save in JSON (Simple logic for small projects)
+        // Warning: Large files will make this slow.
         const serializedAssets = await Promise.all(assetsLibrary.map(async (a) => {
             return {
                 id: a.id,
@@ -364,59 +468,57 @@
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `${name}.xnc`;
+        link.download = `${name}.xnc`; // Custom extension
         link.click();
         
         btn.innerText = "💾 Lưu Dự Án (.xnc)";
         alert("Đã lưu! Hãy giữ file .xnc này cẩn thận.");
     }
 
-    // HÀM LOAD FILE (FIXED: readAsText)
     function loadProjectFromFile(input) {
-        const file = input.files[0];
-        if(!file) return;
-        
+        const file = input.files && input.files[0];
+        if (!file) return;
+
         const reader = new FileReader();
         reader.onload = async (e) => {
             try {
                 const data = JSON.parse(e.target.result);
-                
-                document.getElementById('projName').value = data.meta.name || "Du_An_Cu";
-                document.getElementById('projID').innerText = data.meta.id || "ID: OLD";
-                document.getElementById('bgmVol').value = data.bgmVol || 0.3;
 
-                assetsLibrary = await Promise.all(data.assets.map(async (a) => {
-                    const res = await fetch(a.data);
-                    const blob = await res.blob();
-                    return { id: a.id, name: a.name, type: a.type, blob: blob };
+                // Restore Meta
+                document.getElementById('projName').value = data.meta?.name || "PhongThư";
+                document.getElementById('projID').innerText = data.meta?.id || ("ID: " + Date.now().toString().slice(-6));
+                document.getElementById('bgmVol').value = (data.bgmVol ?? 0.3);
+
+                // Restore Assets
+                assetsLibrary = await Promise.all((data.assets || []).map(async (a) => {
+                    // stored as dataURL
+                    const resp = await fetch(a.dataURL || a.data);
+                    const blob = await resp.blob();
+                    return { id: a.id, name: a.name, blob, type: a.type };
                 }));
 
-                timeline = data.timeline;
-                renderLibrary();
-                renderTimeline();
-                if(data.bgmId) document.getElementById('bgmSelect').value = data.bgmId;
+                // Restore Timeline
+                timeline = Array.isArray(data.timeline) ? data.timeline : [];
 
-                alert("✅ Đã khôi phục dự án thành công!");
-            } catch(err) {
-                alert("❌ Lỗi đọc file: " + err.message);
+                // Restore BGM selection
+                if (data.bgmId) document.getElementById('bgmSelect').value = data.bgmId;
+
+                renderAssets();
+                renderTimeline();
+                alert("Đã khôi phục dự án thành công!");
+            } catch (err) {
                 console.error(err);
+                alert("File lỗi hoặc hỏng: " + err.message);
+            } finally {
+                input.value = "";
             }
         };
-        reader.readAsText(file); // QUAN TRỌNG: Đọc dạng Text
-        input.value = ""; 
+        reader.readAsText(file);
     }
 
-    function blobToBase64(blob) {
-        return new Promise((resolve, _) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.readAsDataURL(blob);
-        });
-    }
-
-    // === 5. PLAY & EXPORT (ENGINE) ===
-    async function playProject(isExport = false) {
+function playProject(isExport = false) {
         if(timeline.length === 0) return alert("Timeline trống!");
+        if (audioContext && audioContext.state === "suspended") { audioContext.resume(); }
         const status = document.getElementById('statusText');
         status.innerText = isExport ? "Đang xuất file..." : "Đang phát...";
         
@@ -461,6 +563,7 @@
         for (const item of timeline) {
             const asset = assetsLibrary.find(a => a.id === item.assetId);
             if(asset) {
+                // Clone buffer logic
                 const arrayBuffer = await asset.blob.slice(0).arrayBuffer(); // Clone blob
                 const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
                 
@@ -484,3 +587,5 @@
 
 </body>
 </html>
+
+
