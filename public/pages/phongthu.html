@@ -515,7 +515,7 @@ async function saveProjectToFile() {
         reader.readAsText(file);
     }
 
-function playProject(isExport = false) {
+async function playProject(isExport = false) {
         if(timeline.length === 0) return alert("Timeline trống!");
         if (audioContext && audioContext.state === "suspended") { audioContext.resume(); }
         const status = document.getElementById('statusText');
