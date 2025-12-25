@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XNC Podcast Studio Pro (V19)</title>
+    <title>XNC Podcast Studio Pro (V19 Final)</title>
     <link rel="stylesheet" href="/public/style.css">
     <link rel="stylesheet" href="/public/green-theme.css">
     
@@ -48,6 +48,7 @@
         .asset-item:hover { border-color: #8CCB7A; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .asset-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
         .btn-add-mini { background: #8CCB7A; color: white; border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-add-mini:hover { background: #558B2F; }
 
         /* WORKSPACE (TIMELINE) */
         .workspace { background: #FFFDE7; padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
@@ -68,7 +69,7 @@
             display: flex; align-items: center; gap: 15px; flex-shrink: 0;
         }
         .btn-main { padding: 10px 20px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; }
-        .btn-play { background: #FF5722; color: white; width: 50px; height: 50px; border-radius: 50%; font-size: 20px; padding: 0; }
+        .btn-play { background: #FF5722; color: white; width: 50px; height: 50px; border-radius: 50%; font-size: 20px; padding: 0; border: none; cursor: pointer;}
         .btn-save { background: #5D4037; color: white; margin-left: auto; }
         .btn-export { background: white; color: #263238; }
 
@@ -81,7 +82,7 @@
 <div class="studio-card">
     <div class="studio-header">
         <div style="display:flex; align-items:center; gap:10px;">
-            <h3 style="margin:0">🎛️ Studio V19</h3>
+            <h3 style="margin:0">🎛️ Studio V19 <span style="font-size:12px; opacity:0.8">(Final Fixed)</span></h3>
             <span id="projID" class="proj-id">ID: NEW</span>
             <input type="text" id="projName" class="proj-input" placeholder="Tên dự án (Vd: Tap 1)..." value="Du_An_Moi">
         </div>
@@ -284,8 +285,7 @@
         } catch(e) { alert(e.message); }
     }
 
-       
-    // === 3. TIMELINE LOGIC (ĐÃ SỬA LỖI) ===
+    // === 3. TIMELINE LOGIC (FIXED) ===
     function addToTimeline(assetId) {
         const asset = assetsLibrary.find(a => a.id === assetId);
         if(!asset) return;
@@ -296,9 +296,9 @@
 
     function renderTimeline() {
         const container = document.getElementById('timelineContainer');
-        container.innerHTML = ""; // Bước 1: Xóa sạch cũ
+        container.innerHTML = ""; // Xóa cũ
         
-        // Bước 2: Kiểm tra nếu rỗng -> TỰ VIẾT LẠI thông báo
+        // KIỂM TRA RỖNG (FIXED)
         if(timeline.length === 0) {
             container.innerHTML = `
                 <div id="emptyMsg" style="text-align:center; color:#ccc; margin-top:100px;">
@@ -307,7 +307,6 @@
             return;
         }
 
-        // Bước 3: Nếu có dữ liệu -> Vẽ từng dòng
         timeline.forEach((item, index) => {
             const asset = assetsLibrary.find(a => a.id === item.assetId);
             if(!asset) return;
@@ -323,26 +322,23 @@
             `;
             container.appendChild(div);
         });
-    // === HÀM DI CHUYỂN LÊN XUỐNG (Thêm đoạn này vào nhé) ===
+    }
+
+    // NÚT DI CHUYỂN (FIXED: ĐÃ THÊM VÀO)
     function moveItem(index, dir) {
-        // Kiểm tra xem có di chuyển ra ngoài giới hạn không
         if(index + dir < 0 || index + dir >= timeline.length) return;
-        
-        // Đổi chỗ 2 phần tử trong mảng timeline
         [timeline[index], timeline[index+dir]] = [timeline[index+dir], timeline[index]];
-        
-        // Vẽ lại giao diện
         renderTimeline();
     }
-    }
-    // === 4. SAVE & LOAD SYSTEM (The Magic) ===
+
+    function removeTimelineItem(index) { timeline.splice(index, 1); renderTimeline(); }
+
+    // === 4. SAVE & LOAD SYSTEM (FIXED) ===
     async function saveProjectToFile() {
         const name = document.getElementById('projName').value || "Project";
         const btn = document.querySelector('.btn-save');
         btn.innerText = "⏳ Đang nén...";
 
-        // Convert all blobs to Base64 to save in JSON (Simple logic for small projects)
-        // Warning: Large files will make this slow.
         const serializedAssets = await Promise.all(assetsLibrary.map(async (a) => {
             return {
                 id: a.id,
@@ -368,13 +364,14 @@
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `${name}.xnc`; // Custom extension
+        link.download = `${name}.xnc`;
         link.click();
         
         btn.innerText = "💾 Lưu Dự Án (.xnc)";
         alert("Đã lưu! Hãy giữ file .xnc này cẩn thận.");
     }
 
+    // HÀM LOAD FILE (FIXED: readAsText)
     function loadProjectFromFile(input) {
         const file = input.files[0];
         if(!file) return;
@@ -384,61 +381,29 @@
             try {
                 const data = JSON.parse(e.target.result);
                 
-                // Restore Meta
-                document.getElementById('projName').value = data.meta.name;
-                document.getElementById('projID').innerText = data.meta.id;
+                document.getElementById('projName').value = data.meta.name || "Du_An_Cu";
+                document.getElementById('projID').innerText = data.meta.id || "ID: OLD";
                 document.getElementById('bgmVol').value = data.bgmVol || 0.3;
 
-                // Restore Assets
                 assetsLibrary = await Promise.all(data.assets.map(async (a) => {
                     const res = await fetch(a.data);
                     const blob = await res.blob();
                     return { id: a.id, name: a.name, type: a.type, blob: blob };
                 }));
 
-                // Restore Timeline
                 timeline = data.timeline;
-
                 renderLibrary();
                 renderTimeline();
-                
-                // Restore BGM Selection
                 if(data.bgmId) document.getElementById('bgmSelect').value = data.bgmId;
 
-                alert("Đã khôi phục dự án thành công!");
+                alert("✅ Đã khôi phục dự án thành công!");
             } catch(err) {
-                alert("File lỗi hoặc hỏng: " + err.message);
+                alert("❌ Lỗi đọc file: " + err.message);
+                console.error(err);
             }
         };
-        reader.readAsDataURL(file); // Changed to DataURL for safety in some browsers, but Text is usually fine for JSON. Actually readAsText is better for JSON.
-        // Let's use readAsText specifically for parsing JSON
-        const textReader = new FileReader();
-        textReader.onload = (e) => {
-             // Logic is handled in the text reader
-             const json = e.target.result;
-             // ... duplicate logic above ...
-             // Re-implementing correctly inside:
-             try {
-                const data = JSON.parse(json);
-                restoreData(data);
-             } catch(err) { alert("Lỗi file project!"); }
-        };
-        textReader.readAsText(file);
-    }
-
-    async function restoreData(data) {
-        document.getElementById('projName').value = data.meta.name;
-        document.getElementById('projID').innerText = data.meta.id;
-        document.getElementById('bgmVol').value = data.bgmVol || 0.3;
-        assetsLibrary = await Promise.all(data.assets.map(async (a) => {
-            const res = await fetch(a.data);
-            const blob = await res.blob();
-            return { id: a.id, name: a.name, type: a.type, blob: blob };
-        }));
-        timeline = data.timeline;
-        renderLibrary();
-        renderTimeline();
-        if(data.bgmId) document.getElementById('bgmSelect').value = data.bgmId;
+        reader.readAsText(file); // QUAN TRỌNG: Đọc dạng Text
+        input.value = ""; 
     }
 
     function blobToBase64(blob) {
@@ -496,7 +461,6 @@
         for (const item of timeline) {
             const asset = assetsLibrary.find(a => a.id === item.assetId);
             if(asset) {
-                // Clone buffer logic
                 const arrayBuffer = await asset.blob.slice(0).arrayBuffer(); // Clone blob
                 const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
                 
@@ -520,5 +484,3 @@
 
 </body>
 </html>
-
-
