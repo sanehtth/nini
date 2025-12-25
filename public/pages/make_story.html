@@ -155,19 +155,38 @@
     
     // === CẤU HÌNH TÊN KEY (SỬA Ở ĐÂY NẾU ADMIN PANEL LƯU TÊN KHÁC) ===
     // Bạn hãy sửa lại 3 dòng này cho khớp với cách bạn lưu trong localStorage
-    const PROFILE_ID = "default"; // nếu bạn lưu profile khác thì đổi ở đây
+    const ACTIVE_PROVIDER_KEY = "nini_active_provider";
+    const PROFILE_ID = "default"; // đổi nếu bạn dùng profile khác trong Admin
 
-const KEYS = {
-  gemini: `lq_api_${PROFILE_ID}_gemini`,
-  openai: `lq_api_${PROFILE_ID}_openai`,
-  grok:   `lq_api_${PROFILE_ID}_grok`,
-};
+    function getActiveProvider() {
+        return localStorage.getItem(ACTIVE_PROVIDER_KEY) || "openai";
+    }
+    function setActiveProvider(p) {
+        localStorage.setItem(ACTIVE_PROVIDER_KEY, p);
+    }
 
+    // Lấy API key theo chuẩn Admin: lq_api_<profileId>_<provider>
+    function getApiKeyByProvider(provider) {
+        const k1 = `lq_api_${PROFILE_ID}_${provider}`;
+        const v1 = localStorage.getItem(k1);
+        if (v1) return { key: v1, keyName: k1 };
+
+        // Fallback nếu trước đây bạn từng dùng prefix khác
+        const k2 = `nq_api_${PROFILE_ID}_${provider}`;
+        const v2 = localStorage.getItem(k2);
+        if (v2) return { key: v2, keyName: k2 };
+
+        return { key: "", keyName: k1 };
+    }
     
     let charData = [];
     let currentMode = 'funny';
 
     window.onload = async () => {
+        // Đồng bộ dropdown theo AI đang chọn ở Admin/tool khác
+        const sel = document.getElementById('aiProvider');
+        if (sel) sel.value = getActiveProvider();
+
         checkKeyStatus(); // Kiểm tra Key ngay khi mở
         
         try {
@@ -181,17 +200,19 @@ const KEYS = {
 
     function checkKeyStatus() {
         const provider = document.getElementById('aiProvider').value;
-        const keyName = KEYS[provider];
-        const keyVal = localStorage.getItem(keyName); // Lấy key từ localStorage
+        setActiveProvider(provider);
+
+        const { key, keyName } = getApiKeyByProvider(provider);
         const statusDiv = document.getElementById('keyStatus');
 
-        if(keyVal) {
+        if (key) {
             statusDiv.innerHTML = `✅ Đã tìm thấy Key: <b>${keyName}</b>`;
             statusDiv.style.color = "#33691E";
         } else {
-            statusDiv.innerHTML = `⚠️ Chưa thấy Key (<b>${keyName}</b>). Hãy vào Admin nhập nhé!`;
+            statusDiv.innerHTML = `⚠️ Chưa thấy Key (<b>${keyName}</b>). Vào Admin Panel để lưu API key.`;
             statusDiv.style.color = "#C62828";
         }
+    }
     }
 
     function renderChars() {
@@ -215,7 +236,7 @@ const KEYS = {
     // === HÀM GỌI ĐA API (MULTI-MODEL) ===
     async function generateStory() {
         const provider = document.getElementById('aiProvider').value;
-        const apiKey = localStorage.getItem(KEYS[provider]); // Lấy key tương ứng
+        const { key: apiKey } = getApiKeyByProvider(provider); // Lấy key theo chuẩn Admin
         const storyIdea = document.getElementById('storyIdea').value;
         
         if(!apiKey) { alert(`Chưa có API Key cho ${provider.toUpperCase()}! Vào Admin Panel lưu đi bạn ơi.`); return; }
@@ -311,7 +332,4 @@ const KEYS = {
 
 </body>
 </html>
-
-
-
 
