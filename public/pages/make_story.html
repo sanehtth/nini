@@ -1,14 +1,14 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XNC Story Generator (Auto-Write)</title>
+    <title>XNC Story Auto-Writer (System Sync)</title>
     <link rel="stylesheet" href="/public/style.css">
     <link rel="stylesheet" href="/public/green-theme.css">
     
     <style>
-        /* THEME DNA XANH - NÂU */
+        /* GIỮ NGUYÊN THEME DNA CỦA BẠN */
         body {
             background: linear-gradient(135deg, #CDECC1 0%, #F4E8A2 100%);
             font-family: 'Segoe UI', sans-serif;
@@ -26,32 +26,32 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            min-height: 90vh;
+            min-height: 85vh;
         }
 
         .studio-header {
-            background: #8CCB7A; padding: 20px 30px; color: white;
+            background: #8CCB7A; padding: 15px 30px; color: white;
             display: flex; justify-content: space-between; align-items: center;
             border-bottom: 5px solid #B9885D;
         }
 
-        /* KHU VỰC API KEY */
-        .api-box {
-            background: #FFF3E0; padding: 10px 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #FFE0B2; font-size: 13px;
+        /* THẺ TRẠNG THÁI API (Thay cho ô nhập Key) */
+        .api-status-badge {
+            font-size: 13px; font-weight: bold; padding: 6px 15px; border-radius: 20px;
+            display: flex; align-items: center; gap: 8px;
         }
-        .api-input {
-            border: 1px solid #FFB74D; padding: 5px 10px; border-radius: 5px; width: 250px; background: white;
-        }
+        .status-ok { background: #DCEDC8; color: #33691E; border: 1px solid #8CCB7A; }
+        .status-err { background: #FFEBEE; color: #C62828; border: 1px solid #E57373; animation: pulse 2s infinite; }
 
         .studio-body {
-            padding: 30px;
+            padding: 25px;
             display: grid;
-            grid-template-columns: 1fr 1.2fr;
+            grid-template-columns: 1fr 1.3fr;
             gap: 30px;
             flex-grow: 1;
         }
 
-        /* LEFT COLUMN */
+        /* INPUT STYLES */
         .label-dna { color: #8CCB7A; font-weight: 800; margin-bottom: 8px; display: block; text-transform: uppercase; font-size: 13px; }
         .input-dna {
             width: 100%; padding: 12px; border: 2px solid #E0E0E0; border-radius: 12px; background: #FAFAFA; margin-bottom: 15px; box-sizing: border-box; transition: 0.3s;
@@ -60,28 +60,30 @@
 
         .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
         .mode-card {
-            border: 2px solid #E0E0E0; border-radius: 12px; padding: 10px; text-align: center; cursor: pointer; background: white; font-size: 13px;
+            border: 2px solid #E0E0E0; border-radius: 12px; padding: 10px; text-align: center; cursor: pointer; background: white; font-size: 13px; transition: 0.2s;
         }
-        .mode-card.active { border-color: #B9885D; background: #FFF8E1; color: #E65100; font-weight: bold; }
+        .mode-card:hover { transform: translateY(-2px); border-color: #8CCB7A; }
+        .mode-card.active { border-color: #B9885D; background: #FFF8E1; color: #E65100; font-weight: bold; box-shadow: 0 4px 0 #B9885D; }
 
-        .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; max-height: 200px; overflow-y: auto; padding: 10px; background: #F1F8E9; border-radius: 12px; border: 1px dashed #8CCB7A; }
-        .char-item { font-size: 13px; background: white; padding: 6px; border-radius: 6px; border: 1px solid #ddd; display: flex; gap: 5px; align-items: center; }
+        .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; max-height: 250px; overflow-y: auto; padding: 10px; background: #F1F8E9; border-radius: 12px; border: 1px dashed #8CCB7A; }
+        .char-item { font-size: 13px; background: white; padding: 8px; border-radius: 8px; border: 1px solid #ddd; display: flex; gap: 8px; align-items: center; cursor: pointer; }
+        .char-item:hover { border-color: #8CCB7A; }
 
         .btn-generate {
-            background: linear-gradient(135deg, #B9885D, #8D6E63); color: white; width: 100%; padding: 15px; border: none; border-radius: 50px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; transition: 0.2s;
+            background: linear-gradient(135deg, #B9885D, #8D6E63); color: white; width: 100%; padding: 15px; border: none; border-radius: 50px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 15px; transition: 0.2s;
+            box-shadow: 0 6px 0 #5D4037;
         }
-        .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(185, 136, 93, 0.4); }
-        .btn-generate:disabled { background: #ccc; cursor: wait; }
+        .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 0 #5D4037; }
+        .btn-generate:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; transform: none; }
 
-        /* RIGHT COLUMN (RESULT) */
+        /* RIGHT RESULT */
         .result-container {
             background: #FFFDE7; border: 2px dashed #FBC02D; border-radius: 20px; padding: 25px; display: flex; flex-direction: column; position: relative;
         }
         .story-content {
             flex-grow: 1; white-space: pre-wrap; font-family: 'Segoe UI', sans-serif; line-height: 1.6; font-size: 15px; color: #3E2723; overflow-y: auto; max-height: 600px; padding-right: 10px;
         }
-        
-        /* Hiệu ứng Loading */
+
         .loading-spinner {
             display: none; text-align: center; margin-top: 50px;
         }
@@ -90,23 +92,21 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div class="studio-card">
     <div class="studio-header">
-        <div>
+        <div class="header-left">
             <h2 style="margin:0">✨ XNC Story Auto-Writer</h2>
-            <p style="margin:0; font-size:13px; opacity:0.9">Viết kịch bản tự động bằng AI (Gemini)</p>
+            <p style="margin:0; font-size:13px; opacity:0.9">Biên kịch AI (Tự động kết nối Admin Panel)</p>
         </div>
-    </div>
-
-    <div class="api-box">
-        <span>🔑 Google Gemini API Key:</span>
-        <input type="password" id="apiKeyInput" class="api-input" placeholder="Dán API Key vào đây..." onchange="saveKey()">
-        <span style="color:#666; font-style:italic;">(Lưu tự động trên máy bạn)</span>
-        <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#B9885D; margin-left:auto; font-weight:bold; text-decoration:none;">👉 Lấy Key miễn phí tại đây</a>
+        
+        <div id="apiStatus" class="api-status-badge status-err">
+            ⭕ Chưa tìm thấy API Key (Vào Admin nhập nhé!)
+        </div>
     </div>
 
     <div class="studio-body">
@@ -130,48 +130,66 @@
         <div class="result-container">
             <div id="loading" class="loading-spinner">
                 <div class="spinner"></div>
-                <div style="color:#8CCB7A; font-weight:bold;">AI đang viết truyện, đợi xíu nhen...</div>
-                <div style="font-size:12px; color:#666;">(Đang nhập vai Bô-Lô, Tùm-La...)</div>
+                <div style="color:#8CCB7A; font-weight:bold;">Đang gọi "Biên kịch Google"...</div>
             </div>
             
             <div id="finalStory" class="story-content">
-                <div style="text-align:center; color:#999; margin-top:100px;">
-                    📝 Kết quả kịch bản sẽ hiện ra ở đây.<br>Không cần copy đi đâu cả!
+                <div style="text-align:center; color:#999; margin-top:100px; font-style:italic;">
+                    (Nhập ý tưởng bên trái -> Bấm nút -> Kịch bản sẽ hiện ở đây)
                 </div>
             </div>
 
-            <button onclick="copyStory()" style="position:absolute; top:10px; right:10px; background:white; border:1px solid #ccc; padding:5px 10px; border-radius:5px; cursor:pointer;">📋 Copy</button>
+            <button onclick="copyStory()" style="position:absolute; top:10px; right:10px; background:white; border:1px solid #ccc; padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:bold; color:#5D4037;">📋 Copy</button>
         </div>
     </div>
 </div>
 
 <script>
-    // URL File JSON Data
+    // CẤU HÌNH ĐƯỜNG DẪN DATA
     const DATA_PATH = "/public/adn/xomnganchuyen/"; 
     const CHAR_URL = DATA_PATH + "XNC_characters.json";
     
+    // =======================================================
+    // 🔴 CẤU HÌNH API KEY (SỬA TÊN BIẾN NÀY NẾU CẦN)
+    // Tên Key trong localStorage mà Admin Panel của bạn dùng
+    const STORAGE_KEY_NAME = 'gemini'; // Hoặc 'api_key', 'google_key'...
+    // =======================================================
+
     let charData = [];
     let currentMode = 'funny';
+    let systemApiKey = "";
 
-    // 1. KHỞI TẠO
     window.onload = async () => {
-        // Load API Key cũ nếu có
-        const savedKey = localStorage.getItem('xnc_gemini_key');
-        if(savedKey) document.getElementById('apiKeyInput').value = savedKey;
+        // 1. KIỂM TRA API KEY TỪ HỆ THỐNG
+        checkSystemKey();
 
-        // Load Nhân vật
+        // 2. TẢI DỮ LIỆU NHÂN VẬT
         try {
             const res = await fetch(CHAR_URL);
-            charData = (await res.json()).characters || [];
-            renderChars();
+            if(res.ok) {
+                charData = (await res.json()).characters || [];
+                renderChars();
+            } else {
+                document.getElementById('charList').innerText = "⚠️ Lỗi: Không tìm thấy file JSON nhân vật.";
+            }
         } catch (e) {
-            document.getElementById('charList').innerText = "⚠️ Không tải được nhân vật.";
+            console.error(e);
         }
-    }
+    };
 
-    function saveKey() {
-        const key = document.getElementById('apiKeyInput').value;
-        localStorage.setItem('xnc_gemini_key', key);
+    function checkSystemKey() {
+        const statusDiv = document.getElementById('apiStatus');
+        
+        // Thử lấy key từ localStorage
+        systemApiKey = localStorage.getItem(STORAGE_KEY_NAME);
+
+        if (systemApiKey) {
+            statusDiv.className = 'api-status-badge status-ok';
+            statusDiv.innerHTML = '✅ Đã kết nối API Hệ thống';
+        } else {
+            statusDiv.className = 'api-status-badge status-err';
+            statusDiv.innerHTML = '⚠️ Chưa có Key! (Vào Tab "Nhập API" lưu nhé)';
+        }
     }
 
     function renderChars() {
@@ -181,7 +199,7 @@
             container.innerHTML += `
                 <label class="char-item">
                     <input type="checkbox" value="${c.name}" data-desc="${c.personality || c.base_desc_en}">
-                    ${c.name}
+                    <span style="font-weight:bold;">${c.name}</span>
                 </label>`;
         });
     }
@@ -192,68 +210,59 @@
         currentMode = mode;
     }
 
-    // 2. GỌI API GEMINI (AUTO WRITER)
     async function generateStory() {
-        const apiKey = document.getElementById('apiKeyInput').value;
+        // Kiểm tra lại Key lần nữa (phòng khi user vừa mới lưu bên tab kia)
+        checkSystemKey(); 
+        
         const storyIdea = document.getElementById('storyIdea').value;
         
-        if(!apiKey) { alert("⚠️ Bạn chưa nhập API Key! Nhấn vào link 'Lấy Key miễn phí' ở trên nhé."); return; }
-        if(!storyIdea) { alert("⚠️ Nhập ý tưởng cốt truyện đi bạn ơi!"); return; }
+        if(!systemApiKey) { 
+            alert("🛑 Chưa tìm thấy API Key trong hệ thống!\nHãy vào Tab 'Nhập API', chọn Google AI và bấm Lưu."); 
+            return; 
+        }
+        if(!storyIdea) { alert("⚠️ Cho mình xin cái ý tưởng cốt truyện đi!"); return; }
 
-        // Lấy nhân vật đã chọn
         let selectedChars = [];
         document.querySelectorAll('#charList input:checked').forEach(cb => {
             selectedChars.push(`- ${cb.value}: ${cb.dataset.desc}`);
         });
 
-        if(selectedChars.length === 0) { alert("⚠️ Chọn ít nhất 1 nhân vật!"); return; }
+        if(selectedChars.length === 0) { alert("⚠️ Chọn ít nhất 1 diễn viên!"); return; }
 
-        // Hiển thị Loading
+        // UI Loading
         document.getElementById('loading').style.display = 'block';
         document.getElementById('finalStory').style.display = 'none';
         document.getElementById('btnGen').disabled = true;
 
-        // TẠO PROMPT GỬI CHO AI
         const prompt = `
-        Bạn là Biên kịch chuyên nghiệp cho series hoạt hình/podcast "Xóm Ngàn Chuyện".
-        Hãy viết một kịch bản hội thoại chi tiết (Dialogue Script) dựa trên thông tin sau:
+        ACT AS A SCREENWRITER for "Xóm Ngàn Chuyện" (Vietnamese Cartoon/Podcast).
+        INPUT DATA:
+        - Idea: ${storyIdea}
+        - Genre: ${currentMode}
+        - Characters: \n${selectedChars.join('\n')}
 
-        1. CỐT TRUYỆN: ${storyIdea}
-        2. THỂ LOẠI: ${currentMode} (Vui nhộn/Ma mị/Cảm động)
-        3. NHÂN VẬT & TÍNH CÁCH (DNA):
-        ${selectedChars.join('\n')}
-
-        YÊU CẦU:
-        - Ngôn ngữ: Tiếng Việt (Giọng văn Miền Tây Nam Bộ, tự nhiên, đời thường).
-        - Định dạng: [Tên Nhân Vật]: Lời thoại...
-        - Kèm chỉ dẫn âm thanh [SFX] và cảm xúc (trong ngoặc).
-        - Giữ đúng tính cách nhân vật (Vd: TùmLa điệu đà, BôLô hay soi mói...).
-        - Có phần Mở đầu, Thân bài (Cao trào), Kết thúc.
-
-        HÃY VIẾT NGAY BÂY GIỜ:
+        TASK: Write a funny, engaging dialogue script.
+        - Language: Vietnamese (Southern/Mekong Delta accent style).
+        - Format: Standard Script ([Character]: Dialogue).
+        - Include [SFX] (Sound effects) and (Emotion) notes.
+        - Keep it under 3 minutes reading time.
         `;
 
         try {
-            // GỌI TRỰC TIẾP ĐẾN GOOGLE GEMINI API
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${systemApiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
 
             const data = await response.json();
+            if(data.error) throw new Error(data.error.message);
             
-            if(data.error) { throw new Error(data.error.message); }
-
             const aiText = data.candidates[0].content.parts[0].text;
-            
-            // Hiển thị kết quả
             document.getElementById('finalStory').innerText = aiText;
 
         } catch (error) {
-            alert("Lỗi AI: " + error.message);
+            alert("Lỗi kết nối AI: " + error.message);
         } finally {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('finalStory').style.display = 'block';
@@ -262,11 +271,12 @@
     }
 
     function copyStory() {
-        navigator.clipboard.writeText(document.getElementById('finalStory').innerText);
+        const text = document.getElementById('finalStory').innerText;
+        if(!text) return;
+        navigator.clipboard.writeText(text);
         alert("Đã copy kịch bản!");
     }
 </script>
 
 </body>
-
 </html>
