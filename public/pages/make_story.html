@@ -104,7 +104,7 @@
     <div class="ai-selector-bar">
         <span style="font-weight:bold; color:#B9885D;">🧠 AI đang dùng viết truyện:</span>
         <select id="aiProvider" class="ai-select" onchange="checkKeyStatus()">
-            <option value="google">Google AI (Gemini Flash)</option>
+            <option value="gemini">Google AI (Gemini Flash)</option>
             <option value="openai">OpenAI (GPT-4o/Mini)</option>
             <option value="grok">Grok (xAI)</option>
         </select>
@@ -156,9 +156,9 @@
     // === CẤU HÌNH TÊN KEY (SỬA Ở ĐÂY NẾU ADMIN PANEL LƯU TÊN KHÁC) ===
     // Bạn hãy sửa lại 3 dòng này cho khớp với cách bạn lưu trong localStorage
     const KEYS = {
-        google: 'gemini_api_key',  // Ví dụ: 'google_key'
-        openai: 'openai_api_key',  // Ví dụ: 'openai_key'
-        grok:   'grok_api_key'     // Ví dụ: 'grok_key'
+        google: 'gemini',  // Ví dụ: 'google_key'
+        openai: 'openai',  // Ví dụ: 'openai_key'
+        grok:   'grok'     // Ví dụ: 'grok_key'
     };
     
     let charData = [];
@@ -308,3 +308,4 @@
 
 </body>
 </html>
+
