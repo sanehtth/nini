@@ -202,7 +202,7 @@ function renderActiveProviderUI() {
 }
 
   // ================== 4. API THEO USER (LƯU TRÊN FIREBASE) ==================
-  const userOpenAiInput   = document.getElementById("userOpenAiKey");
+  const userOpenAiInput   = document.getElementById("userOpenAiKey") || document.getElementById("userOpenAIKey");
   const userGeminiInput   = document.getElementById("userGeminiKey");
   const userGrokInput     = document.getElementById("userGrokKey");
   const saveUserApiBtn    = document.getElementById("saveUserApiBtn");
@@ -232,15 +232,26 @@ function renderActiveProviderUI() {
       return;
     }
 
+    // Lưu theo user: /users/<uid>/api
     const ref = db.ref(`users/${user.uid}/api`);
-    const payload = {
-      openai: userOpenAiInput ? userOpenAiInput.value.trim() : "",
-      gemini: userGeminiInput ? userGeminiInput.value.trim() : "",
-      grok:   userGrokInput   ? userGrokInput.value.trim()   : "",
-      updatedAt: Date.now()
-    };
 
-    ref.set(payload)
+    const openai = userOpenAiInput ? userOpenAiInput.value.trim() : "";
+    const gemini = userGeminiInput ? userGeminiInput.value.trim() : "";
+    const grok   = userGrokInput   ? userGrokInput.value.trim()   : "";
+
+    // Tránh ghi đè rỗng làm mất key cũ
+    const payload = { updatedAt: Date.now() };
+    if (openai) payload.openai = openai;
+    if (gemini) payload.gemini = gemini;
+    if (grok)   payload.grok   = grok;
+
+    if (!payload.openai && !payload.gemini && !payload.grok) {
+      alert("Bạn chưa nhập key nào. (Để tránh ghi đè rỗng lên Firebase)");
+      return;
+    }
+
+    // Dùng update để không ghi đè các field khác (và không xoá key cũ khi ô trống)
+    ref.update(payload)
       .then(() => {
         if (userApiStatusSpan) userApiStatusSpan.textContent = "Đã lưu API user lên Firebase.";
       })
