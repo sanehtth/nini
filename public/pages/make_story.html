@@ -132,13 +132,36 @@
             <div id="dnaInfo" class="dna-info-box">Loading info...</div>
 
             <label class="label-dna">3. Ý Tưởng (Story Idea)</label>
-            <textarea id="storyIdea" class="input-dna" rows="4" placeholder="Nhập ý tưởng ngắn gọn (Vd: TùmLa đi thi hoa hậu xóm dừa...)"></textarea>
+            
+            <div class="mp-row" style="display:flex; gap:12px; margin:10px 0 8px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:200px;">
+                    <label class="label-dna" style="margin:0 0 6px;">ID truyện (tự sinh)</label>
+                    <input id="storyId" class="input-dna" type="text" readonly />
+                </div>
+                <div style="flex:2; min-width:260px;">
+                    <label class="label-dna" style="margin:0 0 6px;">Tên truyện</label>
+                    <input id="storyTitle" class="input-dna" type="text" placeholder="Ví dụ: Quà Noel giao nhầm nhà" />
+                </div>
+            </div>
+<textarea id="storyIdea" class="input-dna" rows="4" placeholder="Nhập ý tưởng ngắn gọn (Vd: TùmLa đi thi hoa hậu xóm dừa...)"></textarea>
 
             <label class="label-dna">4. Diễn Viên (Load từ JSON)</label>
             <div id="charList" class="char-grid">Loading characters...</div>
 
             <button id="btnGen" class="btn-generate" onclick="generateStory()">✨ VIẾT KỊCH BẢN</button>
-        </div>
+        
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+                <button type="button" onclick="saveDraft(true)" class="btn-generate" style="padding:10px 14px; width:auto; background:#4b7bec;">
+                    💾 Lưu nháp
+                </button>
+                <button type="button" onclick="exportStoryJSON()" class="btn-generate" style="padding:10px 14px; width:auto; background:#20bf6b;">
+                    ⬇️ Xuất JSON
+                </button>
+                <button type="button" onclick="clearDraft()" class="btn-generate" style="padding:10px 14px; width:auto; background:#eb3b5a;">
+                    🗑️ Xóa nháp
+                </button>
+            </div>
+</div>
 
         <div class="result-container">
             <div id="loading" class="loading-spinner">
@@ -160,7 +183,177 @@
     // === CẤU HÌNH PATH ===
     const DATA_PATH = "/public/adn/xomnganchuyen/"; 
     const CHAR_URL = DATA_PATH + "XNC_characters.json";
-    const STYLE_URL = DATA_PATH + "XNC_style.json";
+    
+    // === LƯU NHÁP & XUẤT JSON (chống mất khi refresh) ===
+    const PROFILE_ID = "default";
+    const DRAFT_KEY = "xnc_story_draft_v1";
+    const COUNTER_KEY = "xnc_story_counter_v1";
+    const API_SOURCE_KEY = "nini_api_source"; // "local" | "firebase"
+
+    function pad4(n){ return String(n).padStart(4,"0"); }
+
+    function generateStoryId(){
+        const d = new Date();
+        const ymd = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+        let c = parseInt(localStorage.getItem(COUNTER_KEY) || "0", 10) + 1;
+        localStorage.setItem(COUNTER_KEY, String(c));
+        return `XNC-${ymd}-${pad4(c)}`;
+    }
+
+    function getSelectedChars(){
+        const boxes = document.querySelectorAll('#charList input[type="checkbox"]:checked');
+        return Array.from(boxes).map(b => b.value || b.getAttribute("data-name") || b.id).filter(Boolean);
+    }
+
+    function setSelectedChars(names){
+        const set = new Set(names || []);
+        const boxes = document.querySelectorAll('#charList input[type="checkbox"]');
+        boxes.forEach(b=>{
+            const v = b.value || b.getAttribute("data-name") || b.id;
+            b.checked = set.has(v);
+        });
+    }
+
+    function getStoryText(){
+        const el = document.getElementById("finalStory");
+        return (el && el.innerText) ? el.innerText.trim() : "";
+    }
+
+    function setStoryText(text){
+        const el = document.getElementById("finalStory");
+        if (!el) return;
+        el.textContent = text || "";
+    }
+
+    function buildStoryJSON(){
+        const provider = document.getElementById("aiProvider")?.value || "";
+        const apiSource = document.getElementById("apiSource")?.value || (localStorage.getItem(API_SOURCE_KEY)||"local");
+        const dnaKey = document.getElementById("dnaSelector")?.value || "";
+        const idea = document.getElementById("storyIdea")?.value || "";
+        const title = document.getElementById("storyTitle")?.value || "";
+        const id = document.getElementById("storyId")?.value || generateStoryId();
+        const chars = getSelectedChars();
+        const story = getStoryText();
+
+        return {
+            id,
+            title,
+            provider,
+            apiSource,
+            dnaStyle: dnaKey,
+            idea,
+            characters: chars,
+            story,
+            updatedAt: new Date().toISOString()
+        };
+    }
+
+    function saveDraft(showToast=false){
+        try{
+            // đảm bảo có ID
+            const idEl = document.getElementById("storyId");
+            if (idEl && !idEl.value) idEl.value = generateStoryId();
+
+            const data = buildStoryJSON();
+            // thêm createdAt nếu lần đầu
+            const prev = localStorage.getItem(DRAFT_KEY);
+            if (prev){
+                const p = JSON.parse(prev);
+                if (p && p.createdAt) data.createdAt = p.createdAt;
+            }
+            if (!data.createdAt) data.createdAt = new Date().toISOString();
+
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+            if (showToast) alert("Đã lưu nháp trên trình duyệt máy này.");
+        }catch(e){
+            console.warn("saveDraft error", e);
+        }
+    }
+
+    function loadDraft(){
+        try{
+            const raw = localStorage.getItem(DRAFT_KEY);
+            const idEl = document.getElementById("storyId");
+            if (!raw){
+                if (idEl) idEl.value = generateStoryId();
+                return;
+            }
+            const d = JSON.parse(raw);
+                        window.__draftChars = d.characters || [];
+if (idEl) idEl.value = d.id || generateStoryId();
+
+            const titleEl = document.getElementById("storyTitle");
+            if (titleEl) titleEl.value = d.title || "";
+
+            const ideaEl = document.getElementById("storyIdea");
+            if (ideaEl) ideaEl.value = d.idea || "";
+
+            const provEl = document.getElementById("aiProvider");
+            if (provEl && d.provider) provEl.value = d.provider;
+
+            const srcEl = document.getElementById("apiSource");
+            if (srcEl && d.apiSource) {
+                srcEl.value = d.apiSource;
+                localStorage.setItem(API_SOURCE_KEY, d.apiSource);
+            }
+
+            const dnaEl = document.getElementById("dnaSelector");
+            if (dnaEl && d.dnaStyle) dnaEl.value = d.dnaStyle;
+
+            // characters sẽ set sau khi load JSON xong (gọi lại ở cuối loadCharacters)
+            setStoryText(d.story || "");
+        }catch(e){
+            console.warn("loadDraft error", e);
+            const idEl = document.getElementById("storyId");
+            if (idEl) idEl.value = generateStoryId();
+        }
+    }
+
+    function clearDraft(){
+        localStorage.removeItem(DRAFT_KEY);
+        // reset form nhưng giữ counter
+        const idEl = document.getElementById("storyId");
+        if (idEl) idEl.value = generateStoryId();
+        const titleEl = document.getElementById("storyTitle");
+        if (titleEl) titleEl.value = "";
+        const ideaEl = document.getElementById("storyIdea");
+        if (ideaEl) ideaEl.value = "";
+        setSelectedChars([]);
+        setStoryText("");
+        alert("Đã xóa nháp.");
+    }
+
+    function exportStoryJSON(){
+        const data = buildStoryJSON();
+        // nếu chưa có truyện thì vẫn xuất được (idea + config)
+        const filename = `${(data.id || "XNC-story")}.json`;
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json;charset=utf-8"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+    }
+
+    function wireAutoSave(){
+        const idea = document.getElementById("storyIdea");
+        const title = document.getElementById("storyTitle");
+        const prov = document.getElementById("aiProvider");
+        const src = document.getElementById("apiSource");
+        const dna = document.getElementById("dnaSelector");
+
+        [idea, title, prov, src, dna].filter(Boolean).forEach(el=>{
+            el.addEventListener("input", ()=>saveDraft(false));
+            el.addEventListener("change", ()=>saveDraft(false));
+        });
+
+        // autosave khi tick nhân vật
+        document.getElementById("charList")?.addEventListener("change", ()=>saveDraft(false));
+    }
+const STYLE_URL = DATA_PATH + "XNC_style.json";
 
     const ACTIVE_PROVIDER_KEY = "nini_active_provider";
     const PROFILE_ID = "default";
@@ -254,8 +447,11 @@
     let stylesData = {};
 
     window.onload = async () => {
-        const sel = document.getElementById('aiProvider');
-        if (sel) sel.value = getActiveProvider();
+        
+        loadDraft();
+        wireAutoSave();
+const sel = document.getElementById('aiProvider');
+        if (sel && !sel.value) sel.value = getActiveProvider();
 
         // init API source (local/firebase)
         const srcSel = document.getElementById('apiSource');
@@ -292,6 +488,12 @@ try {
                     <span style="font-weight:bold;">${c.name}</span>
                 </label>`;
         });
+        // restore draft-selected characters once after loading
+        if (window.__draftChars && window.__draftChars.length) {
+            setSelectedChars(window.__draftChars);
+            window.__draftChars = null;
+        }
+
     }
 
     function renderDNASelector() {
@@ -425,7 +627,10 @@ async function generateStory() {
 
             document.getElementById('finalStory').innerText = resultText;
 
-        } catch (error) {
+        
+            // autosave after generation
+            saveDraft(false);
+} catch (error) {
             alert("Lỗi AI: " + error.message + "\n\n💡 Mẹo: Hãy thử chọn phiên bản Gemini khác trên thanh công cụ xem sao!");
         } finally {
             document.getElementById('loading').style.display = 'none';
