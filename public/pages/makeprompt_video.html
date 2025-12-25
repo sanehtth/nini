@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Prompt tạo VIDEO – Xóm Ngàn Chuyện</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- CSS chung -->
+  <link rel="stylesheet" href="public/style.css" />
+  <!-- Theme xanh lá & nâu -->
+  <link rel="stylesheet" href="public/green-theme.css" />
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+    .xnc-page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+    .xnc-header {
+      margin-bottom: 20px;
+    }
+    .xnc-header h1 {
+      margin: 0 0 4px;
+      font-size: 24px;
+    }
+    .xnc-header p {
+      margin: 0;
+      opacity: 0.8;
+    }
+    .xnc-block {
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+    .xnc-block h3 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+    .xnc-field {
+      margin-bottom: 10px;
+    }
+    .xnc-field label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    .xnc-field input[type="text"],
+    .xnc-field input[type="password"],
+    .xnc-field textarea,
+    .xnc-field select {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid #d3d3d3;
+      padding: 6px 8px;
+      font-size: 13px;
+      box-sizing: border-box;
+    }
+    .xnc-field textarea {
+      min-height: 56px;
+      resize: vertical;
+    }
+    .xnc-hint {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+    .xnc-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    .xnc-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #4caf50;
+      color: #fff;
+    }
+    .xnc-btn.secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    .xnc-output {
+      width: 100%;
+      min-height: 160px;
+      padding: 8px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 13px;
+      box-sizing: border-box;
+      resize: vertical;
+      font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+    }
+    .xnc-tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+    .xnc-tag {
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+    }
+  </style>
+</head>
+<body class="green-theme">
+  <div class="xnc-page">
+    <header class="xnc-header">
+      <h1>Prompt tạo VIDEO – Xóm Ngàn Chuyện</h1>
+      <p>Tool sinh prompt video &amp; 4 keyframe theo đúng ADN Xóm Ngàn Chuyện, có kèm JSON để lưu storyboard.</p>
+    </header>
+
+    <!-- CẤU HÌNH API / PROVIDER -->
+    <section class="xnc-block">
+      <h3>Cấu hình AI dùng để chuẩn hoá prompt</h3>
+      <div class="xnc-field">
+        <label for="mpProvider">AI Provider</label>
+        <select id="mpProvider">
+          <option value="openai">OpenAI</option>
+          <option value="gemini">Google AI (Gemini)</option>
+          <option value="grok">Grok (xAI)</option>
+        </select>
+        <div class="xnc-hint" id="mpProviderHint">
+          Hiện tại chuẩn hoá prompt chỉ hỗ trợ OpenAI.
+        </div>
+      </div>
+      <div class="xnc-field">
+        <label for="mpApiKey">OpenAI API Key</label>
+        <input
+          type="password"
+          id="mpApiKey"
+          placeholder="sk-..."
+        />
+        <div class="xnc-hint">
+          Nếu để trống, hệ thống sẽ cố gắng đọc key từ cấu hình đã lưu trong <code>localStorage.apiProfiles</code>.
+        </div>
+      </div>
+    </section>
+
+    <!-- CHỌN ADN / SERIES -->
+    <section class="xnc-block">
+      <h3>Chọn ADN / Series</h3>
+
+      <div class="xnc-field">
+        <label for="xncAdnProfile">ADN / thế giới *</label>
+        <select id="xncAdnProfile">
+          <option value="xomnganchuyen">Xóm Ngàn Chuyện (mặc định)</option>
+        </select>
+        <div class="xnc-hint">
+          Mỗi ADN ứng với thư mục <code>/adn/&lt;profileId&gt;</code> chứa JSON nhân vật, style, audio.
+        </div>
+      </div>
+    </section>
+
+    <!-- VIBE -->
+    <section class="xnc-block">
+      <h3>Vibe &amp; phong cách Xóm Ngàn Chuyện</h3>
+      <div class="xnc-tag-row">
+        <span class="xnc-tag">Green &amp; Brown Vietnamese vibe</span>
+        <span class="xnc-tag">Pastel chibi 2D</span>
+        <span class="xnc-tag">Vietnamese primary school</span>
+      </div>
+      <p class="xnc-hint">
+        ADN này được cố định bởi <code>xomnganchuyen.js</code> và JSON XNC_* trong thư mục <code>/adn</code>.
+      </p>
+    </section>
+
+    <!-- THÔNG TIN CẢNH VIDEO -->
+    <section class="xnc-block">
+      <h3>Thông tin cảnh video</h3>
+
+      <div class="xnc-field">
+        <label for="xncVideoId">ID video / ID cảnh *</label>
+        <input
+          type="text"
+          id="xncVideoId"
+          placeholder="Ví dụ: ep08_sc01_vid"
+        />
+        <div class="xnc-hint">
+          Dùng ID này để quản lý scene trong storyboard (tập – cảnh – loại: <code>ep08_sc01_vid</code>).
+        </div>
+      </div>
+
+      <div class="xnc-field">
+        <label for="xncAction">Hành động chính của cảnh *</label>
+        <input
+          type="text"
+          id="xncAction"
+          placeholder="Ví dụ: Bô-lô soi cuốn sổ đen, Tùm-la lao tới xử lý..."
+        />
+      </div>
+
+      <div class="xnc-field">
+        <label for="xncContext">Bối cảnh / không gian *</label>
+        <input
+          type="text"
+          id="xncContext"
+          placeholder="Ví dụ: trong lớp 2A, hành lang trường, sân trường giờ ra chơi..."
+        />
+      </div>
+
+      <div class="xnc-field">
+        <label for="xncMotion">Mô tả chuyển động (motion) *</label>
+        <textarea
+          id="xncMotion"
+          placeholder="Ví dụ: camera đứng yên, nhân vật bước 1–2 bước về phía bảng, tay chỉ vào tờ giấy, miệng nói nhưng không cần sync thoại..."
+        ></textarea>
+        <div class="xnc-hint">
+          Phần này giúp video AI hiểu chuyển động: camera tĩnh/di chuyển, nhân vật đi/chạy, quay đầu, giơ tay, v.v.
+        </div>
+      </div>
+
+      <div class="xnc-field">
+        <label for="xncDuration">Độ dài video (giây)</label>
+        <input
+          type="text"
+          id="xncDuration"
+          value="2"
+        />
+        <div class="xnc-hint">
+          Thường 1–2s cho short gag, bạn có thể đổi nếu cần.
+        </div>
+      </div>
+    </section>
+
+    <!-- NHÂN VẬT -->
+    <section class="xnc-block">
+      <h3>Nhân vật &amp; biểu cảm đặc trưng</h3>
+
+      <div class="xnc-field">
+        <label for="xncCharacter">Nhân vật *</label>
+        <select id="xncCharacter">
+          <option value="">-- Chọn nhân vật --</option>
+        </select>
+      </div>
+
+      <div class="xnc-field">
+        <label for="xncSignature">Biểu cảm / hành vi đặc trưng</label>
+        <select id="xncSignature">
+          <option value="">-- Chọn (không bắt buộc) --</option>
+        </select>
+        <div class="xnc-hint">
+          Nếu không chọn, video vẫn dùng hành động chính. Signature giúp nhân vật mang đúng “thói quen riêng”.
+        </div>
+      </div>
+    </section>
+
+    <!-- CAMERA & TONE -->
+    <section class="xnc-block">
+      <h3>Góc nhìn, tone cảm xúc &amp; mood</h3>
+
+      <div class="xnc-field">
+        <label for="xncCamera">Góc nhìn / camera</label>
+        <select id="xncCamera">
+          <option value="">(Không bắt buộc)</option>
+          <option value="closeup">Close-up (cận mặt)</option>
+          <option value="medium">Medium shot (nửa người / toàn thân)</option>
+          <option value="dramatic_low">Low angle drama</option>
+          <option value="comedy_zoom">Comedy punch-in</option>
+        </select>
+      </div>
+
+      <div class="xnc-field">
+        <label for="xncEmotion">Tone cảm xúc / màu chính *</label>
+        <select id="xncEmotion">
+          <option value="happy">Vui / ấm</option>
+          <option value="comedy" selected>Hài hước</option>
+          <option value="warm">Ấm áp</option>
+          <option value="drama">Drama / nghiêm túc</option>
+          <option value="twist">Twist / bất ngờ</option>
+          <option value="embarrassed">Ngại / xấu hổ</option>
+        </select>
+      </div>
+
+      <div class="xnc-field">
+        <label for="xncExtraMood">Mood chi tiết (tùy chọn)</label>
+        <textarea
+          id="xncExtraMood"
+          placeholder="Ví dụ: hơi căng thẳng nhưng vẫn pastel, cảm giác học đường Việt Nam, Noel vui nhộn..."
+        ></textarea>
+      </div>
+    </section>
+
+    <!-- PROMPT MẪU VIDEO -->
+    <section class="xnc-block">
+      <h3>Prompt mẫu VIDEO từ AI khác (tuỳ chọn)</h3>
+
+      <div class="xnc-field">
+        <label for="xncSamplePrompt_vid">Dán prompt video gốc</label>
+        <textarea
+          id="xncSamplePrompt_vid"
+          placeholder="Dán prompt video từ Sora / Flow / Meta / v.v..."
+        ></textarea>
+      </div>
+
+      <div class="xnc-field">
+        <button type="button" class="xnc-btn" id="btnNormalizeVideo">
+          Chuẩn hoá VIDEO theo ADN Xóm Ngàn Chuyện (OpenAI)
+        </button>
+      </div>
+    </section>
+
+    <!-- PROMPT VIDEO -->
+    <section class="xnc-block">
+      <h3>🎬 Prompt VIDEO (generic – dùng cho Sora / Meta / Flow)</h3>
+
+      <div class="xnc-actions">
+        <button type="button" class="xnc-btn" id="btnGenVideo">
+          🎬 Tạo Prompt Video
+        </button>
+        <button type="button" class="xnc-btn secondary" id="btnCopyVideo">
+          📋 Copy Prompt Video
+        </button>
+      </div>
+
+      <div class="xnc-field" style="margin-top: 10px;">
+        <textarea
+          id="xncVideoPrompt"
+          class="xnc-output"
+          placeholder="Prompt video sẽ hiện ở đây sau khi bạn bấm 'Tạo Prompt Video' hoặc sau khi chuẩn hoá từ prompt mẫu..."
+        ></textarea>
+      </div>
+    </section>
+
+    <!-- KEYFRAMES -->
+    <section class="xnc-block">
+      <h3>🖼️ Prompt 4 Keyframes (cho dựng video từ frame)</h3>
+
+      <div class="xnc-actions">
+        <button type="button" class="xnc-btn" id="btnGenFrames">
+          🖼️ Tạo 4 Frame
+        </button>
+        <button type="button" class="xnc-btn secondary" id="btnCopyFrames">
+          📋 Copy 4 Frame
+        </button>
+      </div>
+
+      <div class="xnc-field" style="margin-top: 10px;">
+        <textarea
+          id="xncFramesPrompt"
+          class="xnc-output"
+          placeholder="Prompt 4 frame (text liệt kê) sẽ hiện ở đây sau khi bạn bấm 'Tạo 4 Frame'..."
+        ></textarea>
+      </div>
+    </section>
+
+    <!-- JSON EXPORT -->
+    <section class="xnc-block">
+      <h3>🧩 JSON lưu scene VIDEO (shot)</h3>
+
+      <div class="xnc-actions">
+        <button type="button" class="xnc-btn" id="btnGenJson">
+          🧩 Tạo JSON
+        </button>
+        <button type="button" class="xnc-btn secondary" id="btnCopyJson">
+          📋 Copy JSON
+        </button>
+      </div>
+
+      <div class="xnc-field" style="margin-top: 10px;">
+        <textarea
+          id="xncJsonOutput"
+          class="xnc-output"
+          placeholder="JSON sẽ hiện ở đây sau khi bạn bấm 'Tạo JSON'..."
+        ></textarea>
+      </div>
+
+      <p class="xnc-hint">
+        JSON này có đầy đủ: ID scene, action, context, character, videoPrompt, keyframes.
+        Bạn có thể lưu thành file <code>.json</code> hoặc gửi cho người làm video.
+      </p>
+    </section>
+  </div>
+
+  <!-- JS ADN -->
+  <script src="js/xomnganchuyen.js"></script>
+  <script>
+    /* ========= Helper API / Provider (giống trang image) ========= */
+
+    function getActiveProvider() {
+      const select = document.getElementById("mpProvider");
+      if (select && select.value) {
+        return select.value;
+      }
+      return localStorage.getItem("nini_active_provider") || "openai";
+    }
+
+    function setActiveProvider(provider) {
+      localStorage.setItem("nini_active_provider", provider);
+    }
+
+    function initProviderSelectLocal() {
+      const select = document.getElementById("mpProvider");
+      if (!select) return;
+      const saved = localStorage.getItem("nini_active_provider") || "openai";
+      select.value = saved;
+      select.addEventListener("change", () => {
+        const v = select.value || "openai";
+        setActiveProvider(v);
+        updateProviderHint();
+      });
+      updateProviderHint();
+    }
+
+    function updateProviderHint() {
+      const p = getActiveProvider();
+      const el = document.getElementById("mpProviderHint");
+      if (!el) return;
+      if (p !== "openai") {
+        el.textContent =
+          "Hiện tại chuẩn hoá prompt chỉ hỗ trợ OpenAI. Vui lòng chọn OpenAI nếu muốn dùng nút chuẩn hoá.";
+      } else {
+        el.textContent =
+          "OpenAI đang được dùng để chuẩn hoá prompt (gpt-4.1-mini).";
+      }
+    }
+
+    function getOpenAIKeyForXNC() {
+      const input = document.getElementById("mpApiKey");
+      if (input && input.value.trim()) return input.value.trim();
+
+      try {
+        const raw =
+          localStorage.getItem("apiProfiles") ||
+          localStorage.getItem("api_profiles") ||
+          "";
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            const found = parsed.find(
+              p =>
+                p &&
+                (p.provider === "openai" || p.provider === "OpenAI") &&
+                p.apiKey
+            );
+            if (found) return found.apiKey;
+          } else if (typeof parsed === "object") {
+            for (const k in parsed) {
+              const p = parsed[k];
+              if (
+                p &&
+                (p.provider === "openai" || p.provider === "OpenAI") &&
+                p.apiKey
+              ) {
+                return p.apiKey;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Không đọc được apiProfiles từ localStorage:", e);
+      }
+      return "";
+    }
+
+    async function callXNCAnalyzer(rawSamplePrompt, target) {
+      const provider = getActiveProvider();
+      const apiKey = getOpenAIKeyForXNC();
+
+      if (!rawSamplePrompt || !rawSamplePrompt.trim()) {
+        alert("Dán prompt mẫu vào trước đã nha.");
+        return "";
+      }
+
+      if (provider !== "openai") {
+        alert(
+          "Module chuẩn hoá prompt hiện chỉ hỗ trợ OpenAI.\n" +
+            "Bạn đang chọn: " +
+            provider +
+            ". Vui lòng chọn OpenAI trong phần cấu hình AI."
+        );
+        return "";
+      }
+
+      if (!apiKey) {
+        alert(
+          "Chưa có OpenAI API key.\n" +
+            "- Nhập key vào ô OpenAI API Key, HOẶC\n" +
+            "- Đảm bảo bạn đã lưu profile OpenAI trong Admin (localStorage.apiProfiles)."
+        );
+        return "";
+      }
+
+      const mode =
+        target === "video"
+          ? "short animation video (1–3 seconds)"
+          : "single illustration image";
+
+      const userContent = `
+You are a prompt formatter for the Vietnamese chibi universe "Xóm Ngàn Chuyện".
+
+Your job:
+- Take the raw prompt below (may come from any AI tool).
+- Rewrite it into ONE clean English prompt that strictly follows the ADN of "Xóm Ngàn Chuyện".
+
+ADN:
+- 2D pastel chibi style
+- Green & brown Vietnamese village / primary school vibe
+- Setting: Vietnamese primary school or small neighbourhood
+- Warm, funny, lighthearted, not dark, not violent.
+
+Output:
+- One single English prompt for a ${mode}.
+- No explanation, no numbering.
+
+Raw prompt:
+"""${rawSamplePrompt.trim()}"""
+      `.trim();
+
+      try {
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + apiKey
+          },
+          body: JSON.stringify({
+            model: "gpt-4.1-mini",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You convert any raw prompt into the ADN style of the Vietnamese chibi universe Xóm Ngàn Chuyện."
+              },
+              { role: "user", content: userContent }
+            ],
+            temperature: 0.8,
+            max_tokens: 400
+          })
+        });
+
+        if (!res.ok) {
+          console.error("OpenAI XNC analyzer error:", await res.text());
+          alert("Lỗi khi gọi OpenAI để chuẩn hoá prompt.");
+          return "";
+        }
+
+        const data = await res.json();
+        const text =
+          data.choices?.[0]?.message?.content?.trim() || "";
+
+        return text;
+      } catch (err) {
+        console.error("Lỗi callXNCAnalyzer:", err);
+        alert("Có lỗi kết nối khi chuẩn hoá prompt.");
+        return "";
+      }
+    }
+
+    /* ========= Logic XNC cho VIDEO ========= */
+    document.addEventListener("DOMContentLoaded", function () {
+      initProviderSelectLocal();
+
+      const adnSelect = document.getElementById("xncAdnProfile");
+
+      const videoIdInput = document.getElementById("xncVideoId");
+      const actionInput = document.getElementById("xncAction");
+      const contextInput = document.getElementById("xncContext");
+      const motionInput = document.getElementById("xncMotion");
+      const durationInput = document.getElementById("xncDuration");
+
+      const charSelect = document.getElementById("xncCharacter");
+      const sigSelect = document.getElementById("xncSignature");
+      const cameraSelect = document.getElementById("xncCamera");
+      const emotionSelect = document.getElementById("xncEmotion");
+      const extraMoodInput = document.getElementById("xncExtraMood");
+
+      const videoPromptOutput = document.getElementById("xncVideoPrompt");
+      const framesPromptOutput = document.getElementById("xncFramesPrompt");
+      const jsonOutput = document.getElementById("xncJsonOutput");
+
+      const btnGenVideo = document.getElementById("btnGenVideo");
+      const btnCopyVideo = document.getElementById("btnCopyVideo");
+      const btnGenFrames = document.getElementById("btnGenFrames");
+      const btnCopyFrames = document.getElementById("btnCopyFrames");
+      const btnGenJson = document.getElementById("btnGenJson");
+      const btnCopyJson = document.getElementById("btnCopyJson");
+      const btnNormalizeVideo = document.getElementById("btnNormalizeVideo");
+
+      if (!window.XNC) {
+        console.error("XNC core not found");
+        return;
+      }
+
+      function loadProfileAndFill() {
+        const profileId = adnSelect.value || "xomnganchuyen";
+
+        charSelect.innerHTML =
+          '<option value="">-- Chọn nhân vật --</option>';
+        sigSelect.innerHTML =
+          '<option value="">-- Chọn (không bắt buộc) --</option>';
+
+        XNC.setProfile(profileId)
+          .then(() => {
+            const chars = XNC.getCharacterList();
+            chars.forEach((c) => {
+              const opt = document.createElement("option");
+              opt.value = c.id;
+              opt.textContent = `${c.name} – ${c.role}`;
+              charSelect.appendChild(opt);
+            });
+          })
+          .catch((e) => console.error(e));
+      }
+
+      XNC.ready(() => {
+        loadProfileAndFill();
+      });
+
+      adnSelect.addEventListener("change", () => {
+        loadProfileAndFill();
+      });
+
+      charSelect.addEventListener("change", () => {
+        const id = charSelect.value;
+        sigSelect.innerHTML =
+          '<option value="">-- Chọn (không bắt buộc) --</option>';
+        if (!id) return;
+
+        const sigs = XNC.getSignaturesFor(id);
+        sigs.forEach((s) => {
+          const opt = document.createElement("option");
+          opt.value = s.id;
+          opt.textContent = s.label;
+          sigSelect.appendChild(opt);
+        });
+      });
+
+      function buildBaseScenePrompt() {
+        const characterId = charSelect.value;
+        const signatureId = sigSelect.value || "";
+        const actionText = actionInput.value.trim();
+        const contextText = contextInput.value.trim();
+        const cameraKey = cameraSelect.value || "";
+        const emotionKey = emotionSelect.value || "comedy";
+        const extraMood = extraMoodInput.value.trim();
+
+        if (!characterId || !actionText || !contextText) {
+          alert("Vui lòng nhập Hành động, Bối cảnh và chọn Nhân vật trước.");
+          return null;
+        }
+
+        const basePrompt = XNC.buildCharacterPrompt({
+          characterId,
+          signatureId,
+          actionText,
+          emotionKey,
+          contextText,
+          cameraKey,
+          lightingKey: "school_daylight",
+          extraMood
+        });
+
+        return basePrompt;
+      }
+
+      function buildVideoPrompt() {
+        const basePrompt = buildBaseScenePrompt();
+        if (!basePrompt) return null;
+
+        const motion = motionInput.value.trim();
+        const duration = (durationInput.value || "2").trim();
+
+        const text = `
+Short animated video in the ${XNC.getCurrentProfileId()} Vietnamese chibi 2D style,
+pastel colors, green and brown brand palette.
+
+Scene description:
+${basePrompt}
+
+Motion:
+${motion || "subtle character motion matching the described action, no camera shake."}
+
+Technical notes:
+- Duration: about ${duration} seconds
+- Stable camera, no heavy distortion
+- Keep character design consistent across frames
+        `.trim();
+
+        return text;
+      }
+
+      function buildKeyframesPrompt() {
+        const basePrompt = buildBaseScenePrompt();
+        if (!basePrompt) return null;
+
+        const frames = [
+          {
+            index: 1,
+            label: "establish",
+            prompt: `Frame 1 – Establish shot: ${basePrompt}, character and environment clearly visible.`
+          },
+          {
+            index: 2,
+            label: "action_peak",
+            prompt: `Frame 2 – Action peak: ${basePrompt}, the main action reaches its most intense moment.`
+          },
+          {
+            index: 3,
+            label: "reaction",
+            prompt: `Frame 3 – Reaction shot: close-up on the character reacting emotionally to what just happened.`
+          },
+          {
+            index: 4,
+            label: "ending",
+            prompt: `Frame 4 – Ending / comedic freeze: final pose that clearly concludes the gag, can be slightly exaggerated.`
+          }
+        ];
+
+        const textLines = frames.map((f) => `${f.index}) ${f.prompt}`);
+        return {
+          text: textLines.join("\n\n"),
+          frames
+        };
+      }
+
+      btnGenVideo.addEventListener("click", () => {
+        const vPrompt = buildVideoPrompt();
+        if (vPrompt) {
+          videoPromptOutput.value = vPrompt;
+        }
+      });
+
+      btnCopyVideo.addEventListener("click", () => {
+        const text = videoPromptOutput.value.trim();
+        if (!text) {
+          alert("Chưa có prompt video để copy.");
+          return;
+        }
+        navigator.clipboard.writeText(text);
+        alert("Đã copy prompt video.");
+      });
+
+      let lastFrameData = null;
+
+      btnGenFrames.addEventListener("click", () => {
+        const result = buildKeyframesPrompt();
+        if (!result) return;
+        framesPromptOutput.value = result.text;
+        lastFrameData = result.frames;
+      });
+
+      btnCopyFrames.addEventListener("click", () => {
+        const text = framesPromptOutput.value.trim();
+        if (!text) {
+          alert("Chưa có prompt 4 frame để copy.");
+          return;
+        }
+        navigator.clipboard.writeText(text);
+        alert("Đã copy 4 frame.");
+      });
+
+      btnNormalizeVideo.addEventListener("click", async () => {
+        const sample = document.getElementById("xncSamplePrompt_vid").value;
+        const result = await callXNCAnalyzer(sample, "video");
+        if (result) {
+          videoPromptOutput.value = result;
+        }
+      });
+
+      btnGenJson.addEventListener("click", () => {
+        const id = videoIdInput.value.trim();
+        if (!id) {
+          alert("Vui lòng nhập ID video / ID cảnh.");
+          return;
+        }
+
+        const videoPrompt = videoPromptOutput.value.trim();
+        if (!videoPrompt) {
+          alert("Bạn chưa tạo prompt video. Bấm 'Tạo Prompt Video' hoặc 'Chuẩn hoá' trước.");
+          return;
+        }
+
+        if (!lastFrameData) {
+          const result = buildKeyframesPrompt();
+          if (!result) return;
+          lastFrameData = result.frames;
+        }
+
+        const characterId = charSelect.value;
+        const signatureId = sigSelect.value || "";
+        const actionText = actionInput.value.trim();
+        const contextText = contextInput.value.trim();
+        const cameraKey = cameraSelect.value || "";
+        const emotionKey = emotionSelect.value || "comedy";
+        const extraMood = extraMoodInput.value.trim();
+        const motion = motionInput.value.trim();
+        const duration = (durationInput.value || "2").trim();
+
+        if (!characterId || !actionText || !contextText) {
+          alert("Thiếu Hành động, Bối cảnh hoặc Nhân vật.");
+          return;
+        }
+
+        const obj = {
+          id: id,
+          type: "video",
+          series: XNC.getCurrentProfileId(),
+          characterId: characterId,
+          signatureId: signatureId || null,
+          action: actionText,
+          context: contextText,
+          camera: cameraKey || null,
+          emotion: emotionKey,
+          mood: extraMood || null,
+          motion: motion || null,
+          durationSeconds: Number(duration) || 2,
+          videoPrompt: videoPrompt,
+          keyframes: lastFrameData,
+          createdAt: new Date().toISOString()
+        };
+
+        jsonOutput.value = JSON.stringify(obj, null, 2);
+      });
+
+      btnCopyJson.addEventListener("click", () => {
+        const text = jsonOutput.value.trim();
+        if (!text) {
+          alert("Chưa có JSON để copy. Bấm 'Tạo JSON' trước.");
+          return;
+        }
+        navigator.clipboard.writeText(text);
+        alert("Đã copy JSON scene video.");
+      });
+    });
+  </script>
+</body>
+</html>
