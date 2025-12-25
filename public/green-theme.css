@@ -125,71 +125,112 @@ body.green-theme .forgot-link a {
   color: #4CAF50;
 }
 
-/* =========================================
-   STUDIO EXTENSION FOR GREEN THEME
-   (Dán đoạn này vào cuối file green-theme.css)
-   ========================================= */
+/* =========================================================
+   XÓM NGÀN CHUYỆN – DNA BRAND THEME (UPDATED FROM JSON)
+   Palette: #8CCB7A (Green), #B9885D (Brown), #F4E8A2 (Yellow)
+   ========================================================= */
 
-/* 1. Labels & Tiêu đề */
-body.green-theme .section-label {
-  color: #4CAF50; /* Xanh lá chủ đạo */
+body.green-theme {
+  /* Gradient nền từ Xanh mềm sang Vàng nắng */
+  background: linear-gradient(135deg, #CDECC1, #F4E8A2); 
+  color: #5D4037; /* Chữ màu nâu đất đậm cho dễ đọc */
 }
 
-/* 2. Các ô nhập liệu (Input/Select) */
+/* CONTAINER CHÍNH */
+body.green-theme .container {
+  background: #FFFFFF;
+  border: 2px solid #8CCB7A; /* Viền xanh chủ đạo */
+  box-shadow: 0 15px 35px rgba(139, 94, 60, 0.15); /* Bóng màu nâu nhẹ */
+}
+
+/* HEADER: Dùng màu Xanh chủ đạo */
+body.green-theme header {
+  background: #8CCB7A; /* DNA Green Primary */
+  border-bottom: 4px solid #B9885D; /* Viền dưới màu Nâu gỗ */
+  color: #fff;
+}
+
+body.green-theme h1 { color: #fff; text-shadow: 1px 1px 0px #5D4037; }
+body.green-theme .subtitle { color: #F4E8A2; opacity: 1; } /* Subtitle màu vàng nắng */
+
+/* USER INFO */
+body.green-theme .user-info { background: rgba(255,255,255,0.3); }
+body.green-theme .profile-btn { background: #B9885D; } /* Nút nhỏ màu nâu */
+
+/* LABELS & TEXT */
+body.green-theme .section-label {
+  color: #B9885D; /* Tiêu đề mục màu Nâu (Gỗ) */
+  border-left-color: #8CCB7A; /* Vạch kẻ bên trái màu Xanh */
+}
+
+/* INPUTS & SELECTS */
 body.green-theme .studio-input {
-  border-color: #C8A27A; /* Viền nâu nhạt */
-  background: #ffffff;
+  background: #FAFAFA;
+  border: 1px solid #D8BFA8; /* Viền nâu nhạt (Soft Brown) */
+  color: #5D4037;
 }
 
 body.green-theme .studio-input:focus {
-  border-color: #4CAF50; /* Focus màu xanh */
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+  border-color: #8CCB7A;
+  box-shadow: 0 0 0 3px rgba(140, 203, 122, 0.3); /* Glow màu xanh DNA */
 }
 
-/* 3. Hàng nhân vật (Character Row) */
+/* BUTTONS (QUAN TRỌNG: Tạo điểm nhấn) */
+/* Nút chính dùng màu Nâu Gỗ để nổi bật trên nền xanh */
+body.green-theme button.main-btn {
+  background: linear-gradient(135deg, #B9885D, #A07045);
+  border: none;
+  box-shadow: 0 4px 0 #5D4037; /* Hiệu ứng nút nổi 3D */
+  color: #fff;
+  transition: transform 0.1s;
+}
+
+body.green-theme button.main-btn:hover {
+  background: #8B5E3C;
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #5D4037;
+}
+
+body.green-theme button.sub-btn {
+  border-color: #8CCB7A;
+  color: #5D4037;
+  background: #fff;
+}
+body.green-theme button.sub-btn:hover {
+  background: #CDECC1;
+}
+
+/* DANH SÁCH NHÂN VẬT */
 body.green-theme .char-row-studio {
-  background: #F1F8E9; /* Nền xanh rất nhạt */
-  border: 1px dashed #8B5E3C55; /* Viền nét đứt màu nâu */
+  background: #F7F9F0; /* Nền xanh siêu nhạt */
+  border: 1px dashed #8CCB7A;
 }
+body.green-theme .remove-btn { background: #E57373; } /* Đỏ nhạt pastel */
 
-/* 4. Nút xóa (X) */
-body.green-theme .remove-btn {
-  background: #8B5E3C; /* Màu nâu đất */
-}
-
-body.green-theme .remove-btn:hover {
-  background: #5D4037; /* Nâu đậm hơn khi hover */
-}
-
-/* 5. Khung Kết quả (Result Panel) */
+/* KẾT QUẢ PROMPT CARD */
 body.green-theme .result-panel {
-  background: #F7F3EA; /* Màu kem nền nã */
-  border-color: #C8A27A;
+  background: #FFFDE7; /* Nền vàng nhạt (giấy cũ) */
+  border-color: #F4E8A2;
 }
 
-/* 6. Hộp chứa Code Prompt */
 body.green-theme .prompt-card {
-  background: #1B3A25; /* Màu xanh rêu đậm (Dark Forest) */
-  border: 1px solid #4CAF50;
+  background: #2E3B28; /* Màu bảng đen phấn trắng (Dark Green) */
+  border: 2px solid #8CCB7A;
 }
 
 body.green-theme .prompt-content {
-  color: #C8E6C9; /* Chữ xanh nhạt dễ đọc trên nền tối */
+  color: #CDECC1; /* Chữ code màu xanh soft */
 }
 
-/* 7. Nút Copy nổi */
 body.green-theme .copy-btn-floating {
-  background: #4CAF50;
+  background: #8CCB7A;
+  color: #fff;
 }
+body.green-theme .copy-btn-floating:hover { background: #7AB568; }
 
-body.green-theme .copy-btn-floating:hover {
-  background: #388E3C;
-  box-shadow: 0 6px 15px rgba(76, 175, 80, 0.4);
-}
-
-/* 8. Tips Box */
+/* Tips Box */
 body.green-theme .tips-box {
-  background: #E8F5E9;
-  border-color: #4CAF50;
-  color: #1B5E20;
+  background: #CDECC1;
+  border-color: #8CCB7A;
+  color: #385C2F;
 }
