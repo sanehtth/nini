@@ -3,104 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xóm Ngàn Chuyện Studio V6 - Local Path</title>
-    <style>
-        :root { --primary: #FFD700; --bg: #121212; --panel: #1e1e1e; --text: #e0e0e0; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; background: var(--panel); padding: 30px; border-radius: 12px; border: 1px solid #333; }
-        h1 { text-align: center; color: var(--primary); margin-top: 0; }
-        .status-bar { text-align: center; font-size: 0.9em; margin-bottom: 20px; padding: 10px; background: #252525; border-radius: 6px; }
-        
-        /* FORM ELEMENTS */
-        .section-header { color: #fff; font-weight: bold; margin: 20px 0 10px; border-left: 3px solid var(--primary); padding-left: 10px; }
-        select, input, textarea { width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; color: #fff; border-radius: 6px; margin-bottom: 10px; box-sizing: border-box; }
-        select:focus, input:focus, textarea:focus { border-color: var(--primary); outline: none; }
-        
-        /* CHARACTERS */
-        .char-row { display: grid; grid-template-columns: 2fr 1fr auto; gap: 10px; margin-bottom: 10px; }
-        .btn-add { width: 100%; padding: 10px; background: #333; color: var(--primary); border: 1px dashed var(--primary); cursor: pointer; border-radius: 6px; }
-        .btn-remove { background: #ff4444; color: white; border: none; width: 30px; border-radius: 4px; cursor: pointer; }
-
-        /* BUTTONS */
-        .btn-gen { width: 100%; padding: 15px; background: linear-gradient(135deg, #FFD700, #FFA500); color: black; font-weight: bold; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer; margin-top: 20px; }
-        .btn-gen:hover { transform: translateY(-2px); }
-
-        /* RESULT */
-        #resultArea { margin-top: 30px; display: none; }
-        .prompt-box { background: #111; padding: 15px; border-radius: 6px; border: 1px solid #444; color: #a5d6a7; font-family: monospace; white-space: pre-wrap; position: relative; }
-        .copy-btn { position: absolute; top: 10px; right: 10px; background: #333; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
-    </style>
+    <title>Xóm Ngàn Chuyện Studio - Nini Funny</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="green-theme.css">
 </head>
 <body>
 
-<div class="container">
-    <h1>🎬 Xóm Ngàn Chuyện Studio V6</h1>
+<header>
+    <h1>🎬 Xóm Ngàn Chuyện Studio</h1>
+    <div class="subtitle">Trình tạo Prompt chuẩn Asset (Background & Character)</div>
+    <div class="user-info">
+        <span>Admin Mode</span>
+        <button class="profile-btn">Settings</button>
+    </div>
+</header>
+
+<div class="container studio-container">
     
-    <div id="statusBar" class="status-bar">
-        🔄 Đang tải dữ liệu từ server...
+    <div id="statusBar" class="alert" style="display:block">
+        🔄 Đang kết nối tới kho dữ liệu...
     </div>
 
-    <div class="section-header">1. CHỌN BỐI CẢNH</div>
-    <select id="bgSelect"><option>-- Đang tải... --</option></select>
-    <input type="text" id="customBg" placeholder="Hoặc nhập bối cảnh tùy chỉnh...">
+    <div class="studio-grid">
+        
+        <div class="studio-panel">
+            
+            <div class="input-group">
+                <label class="section-label">1. CHỌN BỐI CẢNH</label>
+                <select id="bgSelect" class="studio-input">
+                    <option>-- Đang tải... --</option>
+                </select>
+                <input type="text" id="customBg" class="studio-input" placeholder="Hoặc nhập bối cảnh tùy chỉnh...">
+            </div>
 
-    <div class="section-header">2. CHỌN NHÂN VẬT</div>
-    <div id="charList"></div>
-    <button class="btn-add" onclick="addChar()">+ Thêm nhân vật</button>
+            <div class="input-group">
+                <label class="section-label">2. ĐỘI HÌNH NHÂN VẬT</label>
+                <div id="charList" class="char-list"></div>
+                <button class="sub-btn w-100" onclick="addChar()">+ Thêm nhân vật</button>
+            </div>
 
-    <div class="section-header">3. CỐT TRUYỆN / HÀNH ĐỘNG</div>
-    <textarea id="actionInput" rows="3" placeholder="Mô tả: TùmLa đang lén ăn cá nướng, mặt lấm lét..."></textarea>
+            <div class="input-group">
+                <label class="section-label">3. HÀNH ĐỘNG / CỐT TRUYỆN</label>
+                <textarea id="actionInput" class="studio-input" rows="3" placeholder="Mô tả: TùmLa đang lén ăn cá nướng, mặt lấm lét..."></textarea>
+            </div>
 
-    <div class="section-header">4. CẤU HÌNH</div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-        <select id="styleSelect">
-            <option value="video">🎬 Video Hài (Sáng/Vui)</option>
-            <option value="podcast">🎙️ Podcast (Tối/Ma mị)</option>
-        </select>
-        <select id="ratioSelect">
-            <option value="--ar 16:9">YouTube Ngang (16:9)</option>
-            <option value="--ar 9:16">Shorts Dọc (9:16)</option>
-            <option value="--ar 1:1">Vuông (1:1)</option>
-        </select>
-    </div>
+            <div class="input-group">
+                <label class="section-label">4. CẤU HÌNH ẢNH</label>
+                <div class="config-row">
+                    <select id="styleSelect" class="studio-input">
+                        <option value="video">🎬 Video Hài (Sáng/Vui)</option>
+                        <option value="podcast">🎙️ Podcast (Tối/Ma mị)</option>
+                    </select>
+                    <select id="ratioSelect" class="studio-input">
+                        <option value="--ar 16:9">YouTube (16:9)</option>
+                        <option value="--ar 9:16">Shorts (9:16)</option>
+                        <option value="--ar 1:1">Vuông (1:1)</option>
+                    </select>
+                </div>
+            </div>
 
-    <button class="btn-gen" onclick="generate()">⚡ TẠO PROMPT</button>
+            <button class="main-btn w-100" onclick="generate()">⚡ TẠO PROMPT NGAY</button>
+        </div>
 
-    <div id="resultArea">
-        <div class="section-header">KẾT QUẢ:</div>
-        <div class="prompt-box">
-            <div id="finalPrompt"></div>
-            <button class="copy-btn" onclick="copyPrompt()">COPY</button>
+        <div class="studio-panel result-panel">
+            <label class="section-label">KẾT QUẢ PROMPT</label>
+            <div class="prompt-card">
+                <div id="finalPrompt" class="prompt-content">
+                    (Kết quả sẽ hiện ở đây...)
+                </div>
+                <button class="copy-btn-floating" onclick="copyPrompt()">📋 Copy</button>
+            </div>
+            
+            <div class="tips-box">
+                <strong>💡 Tips:</strong>
+                <ul>
+                    <li>Chọn <strong>Podcast</strong> để có ảnh tối, ma mị.</li>
+                    <li>Chọn <strong>Video Hài</strong> để có ảnh sáng, rực rỡ.</li>
+                    <li>Thêm nhiều nhân vật để ảnh sinh động hơn.</li>
+                </ul>
+            </div>
         </div>
     </div>
+
 </div>
 
 <script>
-    // ============================================================
-    // CẤU HÌNH ĐƯỜNG DẪN (QUAN TRỌNG)
-    // Dựa vào ảnh bạn gửi, file JSON nằm trong folder "adn/xomnganchuyen/"
-    // Nếu bạn đặt file HTML này CÙNG CHỖ với file JSON, hãy sửa dòng dưới thành: "./"
-    
+    // CẤU HÌNH ĐƯỜNG DẪN (Sửa lại cho đúng thư mục của bạn)
     const DATA_PATH = "adn/xomnganchuyen/"; 
     
-    // ============================================================
-
     const BG_URL = DATA_PATH + "XNC_backgrounds.json";
     const CHAR_URL = DATA_PATH + "XNC_characters.json";
 
-    let bgData = [];
-    let charData = [];
+    let bgData = [], charData = [];
 
     window.onload = async () => {
         const status = document.getElementById('statusBar');
         try {
-            // Thử load file
             const [bgRes, charRes] = await Promise.all([fetch(BG_URL), fetch(CHAR_URL)]);
-            
-            if(!bgRes.ok || !charRes.ok) {
-                // Nếu lỗi, thử load kiểu cùng thư mục (phòng hờ bạn di chuyển file)
-                throw new Error("Không tìm thấy file ở đường dẫn: " + DATA_PATH);
-            }
+            if(!bgRes.ok || !charRes.ok) throw new Error("Lỗi đọc file JSON");
 
             const bgJson = await bgRes.json();
             const charJson = await charRes.json();
@@ -111,20 +111,19 @@
             populateBg();
             addChar();
             
-            status.innerHTML = `✅ <strong>Đã kết nối!</strong> Tìm thấy ${bgData.length} bối cảnh và ${charData.length} nhân vật.`;
-            status.style.color = "#4CAF50";
-            status.style.border = "1px solid #4CAF50";
+            status.innerHTML = `✅ <strong>Sẵn sàng!</strong> Đã tải ${bgData.length} bối cảnh & ${charData.length} nhân vật.`;
+            status.style.background = "#dcfce7"; 
+            status.style.color = "#15803d";
 
         } catch (e) {
             console.error(e);
-            status.innerHTML = `⚠️ <strong>Lỗi:</strong> Không đọc được file JSON.<br>Hãy đảm bảo file HTML và thư mục 'adn' nằm đúng vị trí.<br>(${e.message})`;
-            status.style.color = "#FF4444";
+            status.innerHTML = `⚠️ <strong>Lỗi kết nối:</strong> Không tìm thấy dữ liệu tại '${DATA_PATH}'.`;
         }
     };
 
     function populateBg() {
         const sel = document.getElementById('bgSelect');
-        sel.innerHTML = '<option value="">-- Chọn bối cảnh có sẵn --</option>';
+        sel.innerHTML = '<option value="">-- Chọn bối cảnh --</option>';
         bgData.forEach(bg => {
             const opt = document.createElement('option');
             opt.value = bg.id;
@@ -136,7 +135,7 @@
 
     function addChar() {
         const div = document.createElement('div');
-        div.className = 'char-row';
+        div.className = 'char-row-studio';
         let opts = `<option value="">-- Chọn nhân vật --</option>`;
         charData.forEach(c => {
             let desc = c.prompt || c.base_desc_en || c.desc_en || (c.appearance + " " + c.outfit);
@@ -144,9 +143,9 @@
             opts += `<option value="${c.id}" data-desc="${desc}">${c.name}</option>`;
         });
         div.innerHTML = `
-            <select class="char-sel">${opts}</select>
-            <input type="text" class="char-act" placeholder="Hành động (Vd: cười, sợ hãi)...">
-            <button class="btn-remove" onclick="this.parentElement.remove()">×</button>
+            <select class="studio-input char-sel">${opts}</select>
+            <input type="text" class="studio-input char-act" placeholder="Hành động...">
+            <button class="remove-btn" onclick="this.parentElement.remove()">×</button>
         `;
         document.getElementById('charList').appendChild(div);
     }
@@ -159,7 +158,7 @@
         if(!bgDesc) { alert("Chưa chọn bối cảnh!"); return; }
 
         let chars = [];
-        document.querySelectorAll('.char-row').forEach(row => {
+        document.querySelectorAll('.char-row-studio').forEach(row => {
             const sel = row.querySelector('.char-sel');
             const act = row.querySelector('.char-act').value;
             if(sel.value) {
@@ -188,12 +187,14 @@ High quality, 8k resolution. ${ratio} --niji 6
         `.trim();
 
         document.getElementById('finalPrompt').innerText = final;
-        document.getElementById('resultArea').style.display = 'block';
     }
 
     function copyPrompt() {
         navigator.clipboard.writeText(document.getElementById('finalPrompt').innerText);
-        alert("Đã copy Prompt!");
+        const btn = document.querySelector('.copy-btn-floating');
+        btn.innerText = "Đã Copy!";
+        btn.style.background = "#15803d";
+        setTimeout(() => { btn.innerText = "📋 Copy"; btn.style.background = "#e11d48"; }, 2000);
     }
 </script>
 
