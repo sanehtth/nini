@@ -323,6 +323,17 @@
             `;
             container.appendChild(div);
         });
+    // === HÀM DI CHUYỂN LÊN XUỐNG (Thêm đoạn này vào nhé) ===
+    function moveItem(index, dir) {
+        // Kiểm tra xem có di chuyển ra ngoài giới hạn không
+        if(index + dir < 0 || index + dir >= timeline.length) return;
+        
+        // Đổi chỗ 2 phần tử trong mảng timeline
+        [timeline[index], timeline[index+dir]] = [timeline[index+dir], timeline[index]];
+        
+        // Vẽ lại giao diện
+        renderTimeline();
+    }
     }
     // === 4. SAVE & LOAD SYSTEM (The Magic) ===
     async function saveProjectToFile() {
@@ -509,4 +520,5 @@
 
 </body>
 </html>
+
 
