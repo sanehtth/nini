@@ -284,7 +284,8 @@
         } catch(e) { alert(e.message); }
     }
 
-    // === 3. TIMELINE LOGIC ===
+       
+    // === 3. TIMELINE LOGIC (ĐÃ SỬA LỖI) ===
     function addToTimeline(assetId) {
         const asset = assetsLibrary.find(a => a.id === assetId);
         if(!asset) return;
@@ -295,14 +296,18 @@
 
     function renderTimeline() {
         const container = document.getElementById('timelineContainer');
-        container.innerHTML = "";
+        container.innerHTML = ""; // Bước 1: Xóa sạch cũ
         
+        // Bước 2: Kiểm tra nếu rỗng -> TỰ VIẾT LẠI thông báo
         if(timeline.length === 0) {
-            document.getElementById('emptyMsg').style.display = 'block';
+            container.innerHTML = `
+                <div id="emptyMsg" style="text-align:center; color:#ccc; margin-top:100px;">
+                    Chưa có gì hết trơn.<br>Bấm dấu [+] bên thư viện để thêm vào nha!
+                </div>`;
             return;
         }
-        document.getElementById('emptyMsg').style.display = 'none';
 
+        // Bước 3: Nếu có dữ liệu -> Vẽ từng dòng
         timeline.forEach((item, index) => {
             const asset = assetsLibrary.find(a => a.id === item.assetId);
             if(!asset) return;
@@ -319,14 +324,6 @@
             container.appendChild(div);
         });
     }
-
-    function removeTimelineItem(index) { timeline.splice(index, 1); renderTimeline(); }
-    function moveItem(index, dir) {
-        if(index + dir < 0 || index + dir >= timeline.length) return;
-        [timeline[index], timeline[index+dir]] = [timeline[index+dir], timeline[index]];
-        renderTimeline();
-    }
-
     // === 4. SAVE & LOAD SYSTEM (The Magic) ===
     async function saveProjectToFile() {
         const name = document.getElementById('projName').value || "Project";
@@ -512,3 +509,4 @@
 
 </body>
 </html>
+
