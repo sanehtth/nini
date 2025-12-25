@@ -367,8 +367,6 @@ const STYLE_URL = DATA_PATH + "XNC_style.json";
     }
 
 
-    const API_SOURCE_KEY = "nini_api_source"; // "local" | "firebase"
-
     function getApiSource() {
         const sel = document.getElementById('apiSource');
         const v = (sel && sel.value) ? sel.value : (localStorage.getItem(API_SOURCE_KEY) || 'local');
