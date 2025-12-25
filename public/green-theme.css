@@ -124,3 +124,72 @@ body.green-theme .tab-btn:hover:not(.active) {
 body.green-theme .forgot-link a {
   color: #4CAF50;
 }
+
+/* =========================================
+   STUDIO EXTENSION FOR GREEN THEME
+   (Dán đoạn này vào cuối file green-theme.css)
+   ========================================= */
+
+/* 1. Labels & Tiêu đề */
+body.green-theme .section-label {
+  color: #4CAF50; /* Xanh lá chủ đạo */
+}
+
+/* 2. Các ô nhập liệu (Input/Select) */
+body.green-theme .studio-input {
+  border-color: #C8A27A; /* Viền nâu nhạt */
+  background: #ffffff;
+}
+
+body.green-theme .studio-input:focus {
+  border-color: #4CAF50; /* Focus màu xanh */
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+/* 3. Hàng nhân vật (Character Row) */
+body.green-theme .char-row-studio {
+  background: #F1F8E9; /* Nền xanh rất nhạt */
+  border: 1px dashed #8B5E3C55; /* Viền nét đứt màu nâu */
+}
+
+/* 4. Nút xóa (X) */
+body.green-theme .remove-btn {
+  background: #8B5E3C; /* Màu nâu đất */
+}
+
+body.green-theme .remove-btn:hover {
+  background: #5D4037; /* Nâu đậm hơn khi hover */
+}
+
+/* 5. Khung Kết quả (Result Panel) */
+body.green-theme .result-panel {
+  background: #F7F3EA; /* Màu kem nền nã */
+  border-color: #C8A27A;
+}
+
+/* 6. Hộp chứa Code Prompt */
+body.green-theme .prompt-card {
+  background: #1B3A25; /* Màu xanh rêu đậm (Dark Forest) */
+  border: 1px solid #4CAF50;
+}
+
+body.green-theme .prompt-content {
+  color: #C8E6C9; /* Chữ xanh nhạt dễ đọc trên nền tối */
+}
+
+/* 7. Nút Copy nổi */
+body.green-theme .copy-btn-floating {
+  background: #4CAF50;
+}
+
+body.green-theme .copy-btn-floating:hover {
+  background: #388E3C;
+  box-shadow: 0 6px 15px rgba(76, 175, 80, 0.4);
+}
+
+/* 8. Tips Box */
+body.green-theme .tips-box {
+  background: #E8F5E9;
+  border-color: #4CAF50;
+  color: #1B5E20;
+}
