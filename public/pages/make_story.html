@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XNC Story Writer Pro (Multi-AI)</title>
+    <title>XNC Story Engine (Dynamic DNA)</title>
     <link rel="stylesheet" href="/public/style.css">
     <link rel="stylesheet" href="/public/green-theme.css">
     
     <style>
-        /* GIỮ THEME DNA CỦA BẠN */
+        /* GIỮ THEME DNA */
         body {
             background: linear-gradient(135deg, #CDECC1 0%, #F4E8A2 100%);
             font-family: 'Segoe UI', sans-serif;
@@ -29,53 +29,49 @@
             min-height: 85vh;
         }
 
-        /* HEADER */
         .studio-header {
             background: #8CCB7A; padding: 15px 30px; color: white;
             display: flex; justify-content: space-between; align-items: center;
             border-bottom: 5px solid #B9885D;
         }
 
-        /* KHU VỰC CHỌN AI (Giống MakePrompt) */
-        .ai-selector-bar {
+        /* THANH CÔNG CỤ TRÊN CÙNG */
+        .toolbar {
             background: #FFF8E1; padding: 15px 30px; border-bottom: 1px solid #FFE0B2;
-            display: flex; align-items: center; gap: 15px;
-        }
-        .ai-select {
-            padding: 8px 15px; border-radius: 8px; border: 1px solid #FFB74D; 
-            background: white; color: #E65100; font-weight: bold; cursor: pointer; outline: none;
+            display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
         }
 
-        .studio-body {
-            padding: 25px; display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; flex-grow: 1;
+        .select-box {
+            padding: 10px 15px; border-radius: 8px; border: 1px solid #FFB74D; 
+            background: white; color: #E65100; font-weight: bold; cursor: pointer; outline: none; min-width: 200px;
         }
 
-        /* INPUTS */
+        /* INPUT AREA */
+        .studio-body { padding: 25px; display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; flex-grow: 1; }
+
         .label-dna { color: #8CCB7A; font-weight: 800; margin-bottom: 8px; display: block; text-transform: uppercase; font-size: 13px; }
+        
         .input-dna {
-            width: 100%; padding: 12px; border: 2px solid #E0E0E0; border-radius: 12px; background: #FAFAFA; margin-bottom: 15px; box-sizing: border-box; transition: 0.3s;
+            width: 100%; padding: 12px; border: 2px solid #E0E0E0; border-radius: 12px; background: #FAFAFA; margin-bottom: 15px; box-sizing: border-box;
         }
         .input-dna:focus { border-color: #8CCB7A; outline: none; background: white; }
 
-        /* MODE & CHARACTERS */
-        .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .mode-card {
-            border: 2px solid #E0E0E0; border-radius: 12px; padding: 10px; text-align: center; cursor: pointer; background: white; font-size: 13px; transition: 0.2s;
-        }
-        .mode-card.active { border-color: #B9885D; background: #FFF8E1; color: #E65100; font-weight: bold; box-shadow: 0 4px 0 #B9885D; }
-
-        .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; max-height: 250px; overflow-y: auto; padding: 10px; background: #F1F8E9; border-radius: 12px; border: 1px dashed #8CCB7A; }
+        /* DANH SÁCH DIỄN VIÊN */
+        .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; max-height: 300px; overflow-y: auto; padding: 10px; background: #F1F8E9; border-radius: 12px; border: 1px dashed #8CCB7A; }
         .char-item { font-size: 13px; background: white; padding: 8px; border-radius: 8px; border: 1px solid #ddd; display: flex; gap: 8px; align-items: center; cursor: pointer; }
-        .char-item:hover { border-color: #8CCB7A; }
+        
+        /* STYLE CARD (HIỂN THỊ INFO DNA) */
+        .dna-info-box {
+            background: #E1F5FE; border: 1px solid #81D4FA; color: #0277BD; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; font-style: italic;
+        }
 
-        /* BUTTON */
         .btn-generate {
             background: linear-gradient(135deg, #B9885D, #8D6E63); color: white; width: 100%; padding: 15px; border: none; border-radius: 50px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 15px; transition: 0.2s; box-shadow: 0 6px 0 #5D4037;
         }
         .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 0 #5D4037; }
-        .btn-generate:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; transform: none; }
+        .btn-generate:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        /* RESULT */
+        /* KẾT QUẢ */
         .result-container {
             background: #FFFDE7; border: 2px dashed #FBC02D; border-radius: 20px; padding: 25px; display: flex; flex-direction: column; position: relative;
         }
@@ -83,11 +79,9 @@
             flex-grow: 1; white-space: pre-wrap; font-family: 'Segoe UI', sans-serif; line-height: 1.6; font-size: 15px; color: #3E2723; overflow-y: auto; max-height: 600px; padding-right: 10px;
         }
 
-        /* LOADING SPINNER */
         .loading-spinner { display: none; text-align: center; margin-top: 50px; }
         .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #8CCB7A; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
     </style>
 </head>
 <body>
@@ -95,55 +89,58 @@
 <div class="studio-card">
     <div class="studio-header">
         <div class="header-left">
-            <h2 style="margin:0">✨ XNC Story Writer Pro</h2>
-            <p style="margin:0; font-size:13px; opacity:0.9">Biên kịch Đa trí tuệ (Multi-Model AI)</p>
+            <h2 style="margin:0">🧬 XNC Story Engine V14</h2>
+            <p style="margin:0; font-size:13px; opacity:0.9">Hệ thống tạo cốt truyện đa DNA</p>
         </div>
         <div style="background:#ffffff33; padding:5px 15px; border-radius:20px; font-size:12px;">Admin Mode</div>
     </div>
 
-    <div class="ai-selector-bar">
-        <span style="font-weight:bold; color:#B9885D;">🧠 AI đang dùng viết truyện:</span>
-        <select id="aiProvider" class="ai-select" onchange="checkKeyStatus()">
-            <option value="gemini">Google AI (Gemini Flash)</option>
-            <option value="openai">OpenAI (GPT-4o/Mini)</option>
-            <option value="grok">Grok (xAI)</option>
-        </select>
+    <div class="toolbar">
+        <div>
+            <label style="font-size:12px; font-weight:bold; color:#B9885D; display:block; margin-bottom:5px;">1. CHỌN TRÍ TUỆ (AI MODEL)</label>
+            <select id="aiProvider" class="select-box" onchange="checkKeyStatus()">
+                <option value="gemini">Google AI (Gemini Flash)</option>
+                <option value="openai">OpenAI (GPT-4o)</option>
+                <option value="grok">Grok (xAI)</option>
+            </select>
+        </div>
+
+        <div>
+            <label style="font-size:12px; font-weight:bold; color:#B9885D; display:block; margin-bottom:5px;">2. CHỌN HỆ DNA (NARRATIVE STYLE)</label>
+            <select id="dnaSelector" class="select-box" onchange="updateDNAInfo()">
+                </select>
+        </div>
         
-        <div id="keyStatus" style="font-size:13px; margin-left:10px;">
-            </div>
+        <div id="keyStatus" style="font-size:13px; margin-top:15px; margin-left:auto;"></div>
     </div>
 
     <div class="studio-body">
         <div>
-            <label class="label-dna">1. Thể Loại (Mode)</label>
-            <div class="mode-grid">
-                <div class="mode-card active" onclick="setMode(this, 'funny')">🤣 Hài Hước</div>
-                <div class="mode-card" onclick="setMode(this, 'spooky')">👻 Ma Mị</div>
-                <div class="mode-card" onclick="setMode(this, 'emotional')">🥺 Cảm Động</div>
+            <div id="dnaInfo" class="dna-info-box">
+                Đang tải DNA...
             </div>
 
-            <label class="label-dna">2. Ý Tưởng Cốt Truyện</label>
-            <textarea id="storyIdea" class="input-dna" rows="3" placeholder="Vd: TùmLa lén lấy trộm xoài của Cô Hai Ngàn nhưng bị con ngỗng rượt chạy té khói..."></textarea>
+            <label class="label-dna">3. Ý Tưởng / Cốt Truyện</label>
+            <textarea id="storyIdea" class="input-dna" rows="4" placeholder="Nhập ý tưởng thô vào đây (Vd: TùmLa bị mất cái nơ...)"></textarea>
 
-            <label class="label-dna">3. Diễn Viên (Lấy từ Data)</label>
+            <label class="label-dna">4. Diễn Viên (Load từ JSON)</label>
             <div id="charList" class="char-grid">Loading...</div>
 
-            <button id="btnGen" class="btn-generate" onclick="generateStory()">✨ VIẾT KỊCH BẢN NGAY</button>
+            <button id="btnGen" class="btn-generate" onclick="generateStory()">✨ VIẾT KỊCH BẢN THEO DNA NÀY</button>
         </div>
 
         <div class="result-container">
             <div id="loading" class="loading-spinner">
                 <div class="spinner"></div>
-                <div id="loadingText" style="color:#8CCB7A; font-weight:bold;">Đang gọi AI...</div>
+                <div id="loadingText" style="color:#8CCB7A; font-weight:bold;">AI đang xử lý...</div>
             </div>
             
             <div id="finalStory" class="story-content">
                 <div style="text-align:center; color:#999; margin-top:100px; font-style:italic;">
-                    (Chọn AI bên trên, nhập ý tưởng -> Bấm nút -> Kịch bản sẽ hiện ở đây)
+                    (Chọn DNA, nhập ý tưởng và bấm nút để xem phép màu...)
                 </div>
             </div>
-
-            <button onclick="copyStory()" style="position:absolute; top:10px; right:10px; background:white; border:1px solid #ccc; padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:bold; color:#5D4037;">📋 Copy</button>
+            <button onclick="copyStory()" style="position:absolute; top:10px; right:10px; background:white; border:1px solid #ccc; padding:6px 12px; border-radius:8px; cursor:pointer;">📋 Copy</button>
         </div>
     </div>
 </div>
@@ -153,42 +150,54 @@
     const DATA_PATH = "/public/adn/xomnganchuyen/"; 
     const CHAR_URL = DATA_PATH + "XNC_characters.json";
     
-    // === CẤU HÌNH TÊN KEY (SỬA Ở ĐÂY NẾU ADMIN PANEL LƯU TÊN KHÁC) ===
-    // Bạn hãy sửa lại 3 dòng này cho khớp với cách bạn lưu trong localStorage
+    // === CẤU HÌNH API KEY (Lấy từ localStorage) ===
     const ACTIVE_PROVIDER_KEY = "nini_active_provider";
-    const PROFILE_ID = "default"; // đổi nếu bạn dùng profile khác trong Admin
+    const PROFILE_ID = "default"; 
 
-    function getActiveProvider() {
-        return localStorage.getItem(ACTIVE_PROVIDER_KEY) || "openai";
-    }
-    function setActiveProvider(p) {
-        localStorage.setItem(ACTIVE_PROVIDER_KEY, p);
-    }
-
-    // Lấy API key theo chuẩn Admin: lq_api_<profileId>_<provider>
+    function getActiveProvider() { return localStorage.getItem(ACTIVE_PROVIDER_KEY) || "gemini"; }
+    function setActiveProvider(p) { localStorage.setItem(ACTIVE_PROVIDER_KEY, p); }
     function getApiKeyByProvider(provider) {
         const k1 = `lq_api_${PROFILE_ID}_${provider}`;
-        const v1 = localStorage.getItem(k1);
-        if (v1) return { key: v1, keyName: k1 };
-
-        // Fallback nếu trước đây bạn từng dùng prefix khác
-        const k2 = `nq_api_${PROFILE_ID}_${provider}`;
-        const v2 = localStorage.getItem(k2);
-        if (v2) return { key: v2, keyName: k2 };
-
-        return { key: "", keyName: k1 };
+        return { key: localStorage.getItem(k1), keyName: k1 };
     }
-    
+
+    // === QUAN TRỌNG: KHO DỮ LIỆU DNA (NARRATIVE STYLES) ===
+    // Bạn có thể "gắn" thêm bao nhiêu DNA tùy thích vào đây
+    const DNA_STYLES = {
+        "xnc_funny": {
+            label: "😂 XNC: Bà Tám Radio (Hài)",
+            desc: "Ồn ào, tranh luận, giọng điệu châm biếm nhẹ nhàng, đậm chất miền Tây sông nước.",
+            prompt: "STYLE: 'Bà Tám Radio'. Hài hước, nhân vật hay ngắt lời nhau. Ngôn ngữ: Miền Tây Nam Bộ (hèn chi, trời đất, nghen)."
+        },
+        "xnc_spooky": {
+            label: "👻 XNC: Chuyện Đêm Khuya (Ma)",
+            desc: "Ma mị nhưng ấm cúng. Tập trung vào âm thanh đêm. Không kinh dị máu me.",
+            prompt: "STYLE: 'Spooky but Cozy'. Bí ẩn, kể chuyện đêm khuya. Nhấn mạnh âm thanh môi trường [SFX]. Giọng kể trầm ấm."
+        },
+        "xnc_emotional": {
+            label: "🥺 XNC: Tâm Tình (Cảm động)",
+            desc: "Sâu lắng, bài học nhân văn, tình làng nghĩa xóm.",
+            prompt: "STYLE: Emotional & Heartwarming. Nhịp điệu chậm, tập trung vào cảm xúc nội tâm và tình cảm gia đình/bạn bè."
+        },
+        "vlog_daily": {
+            label: "📹 Vlog Đời Sống (Review)",
+            desc: "Phong cách YouTuber/TikToker. Nói trực tiếp với khán giả.",
+            prompt: "STYLE: Vlog/Review. Nhân vật phá vỡ bức tường thứ 4 (Break 4th wall), nói chuyện trực tiếp với camera/khán giả. Ngôn ngữ Gen Z."
+        }
+    };
+
     let charData = [];
-    let currentMode = 'funny';
 
     window.onload = async () => {
-        // Đồng bộ dropdown theo AI đang chọn ở Admin/tool khác
+        // 1. Setup API Selector
         const sel = document.getElementById('aiProvider');
         if (sel) sel.value = getActiveProvider();
+        checkKeyStatus();
 
-        checkKeyStatus(); // Kiểm tra Key ngay khi mở
-        
+        // 2. Setup DNA Selector
+        renderDNASelector();
+
+        // 3. Load Characters
         try {
             const res = await fetch(CHAR_URL);
             if(res.ok) {
@@ -198,18 +207,37 @@
         } catch (e) { console.error(e); }
     };
 
+    function renderDNASelector() {
+        const sel = document.getElementById('dnaSelector');
+        sel.innerHTML = "";
+        for (const [key, val] of Object.entries(DNA_STYLES)) {
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.text = val.label;
+            sel.appendChild(opt);
+        }
+        updateDNAInfo(); // Cập nhật thông tin lần đầu
+    }
+
+    function updateDNAInfo() {
+        const key = document.getElementById('dnaSelector').value;
+        const dna = DNA_STYLES[key];
+        document.getElementById('dnaInfo').innerHTML = `
+            <strong>Mô tả DNA:</strong> ${dna.desc}
+        `;
+    }
+
     function checkKeyStatus() {
         const provider = document.getElementById('aiProvider').value;
         setActiveProvider(provider);
-
         const { key, keyName } = getApiKeyByProvider(provider);
         const statusDiv = document.getElementById('keyStatus');
-
+        
         if (key) {
-            statusDiv.innerHTML = `✅ Đã tìm thấy Key: <b>${keyName}</b>`;
+            statusDiv.innerHTML = `✅ Ready: <b>${keyName}</b>`;
             statusDiv.style.color = "#33691E";
         } else {
-            statusDiv.innerHTML = `⚠️ Chưa thấy Key (<b>${keyName}</b>). Vào Admin Panel để lưu API key.`;
+            statusDiv.innerHTML = `⚠️ Missing Key: <b>${keyName}</b>`;
             statusDiv.style.color = "#C62828";
         }
     }
@@ -225,94 +253,71 @@
                 </label>`;
         });
     }
-    
-    function setMode(el, mode) {
-        document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
-        el.classList.add('active');
-        currentMode = mode;
-    }
 
-    // === HÀM GỌI ĐA API (MULTI-MODEL) ===
     async function generateStory() {
         const provider = document.getElementById('aiProvider').value;
-        const { key: apiKey } = getApiKeyByProvider(provider); // Lấy key theo chuẩn Admin
+        const { key: apiKey } = getApiKeyByProvider(provider);
         const storyIdea = document.getElementById('storyIdea').value;
+        const dnaKey = document.getElementById('dnaSelector').value;
         
-        if(!apiKey) { alert(`Chưa có API Key cho ${provider.toUpperCase()}! Vào Admin Panel lưu đi bạn ơi.`); return; }
-        if(!storyIdea) { alert("Nhập ý tưởng cốt truyện đã!"); return; }
+        if(!apiKey) { alert("Chưa có API Key!"); return; }
+        if(!storyIdea) { alert("Nhập ý tưởng đi bạn!"); return; }
 
         let selectedChars = [];
         document.querySelectorAll('#charList input:checked').forEach(cb => {
             selectedChars.push(`- ${cb.value}: ${cb.dataset.desc}`);
         });
-        if(selectedChars.length === 0) { alert("Chọn ít nhất 1 diễn viên!"); return; }
+        if(selectedChars.length === 0) { alert("Chọn diễn viên!"); return; }
 
-        // UI Loading
+        // --- LẤY DNA TỪ CẤU HÌNH ---
+        const selectedDNA = DNA_STYLES[dnaKey];
+
         const btn = document.getElementById('btnGen');
         btn.disabled = true;
         document.getElementById('loading').style.display = 'block';
-        document.getElementById('loadingText').innerText = `Đang nhờ ${provider.toUpperCase()} viết kịch bản...`;
         document.getElementById('finalStory').style.display = 'none';
 
-        // PROMPT CHUNG
         const systemPrompt = `
-        ACT AS A SCREENWRITER for "Xóm Ngàn Chuyện" (Vietnamese Cartoon/Podcast).
+        ACT AS A SCREENWRITER.
+        
         INPUT DATA:
         - Idea: ${storyIdea}
-        - Genre: ${currentMode}
         - Characters: \n${selectedChars.join('\n')}
+        
+        REQUIRED DNA / STYLE:
+        ${selectedDNA.prompt}
 
-        TASK: Write a funny, engaging dialogue script.
-        - Language: Vietnamese (Southern/Mekong Delta accent style).
+        TASK: Write a Dialogue Script based on the DNA above.
+        - Language: Vietnamese.
         - Format: Standard Script ([Character]: Dialogue).
-        - Include [SFX] (Sound effects) and (Emotion) notes.
-        - Keep it under 3 minutes reading time.
+        - Include [SFX] and (Emotion).
+        - Length: Short (approx 2-3 minutes).
         `;
 
         try {
             let resultText = "";
-
             if (provider === 'gemini') {
-                // --- GỌI GOOGLE GEMINI ---
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt }] }] })
                 });
                 const data = await response.json();
                 if(data.error) throw new Error(data.error.message);
                 resultText = data.candidates[0].content.parts[0].text;
-
             } else if (provider === 'openai' || provider === 'grok') {
-                // --- GỌI OPENAI / GROK (Cấu trúc giống nhau) ---
-                // Grok dùng endpoint: https://api.x.ai/v1/chat/completions (giả định)
-                const endpoint = provider === 'openai' 
-                    ? 'https://api.openai.com/v1/chat/completions' 
-                    : 'https://api.x.ai/v1/chat/completions'; 
-                
+                const endpoint = provider === 'openai' ? 'https://api.openai.com/v1/chat/completions' : 'https://api.x.ai/v1/chat/completions'; 
                 const model = provider === 'openai' ? 'gpt-4o-mini' : 'grok-beta';
-
                 const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify({
-                        model: model,
-                        messages: [{ role: "user", content: systemPrompt }],
-                        temperature: 0.7
-                    })
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                    body: JSON.stringify({ model: model, messages: [{ role: "user", content: systemPrompt }], temperature: 0.7 })
                 });
                 const data = await response.json();
                 if(data.error) throw new Error(data.error.message);
                 resultText = data.choices[0].message.content;
             }
-
             document.getElementById('finalStory').innerText = resultText;
-
         } catch (error) {
-            alert(`Lỗi gọi ${provider}: ` + error.message);
+            alert("Lỗi: " + error.message);
         } finally {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('finalStory').style.display = 'block';
@@ -321,14 +326,10 @@
     }
 
     function copyStory() {
-        const text = document.getElementById('finalStory').innerText;
-        if(text) {
-            navigator.clipboard.writeText(text);
-            alert("Đã copy kịch bản!");
-        }
+        navigator.clipboard.writeText(document.getElementById('finalStory').innerText);
+        alert("Đã copy!");
     }
 </script>
 
 </body>
 </html>
-
