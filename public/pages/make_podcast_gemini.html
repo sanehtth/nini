@@ -1,0 +1,268 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xóm Ngàn Chuyện - Podcast Director</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="green-theme.css">
+    
+    <style>
+        /* GIỮ NGUYÊN STYLE DNA CỦA V8 */
+        body {
+            background: linear-gradient(135deg, #CDECC1 0%, #F4E8A2 100%);
+            font-family: 'Segoe UI', sans-serif;
+            color: #5D4037;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .studio-card {
+            background: rgba(255, 255, 255, 0.95);
+            width: 100%;
+            max-width: 1100px;
+            border-radius: 30px;
+            box-shadow: 0 20px 50px rgba(139, 94, 60, 0.15);
+            overflow: hidden;
+            border: 4px solid #fff;
+        }
+
+        .studio-header {
+            background: #8CCB7A; /* Green Primary */
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            border-bottom: 5px solid #B9885D; /* Brown Primary */
+        }
+
+        .header-title h2 { margin: 0; font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .header-title p { margin: 5px 0 0; font-size: 14px; opacity: 0.9; color: #F4E8A2; }
+
+        .studio-body {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        /* INPUT STYLES */
+        .label-dna {
+            display: block; color: #8CCB7A; font-weight: 800; margin-bottom: 8px; font-size: 14px; text-transform: uppercase;
+        }
+        .input-dna {
+            width: 100%; padding: 12px 15px; border: 2px solid #E0E0E0; border-radius: 15px; background: #FAFAFA; font-size: 14px; transition: 0.3s; color: #5D4037;
+        }
+        .input-dna:focus { border-color: #8CCB7A; background: #fff; outline: none; box-shadow: 0 0 0 4px #CDECC1; }
+
+        /* PODCAST MODE CARDS */
+        .mode-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .mode-card {
+            border: 2px solid #E0E0E0; border-radius: 15px; padding: 10px; text-align: center; cursor: pointer; transition: 0.2s; background: white;
+        }
+        .mode-card:hover { transform: translateY(-3px); border-color: #8CCB7A; }
+        .mode-card.active { border-color: #B9885D; background: #FFF3E0; box-shadow: 0 4px 0 #B9885D; }
+        .mode-icon { font-size: 24px; display: block; margin-bottom: 5px; }
+        .mode-title { font-weight: bold; font-size: 13px; color: #5D4037; }
+
+        /* CHARACTER SELECTION */
+        .char-checkbox-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; max-height: 150px; overflow-y: auto; padding: 10px; background: #F1F8E9; border-radius: 15px; border: 1px dashed #8CCB7A;
+        }
+        .char-check-item {
+            display: flex; align-items: center; gap: 8px; font-size: 13px; background: white; padding: 5px 10px; border-radius: 20px; border: 1px solid #ddd; cursor: pointer;
+        }
+        .char-check-item input { accent-color: #8CCB7A; }
+
+        /* BUTTONS */
+        .btn-dna-primary {
+            background: #B9885D; color: white; border: none; padding: 15px; width: 100%; border-radius: 50px; font-weight: 800; font-size: 16px; cursor: pointer; box-shadow: 0 6px 0 #8D6E63; transition: transform 0.1s; text-transform: uppercase; margin-top: 20px;
+        }
+        .btn-dna-primary:hover { transform: translateY(2px); box-shadow: 0 4px 0 #8D6E63; background: #A1887F; }
+
+        /* RESULT AREA */
+        .result-box-dna { background: #FFFDE7; border: 2px dashed #F4E8A2; border-radius: 20px; padding: 20px; height: 100%; display: flex; flex-direction: column; }
+        .prompt-display {
+            background: #3E2723; color: #C8F3E0; padding: 20px; border-radius: 15px; font-family: monospace; font-size: 13px; line-height: 1.6; flex-grow: 1; white-space: pre-wrap; overflow-y: auto; position: relative; border: 2px solid #8CCB7A;
+        }
+        .copy-tag {
+            position: absolute; top: 10px; right: 10px; background: #8CCB7A; color: white; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); border: none;
+        }
+        
+        @media (max-width: 768px) { .studio-body { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<div class="studio-card">
+    <div class="studio-header">
+        <div class="header-title">
+            <h2>🎙️ Xóm Ngàn Chuyện Podcast</h2>
+            <p>Đạo diễn kịch bản Đa góc nhìn (Multi-perspective)</p>
+        </div>
+        <div style="background:#FFF; color:#8CCB7A; padding:5px 15px; border-radius:20px; font-weight:bold; font-size:12px;">V9.0</div>
+    </div>
+
+    <div id="statusBar" style="background:#C8F3E0; color:#2E7D32; padding:8px; text-align:center; font-size:12px; display:none;">
+        🔄 Đang tải dữ liệu nhân vật...
+    </div>
+
+    <div class="studio-body">
+        
+        <div class="form-section">
+            
+            <label class="label-dna">1. Chọn Thể Loại (Format)</label>
+            <div class="mode-grid">
+                <div class="mode-card active" onclick="selectMode(this, 'gossip')">
+                    <span class="mode-icon">😂</span>
+                    <span class="mode-title">Bà Tám Radio<br>(Hài hước/Tranh luận)</span>
+                </div>
+                <div class="mode-card" onclick="selectMode(this, 'spooky')">
+                    <span class="mode-icon">👻</span>
+                    <span class="mode-title">Chuyện Đêm Khuya<br>(Ma mị/Kể chuyện)</span>
+                </div>
+                <div class="mode-card" onclick="selectMode(this, 'confession')">
+                    <span class="mode-icon">😭</span>
+                    <span class="mode-title">Phòng Thú Tội<br>(Thanh minh/Đấu tố)</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="label-dna">2. Cốt Truyện Chính</label>
+                <textarea id="storyInput" class="input-dna" rows="4" placeholder="Ví dụ: TùmLa ăn trộm gà nhưng chối bay chối biến, nói là con gà tự đi theo..."></textarea>
+            </div>
+
+            <div class="input-group" style="margin-top:20px;">
+                <label class="label-dna">3. Diễn Viên Tham Gia (Cast)</label>
+                <div id="charCheckList" class="char-checkbox-grid">
+                    </div>
+            </div>
+
+            <button class="btn-dna-primary" onclick="generateScriptPrompt()">📝 VIẾT KỊCH BẢN AI</button>
+        </div>
+
+        <div class="result-section">
+            <div class="result-box-dna">
+                <label class="label-dna">Prompt Kịch Bản (Copy gửi cho AI)</label>
+                <div class="prompt-display">
+                    <div id="finalPrompt">(Hãy chọn thể loại, nhập cốt truyện và chọn nhân vật, sau đó bấm nút Viết Kịch Bản...)</div>
+                    <button class="copy-tag" onclick="copyPrompt()">COPY</button>
+                </div>
+                <div style="margin-top:10px; font-size:12px; color:#5D4037;">
+                    <strong>💡 Cách dùng:</strong> Copy đoạn này dán vào ChatGPT/Gemini/Claude. Nó sẽ trả về kịch bản hội thoại chi tiết theo đúng giọng nhân vật của bạn.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // CẤU HÌNH ĐƯỜNG DẪN
+    const DATA_PATH = "adn/xomnganchuyen/"; 
+    const CHAR_URL = DATA_PATH + "XNC_characters.json";
+
+    let charData = [];
+    let currentMode = 'gossip';
+
+    window.onload = async () => {
+        const status = document.getElementById('statusBar');
+        status.style.display = 'block';
+        try {
+            const charRes = await fetch(CHAR_URL);
+            if(!charRes.ok) throw new Error("Lỗi đọc file JSON");
+            charData = (await charRes.json()).characters || [];
+            
+            renderCharCheckboxes();
+            status.style.display = 'none';
+        } catch (e) {
+            status.innerHTML = `⚠️ Lỗi kết nối: ${e.message}`;
+            status.style.background = "#FFCDD2"; status.style.color = "#C62828";
+        }
+    };
+
+    function renderCharCheckboxes() {
+        const container = document.getElementById('charCheckList');
+        container.innerHTML = '';
+        charData.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'char-check-item';
+            div.innerHTML = `<input type="checkbox" value="${c.id}" data-name="${c.name}" data-role="${c.role || ''}" data-desc="${c.personality || c.base_desc_en}"> ${c.name}`;
+            container.appendChild(div);
+        });
+    }
+
+    function selectMode(el, mode) {
+        document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        currentMode = mode;
+    }
+
+    function generateScriptPrompt() {
+        const story = document.getElementById('storyInput').value;
+        if(!story) { alert("Nhập cốt truyện đi bạn ơi!"); return; }
+
+        // Lấy danh sách nhân vật đã chọn
+        let selectedChars = [];
+        document.querySelectorAll('#charCheckList input:checked').forEach(cb => {
+            selectedChars.push(`- Name: ${cb.dataset.name} (${cb.dataset.role}). Personality: ${cb.dataset.desc}`);
+        });
+
+        if(selectedChars.length === 0) { alert("Chọn ít nhất 1 nhân vật tham gia!"); return; }
+
+        // Cấu hình theo Mode
+        let modeInstruction = "";
+        let structure = "";
+        
+        if (currentMode === 'gossip') {
+            modeInstruction = "STYLE: Hài hước, ồn ào, tranh luận (Gossip/Argument). Các nhân vật ngắt lời nhau, mỗi người kể một kiểu (Đa góc nhìn).";
+            structure = "1. Intro nhạc nền vui nhộn.\n2. Nhân vật chính mở đầu câu chuyện.\n3. Các nhân vật khác nhảy vào tranh cãi/bổ sung chi tiết phóng đại.\n4. Kết thúc hỗn loạn nhưng vui.";
+        } else if (currentMode === 'spooky') {
+            modeInstruction = "STYLE: Ma mị, chậm rãi, kể chuyện đêm khuya (Horror/Storytelling). Tập trung vào âm thanh môi trường (tiếng gió, dế kêu).";
+            structure = "1. Intro nhạc rùng rợn + Tiếng đêm.\n2. Người kể dẫn dắt vào không khí.\n3. Nhân vật trải nghiệm kể lại sự kiện với giọng sợ hãi.\n4. Plot twist cuối cùng.";
+        } else {
+            modeInstruction = "STYLE: Phỏng vấn/Thanh minh (Confession Room). Một người hỏi, một người chối tội hoặc giải thích vòng vo.";
+            structure = "1. Tiếng đóng cửa phòng.\n2. Người hỏi (Công tố viên) đưa ra bằng chứng.\n3. Nghi phạm giải thích vòng vo hài hước.\n4. Kết luận.";
+        }
+
+        const prompt = `
+**ACT AS A SCRIPTWRITER FOR THE SERIES "XÓM NGÀN CHUYỆN"**
+
+**CONTEXT (STORY):** ${story}
+**FORMAT:** Audio Podcast / Radio Drama.
+**LANGUAGE:** Vietnamese (Miền Tây accents/vocabulary preferred).
+
+**CAST (CHARACTERS & PERSONALITIES):**
+${selectedChars.join("\n")}
+
+**MODE:** ${modeInstruction}
+
+**REQUIRED STRUCTURE:**
+${structure}
+
+**OUTPUT FORMAT:**
+Please write a full dialogue script.
+- Use [SFX: sound effect description] for sound effects.
+- Use [BGM: music mood] for background music cues.
+- Indicate emotions in (parentheses) before dialogue.
+- Make sure characters speak according to their defined personalities (DNA).
+
+**WRITE THE SCRIPT NOW:**
+        `.trim();
+
+        document.getElementById('finalPrompt').innerText = prompt;
+    }
+
+    function copyPrompt() {
+        navigator.clipboard.writeText(document.getElementById('finalPrompt').innerText);
+        const btn = document.querySelector('.copy-tag');
+        btn.innerText = "ĐÃ COPY!"; btn.style.background = "#1B5E20";
+        setTimeout(() => { btn.innerText = "COPY"; btn.style.background = "#8CCB7A"; }, 2000);
+    }
+</script>
+
+</body>
+</html>
