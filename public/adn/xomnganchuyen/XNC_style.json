@@ -37,6 +37,29 @@
       "dramatic_spot": "spotlight with high contrast",
       "warm_glow": "warm golden ambient light",
       "school_daylight": "bright school fluorescent lighting"
+    },
+    "narrative_modes": {
+      "funny": {
+        "label": "Comedy / Hài Hước (Bà Tám Radio)",
+        "script_instruction": "GENRE: Comedy / Sitcom. TONE: Noisy, argumentative, light-hearted satire, fast-paced. LANGUAGE_STYLE: Southern Vietnamese dialect (use terms like 'hèn chi', 'trời đất', 'nghen').",
+        "visual_prompt": "Bright high-key lighting, vibrant pastel colors, wide angle comedy shot, energetic atmosphere, high saturation."
+      },
+      "spooky": {
+        "label": "Cozy Horror / Chuyện Ma (Đêm Khuya)",
+        "script_instruction": "GENRE: Cozy Horror / Mystery. TONE: Mysterious but warm, whispering voice, focus on environmental sounds (crickets, wind). LANGUAGE_STYLE: Southern Vietnamese storytelling style.",
+        "visual_prompt": "Dim lighting, volumetric fog, cool blue and dark green tones, mysterious shadows (chiaroscuro), spotlight effect, cinematic night."
+      },
+      "emotional": {
+        "label": "Heartwarming / Cảm Động (Tâm Tình)",
+        "script_instruction": "GENRE: Drama / Heartwarming. TONE: Slow-paced, sentimental, focus on inner emotions and family values, touching. LANGUAGE_STYLE: Sincere Southern Vietnamese.",
+        "visual_prompt": "Golden hour lighting, warm tones, close-up shots on faces, soft focus, nostalgic aesthetic, cinematic depth of field."
+      },
+      "vlog": {
+        "label": "Vlog / Đời Sống (Review)",
+        "script_instruction": "GENRE: Modern Vlog / Review. TONE: Breaking the 4th wall (talking directly to audience), energetic, slang heavy. LANGUAGE_STYLE: Gen Z Vietnamese slang mixed with Southern accent.",
+        "visual_prompt": "Selfie angle or POV shot, bright natural lighting, casual composition, YouTube thumbnail style, sharp focus."
+      }
     }
   }
 }
+
