@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XNC Story Engine (Dynamic DNA)</title>
+    <title>XNC Story Engine V15 (Dynamic JSON)</title>
     <link rel="stylesheet" href="/public/style.css">
     <link rel="stylesheet" href="/public/green-theme.css">
     
     <style>
-        /* GIỮ THEME DNA */
+        /* THEME DNA */
         body {
             background: linear-gradient(135deg, #CDECC1 0%, #F4E8A2 100%);
             font-family: 'Segoe UI', sans-serif;
@@ -24,9 +24,7 @@
             box-shadow: 0 20px 50px rgba(139, 94, 60, 0.15);
             border: 4px solid #fff;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            min-height: 85vh;
+            display: flex; flex-direction: column; min-height: 85vh;
         }
 
         .studio-header {
@@ -35,7 +33,7 @@
             border-bottom: 5px solid #B9885D;
         }
 
-        /* THANH CÔNG CỤ TRÊN CÙNG */
+        /* TOOLBAR */
         .toolbar {
             background: #FFF8E1; padding: 15px 30px; border-bottom: 1px solid #FFE0B2;
             display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
@@ -43,42 +41,38 @@
 
         .select-box {
             padding: 10px 15px; border-radius: 8px; border: 1px solid #FFB74D; 
-            background: white; color: #E65100; font-weight: bold; cursor: pointer; outline: none; min-width: 200px;
+            background: white; color: #E65100; font-weight: bold; cursor: pointer; outline: none; min-width: 250px;
         }
 
-        /* INPUT AREA */
         .studio-body { padding: 25px; display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; flex-grow: 1; }
 
         .label-dna { color: #8CCB7A; font-weight: 800; margin-bottom: 8px; display: block; text-transform: uppercase; font-size: 13px; }
-        
         .input-dna {
             width: 100%; padding: 12px; border: 2px solid #E0E0E0; border-radius: 12px; background: #FAFAFA; margin-bottom: 15px; box-sizing: border-box;
         }
         .input-dna:focus { border-color: #8CCB7A; outline: none; background: white; }
 
-        /* DANH SÁCH DIỄN VIÊN */
         .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; max-height: 300px; overflow-y: auto; padding: 10px; background: #F1F8E9; border-radius: 12px; border: 1px dashed #8CCB7A; }
         .char-item { font-size: 13px; background: white; padding: 8px; border-radius: 8px; border: 1px solid #ddd; display: flex; gap: 8px; align-items: center; cursor: pointer; }
-        
-        /* STYLE CARD (HIỂN THỊ INFO DNA) */
+
+        /* DNA INFO CARD */
         .dna-info-box {
-            background: #E1F5FE; border: 1px solid #81D4FA; color: #0277BD; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; font-style: italic;
+            background: #E1F5FE; border: 1px solid #81D4FA; color: #0277BD; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; line-height: 1.5;
         }
 
         .btn-generate {
             background: linear-gradient(135deg, #B9885D, #8D6E63); color: white; width: 100%; padding: 15px; border: none; border-radius: 50px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 15px; transition: 0.2s; box-shadow: 0 6px 0 #5D4037;
         }
         .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 0 #5D4037; }
-        .btn-generate:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-generate:disabled { background: #ccc; cursor: not-allowed; }
 
-        /* KẾT QUẢ */
         .result-container {
             background: #FFFDE7; border: 2px dashed #FBC02D; border-radius: 20px; padding: 25px; display: flex; flex-direction: column; position: relative;
         }
         .story-content {
             flex-grow: 1; white-space: pre-wrap; font-family: 'Segoe UI', sans-serif; line-height: 1.6; font-size: 15px; color: #3E2723; overflow-y: auto; max-height: 600px; padding-right: 10px;
         }
-
+        
         .loading-spinner { display: none; text-align: center; margin-top: 50px; }
         .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #8CCB7A; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -89,15 +83,15 @@
 <div class="studio-card">
     <div class="studio-header">
         <div class="header-left">
-            <h2 style="margin:0">🧬 XNC Story Engine V14</h2>
-            <p style="margin:0; font-size:13px; opacity:0.9">Hệ thống tạo cốt truyện đa DNA</p>
+            <h2 style="margin:0">🧬 XNC Story Engine V15</h2>
+            <p style="margin:0; font-size:13px; opacity:0.9">Kịch bản tự động theo DNA (Load từ JSON)</p>
         </div>
-        <div style="background:#ffffff33; padding:5px 15px; border-radius:20px; font-size:12px;">Admin Mode</div>
+        <div style="background:#ffffff33; padding:5px 15px; border-radius:20px; font-size:12px;">Dynamic JSON Mode</div>
     </div>
 
     <div class="toolbar">
         <div>
-            <label style="font-size:12px; font-weight:bold; color:#B9885D; display:block; margin-bottom:5px;">1. CHỌN TRÍ TUỆ (AI MODEL)</label>
+            <label style="font-size:11px; font-weight:bold; color:#B9885D; display:block; margin-bottom:5px;">1. CHỌN AI (BRAIN)</label>
             <select id="aiProvider" class="select-box" onchange="checkKeyStatus()">
                 <option value="gemini">Google AI (Gemini Flash)</option>
                 <option value="openai">OpenAI (GPT-4o)</option>
@@ -106,9 +100,10 @@
         </div>
 
         <div>
-            <label style="font-size:12px; font-weight:bold; color:#B9885D; display:block; margin-bottom:5px;">2. CHỌN HỆ DNA (NARRATIVE STYLE)</label>
+            <label style="font-size:11px; font-weight:bold; color:#B9885D; display:block; margin-bottom:5px;">2. CHỌN DNA STYLE (GENRE)</label>
             <select id="dnaSelector" class="select-box" onchange="updateDNAInfo()">
-                </select>
+                <option value="">⏳ Đang tải Styles...</option>
+            </select>
         </div>
         
         <div id="keyStatus" style="font-size:13px; margin-top:15px; margin-left:auto;"></div>
@@ -116,28 +111,26 @@
 
     <div class="studio-body">
         <div>
-            <div id="dnaInfo" class="dna-info-box">
-                Đang tải DNA...
-            </div>
+            <div id="dnaInfo" class="dna-info-box">Loading info...</div>
 
-            <label class="label-dna">3. Ý Tưởng / Cốt Truyện</label>
-            <textarea id="storyIdea" class="input-dna" rows="4" placeholder="Nhập ý tưởng thô vào đây (Vd: TùmLa bị mất cái nơ...)"></textarea>
+            <label class="label-dna">3. Ý Tưởng (Story Idea)</label>
+            <textarea id="storyIdea" class="input-dna" rows="4" placeholder="Nhập ý tưởng ngắn gọn (Vd: TùmLa đi thi hoa hậu xóm dừa...)"></textarea>
 
             <label class="label-dna">4. Diễn Viên (Load từ JSON)</label>
-            <div id="charList" class="char-grid">Loading...</div>
+            <div id="charList" class="char-grid">Loading characters...</div>
 
-            <button id="btnGen" class="btn-generate" onclick="generateStory()">✨ VIẾT KỊCH BẢN THEO DNA NÀY</button>
+            <button id="btnGen" class="btn-generate" onclick="generateStory()">✨ VIẾT KỊCH BẢN</button>
         </div>
 
         <div class="result-container">
             <div id="loading" class="loading-spinner">
                 <div class="spinner"></div>
-                <div id="loadingText" style="color:#8CCB7A; font-weight:bold;">AI đang xử lý...</div>
+                <div id="loadingText" style="color:#8CCB7A; font-weight:bold;">Đang gọi AI...</div>
             </div>
             
             <div id="finalStory" class="story-content">
                 <div style="text-align:center; color:#999; margin-top:100px; font-style:italic;">
-                    (Chọn DNA, nhập ý tưởng và bấm nút để xem phép màu...)
+                    (Chọn Style bên trên -> Nhập ý tưởng -> Bấm nút để viết truyện)
                 </div>
             </div>
             <button onclick="copyStory()" style="position:absolute; top:10px; right:10px; background:white; border:1px solid #ccc; padding:6px 12px; border-radius:8px; cursor:pointer;">📋 Copy</button>
@@ -146,13 +139,14 @@
 </div>
 
 <script>
-    // === CẤU HÌNH DATA ===
+    // === 1. CẤU HÌNH PATH CHUẨN ===
     const DATA_PATH = "/public/adn/xomnganchuyen/"; 
     const CHAR_URL = DATA_PATH + "XNC_characters.json";
-    
-    // === CẤU HÌNH API KEY (Lấy từ localStorage) ===
+    const STYLE_URL = DATA_PATH + "XNC_style.json"; // File chứa Narrative Modes
+
+    // === 2. QUẢN LÝ API KEY ===
     const ACTIVE_PROVIDER_KEY = "nini_active_provider";
-    const PROFILE_ID = "default"; 
+    const PROFILE_ID = "default";
 
     function getActiveProvider() { return localStorage.getItem(ACTIVE_PROVIDER_KEY) || "gemini"; }
     function setActiveProvider(p) { localStorage.setItem(ACTIVE_PROVIDER_KEY, p); }
@@ -161,70 +155,75 @@
         return { key: localStorage.getItem(k1), keyName: k1 };
     }
 
-    // === QUAN TRỌNG: KHO DỮ LIỆU DNA (NARRATIVE STYLES) ===
-    // Bạn có thể "gắn" thêm bao nhiêu DNA tùy thích vào đây
-    const DNA_STYLES = {
-        "xnc_funny": {
-            label: "😂 XNC: Bà Tám Radio (Hài)",
-            desc: "Ồn ào, tranh luận, giọng điệu châm biếm nhẹ nhàng, đậm chất miền Tây sông nước.",
-            prompt: "STYLE: 'Bà Tám Radio'. Hài hước, nhân vật hay ngắt lời nhau. Ngôn ngữ: Miền Tây Nam Bộ (hèn chi, trời đất, nghen)."
-        },
-        "xnc_spooky": {
-            label: "👻 XNC: Chuyện Đêm Khuya (Ma)",
-            desc: "Ma mị nhưng ấm cúng. Tập trung vào âm thanh đêm. Không kinh dị máu me.",
-            prompt: "STYLE: 'Spooky but Cozy'. Bí ẩn, kể chuyện đêm khuya. Nhấn mạnh âm thanh môi trường [SFX]. Giọng kể trầm ấm."
-        },
-        "xnc_emotional": {
-            label: "🥺 XNC: Tâm Tình (Cảm động)",
-            desc: "Sâu lắng, bài học nhân văn, tình làng nghĩa xóm.",
-            prompt: "STYLE: Emotional & Heartwarming. Nhịp điệu chậm, tập trung vào cảm xúc nội tâm và tình cảm gia đình/bạn bè."
-        },
-        "vlog_daily": {
-            label: "📹 Vlog Đời Sống (Review)",
-            desc: "Phong cách YouTuber/TikToker. Nói trực tiếp với khán giả.",
-            prompt: "STYLE: Vlog/Review. Nhân vật phá vỡ bức tường thứ 4 (Break 4th wall), nói chuyện trực tiếp với camera/khán giả. Ngôn ngữ Gen Z."
-        }
-    };
-
     let charData = [];
+    let stylesData = {}; // Chứa narrative_modes
 
     window.onload = async () => {
-        // 1. Setup API Selector
+        // Setup AI
         const sel = document.getElementById('aiProvider');
         if (sel) sel.value = getActiveProvider();
         checkKeyStatus();
 
-        // 2. Setup DNA Selector
-        renderDNASelector();
-
-        // 3. Load Characters
         try {
-            const res = await fetch(CHAR_URL);
-            if(res.ok) {
-                charData = (await res.json()).characters || [];
-                renderChars();
+            // Load song song cả Characters và Style
+            const [charRes, styleRes] = await Promise.all([fetch(CHAR_URL), fetch(STYLE_URL)]);
+            
+            if(charRes.ok) charData = (await charRes.json()).characters || [];
+            if(styleRes.ok) {
+                const sData = await styleRes.json();
+                stylesData = sData.style?.narrative_modes || {};
             }
-        } catch (e) { console.error(e); }
+
+            renderChars();
+            renderDNASelector();
+
+        } catch (e) {
+            console.error("Lỗi load data:", e);
+            document.getElementById('dnaInfo').innerText = "⚠️ Lỗi tải dữ liệu JSON. Kiểm tra Console.";
+        }
     };
+
+    // === RENDER GIAO DIỆN ===
+    function renderChars() {
+        const container = document.getElementById('charList');
+        container.innerHTML = '';
+        charData.forEach(c => {
+            container.innerHTML += `
+                <label class="char-item">
+                    <input type="checkbox" value="${c.name}" data-desc="${c.personality || c.base_desc_en}">
+                    <span style="font-weight:bold;">${c.name}</span>
+                </label>`;
+        });
+    }
 
     function renderDNASelector() {
         const sel = document.getElementById('dnaSelector');
         sel.innerHTML = "";
-        for (const [key, val] of Object.entries(DNA_STYLES)) {
+        
+        // Duyệt qua file JSON và tạo Options
+        for (const [key, val] of Object.entries(stylesData)) {
             const opt = document.createElement('option');
             opt.value = key;
-            opt.text = val.label;
+            opt.text = val.label; // Lấy tên tiếng Việt/Anh từ JSON
             sel.appendChild(opt);
         }
-        updateDNAInfo(); // Cập nhật thông tin lần đầu
+
+        if(Object.keys(stylesData).length === 0) {
+            sel.innerHTML = "<option>⚠️ Không tìm thấy Style trong JSON</option>";
+        } else {
+            updateDNAInfo(); // Cập nhật info cái đầu tiên
+        }
     }
 
     function updateDNAInfo() {
         const key = document.getElementById('dnaSelector').value;
-        const dna = DNA_STYLES[key];
-        document.getElementById('dnaInfo').innerHTML = `
-            <strong>Mô tả DNA:</strong> ${dna.desc}
-        `;
+        const dna = stylesData[key];
+        if (dna) {
+            document.getElementById('dnaInfo').innerHTML = `
+                <strong>📖 Style:</strong> ${dna.label}<br>
+                <strong>🎯 Tone:</strong> ${dna.script_instruction.substring(0, 100)}...
+            `;
+        }
     }
 
     function checkKeyStatus() {
@@ -242,18 +241,7 @@
         }
     }
 
-    function renderChars() {
-        const container = document.getElementById('charList');
-        container.innerHTML = '';
-        charData.forEach(c => {
-            container.innerHTML += `
-                <label class="char-item">
-                    <input type="checkbox" value="${c.name}" data-desc="${c.personality || c.base_desc_en}">
-                    <span style="font-weight:bold;">${c.name}</span>
-                </label>`;
-        });
-    }
-
+    // === LOGIC VIẾT TRUYỆN ===
     async function generateStory() {
         const provider = document.getElementById('aiProvider').value;
         const { key: apiKey } = getApiKeyByProvider(provider);
@@ -261,7 +249,7 @@
         const dnaKey = document.getElementById('dnaSelector').value;
         
         if(!apiKey) { alert("Chưa có API Key!"); return; }
-        if(!storyIdea) { alert("Nhập ý tưởng đi bạn!"); return; }
+        if(!storyIdea) { alert("Cho xin cái ý tưởng đi bạn!"); return; }
 
         let selectedChars = [];
         document.querySelectorAll('#charList input:checked').forEach(cb => {
@@ -269,8 +257,9 @@
         });
         if(selectedChars.length === 0) { alert("Chọn diễn viên!"); return; }
 
-        // --- LẤY DNA TỪ CẤU HÌNH ---
-        const selectedDNA = DNA_STYLES[dnaKey];
+        // Lấy chỉ dẫn viết kịch bản từ JSON
+        const selectedDNA = stylesData[dnaKey];
+        if(!selectedDNA) { alert("Lỗi DNA Style!"); return; }
 
         const btn = document.getElementById('btnGen');
         btn.disabled = true;
@@ -278,20 +267,19 @@
         document.getElementById('finalStory').style.display = 'none';
 
         const systemPrompt = `
-        ACT AS A SCREENWRITER.
+        ACT AS A SCREENWRITER for "Xóm Ngàn Chuyện".
         
         INPUT DATA:
         - Idea: ${storyIdea}
         - Characters: \n${selectedChars.join('\n')}
         
-        REQUIRED DNA / STYLE:
-        ${selectedDNA.prompt}
+        REQUIRED GENRE & STYLE (DNA):
+        ${selectedDNA.script_instruction}
 
-        TASK: Write a Dialogue Script based on the DNA above.
-        - Language: Vietnamese.
-        - Format: Standard Script ([Character]: Dialogue).
+        TASK: Write a Dialogue Script (Vietnamese).
+        - Format: [Character]: Dialogue.
         - Include [SFX] and (Emotion).
-        - Length: Short (approx 2-3 minutes).
+        - Keep it funny, engaging, natural Southern Vietnamese dialect.
         `;
 
         try {
@@ -317,7 +305,7 @@
             }
             document.getElementById('finalStory').innerText = resultText;
         } catch (error) {
-            alert("Lỗi: " + error.message);
+            alert("Lỗi AI: " + error.message);
         } finally {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('finalStory').style.display = 'block';
@@ -327,7 +315,7 @@
 
     function copyStory() {
         navigator.clipboard.writeText(document.getElementById('finalStory').innerText);
-        alert("Đã copy!");
+        alert("Đã copy kịch bản!");
     }
 </script>
 
