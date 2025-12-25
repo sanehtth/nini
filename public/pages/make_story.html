@@ -356,7 +356,7 @@ if (idEl) idEl.value = d.id || generateStoryId();
 const STYLE_URL = DATA_PATH + "XNC_style.json";
 
     const ACTIVE_PROVIDER_KEY = "nini_active_provider";
-    const PROFILE_ID = "default";
+    /* PROFILE_ID already declared above */
 
     function getActiveProvider() { return localStorage.getItem(ACTIVE_PROVIDER_KEY) || "gemini"; }
     function setActiveProvider(p) { localStorage.setItem(ACTIVE_PROVIDER_KEY, p); }
