@@ -99,6 +99,12 @@
                 <option value="openai">OpenAI (GPT-4)</option>
                 <option value="grok">Grok (xAI)</option>
             </select>
+            <select id="apiSource" class="select-box" style="margin-left:10px; min-width:180px;" onchange="onApiSourceChange()">
+                <option value="local">Local key</option>
+                <option value="firebase">Firebase key</option>
+            </select>
+            <span id="apiSourceHint" style="margin-left:10px; font-size:12px; opacity:0.85;"></span>
+
         </div>
 
         <div class="control-group" id="googleModelBox">
@@ -167,15 +173,98 @@
         return { key: localStorage.getItem(k1), keyName: k1 };
     }
 
+
+    const API_SOURCE_KEY = "nini_api_source"; // "local" | "firebase"
+
+    function getApiSource() {
+        const sel = document.getElementById('apiSource');
+        const v = (sel && sel.value) ? sel.value : (localStorage.getItem(API_SOURCE_KEY) || 'local');
+        return (v === 'firebase') ? 'firebase' : 'local';
+    }
+
+    function setApiSource(v) {
+        localStorage.setItem(API_SOURCE_KEY, v);
+        const sel = document.getElementById('apiSource');
+        if (sel) sel.value = v;
+        updateApiSourceHint();
+    }
+
+    function updateApiSourceHint() {
+        const hint = document.getElementById('apiSourceHint');
+        if (!hint) return;
+        const mode = getApiSource();
+        hint.textContent = (mode === 'firebase')
+            ? 'Ưu tiên key theo tài khoản Firebase (cần đăng nhập).'
+            : 'Ưu tiên key lưu trên máy này.';
+    }
+
+    function onApiSourceChange() {
+        const sel = document.getElementById('apiSource');
+        const v = sel ? sel.value : 'local';
+        setApiSource(v);
+        checkKeyStatus(); // async OK
+    }
+
+    function getLocalKey(provider) {
+        const k1 = `lq_api_${PROFILE_ID}_${provider}`;
+        const v1 = localStorage.getItem(k1);
+        if (v1) return { key: v1, keyName: k1 };
+
+        const k2 = `nq_api_${PROFILE_ID}_${provider}`;
+        const v2 = localStorage.getItem(k2);
+        if (v2) return { key: v2, keyName: k2 };
+
+        return { key: '', keyName: k1 };
+    }
+
+    async function getFirebaseKey(provider) {
+        if (!window.auth || !window.db) return { key: '', keyName: `firebase:users/{uid}/api/${provider}` };
+        const user = auth.currentUser;
+        if (!user) return { key: '', keyName: `firebase:users/{uid}/api/${provider}` };
+
+        const ref = db.ref(`users/${user.uid}/api`);
+        const snap = await ref.once('value');
+        const val = snap.val() || {};
+        const k = (val[provider] || '').trim();
+        return { key: k, keyName: `firebase:users/${user.uid}/api/${provider}` };
+    }
+
+    async function resolveApiKey(provider) {
+        const mode = getApiSource();
+        if (mode === 'firebase') {
+            const fb = await getFirebaseKey(provider);
+            if (fb.key) return { apiKey: fb.key, from: 'firebase', keyName: fb.keyName };
+
+            const local = getLocalKey(provider);
+            if (local.key) return { apiKey: local.key, from: 'local(fallback)', keyName: local.keyName };
+
+            return { apiKey: '', from: 'none', keyName: fb.keyName };
+        } else {
+            const local = getLocalKey(provider);
+            if (local.key) return { apiKey: local.key, from: 'local', keyName: local.keyName };
+
+            const fb = await getFirebaseKey(provider);
+            if (fb.key) return { apiKey: fb.key, from: 'firebase(fallback)', keyName: fb.keyName };
+
+            return { apiKey: '', from: 'none', keyName: local.keyName };
+        }
+    }
+
     let charData = [];
     let stylesData = {};
 
     window.onload = async () => {
         const sel = document.getElementById('aiProvider');
         if (sel) sel.value = getActiveProvider();
-        checkKeyStatus();
 
-        try {
+        // init API source (local/firebase)
+        const srcSel = document.getElementById('apiSource');
+        const savedSrc = localStorage.getItem(API_SOURCE_KEY) || 'local';
+        if (srcSel) srcSel.value = (savedSrc === 'firebase') ? 'firebase' : 'local';
+        updateApiSourceHint();
+
+        await checkKeyStatus();
+try {
             const [charRes, styleRes] = await Promise.all([fetch(CHAR_URL), fetch(STYLE_URL)]);
             
             if(charRes.ok) charData = (await charRes.json()).characters || [];
@@ -229,28 +318,31 @@
         }
     }
 
-    function checkKeyStatus() {
+    async function checkKeyStatus() {
         const provider = document.getElementById('aiProvider').value;
         setActiveProvider(provider);
-        
+
         // Ẩn hiện menu Model Gemini
         document.getElementById('googleModelBox').style.display = (provider === 'gemini') ? 'flex' : 'none';
 
-        const { key, keyName } = getApiKeyByProvider(provider);
+        updateApiSourceHint();
+
+        const { apiKey, from, keyName } = await resolveApiKey(provider);
         const statusDiv = document.getElementById('keyStatus');
-        
-        if (key) {
-            statusDiv.innerHTML = `✅ Ready: <b>${keyName}</b>`;
+
+        if (apiKey) {
+            statusDiv.innerHTML = `✅ Ready (${from}): <b>${keyName}</b>`;
             statusDiv.style.color = "#33691E";
         } else {
-            statusDiv.innerHTML = `⚠️ Missing Key: <b>${keyName}</b>`;
+            statusDiv.innerHTML = `⚠️ Missing Key (${from}): <b>${keyName}</b>`;
             statusDiv.style.color = "#C62828";
         }
     }
 
-    async function generateStory() {
+
+async function generateStory() {
         const provider = document.getElementById('aiProvider').value;
-        const { key: apiKey } = getApiKeyByProvider(provider);
+        const { apiKey, from: apiFrom } = await resolveApiKey(provider);
         const storyIdea = document.getElementById('storyIdea').value;
         const dnaKey = document.getElementById('dnaSelector').value;
         
