@@ -149,14 +149,16 @@
         `;
         document.getElementById('charList').appendChild(div);
     }
-
-    function generate() {
+//============== cap nhat them style DNA cua xom =====================
+   function generate() {
+        // 1. LẤY BỐI CẢNH
         const bgSel = document.getElementById('bgSelect');
         const customBg = document.getElementById('customBg').value;
         const bgDesc = customBg || bgSel.options[bgSel.selectedIndex]?.dataset.desc || "";
         
         if(!bgDesc) { alert("Chưa chọn bối cảnh!"); return; }
 
+        // 2. LẤY NHÂN VẬT (Vòng lặp qua danh sách)
         let chars = [];
         document.querySelectorAll('.char-row-studio').forEach(row => {
             const sel = row.querySelector('.char-sel');
@@ -168,27 +170,48 @@
             }
         });
 
+        // 3. LẤY CẤU HÌNH INPUT
         const action = document.getElementById('actionInput').value;
         const style = document.getElementById('styleSelect').value;
         const ratio = document.getElementById('ratioSelect').value;
 
-        let mood = style === 'podcast' 
-            ? "**MOOD:** Mysterious, Spooky, Dim Lighting, Storytelling vibe. Visuals: Vignette, Microphone icon, Dark Blue/Purple tones."
-            : "**MOOD:** Bright, Energetic, Funny, High Contrast, Cartoon motion lines.";
+        // --- CẬP NHẬT: THÊM DNA MÀU SẮC CỦA XÓM ---
+        // Định nghĩa bảng màu chuẩn từ file style.json của bạn
+        const brandDNA = "**BRAND PALETTE:** Primary Green (#8CCB7A), Earthy Brown (#B9885D), Accent Yellow (#F4E8A2). Soft Pastel Tones (#CDECC1, #D8BFA8).";
 
+        // --- CẬP NHẬT: MOOD & LIGHTING DỰA TRÊN STYLE ---
+        let moodSettings = "";
+        
+        if (style === 'podcast') {
+            // Podcast: Tối, Ma mị nhưng vẫn giữ chất Xóm (Dùng màu Nâu + Vàng làm điểm sáng trong đêm)
+            moodSettings = `**MOOD & ATMOSPHERE:** Mysterious, Spooky but cozy, Storytelling vibe.
+**LIGHTING & COLOR:** Dim lighting, Vignette effect. Dark Night Blue atmosphere mixed with Warm Brown (#B9885D) shadows and soft Yellow (#F4E8A2) highlights (lantern/moon/candle).
+**VISUALS:** Microphone icon in corner (optional).`;
+        } else {
+            // Video Hài: Sáng, Rực rỡ (Dùng màu Xanh + Vàng làm chủ đạo)
+            moodSettings = `**MOOD & ATMOSPHERE:** Bright, Energetic, Funny, High Contrast, Cartoon motion lines.
+**LIGHTING & COLOR:** Sunny daylight. Dominant Fresh Green (#8CCB7A) and bright Sunny Yellow (#F4E8A2). Vibrant and colorful.`;
+        }
+
+        // 4. TẠO PROMPT CUỐI CÙNG
         const final = `
 (YouTube Thumbnail), 2D animation style, Vietnamese countryside aesthetic, pastel chibi art.
+${brandDNA}
+
 **BACKGROUND:** ${bgDesc}
 **CHARACTERS:**
 ${chars.join("\n")}
 **SCENE EVENT:** ${action}
-${mood}
-High quality, 8k resolution. ${ratio} --niji 6
+
+${moodSettings}
+
+High quality, 8k resolution, detailed art. ${ratio} --niji 6
         `.trim();
 
+        // 5. HIỂN THỊ KẾT QUẢ
         document.getElementById('finalPrompt').innerText = final;
     }
-
+//==========het ham cap nhat DNA=====================
     function copyPrompt() {
         navigator.clipboard.writeText(document.getElementById('finalPrompt').innerText);
         const btn = document.querySelector('.copy-btn-floating');
@@ -200,3 +223,4 @@ High quality, 8k resolution. ${ratio} --niji 6
 
 </body>
 </html>
+
