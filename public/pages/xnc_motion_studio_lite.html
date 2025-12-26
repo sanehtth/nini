@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>XNC Motion Studio Lite (Objects/Motions/Hands/Faces)</title>
+  <style>
+    :root{--bg:#f6f7fb;--card:#fff;--line:#e6e9ee;--text:#111827;--muted:#6b7280;--brand:#2563eb;}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
+    header{position:sticky;top:0;z-index:5;background:#0b1220;color:#fff;padding:12px 14px;display:flex;gap:10px;align-items:center}
+    header b{font-size:14px}
+    header .pill{margin-left:auto;background:#ffffff18;border:1px solid #ffffff22;border-radius:999px;padding:6px 10px;font-size:12px}
+    main{max-width:1500px;margin:0 auto;padding:14px;display:grid;grid-template-columns:360px 1fr;gap:12px}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 22px rgba(16,24,40,.06)}
+    .side{padding:12px}
+    .content{padding:12px}
+    .group{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff;margin-bottom:10px}
+    .group h3{margin:0 0 8px 0;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+    label{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
+    select,input,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:13px;background:#fff;outline:none}
+    textarea{min-height:120px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;line-height:1.35}
+    button{border:1px solid transparent;background:var(--brand);color:#fff;padding:9px 12px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer}
+    button.ghost{background:#fff;color:var(--text);border:1px solid var(--line)}
+    button.warn{background:#b45309}
+    button:disabled{opacity:.6;cursor:not-allowed}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    .hint{font-size:12px;color:var(--muted);line-height:1.35}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(360px,1fr));gap:12px}
+    .card{border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px;display:flex;flex-direction:column;gap:8px}
+    .cardTop{display:flex;align-items:center;gap:8px}
+    .badge{font-size:12px;font-weight:900;background:#eef2ff;border:1px solid #e0e7ff;color:#3730a3;padding:3px 8px;border-radius:999px}
+    .small{font-size:12px;color:var(--muted)}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
+    .row > div{flex:1;min-width:170px}
+    .promptBox{border:1px dashed #d1d5db;background:#fcfcfd;border-radius:12px;padding:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;white-space:pre-wrap;line-height:1.35}
+    .right{margin-left:auto}
+    @media(max-width:1100px){main{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <b>XNC Motion Studio Lite</b>
+  <span class="small" style="color:#cbd5e1">Tạo scene registry nhanh: object/motion/hand/face + spawn (không phụ thuộc trang cũ)</span>
+  <span class="pill" id="status">Loading JSON…</span>
+</header>
+
+<main>
+  <section class="panel side">
+    <div class="group">
+      <h3>Nguồn JSON</h3>
+      <div class="hint">
+        Trang này sẽ thử load JSON theo 2 đường dẫn (nếu 1 cái lỗi sẽ tự fallback):
+        <br/>• <code>/public/studio/…</code>
+        <br/>• <code>/public/adn/xomnganchuyen/…</code>
+      </div>
+      <label>Chọn bộ nguồn ưu tiên</label>
+      <select id="basePref" onchange="reloadAll()">
+        <option value="studio">Ưu tiên /public/studio</option>
+        <option value="adn">Ưu tiên /public/adn/xomnganchuyen</option>
+      </select>
+      <div class="toolbar" style="margin-top:10px">
+        <button class="ghost" onclick="reloadAll()">Reload JSON</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>Project meta</h3>
+      <label>Title</label>
+      <input id="title" placeholder="VD: T12 - Xóm Ngắn Chuyện (Hook)"/>
+      <div class="row">
+        <div>
+          <label>Aspect</label>
+          <select id="aspect">
+            <option>9:16</option>
+            <option>16:9</option>
+            <option>1:1</option>
+          </select>
+        </div>
+        <div>
+          <label>FPS</label>
+          <input id="fps" type="number" value="30" min="1" max="120"/>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Max scene sec</label>
+          <input id="maxScene" type="number" value="5" min="1" max="60"/>
+        </div>
+        <div>
+          <label>Default duration</label>
+          <input id="durDefault" type="number" value="3" min="1" max="60"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>Thao tác nhanh</h3>
+      <div class="toolbar">
+        <button onclick="addScene()">+ Thêm scene</button>
+        <button class="ghost" onclick="addObjectOnlyScene()">+ Scene vật bay (không tay/mặt)</button>
+      </div>
+      <div class="toolbar" style="margin-top:8px">
+        <button class="warn" onclick="exportSceneRegistry()">Export scene_registry.json</button>
+        <button class="warn" onclick="exportProject()">Export project_motioncomic.json</button>
+      </div>
+      <div class="hint" style="margin-top:8px">
+        • <b>scene_registry</b> phù hợp để bạn lưu “thư viện scene” (có object/motion/hand/face).<br/>
+        • <b>project_motioncomic</b> phù hợp để dựng project (clip/sfx/text). Ở bản lite này, clip để trống (bạn điền sau).
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>Output</h3>
+      <div class="toolbar" style="margin-bottom:8px">
+        <button class="ghost" onclick="copyOut()">Copy</button>
+        <button class="ghost" onclick="downloadOut()">Download.json</button>
+      </div>
+      <textarea id="out" placeholder="(output sẽ hiện ở đây)"></textarea>
+    </div>
+  </section>
+
+  <section class="panel content">
+    <div class="row" style="margin-bottom:10px">
+      <div style="min-width:220px">
+        <label>Tìm nhanh</label>
+        <input id="q" placeholder="object / motion / hand / face / tên scene…" oninput="render()"/>
+      </div>
+      <div style="min-width:220px">
+        <label>Template layout</label>
+        <select id="layoutType" onchange="applyLayoutAll(this.value)">
+          <option value="single_full">single_full</option>
+          <option value="split_2">split_2</option>
+          <option value="grid_4">grid_4</option>
+        </select>
+      </div>
+      <div style="min-width:220px">
+        <label>Spawn preset (motion_params)</label>
+        <select id="spawnPreset" onchange="applySpawnAll(this.value)">
+          <option value="">(không đổi)</option>
+          <option value="tl:center">Top-Left → Center</option>
+          <option value="tr:center">Top-Right → Center</option>
+          <option value="bl:center">Bottom-Left → Center</option>
+          <option value="br:center">Bottom-Right → Center</option>
+          <option value="left:right">Left → Right</option>
+          <option value="right:left">Right → Left</option>
+          <option value="top:bottom">Top → Bottom</option>
+          <option value="bottom:top">Bottom → Top</option>
+        </select>
+      </div>
+      <div class="right small" id="count">0 scenes</div>
+    </div>
+
+    <div id="grid" class="grid"></div>
+  </section>
+</main>
+
+<script>
+/* ========= Data loader (robust) ========= */
+const BASES = {
+  studio: "/public/studio/",
+  adn: "/public/adn/xomnganchuyen/"
+};
+const FILES = {
+  objects: "XNC_objects.json",
+  motions: "XNC_motions.json",
+  hands: "XNC_hands.json",
+  faces: "XNC_faces.json"
+};
+
+let DB = { objects:[], motions:[], hands:[], poses:[], faces:[] };
+let scenes = [];
+let outCache = "";
+
+const $ = (id)=>document.getElementById(id);
+function esc(s){return String(s??"").replace(/[<>&]/g,m=>({ "<":"&lt;",">":"&gt;","&":"&amp;" }[m]));}
+
+async function fetchTry(urls){
+  let lastErr = null;
+  for(const u of urls){
+    try{
+      const r = await fetch(u, {cache:"no-store"});
+      if(!r.ok) throw new Error(u+" HTTP "+r.status);
+      return await r.json();
+    }catch(e){ lastErr = e; }
+  }
+  throw lastErr || new Error("fetch failed");
+}
+
+function buildUrls(file){
+  const pref = $("basePref").value || "studio";
+  const first = BASES[pref] + file;
+  const second = BASES[pref==="studio"?"adn":"studio"] + file;
+  return [first, second];
+}
+
+async function reloadAll(){
+  $("status").textContent = "Loading JSON…";
+  try{
+    const [obj, mot, hand, face] = await Promise.all([
+      fetchTry(buildUrls(FILES.objects)),
+      fetchTry(buildUrls(FILES.motions)),
+      fetchTry(buildUrls(FILES.hands)),
+      fetchTry(buildUrls(FILES.faces))
+    ]);
+
+    DB.objects = obj.objects || [];
+    DB.motions = mot.motions || [];
+    DB.hands   = hand.hands || [];
+    DB.poses   = hand.poses || [];
+    DB.faces   = face.faces || [];
+
+    $("status").textContent = `Ready • objects:${DB.objects.length} motions:${DB.motions.length} hands:${DB.hands.length} faces:${DB.faces.length}`;
+    render();
+  }catch(e){
+    console.error(e);
+    $("status").textContent = "Load error (check paths/JSON)";
+    alert("Không load được JSON. Bạn kiểm tra lại đường dẫn /public/studio hoặc /public/adn/xomnganchuyen có tồn tại các file XNC_*.json.");
+  }
+}
+
+/* ========= Scene helpers ========= */
+function uid(n){ return "AUTO_" + String(n).padStart(3,"0"); }
+
+function getObj(id){ return DB.objects.find(x=>x.id===id) || null; }
+function getMot(id){ return DB.motions.find(x=>x.id===id) || null; }
+function getHand(id){ return DB.hands.find(x=>x.id===id) || null; }
+function getPose(id){ return DB.poses.find(x=>x.id===id) || null; }
+function getFace(id){ return DB.faces.find(x=>x.id===id) || null; }
+
+function addScene(){
+  const n = scenes.length + 1;
+  scenes.push({
+    scene_auto_id: uid(n),
+    name: `S${String(n).padStart(2,"0")} - Scene`,
+    duration_sec: Number($("durDefault").value||3),
+    layout: { type: $("layoutType").value || "single_full" },
+    prompt_ref: "",
+    clip: { src:"", trim_in:0, trim_out:Number($("durDefault").value||3), fit:"cover", pan:{x:0,y:0,scale:1} },
+    object_id: "",
+    motion_id: "",
+    hand_id: "",
+    hand_pose_id: "",
+    face_id: "",
+    motion_params: { from:"", to:"" },   // extension: spawn control
+    sfx: [],
+    text: [],
+    notes: ""
+  });
+  render();
+}
+
+function addObjectOnlyScene(){
+  addScene();
+  const s = scenes[scenes.length-1];
+  s.name = s.name.replace("Scene","Vật bay (no hand/face)");
+  // pick a reasonable default object if exists
+  const fallbackObj = DB.objects.find(o=>o.id.includes("baseball")) || DB.objects[0] || null;
+  if(fallbackObj){
+    s.object_id = fallbackObj.id;
+    const dm = (fallbackObj.default_motions||[])[0] || "";
+    s.motion_id = dm;
+  }
+  s.hand_id = ""; s.hand_pose_id = ""; s.face_id = "";
+  s.motion_params = { from:"tr", to:"center" };
+  render();
+}
+
+function applyLayoutAll(v){
+  scenes.forEach(s=>s.layout={type:v});
+  render();
+}
+function applySpawnAll(v){
+  if(!v) return;
+  const [from,to] = v.split(":");
+  scenes.forEach(s=>{
+    if(!s.motion_params) s.motion_params = {from:"",to:""};
+    s.motion_params.from = from; s.motion_params.to = to;
+  });
+  render();
+}
+
+/* ========= Render ========= */
+function render(){
+  const q = ($("q").value||"").trim().toLowerCase();
+  const list = scenes.filter(s=>{
+    if(!q) return true;
+    const hay = [
+      s.scene_auto_id, s.name, s.object_id, s.motion_id, s.hand_id, s.hand_pose_id, s.face_id,
+      (s.motion_params?.from||""),(s.motion_params?.to||""),
+      s.notes
+    ].join(" ").toLowerCase();
+    return hay.includes(q);
+  });
+
+  $("count").textContent = `${list.length} / ${scenes.length} scenes`;
+  const grid = $("grid");
+  grid.innerHTML = "";
+
+  const objOpts = [`<option value="">(none)</option>`].concat(
+    DB.objects.map(o=>`<option value="${esc(o.id)}">${esc(o.label||o.id)}</option>`)
+  ).join("");
+  const motOpts = [`<option value="">(none)</option>`].concat(
+    DB.motions.map(m=>`<option value="${esc(m.id)}">${esc(m.label||m.id)}</option>`)
+  ).join("");
+  const handOpts = [`<option value="">(none)</option>`].concat(
+    DB.hands.map(h=>`<option value="${esc(h.id)}">${esc(h.label||h.id)}</option>`)
+  ).join("");
+  const poseOpts = [`<option value="">(none)</option>`].concat(
+    DB.poses.map(p=>`<option value="${esc(p.id)}">${esc(p.label||p.id)}</option>`)
+  ).join("");
+  const faceOpts = [`<option value="">(none)</option>`].concat(
+    DB.faces.map(f=>`<option value="${esc(f.id)}">${esc(f.label||f.id)}</option>`)
+  ).join("");
+
+  for(const s of list){
+    const idx = scenes.findIndex(x=>x.scene_auto_id===s.scene_auto_id);
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const obj = getObj(s.object_id);
+    const mot = getMot(s.motion_id);
+    const hand = getHand(s.hand_id);
+    const pose = getPose(s.hand_pose_id);
+    const face = getFace(s.face_id);
+
+    const motionParams = s.motion_params || {from:"",to:""};
+    const from = motionParams.from || "";
+    const to = motionParams.to || "";
+
+    const preview = [
+      `scene_auto_id: ${s.scene_auto_id}`,
+      `object: ${obj?.label||s.object_id||"(none)"}`,
+      `motion: ${mot?.label||s.motion_id||"(none)"} (${mot?.pattern||"")}`,
+      `spawn: ${from||"(unset)"} -> ${to||"(unset)"}`,
+      `hand: ${hand?.label||"(none)"} / pose: ${pose?.label||"(none)"}`,
+      `face: ${face?.label||"(none)"}`,
+    ].join("\n");
+
+    card.innerHTML = `
+      <div class="cardTop">
+        <span class="badge">${esc(s.scene_auto_id)}</span>
+        <input style="flex:1" value="${esc(s.name)}" oninput="setName(${idx}, this.value)"/>
+        <button class="ghost" onclick="removeScene(${idx})">Xoá</button>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Duration (sec)</label>
+          <input type="number" min="1" max="60" value="${esc(s.duration_sec)}" oninput="setDur(${idx}, this.value)"/>
+        </div>
+        <div>
+          <label>Layout</label>
+          <select onchange="setLayout(${idx}, this.value)">
+            <option value="single_full" ${s.layout?.type==="single_full"?"selected":""}>single_full</option>
+            <option value="split_2" ${s.layout?.type==="split_2"?"selected":""}>split_2</option>
+            <option value="grid_4" ${s.layout?.type==="grid_4"?"selected":""}>grid_4</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Object</label>
+          <select onchange="setObject(${idx}, this.value)">${objOpts.replace(`value="${esc(s.object_id)}"`, `value="${esc(s.object_id)}" selected`)}</select>
+          <div class="hint">${esc(obj?.desc_en||"")}</div>
+        </div>
+        <div>
+          <label>Motion</label>
+          <select onchange="setMotion(${idx}, this.value)">${motOpts.replace(`value="${esc(s.motion_id)}"`, `value="${esc(s.motion_id)}" selected`)}</select>
+          <div class="hint">${esc(mot?.desc_en||"")}</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Spawn From</label>
+          <select onchange="setSpawnFrom(${idx}, this.value)">
+            <option value="" ${from===""?"selected":""}>(unset)</option>
+            <option value="tl" ${from==="tl"?"selected":""}>Top-Left</option>
+            <option value="tr" ${from==="tr"?"selected":""}>Top-Right</option>
+            <option value="bl" ${from==="bl"?"selected":""}>Bottom-Left</option>
+            <option value="br" ${from==="br"?"selected":""}>Bottom-Right</option>
+            <option value="left" ${from==="left"?"selected":""}>Left</option>
+            <option value="right" ${from==="right"?"selected":""}>Right</option>
+            <option value="top" ${from==="top"?"selected":""}>Top</option>
+            <option value="bottom" ${from==="bottom"?"selected":""}>Bottom</option>
+            <option value="center" ${from==="center"?"selected":""}>Center</option>
+          </select>
+        </div>
+        <div>
+          <label>Spawn To</label>
+          <select onchange="setSpawnTo(${idx}, this.value)">
+            <option value="" ${to===""?"selected":""}>(unset)</option>
+            <option value="center" ${to==="center"?"selected":""}>Center</option>
+            <option value="left" ${to==="left"?"selected":""}>Left</option>
+            <option value="right" ${to==="right"?"selected":""}>Right</option>
+            <option value="top" ${to==="top"?"selected":""}>Top</option>
+            <option value="bottom" ${to==="bottom"?"selected":""}>Bottom</option>
+            <option value="tl" ${to==="tl"?"selected":""}>Top-Left</option>
+            <option value="tr" ${to==="tr"?"selected":""}>Top-Right</option>
+            <option value="bl" ${to==="bl"?"selected":""}>Bottom-Left</option>
+            <option value="br" ${to==="br"?"selected":""}>Bottom-Right</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Hand (tuỳ chọn)</label>
+          <select onchange="setHand(${idx}, this.value)">${handOpts.replace(`value="${esc(s.hand_id)}"`, `value="${esc(s.hand_id)}" selected`)}</select>
+        </div>
+        <div>
+          <label>Hand Pose (tuỳ chọn)</label>
+          <select onchange="setPose(${idx}, this.value)">${poseOpts.replace(`value="${esc(s.hand_pose_id)}"`, `value="${esc(s.hand_pose_id)}" selected`)}</select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Face (tuỳ chọn)</label>
+          <select onchange="setFace(${idx}, this.value)">${faceOpts.replace(`value="${esc(s.face_id)}"`, `value="${esc(s.face_id)}" selected`)}</select>
+        </div>
+        <div>
+          <label>prompt_ref (tuỳ chọn)</label>
+          <input value="${esc(s.prompt_ref||"")}" placeholder="VD: P_T12_APPLE_HOOK" oninput="setPromptRef(${idx}, this.value)"/>
+        </div>
+      </div>
+
+      <label>Notes</label>
+      <input value="${esc(s.notes||"")}" oninput="setNotes(${idx}, this.value)" placeholder="Ghi chú: không cần thấy ai ném, chỉ vật bay…"/>
+
+      <div class="promptBox">${esc(preview)}</div>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+/* ========= Mutators ========= */
+function ensureMP(s){ if(!s.motion_params) s.motion_params={from:"",to:""}; }
+function setName(i,v){ scenes[i].name=v; }
+function setDur(i,v){ scenes[i].duration_sec=Number(v||3); scenes[i].clip.trim_out=scenes[i].duration_sec; }
+function setLayout(i,v){ scenes[i].layout={type:v}; render(); }
+function setObject(i,v){
+  scenes[i].object_id=v;
+  const o=getObj(v);
+  if(o && (!scenes[i].motion_id)){
+    scenes[i].motion_id=(o.default_motions||[])[0]||"";
+  }
+  render();
+}
+function setMotion(i,v){ scenes[i].motion_id=v; render(); }
+function setSpawnFrom(i,v){ ensureMP(scenes[i]); scenes[i].motion_params.from=v; render(); }
+function setSpawnTo(i,v){ ensureMP(scenes[i]); scenes[i].motion_params.to=v; render(); }
+function setHand(i,v){ scenes[i].hand_id=v; render(); }
+function setPose(i,v){ scenes[i].hand_pose_id=v; render(); }
+function setFace(i,v){ scenes[i].face_id=v; render(); }
+function setPromptRef(i,v){ scenes[i].prompt_ref=v; }
+function setNotes(i,v){ scenes[i].notes=v; }
+function removeScene(i){ scenes.splice(i,1); // reassign ids
+  scenes.forEach((s,idx)=>s.scene_auto_id=uid(idx+1));
+  render();
+}
+
+/* ========= Export ========= */
+function exportSceneRegistry(){
+  const payload = {
+    meta: {
+      exported_at: new Date().toISOString(),
+      tool: "xnc_motion_studio_lite",
+      note: "Includes extension field motion_params{from,to} for spawn control."
+    },
+    scenes: scenes.map(s=>({
+      scene_auto_id: s.scene_auto_id,
+      name: s.name,
+      duration_sec: s.duration_sec,
+      layout: s.layout,
+      prompt_ref: s.prompt_ref || "",
+      clip: s.clip, // keep (optional)
+      object_id: s.object_id || "",
+      motion_id: s.motion_id || "",
+      hand_id: s.hand_id || "",
+      hand_pose_id: s.hand_pose_id || "",
+      face_id: s.face_id || "",
+      motion_params: s.motion_params || {from:"",to:""},
+      sfx: s.sfx || [],
+      text: s.text || [],
+      notes: s.notes || ""
+    }))
+  };
+  setOut(payload);
+}
+
+function exportProject(){
+  const payload = {
+    meta: {
+      aspect: $("aspect").value,
+      fps: Number($("fps").value||30),
+      max_scene_sec: Number($("maxScene").value||5),
+      title: $("title").value || "Untitled Motion Comic Project",
+      exported_at: new Date().toISOString(),
+      tool: "xnc_motion_studio_lite"
+    },
+    scenes: scenes.map(s=>({
+      scene_auto_id: s.scene_auto_id,
+      name: s.name,
+      duration_sec: s.duration_sec,
+      layout: s.layout,
+      prompt_ref: s.prompt_ref || "",
+      clip: s.clip,   // you can fill later
+      sfx: s.sfx || [],
+      text: s.text || [],
+      notes: [
+        s.notes || "",
+        (s.object_id||s.motion_id||s.hand_id||s.face_id) ? `object_id=${s.object_id}; motion_id=${s.motion_id}; hand_id=${s.hand_id}; hand_pose_id=${s.hand_pose_id}; face_id=${s.face_id}; spawn=${(s.motion_params?.from||"")}->${(s.motion_params?.to||"")}` : ""
+      ].filter(Boolean).join(" | ")
+    }))
+  };
+  setOut(payload);
+}
+
+function setOut(obj){
+  outCache = JSON.stringify(obj, null, 2);
+  $("out").value = outCache;
+}
+
+async function copyOut(){
+  const t = $("out").value || "";
+  if(!t.trim()) return;
+  await navigator.clipboard.writeText(t);
+  $("out").value = "(Copied)";
+}
+function downloadOut(){
+  const t = $("out").value || "";
+  if(!t.trim()) return;
+  const blob = new Blob([t], {type:"application/json;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="xnc_export.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ========= Boot ========= */
+window.addEventListener("load", ()=>{
+  $("title").value = "XNC Motion Comic Project";
+  reloadAll();
+});
+</script>
+</body>
+</html>
