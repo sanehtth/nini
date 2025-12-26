@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XNC Visual Director V23 (Multi-Character)</title>
+    <title>XNC Visual Director V24 (Interactive Editor)</title>
     <link rel="stylesheet" href="/public/style.css">
     <link rel="stylesheet" href="/public/green-theme.css">
     
     <style>
-        /* GIỮ NGUYÊN GIAO DIỆN */
+        /* GIỮ NGUYÊN GIAO DIỆN CHUẨN */
         body { background: linear-gradient(135deg, #CDECC1 0%, #F4E8A2 100%); font-family: 'Segoe UI', sans-serif; color: #5D4037; padding: 20px; }
-        .studio-card { background: rgba(255, 255, 255, 0.98); max-width: 1400px; margin: 0 auto; min-height: 90vh; border-radius: 20px; box-shadow: 0 20px 50px rgba(139, 94, 60, 0.15); border: 4px solid #fff; display: flex; flex-direction: column; }
-        .studio-header { background: #8CCB7A; padding: 15px 30px; color: white; border-bottom: 5px solid #B9885D; display: flex; justify-content: space-between; align-items: center; }
+        .studio-card { background: rgba(255, 255, 255, 0.98); max-width: 1400px; margin: 0 auto; height: 90vh; border-radius: 20px; box-shadow: 0 20px 50px rgba(139, 94, 60, 0.15); border: 4px solid #fff; display: flex; flex-direction: column; }
+        .studio-header { background: #8CCB7A; padding: 15px 30px; color: white; border-bottom: 5px solid #B9885D; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         
         .main-layout { display: grid; grid-template-columns: 350px 1fr; gap: 0; flex-grow: 1; overflow: hidden; }
         
@@ -28,16 +28,37 @@
         .btn-action { padding: 8px 15px; border-radius: 20px; border: 1px solid #ccc; background: white; cursor: pointer; font-weight: bold; font-size: 12px; display: flex; align-items: center; gap: 5px; }
         .btn-save { background: #5D4037; color: white; border: none; }
 
-        .prompt-grid { display: grid; gap: 15px; }
-        .prompt-card { background: white; border-radius: 10px; padding: 0; border: 1px solid #FFE0B2; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden;}
-        .prompt-header { background: #FFF3E0; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #FFE0B2; }
+        .prompt-grid { display: grid; gap: 15px; padding-bottom: 50px; }
+        .prompt-card { background: white; border-radius: 10px; padding: 0; border: 1px solid #FFE0B2; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: visible; transition: 0.2s; }
+        .prompt-card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: #FFB74D; }
+
+        .prompt-header { background: #FFF3E0; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #FFE0B2; }
         .scene-label { font-weight: bold; color: #E65100; font-size: 13px; text-transform: uppercase; }
         
-        /* CHARACTER TAGS */
-        .char-info-container { display: flex; flex-wrap: wrap; gap: 5px; background: #E8F5E9; padding: 8px 15px; border-bottom: 1px solid #C8E6C9; }
-        .char-tag-box { display: flex; align-items: center; gap: 5px; background: white; padding: 2px 8px; border-radius: 15px; border: 1px solid #A5D6A7; }
-        .char-badge { background: #43A047; color: white; font-size: 10px; font-weight: bold; padding: 2px 5px; border-radius: 3px; }
-        .char-desc-mini { font-size: 11px; color: #2E7D32; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* EDIT PANEL IN CARD */
+        .card-editor { padding: 10px 15px; background: #fff; border-bottom: 1px solid #eee; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        
+        .char-tag { 
+            display: inline-flex; align-items: center; gap: 5px; background: #E8F5E9; 
+            border: 1px solid #C8E6C9; padding: 3px 8px; border-radius: 15px; font-size: 11px; font-weight: bold; color: #2E7D32; 
+        }
+        .btn-remove-char { cursor: pointer; color: #C62828; font-size: 14px; font-weight: bold; margin-left: 2px; }
+        .btn-remove-char:hover { color: red; }
+
+        .add-char-wrapper { position: relative; }
+        .btn-add-char { background: #E0F2F1; color: #00695C; border: 1px dashed #4DB6AC; padding: 3px 10px; border-radius: 15px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        .btn-add-char:hover { background: #B2DFDB; }
+        
+        .char-dropdown {
+            position: absolute; top: 100%; left: 0; background: white; border: 1px solid #ccc; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); z-index: 100; max-height: 200px; overflow-y: auto; display: none; width: 150px;
+        }
+        .char-dropdown.show { display: block; }
+        .char-option { padding: 5px 10px; cursor: pointer; font-size: 12px; }
+        .char-option:hover { background: #eee; }
+
+        .action-input { border: none; border-bottom: 1px dashed #ccc; padding: 3px; font-size: 12px; width: 120px; color: #555; }
+        .action-input:focus { outline: none; border-bottom: 1px solid #8CCB7A; color: #000; }
 
         .prompt-content { font-family: monospace; font-size: 13px; color: #333; background: #FAFAFA; padding: 15px; word-wrap: break-word; line-height: 1.5; }
         .btn-copy-mini { background: #8CCB7A; color: white; border: none; padding: 5px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: bold; }
@@ -49,10 +70,10 @@
 <div class="studio-card">
     <div class="studio-header">
         <div>
-            <h2 style="margin:0">🎬 Visual Director V23</h2>
-            <p style="margin:0; font-size:13px; opacity:0.9">Hỗ trợ cảnh nhiều nhân vật (Dùng dấu + hoặc &)</p>
+            <h2 style="margin:0">🎬 Visual Director V24</h2>
+            <p style="margin:0; font-size:13px; opacity:0.9">Interactive Editor: Thêm nhân vật & Sửa hành động trực tiếp</p>
         </div>
-        <div id="status" style="font-size:12px; background:#ffffff33; padding:5px 15px; border-radius:15px;">Loading Data...</div>
+        <div id="status" style="font-size:12px; background:#ffffff33; padding:5px 15px; border-radius:15px;">Loading...</div>
     </div>
 
     <div class="main-layout">
@@ -61,15 +82,15 @@
             <div class="control-group"><label>2. Phong cách vẽ</label><select id="artSelector" class="select-box"></select></div>
             <div class="control-group"><label>3. Bối cảnh</label><select id="bgSelector" class="select-box"></select></div>
             <div class="control-group" style="flex-grow:1; display:flex; flex-direction:column;">
-                <label>4. Kịch bản (Gợi ý: [Bô-Lô + Ba-La]: ...)</label>
-                <textarea id="scriptInput" class="script-box" placeholder="[Bô-Lô + Tùm-Lum]: (cùng cười) Ha ha ha!"></textarea>
+                <label>4. Kịch bản</label>
+                <textarea id="scriptInput" class="script-box" placeholder="[Bô-Lô]: ..."></textarea>
             </div>
-            <button class="btn-gen" onclick="generatePrompts()">🎨 TẠO PROMPT ĐA NHÂN VẬT</button>
+            <button class="btn-gen" onclick="parseScriptAndGen()">🎨 TẠO DANH SÁCH CẢNH</button>
         </div>
 
         <div class="output-area">
             <div class="toolbar-top">
-                <div style="font-weight:bold; color:#5D4037;">Danh sách cảnh</div>
+                <div style="font-weight:bold; color:#5D4037;">Bảng Phân Cảnh (Storyboard Prompts)</div>
                 <div style="display:flex; gap:10px;">
                     <button class="btn-action" onclick="document.getElementById('loadFile').click()">📂 Mở</button>
                     <input type="file" id="loadFile" accept=".json" style="display:none" onchange="loadProject(this)">
@@ -91,7 +112,8 @@
     const BG_URL = DATA_PATH + "XNC_backgrounds.json";
 
     let charData = [];
-    let stylesData = {}; let artStyles = {}; let bgData = {}; let currentPrompts = []; 
+    let stylesData = {}; let artStyles = {}; let bgData = {}; 
+    let scenes = []; // Dữ liệu quản lý các cảnh (Quan trọng)
 
     window.onload = async () => {
         try {
@@ -105,6 +127,14 @@
             if(bgRes.ok) { const bRaw = await bgRes.json(); bgData = bRaw.backgrounds || bRaw; }
             renderSelectors();
             document.getElementById('status').innerText = "✅ Ready";
+            
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.add-char-wrapper')) {
+                    document.querySelectorAll('.char-dropdown').forEach(el => el.classList.remove('show'));
+                }
+            });
+
         } catch (e) { console.error(e); }
     };
 
@@ -127,26 +157,17 @@
         }
     }
 
-    // === CORE LOGIC (MULTI-CHARACTER) ===
-    function generatePrompts() {
+    // === 1. PARSE KỊCH BẢN -> DATA OBJECTS ===
+    function parseScriptAndGen() {
         const script = document.getElementById('scriptInput').value;
-        const toneKey = document.getElementById('toneSelector').value;
-        const artKey = document.getElementById('artSelector').value;
         const bgPrompt = document.getElementById('bgSelector').value;
         const bgName = document.getElementById('bgSelector').selectedOptions[0].text;
+        if(!script || !bgPrompt) return alert("Thiếu kịch bản hoặc Bối cảnh!");
 
-        if(!script || !bgPrompt) return alert("Kiểm tra Kịch bản hoặc Bối cảnh!");
-
-        const toneDNA = stylesData[toneKey]?.visual_prompt || "";
-        const artDNA = artStyles[artKey] || "3d animation style";
-        const container = document.getElementById('promptList');
-        container.innerHTML = "";
-        currentPrompts = []; 
-
+        scenes = []; // Reset
         const lines = script.split('\n');
-        let count = 0;
-
-        lines.forEach(line => {
+        
+        lines.forEach((line, idx) => {
             line = line.trim();
             if(!line || line.toLowerCase().startsWith('[sfx') || !line.includes(':')) return;
 
@@ -154,84 +175,138 @@
             let rawNames = parts[0].replace(/\[|\]|\*|\(|\)/g, '').trim();
             if(rawNames.toUpperCase() === 'SFX' || rawNames.toUpperCase() === 'TITLE') return;
 
-            // --- XỬ LÝ ĐA NHÂN VẬT ---
-            // Tách tên bằng dấu +, &, hoặc chữ "và"
-            const namesList = rawNames.split(/\+|&|\svà\s/i).map(n => n.trim());
+            // Tách tên ban đầu
+            let initialChars = rawNames.split(/\+|&|\svà\s/i).map(n => n.trim());
             
-            let combinedVisual = [];
-            let charTagsHtml = "";
-            let primaryAction = "talking";
-            
-            // Lấy hành động chung
+            let action = "talking";
             const remaining = parts.slice(1).join(':');
             const match = remaining.match(/\((.*?)\)/);
-            if(match) primaryAction = match[1];
+            if(match) action = match[1];
 
-            // Duyệt qua từng tên nhân vật tìm được
-            namesList.forEach(singleName => {
-                const charObj = charData.find(c => 
-                    c.name.toLowerCase() === singleName.toLowerCase() || 
-                    (c.aliases && c.aliases.some(a => a.toLowerCase() === singleName.toLowerCase()))
-                );
-
-                if(charObj) {
-                    // Tìm thấy
-                    combinedVisual.push(`${charObj.base_desc_en}`);
-                    charTagsHtml += `
-                        <div class="char-tag-box">
-                            <span class="char-badge">👤 ${charObj.name}</span>
-                            <span class="char-desc-mini" title="${charObj.base_desc_en}">Found</span>
-                        </div>`;
-                } else {
-                    // Không tìm thấy
-                    combinedVisual.push(`Character ${singleName}`);
-                    charTagsHtml += `
-                        <div class="char-tag-box" style="border-color:red;">
-                            <span class="char-badge" style="background:red;">⚠️ ${singleName}?</span>
-                        </div>`;
-                }
+            // Lưu vào Scene Object
+            scenes.push({
+                id: idx,
+                chars: initialChars, // List tên nhân vật ["Bô-Lô", "Ba-La"]
+                action: action,
+                bgPrompt: bgPrompt,
+                bgName: bgName
             });
+        });
 
-            // Gộp mô tả nhân vật: "Char A desc AND Char B desc"
-            // Midjourney hiểu tốt nhất là: "Two characters: [Desc A] standing next to [Desc B]"
-            let finalCharPrompt = "";
-            if (combinedVisual.length > 1) {
-                finalCharPrompt = `Two characters shot: ${combinedVisual.join(" standing next to ")}`;
-            } else {
-                finalCharPrompt = combinedVisual[0];
-            }
+        renderScenes();
+    }
 
-            const finalPrompt = `/imagine prompt: ${toneDNA}, ${artDNA}, ${finalCharPrompt}, doing action: ${convertActionToEn(primaryAction)}, in ${bgPrompt}`;
+    // === 2. RENDER GIAO DIỆN (INTERACTIVE) ===
+    function renderScenes() {
+        const container = document.getElementById('promptList');
+        container.innerHTML = "";
+        
+        scenes.forEach((scene, index) => {
+            const prompt = buildPrompt(scene);
+            
+            // HTML cho các thẻ nhân vật
+            let charsHtml = scene.chars.map((c, i) => `
+                <span class="char-tag">
+                    👤 ${c} 
+                    <span class="btn-remove-char" onclick="removeChar(${index}, ${i})">×</span>
+                </span>
+            `).join('');
 
-            count++;
-            currentPrompts.push({ scene: count, char: rawNames, prompt: finalPrompt });
+            // HTML cho Dropdown thêm nhân vật
+            let charOptions = charData.map(c => 
+                `<div class="char-option" onclick="addChar(${index}, '${c.name}')">➕ ${c.name}</div>`
+            ).join('');
 
             const div = document.createElement('div');
             div.className = 'prompt-card';
             div.innerHTML = `
                 <div class="prompt-header">
-                    <span class="scene-label">SCENE ${count}: ${rawNames} @ ${bgName}</span>
-                    <button class="btn-copy-mini" onclick="copyText(this)">COPY PROMPT</button>
+                    <span class="scene-label">SCENE ${index + 1} @ ${scene.bgName}</span>
+                    <button class="btn-copy-mini" onclick="copyText(this)">COPY</button>
                 </div>
-                <div class="char-info-container">
-                    ${charTagsHtml}
+                
+                <div class="card-editor">
+                    ${charsHtml}
+                    
+                    <div class="add-char-wrapper">
+                        <button class="btn-add-char" onclick="toggleDropdown(this)">+ Thêm NV</button>
+                        <div class="char-dropdown">${charOptions}</div>
+                    </div>
+
+                    <span style="font-size:12px; color:#777; margin-left:10px;">Action:</span>
+                    <input type="text" class="action-input" value="${scene.action}" onchange="updateAction(${index}, this.value)">
                 </div>
-                <div class="prompt-content">${finalPrompt}</div>
+
+                <div class="prompt-content">${prompt}</div>
             `;
             container.appendChild(div);
         });
     }
 
+    // === 3. LOGIC BUILD PROMPT ===
+    function buildPrompt(scene) {
+        const toneKey = document.getElementById('toneSelector').value;
+        const artKey = document.getElementById('artSelector').value;
+        const toneDNA = stylesData[toneKey]?.visual_prompt || "";
+        const artDNA = artStyles[artKey] || "3d animation style";
+
+        // Xử lý mô tả nhân vật
+        let charDescriptions = [];
+        scene.chars.forEach(name => {
+            const charObj = charData.find(c => c.name.toLowerCase() === name.toLowerCase());
+            if(charObj) charDescriptions.push(charObj.base_desc_en);
+            else charDescriptions.push(`${name} character`);
+        });
+
+        let finalCharPrompt = "";
+        if (charDescriptions.length > 1) {
+            finalCharPrompt = `Two characters shot: ${charDescriptions.join(" standing next to ")}`;
+        } else if (charDescriptions.length === 1) {
+            finalCharPrompt = charDescriptions[0];
+        } else {
+            finalCharPrompt = "No character, background only";
+        }
+
+        return `/imagine prompt: ${toneDNA}, ${artDNA}, ${finalCharPrompt}, doing action: ${convertActionToEn(scene.action)}, in ${scene.bgPrompt}`;
+    }
+
+    // === 4. CÁC HÀM TƯƠNG TÁC (QUAN TRỌNG) ===
+    function addChar(sceneIndex, charName) {
+        // Tránh trùng lặp
+        if(!scenes[sceneIndex].chars.includes(charName)) {
+            scenes[sceneIndex].chars.push(charName);
+            renderScenes(); // Vẽ lại
+        }
+    }
+
+    function removeChar(sceneIndex, charIndex) {
+        scenes[sceneIndex].chars.splice(charIndex, 1);
+        renderScenes();
+    }
+
+    function updateAction(sceneIndex, newAction) {
+        scenes[sceneIndex].action = newAction;
+        renderScenes();
+    }
+
+    function toggleDropdown(btn) {
+        // Đóng các dropdown khác
+        document.querySelectorAll('.char-dropdown').forEach(el => el.classList.remove('show'));
+        // Mở cái này
+        btn.nextElementSibling.classList.toggle('show');
+    }
+
+    // --- UTILS ---
     function convertActionToEn(vi) {
         const dict = { "vui": "happy", "cười": "laughing", "ngạc nhiên": "surprised", "sợ": "scared", "giận": "angry", "chạy": "running" };
         for (const [k, v] of Object.entries(dict)) if (vi.toLowerCase().includes(k)) return v;
         return vi;
     }
+    function copyText(btn) { navigator.clipboard.writeText(btn.parentElement.parentElement.querySelector('.prompt-content').innerText); const t = btn.innerText; btn.innerText = "COPIED!"; setTimeout(()=>btn.innerText=t, 1000); }
+    function saveProject() { const data = { script: document.getElementById('scriptInput').value, scenes: scenes }; const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`Visual_V24.json`; a.click(); }
+    function loadProject(input) { const file=input.files[0]; if(!file)return; const reader=new FileReader(); reader.onload=(e)=>{ const data=JSON.parse(e.target.result); document.getElementById('scriptInput').value=data.script||""; scenes=data.scenes||[]; renderScenes(); alert("Loaded!"); }; reader.readAsText(file); }
+    function exportText() { let content=""; scenes.forEach((s, i)=>{content+=`SCENE ${i+1}:\n${buildPrompt(s)}\n\n`;}); const blob=new Blob([content],{type:"text/plain"}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="prompts.txt"; a.click(); }
 
-    function copyText(btn) { navigator.clipboard.writeText(btn.parentElement.nextElementSibling.nextElementSibling.innerText); const t = btn.innerText; btn.innerText = "COPIED!"; setTimeout(()=>btn.innerText=t, 1000); }
-    function saveProject() { if(currentPrompts.length===0) return; const data = { script: document.getElementById('scriptInput').value, settings: { tone: document.getElementById('toneSelector').value, art: document.getElementById('artSelector').value, bg: document.getElementById('bgSelector').value }, results: currentPrompts }; const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`Visual_V23_${Date.now()}.json`; a.click(); }
-    function loadProject(input) { const file=input.files[0]; if(!file)return; const reader=new FileReader(); reader.onload=(e)=>{ const data=JSON.parse(e.target.result); document.getElementById('scriptInput').value=data.script||""; if(data.settings){ document.getElementById('toneSelector').value=data.settings.tone; document.getElementById('artSelector').value=data.settings.art; document.getElementById('bgSelector').value=data.settings.bg; } alert("Loaded!"); }; reader.readAsText(file); }
-    function exportText() { if(currentPrompts.length===0) return; let content=""; currentPrompts.forEach(p=>{content+=`SCENE ${p.scene}:\n${p.prompt}\n\n`;}); const blob=new Blob([content],{type:"text/plain"}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="prompts.txt"; a.click(); }
 </script>
 
 </body>
