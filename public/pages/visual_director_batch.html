@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Visual Director Batch (Story → Prompts)</title>
+  <style>
+    :root{
+      --bg:#f4f6f8; --card:#fff; --line:#e6e9ee; --text:#1f2a37; --muted:#6b7280;
+      --brand:#67b26f; --brand2:#4ca2cd;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#e8f5e9, var(--bg));color:var(--text)}
+    header{
+      position:sticky;top:0;z-index:5;
+      background:linear-gradient(90deg,var(--brand),var(--brand2));
+      color:#fff;border-bottom:1px solid #ffffff33;
+      padding:14px 16px;display:flex;align-items:center;gap:12px
+    }
+    header .title{font-weight:800;font-size:16px;letter-spacing:.2px}
+    header .sub{font-size:12px;opacity:.9}
+    header .pill{margin-left:auto;background:#ffffff22;border:1px solid #ffffff33;border-radius:999px;padding:6px 10px;font-size:12px}
+    main{display:grid;grid-template-columns:360px 1fr;gap:14px;padding:14px;max-width:1480px;margin:0 auto}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 18px rgba(16,24,40,.06)}
+    .side{padding:12px}
+    .content{padding:12px}
+    .group{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px;background:#fff}
+    .group h3{margin:0 0 8px 0;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+    label{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
+    select,textarea,input{
+      width:100%;border:1px solid var(--line);border-radius:10px;
+      padding:9px 10px;font-size:13px;outline:none;background:#fff
+    }
+    textarea{resize:vertical;min-height:140px}
+    .row{display:flex;gap:8px;align-items:center}
+    .row > *{flex:1}
+    button{
+      border:1px solid #0000;background:var(--brand);color:#fff;
+      padding:9px 12px;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer
+    }
+    button.ghost{background:#fff;color:var(--text);border:1px solid var(--line)}
+    button.warn{background:#b45309}
+    button:disabled{opacity:.6;cursor:not-allowed}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    .hint{font-size:12px;color:var(--muted);line-height:1.35;margin-top:6px}
+    .scenesHead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .scenesHead .count{margin-left:auto;color:var(--muted);font-size:12px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(360px,1fr));gap:12px}
+    .card{border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px;display:flex;flex-direction:column;gap:8px}
+    .cardTop{display:flex;align-items:center;gap:8px}
+    .badge{font-size:12px;font-weight:800;background:#eef6ff;border:1px solid #dbeafe;color:#1d4ed8;padding:3px 8px;border-radius:999px}
+    .small{font-size:12px;color:var(--muted)}
+    .chipRow{display:flex;flex-wrap:wrap;gap:6px}
+    .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:12px;background:#fafafa}
+    .chip .x{cursor:pointer;color:#991b1b;font-weight:900}
+    .inline{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
+    .inline > div{flex:1;min-width:160px}
+    .promptBox{border:1px dashed #d1d5db;background:#fcfcfd;border-radius:12px;padding:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;white-space:pre-wrap;line-height:1.35}
+    .cardActions{display:flex;gap:8px;justify-content:flex-end}
+    .search{flex:1}
+    @media (max-width: 1100px){
+      main{grid-template-columns:1fr}
+      .grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="title">Visual Director Batch</div>
+    <div class="sub">Nạp 1 story JSON → sinh toàn bộ prompts theo từng cảnh → chỉnh nhanh → render 1 lần</div>
+  </div>
+  <div class="pill" id="status">Loading ADN…</div>
+</header>
+
+<main>
+  <section class="panel side">
+    <div class="group">
+      <h3>Nguồn dữ liệu</h3>
+      <div class="toolbar">
+        <button class="ghost" onclick="document.getElementById('storyFile').click()">Nạp Story JSON</button>
+        <input id="storyFile" type="file" accept=".json" style="display:none"/>
+        <button class="ghost" onclick="document.getElementById('projectFile').click()">Mở Project</button>
+        <input id="projectFile" type="file" accept=".json" style="display:none"/>
+        <button class="ghost" onclick="saveProject()">Lưu Project</button>
+      </div>
+      <div class="hint">
+        - Story JSON: file trong <b>/public/substance/…</b> (có <code>story</code> hoặc <code>idea</code>).<br/>
+        - Project JSON: lưu trạng thái chỉnh sửa (characters/action/face/outfit/bg) để mở lại.
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>Thiết lập chung</h3>
+      <label>Tone / Mood</label>
+      <select id="toneSelector"></select>
+
+      <label>Phong cách vẽ</label>
+      <select id="artSelector"></select>
+
+      <label>Bối cảnh mặc định</label>
+      <select id="bgSelector"></select>
+
+      <label>Quy tắc outfit theo bối cảnh (tuỳ chọn)</label>
+      <select id="wardrobeRule">
+        <option value="off">Tắt</option>
+        <option value="school_uniform">Nếu là classroom → đồng phục học sinh</option>
+      </select>
+
+      <div class="toolbar" style="margin-top:10px">
+        <button onclick="buildScenesFromScript()">Tạo danh sách cảnh</button>
+        <button class="ghost" onclick="exportAllText()">Xuất tất cả prompts</button>
+      </div>
+      <div class="hint">Nếu bạn muốn “tự tạo cảnh” theo story markdown, bấm <b>Nạp Story JSON</b> trước, rồi bấm <b>Tạo danh sách cảnh</b>.</div>
+    </div>
+
+    <div class="group">
+      <h3>Script (có thể sửa)</h3>
+      <label>Format khuyến nghị</label>
+      <div class="hint"><code>[Bô-Lô]: (Chỉnh kính soi) Tao làm đề 1.</code></div>
+      <textarea id="scriptInput" placeholder="[Tên]: (Action) Nội dung..."></textarea>
+    </div>
+
+    <div class="group">
+      <h3>Batch</h3>
+      <div class="toolbar">
+        <button class="warn" onclick="applyDefaultBgToAll()">Áp BG mặc định cho tất cả</button>
+        <button class="warn" onclick="applyUniformRuleToAll()">Áp outfit rule</button>
+      </div>
+      <div class="hint">Các nút này giúp bạn chỉnh nhanh toàn bộ cảnh rồi render/export 1 lần.</div>
+    </div>
+  </section>
+
+  <section class="panel content">
+    <div class="scenesHead">
+      <div style="font-weight:800">Danh sách cảnh</div>
+      <input id="search" class="search" placeholder="Tìm theo nhân vật / action / bg…" oninput="renderScenes()"/>
+      <div class="count" id="sceneCount">0 cảnh</div>
+    </div>
+    <div id="sceneGrid" class="grid"></div>
+
+    <div class="group" style="margin-top:12px">
+      <h3>Output</h3>
+      <div class="toolbar" style="margin-bottom:8px">
+        <button class="ghost" onclick="copyOutput()">Copy</button>
+        <button class="ghost" onclick="downloadOutput()">Download.txt</button>
+      </div>
+      <div id="output" class="promptBox">(chưa export)</div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ========= Config ========= */
+const DATA_PATH = "/public/adn/xomnganchuyen/";
+const URLS = {
+  characters: DATA_PATH + "XNC_characters.json",
+  backgrounds: DATA_PATH + "XNC_backgrounds.json",
+  style: DATA_PATH + "XNC_style.json",
+  actions: DATA_PATH + "XNC_actions.json",
+  faces: DATA_PATH + "XNC_faces.json",
+};
+
+let charData = [];
+let bgData = [];
+let actionsData = [];
+let facesData = [];
+let stylesData = {};
+let artStyles = {};
+let scenes = [];
+let lastStoryMeta = null;
+
+/* ========= Helpers ========= */
+const $ = (id)=>document.getElementById(id);
+function esc(s){ return String(s||"").replace(/[<>&]/g, m=>({ "<":"&lt;", ">":"&gt;", "&":"&amp;" }[m])); }
+
+function findByLabel(list, raw){
+  const s = String(raw||"").trim().toLowerCase();
+  if(!s) return null;
+  return list.find(x => String(x.label||x.name||"").trim().toLowerCase() === s) || null;
+}
+function findCharByName(name){
+  const s = String(name||"").trim().toLowerCase();
+  return charData.find(c => String(c.name||"").trim().toLowerCase() === s) || null;
+}
+function bgById(id){ return bgData.find(b=>b.id===id) || null; }
+
+/* ========= Load ADN ========= */
+async function init(){
+  try{
+    const [cRes, bRes, sRes, aRes, fRes] = await Promise.all([
+      fetch(URLS.characters),
+      fetch(URLS.backgrounds),
+      fetch(URLS.style),
+      fetch(URLS.actions),
+      fetch(URLS.faces),
+    ]);
+
+    if(cRes.ok){
+      const raw = await cRes.json();
+      charData = raw.characters || raw.data || [];
+    }
+    if(bRes.ok){
+      const raw = await bRes.json();
+      bgData = raw.backgrounds || raw.data || raw || [];
+      if(!Array.isArray(bgData)){
+        // allow object map
+        bgData = Object.entries(bgData).map(([id,v])=>({
+          id,
+          name: v?.name || v?.label || id,
+          label: v?.label || v?.name || id,
+          desc_en: v?.desc_en || v?.desc || "",
+          prompt: v?.prompt || v?.desc_en || v?.desc || ""
+        }));
+      }
+    }
+    if(aRes.ok){
+      const raw = await aRes.json();
+      actionsData = raw.actions || raw.data || [];
+    }
+    if(fRes.ok){
+      const raw = await fRes.json();
+      facesData = raw.faces || raw.data || [];
+    }
+    if(sRes.ok){
+      const raw = await sRes.json();
+      stylesData = raw.style?.narrative_modes || {};
+      artStyles  = raw.style?.art_styles || { "2d_default": "2D anime style, clean illustration --ar 16:9" };
+    }
+
+    renderSelectors();
+    wireFileInputs();
+    $("status").textContent = "Ready";
+  }catch(err){
+    console.error(err);
+    $("status").textContent = "Load error";
+  }
+}
+
+function renderSelectors(){
+  // tone
+  const toneSel = $("toneSelector");
+  toneSel.innerHTML = "";
+  Object.entries(stylesData).forEach(([k,v])=>{
+    const opt = document.createElement("option");
+    opt.value = k; opt.textContent = v.label || k;
+    toneSel.appendChild(opt);
+  });
+
+  // art
+  const artSel = $("artSelector");
+  artSel.innerHTML = "";
+  Object.keys(artStyles).forEach((k)=>{
+    const opt = document.createElement("option");
+    opt.value = k; opt.textContent = k.toUpperCase().replaceAll("_"," ");
+    artSel.appendChild(opt);
+  });
+
+  // bg default
+  const bgSel = $("bgSelector");
+  bgSel.innerHTML = `<option value="">— Chọn bối cảnh —</option>`;
+  bgData.forEach(bg=>{
+    const opt = document.createElement("option");
+    opt.value = bg.id || bg.name || "";
+    opt.textContent = bg.name || bg.label || bg.id;
+    bgSel.appendChild(opt);
+  });
+}
+
+/* ========= Story import ========= */
+function wireFileInputs(){
+  $("storyFile").addEventListener("change", async (e)=>{
+    const file = e.target.files?.[0];
+    if(!file) return;
+    const txt = await file.text();
+    const data = JSON.parse(txt);
+    lastStoryMeta = { fileName: file.name, id: data.id || "", title: data.title || "" };
+
+    // Prefer story markdown
+    const story = data.story || "";
+    const idea = data.idea || "";
+    const lines = [];
+
+    if(story){
+      // Extract lines like: **Bô-Lô:** (đeo kính) ...
+      story.split("\n").forEach(l=>{
+        const m = l.match(/^\*\*(.+?)\:\*\*\s*(.*)$/);
+        if(!m) return;
+        const name = m[1].trim();
+        const content = m[2].trim();
+        // keep parentheses (action cues) if already present, else none
+        lines.push(`[${name}]: ${content}`);
+      });
+    }
+
+    $("scriptInput").value = lines.length ? lines.join("\n") : idea;
+  });
+
+  $("projectFile").addEventListener("change", async (e)=>{
+    const file = e.target.files?.[0];
+    if(!file) return;
+    const txt = await file.text();
+    const data = JSON.parse(txt);
+    scenes = data.scenes || [];
+    if(data.script) $("scriptInput").value = data.script;
+    if(data.defaults){
+      if(data.defaults.toneKey) $("toneSelector").value = data.defaults.toneKey;
+      if(data.defaults.artKey) $("artSelector").value = data.defaults.artKey;
+      if(data.defaults.bgId) $("bgSelector").value = data.defaults.bgId;
+      if(data.defaults.wardrobeRule) $("wardrobeRule").value = data.defaults.wardrobeRule;
+    }
+    $("output").textContent = "(đã mở project)";
+    renderScenes();
+  });
+}
+
+/* ========= Script → scenes ========= */
+function buildScenesFromScript(){
+  const script = $("scriptInput").value || "";
+  if(!script.trim()) return alert("Chưa có script.");
+
+  const defaultBgId = $("bgSelector").value || "";
+  const wardrobeRule = $("wardrobeRule").value;
+
+  const newScenes = [];
+  const lines = script.split("\n").map(x=>x.trim()).filter(Boolean);
+
+  lines.forEach((line, idx)=>{
+    // ignore SFX / Title
+    if(line.toLowerCase().startsWith("[sfx") || line.toLowerCase().startsWith("sfx:")) return;
+    if(!line.includes(":")) return;
+
+    const [left, ...rest] = line.split(":");
+    const rawNames = left.replace(/[\\[\\]\\*\\(\\)]/g,"").trim();
+    if(!rawNames || ["SFX","TITLE"].includes(rawNames.toUpperCase())) return;
+
+    const chars = rawNames.split(/\\+|&|\\svà\\s/i).map(s=>s.trim()).filter(Boolean);
+
+    const remaining = rest.join(":").trim();
+    const m = remaining.match(/\\((.*?)\\)/);
+    const actionRaw = m ? m[1].trim() : "Đứng bình thường";
+
+    const actionObj = findByLabel(actionsData, actionRaw);
+    const actionId = actionObj ? actionObj.id : "";
+
+    const defaultFaceId = facesData.some(x=>x.id==="neutral") ? "neutral" : (facesData[0]?.id || "");
+
+    const scene = {
+      id: idx+1,
+      chars,
+      actionId,
+      actionRaw: actionObj ? actionObj.label : actionRaw,
+      faceId: defaultFaceId,
+      bgId: defaultBgId,
+      outfit: "",
+      note: remaining
+    };
+
+    // auto uniform rule
+    if(wardrobeRule === "school_uniform"){
+      const bgName = (bgById(scene.bgId)?.name || bgById(scene.bgId)?.label || "").toLowerCase();
+      if(bgName.includes("classroom") || bgName.includes("trường") || bgName.includes("lop")){
+        scene.outfit = "Vietnamese primary school uniform (white shirt, navy shorts/skirt, red scarf)";
+      }
+    }
+
+    newScenes.push(scene);
+  });
+
+  scenes = newScenes;
+  renderScenes();
+}
+
+function applyDefaultBgToAll(){
+  const bgId = $("bgSelector").value || "";
+  scenes.forEach(s=>s.bgId = bgId);
+  renderScenes();
+}
+function applyUniformRuleToAll(){
+  const rule = $("wardrobeRule").value;
+  if(rule !== "school_uniform"){ scenes.forEach(s=>s.outfit=""); renderScenes(); return; }
+  scenes.forEach(s=>{
+    const bgName = (bgById(s.bgId)?.name || bgById(s.bgId)?.label || "").toLowerCase();
+    if(bgName.includes("classroom") || bgName.includes("trường") || bgName.includes("lop")){
+      s.outfit = "Vietnamese primary school uniform (white shirt, navy shorts/skirt, red scarf)";
+    }
+  });
+  renderScenes();
+}
+
+/* ========= Prompt builder ========= */
+function buildPromptForScene(scene){
+  const toneKey = $("toneSelector").value;
+  const artKey = $("artSelector").value;
+
+  const toneDNA = stylesData[toneKey]?.visual_prompt || "";
+  const artDNA = artStyles[artKey] || "";
+
+  const bgObj = bgById(scene.bgId);
+  const bgPrompt = bgObj?.prompt || bgObj?.desc_en || bgObj?.desc || (bgObj?.label || "");
+
+  const actionObj = actionsData.find(a=>a.id===scene.actionId) || null;
+  const faceObj = facesData.find(f=>f.id===scene.faceId) || null;
+
+  const charLines = (scene.chars||[]).map(name=>{
+    const c = findCharByName(name);
+    const base = c?.base_desc_en || `${name} character`;
+    const outfit = scene.outfit ? `, wearing ${scene.outfit}` : "";
+    const face = faceObj?.desc_en ? `, facial expression: ${faceObj.desc_en}` : "";
+    return `${base}${outfit}${face}`;
+  });
+
+  let cast = "No character, background only.";
+  if(charLines.length === 1) cast = charLines[0];
+  if(charLines.length >= 2) cast = `Two characters shot: ${charLines.join(" standing next to ")}`;
+
+  const actionDesc = actionObj?.desc_en ? actionObj.desc_en : (scene.actionRaw || "talking");
+  const camHint = actionObj?.camera_hint ? `, camera: ${actionObj.camera_hint}` : "";
+
+  const constraint = "no text, no subtitles, no UI, consistent characters, comic panel framing";
+  const parts = [
+    toneDNA,
+    artDNA,
+    "bright high-key lighting, vibrant pastel colors, clean lines, high quality",
+    cast,
+    `doing action: ${actionDesc}${camHint}`,
+    bgPrompt ? `background: ${bgPrompt}` : "",
+    constraint
+  ].filter(Boolean);
+
+  return parts.join(", ").replace(/\\s+/g," ").trim();
+}
+
+/* ========= Render ========= */
+function renderScenes(){
+  const q = ($("search").value || "").trim().toLowerCase();
+  const box = $("sceneGrid");
+  box.innerHTML = "";
+
+  const filtered = scenes.filter(s=>{
+    if(!q) return true;
+    const hay = [
+      String(s.id),
+      (s.chars||[]).join(" "),
+      s.actionRaw || "",
+      s.actionId || "",
+      s.faceId || "",
+      s.bgId || "",
+      s.outfit || "",
+      s.note || "",
+    ].join(" ").toLowerCase();
+    return hay.includes(q);
+  });
+
+  $("sceneCount").textContent = `${filtered.length} / ${scenes.length} cảnh`;
+
+  filtered.forEach((scene)=>{
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const bgOpts = [`<option value="">(none)</option>`].concat(
+      bgData.map(b=>`<option value="${esc(b.id)}" ${b.id===scene.bgId?"selected":""}>${esc(b.name||b.label||b.id)}</option>`)
+    ).join("");
+
+    const actOpts = [`<option value="">(raw)</option>`].concat(
+      actionsData.map(a=>`<option value="${esc(a.id)}" ${a.id===scene.actionId?"selected":""}>${esc(a.label||a.id)}</option>`)
+    ).join("");
+
+    const faceOpts = facesData.map(f=>`<option value="${esc(f.id)}" ${f.id===scene.faceId?"selected":""}>${esc(f.label||f.id)}</option>`).join("");
+
+    const prompt = buildPromptForScene(scene);
+
+    const chips = (scene.chars||[]).map((name, idx)=>
+      `<span class="chip">👤 ${esc(name)} <span class="x" onclick="removeChar(${scene.id}, ${idx})">×</span></span>`
+    ).join("");
+
+    card.innerHTML = `
+      <div class="cardTop">
+        <span class="badge">SCENE ${esc(scene.id)}</span>
+        <span class="small">${esc(bgById(scene.bgId)?.name || scene.bgId || "(no bg)")}</span>
+      </div>
+
+      <div class="chipRow">${chips || `<span class="small">No characters</span>`}</div>
+
+      <div class="inline">
+        <div>
+          <label>Thêm nhân vật</label>
+          <select onchange="addChar(${scene.id}, this.value)">
+            <option value="">+ Chọn</option>
+            ${charData.map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join("")}
+          </select>
+        </div>
+        <div>
+          <label>Bối cảnh</label>
+          <select onchange="setBg(${scene.id}, this.value)">${bgOpts}</select>
+        </div>
+      </div>
+
+      <div class="inline">
+        <div>
+          <label>Action</label>
+          <select onchange="setAction(${scene.id}, this.value)">${actOpts}</select>
+          <div class="hint">Nếu chọn (raw), hệ thống dùng text trong ngoặc hoặc bạn tự nhập ở Note.</div>
+        </div>
+        <div>
+          <label>Face</label>
+          <select onchange="setFace(${scene.id}, this.value)">${faceOpts}</select>
+        </div>
+      </div>
+
+      <div class="inline">
+        <div style="flex:2;min-width:240px">
+          <label>Outfit override (tuỳ chọn)</label>
+          <input value="${esc(scene.outfit||"")}" placeholder="VD: Vietnamese school uniform…" oninput="setOutfit(${scene.id}, this.value)"/>
+        </div>
+        <div style="flex:1;min-width:200px">
+          <label>Note (tuỳ chọn)</label>
+          <input value="${esc(scene.note||"")}" placeholder="Ghi chú thêm cho cảnh" oninput="setNote(${scene.id}, this.value)"/>
+        </div>
+      </div>
+
+      <div class="promptBox">${esc(prompt)}</div>
+
+      <div class="cardActions">
+        <button class="ghost" onclick="copyPrompt(${scene.id})">Copy</button>
+      </div>
+    `;
+    box.appendChild(card);
+  });
+}
+
+/* ========= Scene mutators ========= */
+function getSceneById(sceneId){
+  return scenes.find(s=>String(s.id)===String(sceneId)) || null;
+}
+function removeChar(sceneId, charIndex){
+  const s = getSceneById(sceneId);
+  if(!s) return;
+  s.chars.splice(charIndex,1);
+  renderScenes();
+}
+function addChar(sceneId, name){
+  const s = getSceneById(sceneId);
+  if(!s) return;
+  const n = String(name||"").trim();
+  if(!n) return;
+  if(!s.chars.includes(n)) s.chars.push(n);
+  renderScenes();
+}
+function setBg(sceneId, bgId){ const s=getSceneById(sceneId); if(!s) return; s.bgId=bgId; renderScenes(); }
+function setAction(sceneId, actionId){
+  const s=getSceneById(sceneId); if(!s) return;
+  s.actionId = actionId;
+  const a = actionsData.find(x=>x.id===actionId);
+  if(a) s.actionRaw = a.label;
+  renderScenes();
+}
+function setFace(sceneId, faceId){ const s=getSceneById(sceneId); if(!s) return; s.faceId=faceId; renderScenes(); }
+function setOutfit(sceneId, v){ const s=getSceneById(sceneId); if(!s) return; s.outfit=v; /* no re-render per keystroke */ }
+function setNote(sceneId, v){ const s=getSceneById(sceneId); if(!s) return; s.note=v; }
+
+async function copyPrompt(sceneId){
+  const s = getSceneById(sceneId);
+  if(!s) return;
+  const t = buildPromptForScene(s);
+  await navigator.clipboard.writeText(t);
+  $("output").textContent = `Copied SCENE ${sceneId}`;
+}
+
+/* ========= Export / Save ========= */
+function exportAllText(){
+  if(!scenes.length) return alert("Chưa có cảnh.");
+  const toneKey = $("toneSelector").value;
+  const artKey = $("artSelector").value;
+
+  const header = [];
+  if(lastStoryMeta){
+    header.push(`STORY: ${lastStoryMeta.title || lastStoryMeta.fileName || ""}`.trim());
+    if(lastStoryMeta.id) header.push(`ID: ${lastStoryMeta.id}`);
+  }
+  header.push(`TONE: ${toneKey}`);
+  header.push(`ART: ${artKey}`);
+  header.push("");
+
+  const body = scenes.map((s, idx)=>{
+    const bgName = bgById(s.bgId)?.name || s.bgId || "(no bg)";
+    return [
+      `SCENE ${idx+1} @ ${bgName}`,
+      buildPromptForScene(s),
+      ""
+    ].join("\\n");
+  }).join("\\n");
+
+  $("output").textContent = (header.join("\\n") + body).trim();
+}
+
+async function copyOutput(){
+  const t = $("output").textContent || "";
+  if(!t.trim()) return;
+  await navigator.clipboard.writeText(t);
+  $("output").textContent = "Copied.";
+}
+function downloadOutput(){
+  const t = $("output").textContent || "";
+  if(!t.trim()) return;
+  const blob = new Blob([t], {type:"text/plain;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "xnc_prompts.txt";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function saveProject(){
+  const data = {
+    version: "xnc_visual_director_batch_v1",
+    savedAt: new Date().toISOString(),
+    story: lastStoryMeta,
+    defaults: {
+      toneKey: $("toneSelector").value,
+      artKey: $("artSelector").value,
+      bgId: $("bgSelector").value,
+      wardrobeRule: $("wardrobeRule").value
+    },
+    script: $("scriptInput").value,
+    scenes
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "xnc_project.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+window.addEventListener("load", init);
+</script>
+</body>
+</html>
