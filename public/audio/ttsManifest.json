@@ -1,0 +1,17 @@
+﻿{
+  "version": 1,
+  "characters": [
+    {
+      "id": "bolo",
+      "label": "Bô-lô",
+      "folder": "audio_cache/bolo/",
+      "indexFile": "/audio/characters/bolo_index.json"
+    },
+    {
+      "id": "bala",
+      "label": "Ba-la",
+      "folder": "audio_cache/bala/",
+      "indexFile": "/audio/characters/bala_index.json"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+﻿{
+  "characterId": "bolo",
+  "voicePresetRef": "firebase:users/{uid}/voice_map/bolo",
+  "folder": "audio_cache/bolo/",
+  "items": {
+    "v1_openai_anhA_r0.95_p-2_sha1_8f3a": {
+      "text": "xin chào!",
+      "file": "bolo__8f3a.mp3",
+      "provider": "openai",
+      "voice": "anhA",
+      "rate": 0.95,
+      "pitch": -2,
+      "createdAt": "2025-12-26T10:20:00Z"
+    }
+  }
+}
