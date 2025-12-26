@@ -59,7 +59,12 @@
         "script_instruction": "GENRE: Modern Vlog / Review. TONE: Breaking the 4th wall (talking directly to audience), energetic, slang heavy. LANGUAGE_STYLE: Gen Z Vietnamese slang mixed with Southern accent.",
         "visual_prompt": "Selfie angle or POV shot, bright natural lighting, casual composition, YouTube thumbnail style, sharp focus."
       }
-    }
+    },
+  "art_styles": {
+    "3d_pixar": "3d animation style, pixar render, c4d, unreal engine 5, cute character design --ar 16:9",
+    "2d_anime": "2d anime style, flat color, ghibli studio style, hand drawn, high quality --ar 16:9",
+    "2d_comic": "comic book style, thick lines, vibrant colors, webtoon style --ar 16:9"
   }
+ }
 }
 
