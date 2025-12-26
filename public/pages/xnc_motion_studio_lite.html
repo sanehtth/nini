@@ -329,13 +329,14 @@ function render(){
     const to = motionParams.to || "";
 
     const preview = [
-      `scene_auto_id: ${s.scene_auto_id}`,
-      `object: ${obj?.label||s.object_id||"(none)"}`,
-      `motion: ${mot?.label||s.motion_id||"(none)"} (${mot?.pattern||"")}`,
-      `spawn: ${from||"(unset)"} -> ${to||"(unset)"}`,
-      `hand: ${hand?.label||"(none)"} / pose: ${pose?.label||"(none)"}`,
-      `face: ${face?.label||"(none)"}`,
-    ].join("\n");
+  `scene_auto_id: ${s.scene_auto_id}`,
+  `object: ${obj?.label||s.object_id||"(none)"}`,
+  `motion: ${mot?.label||s.motion_id||"(none)"} (${mot?.pattern||""})`,
+  `spawn: ${from||"(unset)"} -> ${to||"(unset)"}`,
+  `hand: ${hand?.label||"(none)"} / pose: ${pose?.label||"(none)"}`,
+  `face: ${face?.label||"(none)"}`,
+].join("\n");
+
 
     card.innerHTML = `
       <div class="cardTop">
