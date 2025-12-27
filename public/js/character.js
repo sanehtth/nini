@@ -39,7 +39,7 @@ function buildCharacterPrompt() {
   const appearance = (document.getElementById("charAppearance").value || "").trim();
   const outfit = (document.getElementById("charOutfit").value || "").trim();
   const tools = (document.getElementById("charTools").value || "").trim();
-  const colorPalette = (document.getElementById("charPalette").value || "").trim();
+  const colorPalette = (document.getElementById("charColorPalette").value || "").trim();
   const artStyle = (document.getElementById("charArtStyle").value || "").trim();
 
   const imgInput = document.getElementById("charImagePath");
@@ -156,13 +156,15 @@ function copyPromptToClipboard() {
 
 // Download characters.json
 function downloadCharactersJson() {
-  if (!characters.length) {
-    alert("Chưa có nhân vật nào trong JSON.");
-    return;
-  }
-  const blob = new Blob([JSON.stringify(characters, null, 2)], {
-    type: "application/json",
-  });
+  const outEl = byId("charJsonOutput");
+  const txt = (outEl?.value || "").trim();
+  if (!txt) return alert("Chưa có dữ liệu JSON.");
+
+  // Validate JSON
+  try { JSON.parse(txt); } 
+  catch (e) { return alert("JSON đang lỗi, kiểm tra lại trước khi tải."); }
+
+  const blob = new Blob([txt], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -176,8 +178,7 @@ function downloadCharactersJson() {
 // Clear danh sách JSON
 function clearCharactersJson() {
   if (!confirm("Xoá toàn bộ danh sách nhân vật trong JSON?")) return;
-  characters = [];
-  renderCharactersJson();
+  byId("charJsonOutput").value = "[]";
 }
 
 // Gắn event sau khi DOM ready
@@ -225,7 +226,7 @@ function normalizeCharacter(obj) {
     appearance: c.appearance || c.charAppearance || "",
     outfit: c.outfit || c.charOutfit || "",
     tools: c.tools || c.charTools || "",
-    palette: c.palette || c.charPalette || "",
+    palette: c.palette || c.charColorPalette || "",
     artStyle: c.artStyle || c.charArtStyle || "",
     imagePath: c.imagePath || c.charImagePath || "",
     promptFinal: c.promptFinal || c.charPromptFinal || "",
@@ -243,7 +244,7 @@ function fillFormFromCharacter(c0) {
   byId("charAppearance").value = c.appearance;
   byId("charOutfit").value = c.outfit;
   byId("charTools").value = c.tools;
-  byId("charPalette").value = c.palette;
+  byId("charColorPalette").value = c.palette;
   byId("charArtStyle").value = c.artStyle;
   byId("charImagePath").value = c.imagePath;
   byId("charPromptFinal").value = c.promptFinal;
@@ -286,7 +287,7 @@ function buildCharacterObjectFromForm() {
     appearance: byId("charAppearance").value.trim(),
     outfit: byId("charOutfit").value.trim(),
     tools: byId("charTools").value.trim(),
-    palette: byId("charPalette").value.trim(),
+    palette: byId("charColorPalette").value.trim(),
     artStyle: byId("charArtStyle").value.trim(),
     imagePath: byId("charImagePath").value.trim(),
     promptFinal: byId("charPromptFinal").value,
@@ -299,6 +300,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const loadBtn = byId("loadAdnBtn");
   const loadSelectedBtn = byId("loadSelectedBtn");
   const importBtn = byId("importFileBtn");
+  const applyPathBtn = byId("applyAdnPathBtn");
+  const adnSeriesEl = byId("adnSeries");
+  const adnFileNameEl = byId("adnFileName");
+
+  const updateAdnUrlFromSeries = () => {
+    const series = (adnSeriesEl?.value || "").trim();
+    const fileName = (adnFileNameEl?.value || "").trim();
+    if (!series || !fileName) return;
+    // public/ là web root, nên chỉ cần đường dẫn tương đối
+    byId("adnUrl").value = `adn/${series}/${fileName}`;
+  };
+
+  // Auto-build ADN path for multiple series
+  applyPathBtn?.addEventListener("click", updateAdnUrlFromSeries);
+  adnSeriesEl?.addEventListener("change", updateAdnUrlFromSeries);
+  adnFileNameEl?.addEventListener("change", updateAdnUrlFromSeries);
+  updateAdnUrlFromSeries();
 
   loadBtn?.addEventListener("click", async () => {
     const url = byId("adnUrl").value.trim();
