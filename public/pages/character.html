@@ -1,478 +1,237 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <title>Tạo prompt Nhân Vật – LearnQuest AI</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Dùng lại style chung -->
-  <!-- NOTE: style.css is served from /public/style.css -->
-  <link rel="stylesheet" href="/style.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ADN Tools</title>
   <style>
-    /* Một chút style riêng cho trang character, dùng chung tone với site */
-
-    .char-page-wrap {
-      max-width: 960px;
-      margin: 0 auto;
-      background: #ffffff;
-      border-radius: 20px;
-      box-shadow: 0 15px 35px rgba(0,0,0,0.12);
-      overflow: hidden;
-    }
-
-    .char-header {
-      background: #e11d48;
-      color: #fff;
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .char-header h1 {
-      font-size: 20px;
-      margin: 0;
-    }
-
-    .char-header a {
-      color: #fee2e2;
-      font-size: 13px;
-      text-decoration: none;
-    }
-
-    .char-body {
-      padding: 24px 24px 28px;
-    }
-
-    .char-section-title {
-      font-weight: 600;
-      margin-bottom: 6px;
-      font-size: 15px;
-    }
-
-    .char-help {
-      font-size: 12px;
-      color: #6b7280;
-      margin-bottom: 8px;
-    }
-
-    .char-grid-2 {
-      display: grid;
-      grid-template-columns: 1.1fr 1.3fr;
-      gap: 20px;
-    }
-
-    .char-field {
-      margin-bottom: 12px;
-    }
-
-    .char-field label {
-      display: block;
-      font-size: 13px;
-      font-weight: 500;
-      margin-bottom: 4px;
-    }
-
-    .char-field small {
-      display: block;
-      font-size: 11px;
-      color: #6b7280;
-      margin-top: 2px;
-    }
-
-    .char-input,
-    .char-textarea {
-      width: 100%;
-      border-radius: 10px;
-      border: 1px solid #d4d4d8;
-      padding: 8px 10px;
-      font-size: 13px;
-      resize: vertical;
-      box-sizing: border-box;
-    }
-
-    .char-textarea {
-      min-height: 60px;
-      line-height: 1.4;
-    }
-
-    .char-actions-row {
-      margin-top: 8px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .char-actions-row .main-btn {
-      padding-inline: 18px;
-    }
-
-    .char-json-note {
-      font-size: 11px;
-      color: #6b7280;
-      margin-top: 4px;
-    }
-
-    .char-footer-note {
-      margin-top: 12px;
-      font-size: 11px;
-      color: #6b7280;
-    }
-
-    .char-json-area {
-      width: 100%;
-      min-height: 150px;
-      font-family: "Consolas","Courier New",monospace;
-      font-size: 12px;
-      border-radius: 10px;
-      border: 1px solid #d4d4d8;
-      padding: 8px 10px;
-      box-sizing: border-box;
-      resize: vertical;
-    }
-
-    @media (max-width: 768px) {
-      .char-grid-2 {
-        grid-template-columns: 1fr;
-      }
-      .char-body {
-        padding: 18px 16px 22px;
-      }
-    }
-  
-/* --- Tabs UI --- */
-.topbar{position:sticky;top:0;background:#111827;color:#fff;padding:12px 16px;z-index:10;border-bottom:1px solid rgba(255,255,255,.12)}
-.brand{display:flex;flex-direction:column;gap:2px}
-.brand-title{font-weight:700;letter-spacing:.3px}
-.brand-sub{font-size:12px;opacity:.8}
-.tabs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.tab-btn{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.12);padding:8px 12px;border-radius:10px;cursor:pointer}
-.tab-btn.active{background:#fff;color:#111827}
-.tab-panel{display:none}
-.tab-panel.active{display:block}
-.container{max-width:1000px;margin:0 auto;padding:18px 14px}
-.grid-2{display:grid;grid-template-columns:1fr;gap:14px}
-@media(min-width:900px){.grid-2{grid-template-columns:1fr 1fr}}
-.card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
-.lbl{display:block;font-weight:600;margin-top:10px;margin-bottom:6px}
-.hint{color:#4b5563;margin:8px 0 0 0}
-.hint.small{font-size:12px}
-.muted{color:#6b7280;font-size:12px}
-.ghost{background:#f3f4f6;border:1px solid #e5e7eb}
-.code{width:100%;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
-.hidden{display:none}
-.swatches{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.swatch{width:28px;height:28px;border-radius:8px;border:1px solid rgba(0,0,0,.12)}
-.field-row{display:flex;gap:10px;align-items:center;margin:8px 0}
-.field-row input[type="text"]{flex:1}
-.field-row input[type="color"]{width:44px;height:34px;padding:0;border:none;background:transparent}
-
-</style>
-  <!-- NOTE: character.js is served from /public/js/character.js -->
-  <script src="/js/character.js" defer></script>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:#f6f6f8;}
+    .top{position:sticky;top:0;background:#0b1220;color:#fff;padding:10px 14px;z-index:10;}
+    .top .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .top h1{font-size:14px;margin:0}
+    .card{background:#fff;border:1px solid #e7e7ee;border-radius:14px;padding:14px;margin:14px;box-shadow:0 10px 30px rgba(0,0,0,.06);}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    @media(max-width:900px){.grid,.grid3{grid-template-columns:1fr}}
+    label{font-size:12px;color:#333}
+    input,select,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;font-size:14px;box-sizing:border-box}
+    textarea{min-height:92px;resize:vertical}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .tab{background:#1b2a4a;color:#fff;border:0;border-radius:999px;padding:8px 12px;cursor:pointer;font-weight:600}
+    .tab.active{background:#ff2b6a}
+    .btn{background:#0b1220;color:#fff;border:0;border-radius:10px;padding:10px 12px;cursor:pointer;font-weight:700}
+    .btn.secondary{background:#fff;color:#0b1220;border:1px solid #0b1220}
+    .muted{color:#666;font-size:12px;margin:8px 0 0}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .row > *{flex:1}
+    .hide{display:none}
+    pre{background:#0b1220;color:#e9f0ff;border-radius:12px;padding:12px;overflow:auto}
+  </style>
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-title">ADN Tools</div>
-      <div class="brand-sub">Xây nhân vật / style bằng form (không cần nhập JSON)</div>
+  <div class="top">
+    <div class="row">
+      <h1>ADN Tools (Style / Background / Character / Outfit)</h1>
+      <div style="flex:2"></div>
+      <button class="btn secondary" id="btnValidate">Validate</button>
+      <button class="btn" id="btnDownload">Download JSON</button>
     </div>
-    <nav class="tabs" role="tablist" aria-label="ADN tabs">
-      <button class="tab-btn active" data-tab="tab-character" role="tab" aria-selected="true">Character</button>
-      <button class="tab-btn" data-tab="tab-style" role="tab" aria-selected="false">Style</button>
-      <button class="tab-btn" data-tab="tab-background" role="tab" aria-selected="false">Background</button>
-      <button class="tab-btn" data-tab="tab-outfit" role="tab" aria-selected="false">Outfit</button>
-    </nav>
-  </header>
-
-  <section id="tab-character" class="tab-panel active" role="tabpanel">
-
-  <div class="char-page-wrap">
-    <header class="char-header">
+    <div class="row" style="margin-top:10px">
       <div>
-        <a href="admin.html">&larr; Về Admin</a>
-        <h1>Tạo prompt Nhân Vật</h1>
+        <label>Base path (đúng theo deploy của bạn)</label>
+        <input id="basePath" value="/public" />
+        <div class="muted">Ví dụ: nếu URL của bạn có dạng <b>/public/pages/...</b> thì base = <b>/public</b>.</div>
       </div>
-      <div style="font-size:13px;">Tool tạo prompt + JSON cho character sheet</div>
-    </header>
-
-    <main class="char-body">
-      
-
-  <section class="card" id="adnSection">
-    <h2>Kết nối ADN / character.json</h2>
-    <div class="row">
-      <label for="adnUrl">URL hoặc đường dẫn character.json</label>
-      <input id="adnUrl" type="text" value="/adn/xomnganchuyen/XNC_characters.json" />
-      <button id="loadAdnBtn" type="button">Tải danh sách</button>
+      <div>
+        <label>Series folder</label>
+        <input id="seriesFolder" value="xomnganchuyen" />
+      </div>
+      <div>
+        <label>File prefix</label>
+        <input id="filePrefix" value="XNC" />
+      </div>
+      <div style="flex:0.7">
+        <label>&nbsp;</label>
+        <button class="btn" id="btnLoadAll">Load tab hiện tại</button>
+      </div>
     </div>
-    <div class="row">
-      <label for="adnCharacterSelect">Chọn nhân vật từ ADN</label>
-      <select id="adnCharacterSelect">
-        <option value="">(chưa tải)</option>
-      </select>
-      <button id="loadSelectedBtn" type="button">Nạp vào form</button>
+    <div class="tabs">
+      <button class="tab active" data-tab="style">Style</button>
+      <button class="tab" data-tab="background">Background</button>
+      <button class="tab" data-tab="character">Character</button>
+      <button class="tab" data-tab="outfit">Outfit</button>
     </div>
-    <div class="row">
-      <label for="importFile">Import character.json từ máy</label>
-      <input id="importFile" type="file" accept="application/json" />
-      <button id="importFileBtn" type="button">Import</button>
-    </div>
-    <div class="row">
-      <label for="modeMerge3d">Trường 3D (tùy chọn)</label>
-      <textarea id="char3dJson" placeholder='Ví dụ: {"modelUrl":"...","rig":"...","voice":"..."}'></textarea>
-    </div>
-    <p class="hint">
-      Gợi ý: bạn có thể dùng section này để quản lý cùng lúc nhân vật 2D (Xom1000chuyen) và metadata 3D. 
-      Export sẽ đóng gói trong cùng một object.
-    </p>
-  </section>
-
-<section>
-        <div class="char-section-title">Thông tin nhân vật</div>
-        <p class="char-help">
-          Điền các field ngắn gọn, sau đó bấm <strong>"Tạo prompt nhân vật"</strong>.
-          Prompt AI sẽ xuất hiện bên phải, và bạn có thể thêm vào danh sách JSON để quản lý nhiều nhân vật.
-        </p>
-
-        <div class="char-grid-2">
-          <!-- Cột trái: thông tin nhân vật (2D / Xom1000chuyen) -->
-          <div class="char-col">
-            <div class="char-form-group">
-              <label for="charId">ID nhân vật *</label>
-              <input id="charId" class="char-input" type="text" placeholder="Kha_001, Luna_01..." />
-              <div class="char-note">Nếu để trống, tool sẽ tự tạo ID theo timestamp.</div>
-            </div>
-
-            <div class="char-form-group">
-              <label for="charName">Tên nhân vật</label>
-              <input id="charName" class="char-input" type="text" placeholder="A Kha, Luna, ..." />
-            </div>
-
-            <div class="char-form-group">
-              <label for="charSummary">Mô tả nhân vật (thô)</label>
-              <textarea id="charSummary" class="char-textarea" rows="3" placeholder="Ví dụ: Cậu bé tóc đen, dáng người nhỏ, phong cách fantasy rừng tối..."></textarea>
-            </div>
-
-            <div class="char-form-group">
-              <label for="charAgeRole">Tuổi / vai trò (1 dòng)</label>
-              <input id="charAgeRole" class="char-input" type="text" placeholder="A 12–14-year-old ancient steampunk crafter boy" />
-            </div>
-
-            <div class="char-form-group">
-              <label for="charAppearance">Hair / appearance</label>
-              <textarea id="charAppearance" class="char-textarea" rows="3" placeholder="Long green hair, low ponytail, messy; bronze gear earring (left only)..."></textarea>
-            </div>
-
-            <div class="char-form-group">
-              <label for="charOutfit">Outfit / clothing</label>
-              <textarea id="charOutfit" class="char-textarea" rows="3" placeholder="Layered tunic, leather belt, worn boots, small satchel..."></textarea>
-            </div>
-          </div>
-
-          <!-- Cột phải: asset + style + 3D (tuỳ chọn) -->
-          <div class="char-col">
-            <div class="char-form-group">
-              <label for="charImagePath">Hình minh hoạ (path)</label>
-              <input id="charImagePath" class="char-input" type="text" placeholder="public/assets/character/<ID>_<Name>.webp" />
-              <div class="char-note">Nếu để trống, hệ thống sẽ tự tạo theo ID + Name.</div>
-            </div>
-
-            <div class="char-form-group">
-              <label for="charTools">Tools &amp; props</label>
-              <textarea id="charTools" class="char-textarea" rows="3" placeholder="Small glowing energy core gear, mini bombs, scrolls, brass+wood hybrid tools..."></textarea>
-            </div>
-
-            <div class="char-form-group">
-              <label for="charColorPalette">Color palette</label>
-              <input id="charColorPalette" class="char-input" type="text" placeholder="Forest green, brown leather, antique brass, teal glow" />
-            </div>
-
-            <div class="char-form-group">
-              <label for="charArtStyle">Artstyle &amp; layout</label>
-              <input id="charArtStyle" class="char-input" type="text" placeholder="Anime, ancient-steampunk fantasy hybrid, detailed reference sheet" />
-            </div>
-
-            <div class="char-form-group">
-              <label for="modelUrl">Trường 3D (tuỳ chọn)</label>
-              <textarea id="modelUrl" class="char-textarea" rows="3" placeholder='Ví dụ:
-{"modelUrl":"...","rig":"...","engine":"threejs"}'></textarea>
-              <div class="char-note">Gợi ý: nếu bạn dùng chung tool này để quản lý nhân vật 2D (Xom1000chuyen) và metadata 3D. Export sẽ đóng gói trong cùng một object.</div>
-            </div>
-          </div>
-        </div>
-
-      <div class="char-actions-row">
-              <button id="buildPromptBtn" class="main-btn" type="button">
-                🧪 Tạo prompt nhân vật
-              </button>
-              <button id="addToJsonBtn" class="sub-btn" type="button">
-                ➕ Thêm vào danh sách JSON
-              </button>
-            </div>
-
-            <p class="char-footer-note">
-              * Bạn có thể tạo nhiều nhân vật. Mỗi lần bấm “Thêm vào danh sách JSON”
-              sẽ push vào mảng <code>characters</code>. Sau đó có thể tải xuống file
-              <strong>characters.json</strong>.
-            </p>
-
-            <div class="char-actions-row" style="margin-top:6px;">
-              <button id="downloadJsonBtn" class="sub-btn" type="button">
-                ⬇ Tải file characters.json
-              </button>
-              <button id="clearJsonBtn" class="sub-btn" type="button">
-                🗑 Xoá danh sách JSON
-              </button>
-            </div>
-          </div>
-
-          <!-- Cột phải: prompt + JSON -->
-          <div class="form-group">
-          <label for="charImagePath">Hình minh hoạ (path)</label>
-          <input
-            type="text"
-            id="charImagePath"
-            placeholder="public/assets/character/<ID>_<Name>.webp"
-           />
-          <small>Nếu để trống, hệ thống sẽ tự tạo theo ID + Name.</small>
-          </div>
-
-          <div>
-            <div class="char-field">
-              <label for="charPromptFinal">Prompt hoàn chỉnh</label>
-              <textarea id="charPromptFinal" class="char-textarea" style="min-height:180px;"
-                placeholder="Prompt sẽ hiện ở đây sau khi bấm 'Tạo prompt nhân vật'..."></textarea>
-              <div class="char-actions-row" style="margin-top:6px;">
-                <button id="copyPromptBtn" class="sub-btn" type="button">📋 Copy prompt</button>
-              </div>
-            </div>
-
-            <div class="char-field">
-              <label for="charJsonOutput">JSON (danh sách tất cả nhân vật)</label>
-              <textarea id="charJsonOutput" class="char-json-area">[]</textarea>
-              <p class="char-json-note">
-                Cấu trúc mỗi object:
-                <code>{ id, name, summary, ageRole, appearance, outfit, tools, colorPalette, artStyle, prompt }</code>.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
   </div>
 
-  </section>
-
-  <section id="tab-style" class="tab-panel" role="tabpanel">
-    <div class="container">
-      <h2>Style</h2>
-      <p class="hint">Chọn template để điền nhanh. Hoặc upload ảnh để lấy palette/ánh sáng rồi tự chỉnh (ảnh không được lưu).</p>
-
-      <div class="grid-2">
-        <div class="card">
-          <h3>1) Load template</h3>
-          <label class="lbl">Template source</label>
-            <!-- NOTE: templates are served from /public/adn/templates/*.json -->
-            <input id="styleTemplateUrl" type="text" value="/adn/templates/style_templates.json" />
-          <div class="row">
-            <button id="btnLoadStyleTemplates">Load templates</button>
-            <span id="styleTemplateStatus" class="muted"></span>
-          </div>
-
-          <label class="lbl">Chọn style mẫu</label>
-          <select id="styleTemplateSelect"></select>
-          <div class="row">
-            <button id="btnApplyStyleTemplate">Áp dụng preset</button>
-            <button id="btnResetStyleForm" class="ghost">Reset</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>2) Upload ảnh (chỉ để lấy màu)</h3>
-          <input id="styleRefImage" type="file" accept="image/*" />
-          <div class="row">
-            <button id="btnAnalyzeImage">Phân tích ảnh</button>
-            <button id="btnApplyImagePalette" class="ghost">Áp palette vào form</button>
-          </div>
-          <canvas id="styleCanvas" class="hidden"></canvas>
-          <div id="imageSwatches" class="swatches"></div>
-          <div class="hint small">Tip: dùng ảnh bất kỳ (Việt/ngoại). Tool chỉ trích màu và gợi ý lighting.</div>
-        </div>
+  <!-- STYLE -->
+  <div class="card" id="panel-style">
+    <h2 style="margin:0 0 10px">Style</h2>
+    <div class="grid3">
+      <div>
+        <label>Chọn template</label>
+        <select id="styleTemplateSelect"></select>
+        <div class="muted">Template nằm tại: <b>{base}/adn/templates/style_templates.json</b></div>
       </div>
-
-      <div class="card">
-        <h3>3) Style form (theo schema hiện tại)</h3>
-
-        <div class="grid-2">
-          <div>
-            <h4>Brand palette</h4>
-            <div id="brandPaletteFields"></div>
-            <div class="row">
-              <button id="btnAddBrandColor" class="ghost">+ Thêm màu</button>
-            </div>
-          </div>
-
-          <div>
-            <h4>Pastel palette</h4>
-            <div id="pastelPaletteFields"></div>
-            <div class="row">
-              <button id="btnAddPastelColor" class="ghost">+ Thêm màu</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="grid-2">
-          <div>
-            <h4>Emotion tone map</h4>
-            <div id="toneMapFields"></div>
-            <div class="row">
-              <button id="btnAddToneColor" class="ghost">+ Thêm tone</button>
-            </div>
-          </div>
-
-          <div>
-            <h4>Camera & Lighting</h4>
-            <label class="lbl">Camera default</label>
-            <select id="cameraDefault"></select>
-            <label class="lbl">Lighting default</label>
-            <select id="lightingDefault"></select>
-            <div class="hint small">Preset list lấy theo template đang áp dụng.</div>
-          </div>
-        </div>
-
-        <div class="row">
-          <button id="btnExportStyleJson">Export style.json</button>
-          <button id="btnCopyStyleJson" class="ghost">Copy JSON</button>
-          <span id="styleExportStatus" class="muted"></span>
-        </div>
-
-        <textarea id="styleJsonPreview" class="code" rows="12" readonly></textarea>
+      <div>
+        <label>Brand primary</label>
+        <input id="styleBrandPrimary" placeholder="#RRGGBB" />
+      </div>
+      <div>
+        <label>Accent</label>
+        <input id="styleAccent" placeholder="#RRGGBB" />
       </div>
     </div>
-  </section>
-
-  <section id="tab-background" class="tab-panel" role="tabpanel">
-    <div class="container">
-      <h2>Background</h2>
-      <p class="hint">Tab này để bạn/CTV mô tả background theo khung (trong nhà/ngoài trời + sáng/tối + địa điểm cụ thể). Bạn có thể hoàn thiện sau.</p>
-      <div class="card">
-        <div class="muted">Chưa kích hoạt UI background trong bản này.</div>
+    <div class="grid">
+      <div>
+        <label>Art style (1 dòng)</label>
+        <input id="styleArt" placeholder="2D anime/cartoon, soft shading, clean outlines..." />
+      </div>
+      <div>
+        <label>Lighting & mood</label>
+        <input id="styleLight" placeholder="warm daylight / cool night / rainy..." />
+      </div>
+      <div>
+        <label>Color palette (csv)</label>
+        <input id="stylePalette" placeholder="#ffeeaa,#112233,#..." />
+      </div>
+      <div>
+        <label>Notes</label>
+        <input id="styleNotes" placeholder="texture, line weight, background blur..." />
       </div>
     </div>
-  </section>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="btnStyleToJson">Xuất style.json</button>
+      <button class="btn secondary" id="btnStyleLoadJson">Load style.json</button>
+      <input type="file" id="styleJsonFile" accept="application/json" />
+    </div>
+    <pre id="styleJsonOut" class="muted"></pre>
+  </div>
 
-  <section id="tab-outfit" class="tab-panel" role="tabpanel">
-    <div class="container">
-      <h2>Outfit</h2>
-      <p class="hint">Tab này để tạo outfit resource dùng chung (uniform/personal/event). Bạn có thể hoàn thiện sau.</p>
-      <div class="card">
-        <div class="muted">Chưa kích hoạt UI outfit trong bản này.</div>
+  <!-- BACKGROUND -->
+  <div class="card hide" id="panel-background">
+    <h2 style="margin:0 0 10px">Background</h2>
+    <div class="grid">
+      <div>
+        <label>Tên background (id)</label>
+        <input id="bgId" placeholder="ts_quantrasua_sang" />
+      </div>
+      <div>
+        <label>Loại</label>
+        <select id="bgType">
+          <option value="outdoor">Ngoài trời</option>
+          <option value="indoor">Trong nhà</option>
+          <option value="both">Cả 2</option>
+        </select>
+      </div>
+      <div>
+        <label>Thời điểm</label>
+        <select id="bgTime">
+          <option value="morning">Sáng</option>
+          <option value="afternoon">Chiều</option>
+          <option value="evening">Tối</option>
+          <option value="night">Đêm</option>
+          <option value="flex">Linh động</option>
+        </select>
+      </div>
+      <div>
+        <label>Mô tả (1 dòng)</label>
+        <input id="bgDesc" placeholder="Vỉa hè trước quán trà sữa Cô Hai, buổi sáng..." />
+      </div>
+      <div>
+        <label>Chi tiết (tuỳ chọn)</label>
+        <textarea id="bgDetails" placeholder="nội thất, vật dụng, ánh sáng, âm thanh, mùi..." ></textarea>
+      </div>
+      <div>
+        <label>Tags (csv)</label>
+        <input id="bgTags" placeholder="vietnamese,small_alley,street_food..." />
       </div>
     </div>
-  </section>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="btnBgToJson">Xuất backgrounds.json (1 item)</button>
+      <button class="btn secondary" id="btnBgLoadJson">Load XNC_backgrounds.json</button>
+      <input type="file" id="bgJsonFile" accept="application/json" />
+    </div>
+    <pre id="bgJsonOut" class="muted"></pre>
+  </div>
+
+  <!-- CHARACTER -->
+  <div class="card hide" id="panel-character">
+    <h2 style="margin:0 0 10px">Character</h2>
+    <div class="grid">
+      <div><label>ID</label><input id="cId" placeholder="bolo" /></div>
+      <div><label>Tên hiển thị</label><input id="cName" placeholder="Bô-Lô" /></div>
+      <div>
+        <label>Giới tính</label>
+        <select id="cGender"><option value="male">Nam</option><option value="female">Nữ</option><option value="other">Khác</option></select>
+      </div>
+      <div><label>Role (ngắn)</label><input id="cRole" placeholder="Thánh soi" /></div>
+      <div><label>Mô tả base (EN hoặc VI)</label><textarea id="cBaseDesc" placeholder="Vietnamese primary school boy, small but tries to look cool..." ></textarea></div>
+      <div>
+        <label>Default accessories (csv)</label>
+        <textarea id="cAccessories" placeholder="glasses, hair_roller, hair_clip..." ></textarea>
+        <div class="muted">Phụ kiện cố định: kính, kẹp tóc, khoen tai, dây chuyền, đồng hồ...</div>
+      </div>
+      <div>
+        <label>Outfit mặc định (id outfit)</label>
+        <input id="cDefaultOutfit" placeholder="casual_boy_blue" />
+        <div class="muted">Outfit là bảng chung, nhân vật chỉ tham chiếu id.</div>
+      </div>
+      <div>
+        <label>Preferred actions (csv)</label>
+        <textarea id="cActions" placeholder="adjust_glasses, point_accuse" ></textarea>
+      </div>
+      <div>
+        <label>Preferred faces (csv)</label>
+        <textarea id="cFaces" placeholder="smirk_proud, jaw_drop_shock" ></textarea>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="btnCharToJson">Xuất characters.json (1 item)</button>
+      <button class="btn secondary" id="btnCharLoadJson">Load {prefix}_characters.json</button>
+      <input type="file" id="charJsonFile" accept="application/json" />
+    </div>
+    <pre id="charJsonOut" class="muted"></pre>
+  </div>
+
+  <!-- OUTFIT -->
+  <div class="card hide" id="panel-outfit">
+    <h2 style="margin:0 0 10px">Outfit</h2>
+    <div class="grid">
+      <div><label>Outfit ID</label><input id="oId" placeholder="uniform_boy_primary" /></div>
+      <div>
+        <label>Loại</label>
+        <select id="oCategory">
+          <option value="uniform">Đồng phục</option>
+          <option value="casual">Thường ngày</option>
+          <option value="event">Sự kiện</option>
+          <option value="seasonal">Theo mùa</option>
+        </select>
+        <div class="muted">Nếu là <b>uniform</b> thì ưu tiên khi scene ở trường.</div>
+      </div>
+      <div>
+        <label>Gender fit</label>
+        <select id="oGenderFit"><option value="unisex">Unisex</option><option value="male">Nam</option><option value="female">Nữ</option></select>
+      </div>
+      <div><label>Tên outfit</label><input id="oName" placeholder="Đồng phục tiểu học (nam)" /></div>
+      <div><label>Mô tả (1-2 dòng)</label><textarea id="oDesc" placeholder="Áo trắng, quần xanh/đen, giày dép đơn giản, đúng kiểu học sinh VN..." ></textarea></div>
+      <div><label>Colors (csv)</label><input id="oColors" placeholder="white,navy,black" /></div>
+      <div><label>Props (csv)</label><textarea id="oProps" placeholder="school_bag, notebook, flip_flops..." ></textarea></div>
+      <div>
+        <label>Default accessories for this outfit (csv)</label>
+        <textarea id="oAcc" placeholder="cap, ribbon, scarf..." ></textarea>
+        <div class="muted">Đây là phụ kiện theo outfit (khác phụ kiện cố định của nhân vật).</div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="btnOutfitToJson">Xuất outfits.json (1 item)</button>
+      <button class="btn secondary" id="btnOutfitLoadJson">Load {prefix}_outfits.json</button>
+      <input type="file" id="outfitJsonFile" accept="application/json" />
+    </div>
+    <pre id="outfitJsonOut" class="muted"></pre>
+  </div>
+
+  <script src="../js/character.js"></script>
 </body>
 </html>
-
-
