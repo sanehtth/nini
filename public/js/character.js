@@ -388,7 +388,20 @@ let extractedSwatches = [];
 
 function $(id){ return document.getElementById(id); }
 
+function normalizeUrl(url){
+  if(!url) return url;
+  url = String(url).trim();
+  if(!url) return url;
+  // keep absolute URLs
+  if(/^https?:\/\//i.test(url)) return url;
+  // convert relative (e.g. "adn/template/...") -> "/adn/template/..."
+  if(url.startsWith('/')) return url;
+  url = url.replace(/^\.\//,'');
+  return '/' + url;
+}
+
 async function fetchJson(url){
+  url = normalizeUrl(url);
   const res = await fetch(url, {cache:'no-store'});
   if(!res.ok) throw new Error('Fetch failed: ' + res.status + ' ' + url);
   // handle BOM
