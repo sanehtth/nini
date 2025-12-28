@@ -1,13 +1,42 @@
 {
-  "version": "1.1",
+  "version": "2.0",
   "series_id": "XNC",
+  "schema": {
+    "character": {
+      "id": "string",
+      "name": "string",
+      "type": "main|supporting",
+      "gender": "male|female|unknown",
+      "role": "string",
+      "age_role_vi": "string",
+      "summary_vi": "string",
+      "base_desc_en": "string",
+      "prompt_en": "string optional",
+      "signature_items": "string[]",
+      "signature_colors": "string[]",
+      "preferred_actions": "string[]",
+      "preferred_faces": "string[]",
+      "default_outfit_id": "string",
+      "default_uniform_id": "string optional"
+    }
+  },
   "characters": [
     {
       "id": "bolo",
       "name": "Bô-Lô",
+      "type": "main",
       "gender": "male",
       "role": "Thánh soi",
+      "age_role_vi": "Học sinh tiểu học",
+      "summary_vi": "Cậu bé đeo kính, hay soi xét và bắt bẻ, nói chuyện tỉnh rụi như ông cụ non.",
       "base_desc_en": "Vietnamese primary school boy, small but tries to look cool, blue shirt, brown pants, short messy hair, tiny round glasses",
+      "signature_items": [
+        "tiny_round_glasses"
+      ],
+      "signature_colors": [
+        "xnc_blue",
+        "xnc_brown"
+      ],
       "preferred_actions": [
         "adjust_glasses",
         "point_accuse"
@@ -15,155 +44,251 @@
       "preferred_faces": [
         "smirk_proud",
         "cold_gangster"
-      ]
+      ],
+      "default_outfit_id": "xnc_outfit_bolo_everyday",
+      "default_uniform_id": "xnc_uniform_primary_male",
+      "locale": "Vietnam",
+      "notes": "Giữ mô tả Việt Nam 2D; màu signature nằm ở character, đồng phục không nhuộm màu cá nhân."
     },
     {
       "id": "bala",
       "name": "Ba-La",
+      "type": "main",
       "gender": "male",
       "role": "Thánh đồn",
+      "age_role_vi": "Học sinh tiểu học",
+      "summary_vi": "Cậu bé hơi mũm mĩm, nhanh miệng, hay đồn thổi và tự tin sai một cách đáng yêu.",
       "base_desc_en": "Vietnamese primary school boy, slightly chubby, red shirt, black shorts, messy hair, big mouth expression, talkative",
+      "signature_items": [
+        "chubby_body_type"
+      ],
+      "signature_colors": [
+        "xnc_red",
+        "xnc_black"
+      ],
       "preferred_actions": [
         "scratch_head"
       ],
       "preferred_faces": [
         "cover_mouth_panic",
         "jaw_drop_shock"
-      ]
+      ],
+      "default_outfit_id": "xnc_outfit_bala_everyday",
+      "default_uniform_id": "xnc_uniform_primary_male",
+      "locale": "Vietnam",
+      "notes": "Giữ mô tả Việt Nam 2D; màu signature nằm ở character, đồng phục không nhuộm màu cá nhân."
     },
     {
       "id": "tumlum",
       "name": "Tùm-Lum",
+      "type": "main",
       "gender": "female",
       "role": "Thánh điệu",
+      "age_role_vi": "Học sinh tiểu học",
+      "summary_vi": "Cô bé “thánh điệu” tự tin, bắt trend, mix đồ lạ đời nhưng luôn tin mình high fashion.",
       "base_desc_en": "Vietnamese primary school girl, long messy hair with big rollers, bright yellow outfit, quirky fashion, confident pose, high-fashion vibe but comedic",
+      "signature_items": [
+        "big_hair_rollers"
+      ],
+      "signature_colors": [
+        "xnc_yellow",
+        "xnc_pastel"
+      ],
       "preferred_actions": [
         "idle_stand"
       ],
       "preferred_faces": [
         "smirk_proud",
         "sweet_pleading"
-      ]
-    },
-    {
-  "id": "mom_bolo",
-  "name": "Mẹ Bolo",
-  "summary": "Người mẹ Việt truyền thống, thương con theo cách rất đời",
-  "ageRole": "45-year-old Vietnamese mother",
-  "appearance": "round gentle face, low bun hair, simple floral blouse, kitchen apron",
-  "personality": "caring, subtly biased toward daughters, warm but practical",
-  "outfit": "simple floral blouse, apron",
-  "tools": "ladle, chopsticks, rice bowl",
-  "colorPalette": "warm brown, pastel green, rice yellow",
-  "artStyle": "pastel chibi 2D, Vietnamese family life",
-  "prompt": "Vietnamese middle-aged mother, low bun hair, floral blouse, apron, warm kitchen light, cozy family vibe, pastel chibi 2D, not Korean"
-    },
-    {
-  "id": "dad_bolo",
-  "name": "Ba Bolo",
-  "summary": "Ông bố Việt hiền lành, thương con, sợ vợ một cách đáng yêu",
-  "ageRole": "45–50-year-old Vietnamese father",
-  "appearance": "slightly thin body, hunched posture, tired gentle face, short hair with gray",
-  "personality": "kind, humorous, obedient, secretly proud of family",
-  "outfit": "old T-shirt or simple button shirt, shorts, rubber sandals",
-  "colorPalette": "warm brown, faded blue, gray",
-  "artStyle": "pastel chibi 2D, Vietnamese family life",
-  "prompt": "Vietnamese middle-aged father, afraid of wife vibe, humorous, warm family style"
-    },
-{
-  "id": "xnc_chu_tu",
-  "name": "Chú Tư",
-  "ageRole": "Khoảng 45–50 tuổi, hàng xóm nhà Bolo",
-  "summary": "Người đàn ông hiền, sợ vợ, hay lén lút và thường xuyên rơi vào tình huống dở khóc dở cười",
-  "appearance": "Dáng người gầy, hơi khom lưng, mặt mệt mỏi, mắt hay liếc ngang dọc, biểu cảm lúng túng",
-  "outfit": "Áo sơ mi ngắn tay cũ, quần vải sờn, dép nhựa hoặc dép lê",
-  "personality": [
-    "sợ vợ",
-    "lươn lẹo",
-    "hay chống chế",
-    "hiền nhưng không lanh",
-    "rất hợp vai hài"
-  ],
-  "artStyle": "Pastel chibi 2D, Vietnamese countryside vibe",
-  "prompt": "Vietnamese middle-aged man, age around 45–50, thin body, slightly hunched posture, awkward and guilty expression, clearly afraid of his wife, nervous smile, scratching head, eyes looking sideways. Wearing simple worn short-sleeve shirt, old trousers, plastic sandals. Body language shows hesitation and comedy. Vietnamese family house interior, warm indoor light. Style: pastel chibi 2D, Vietnamese countryside vibe, clean illustration, expressive facial acting, humorous, no text."
-},
-{
-      "id": "thief_chicken",
-      "name": "Tên Trộm Gà",
-      "ageRole": "Thanh niên, phản diện hài hước",
-      "summary": "Kẻ trộm xui xẻo, chuyên đi bắt gà hàng xóm nhưng toàn bị phát hiện hoặc bị gà rượt lại.",
-      "appearance": "Đội mũ nồi hoặc trùm đầu, đeo mặt nạ che mắt kiểu hoạt hình, đi khom lưng lén lút, vai vác bao tải (có con gà lòi đầu ra).",
-      "outfit": "Áo thun kẻ sọc đen trắng (kiểu tù nhân hoạt hình) hoặc đồ đen bó sát, quần tối màu, giày sneaker cũ.",
-      "personality": [
-        "lén lút",
-        "xui xẻo",
-        "hay giật mình",
-        "tấu hài"
       ],
-      "artStyle": "Pastel chibi 2D, comedic cartoon style",
-      "prompt": "Cartoon thief character, sneaky pose, wearing a black eye mask and striped black-and-white shirt, carrying a burlap sack on shoulder with a chicken head peeking out. Expression is mischievous but nervous. Comedic villain vibe, full body, pastel chibi 2D style, white background."
-    },
-    {
-      "id": "ba_tam_pho",
-      "name": "Bà Tám Bán Phở",
-      "ageRole": "Trung niên, khoảng 50 tuổi",
-      "summary": "Bà chủ quán phở đầu ngõ, kiêm 'đài phát thanh' của xóm. Biết tuốt mọi chuyện trong nhà ngoài phố.",
-      "appearance": "Dáng người đậm đà phúc hậu, tóc xoăn ngắn (kiểu các bà thím), mặt hay cười hớn hở để tám chuyện.",
-      "outfit": "Mặc đồ bộ vải lanh in hoa sặc sỡ (đặc trưng các mẹ ở nhà), đi dép lê.",
-      "personality": [
-        "nhiều chuyện",
-        "hào sảng",
-        "hay cười lớn",
-        "thích buôn dưa lê"
-      ],
-      "artStyle": "Pastel chibi 2D, Vietnamese daily life",
-      "prompt": "Vietnamese middle-aged woman, chubby and friendly, short curly hair (ajumma style). Wearing colorful floral pajamas (Do Bo - Vietnamese home wear), standing in a relaxed pose as if gossiping. Expressive face, wide mouth chatting. Pastel chibi 2D style, authentic Vietnamese countryside vibe."
-    },
-    {
-      "id": "hai_ngan",
-      "name": "Cô Hai Ngàn",
-      "ageRole": "Thiếu nữ, khoảng 20-25 tuổi",
-      "summary": "Cô gái bán sữa (sữa đậu nành/sữa bò) hiền lành, nết na, là 'crush' của nhiều thanh niên trong xóm.",
-      "appearance": "Gương mặt trái xoan xinh xắn, dịu dàng, tóc đen dài buộc thấp hoặc tết đuôi sam.",
-      "outfit": "Đội nón lá, mặc áo bà ba màu nâu đất giản dị, quần lụa đen, tay ôm bình sữa nhôm lớn.",
-      "personality": [
-        "dịu dàng",
-        "chăm chỉ",
-        "e thẹn",
-        "ngây thơ"
-      ],
-      "artStyle": "Pastel chibi 2D, Vietnamese rustic beauty",
-      "prompt": "Beautiful Vietnamese young woman, gentle and shy expression. Wearing a traditional brown shirt (ao ba ba) and black trousers, wearing a conical hat (non la). Holding a large metal milk churn. Rustic countryside beauty, soft lighting, pastel chibi 2D style."
-    },
-    {
-      "id": "shipper_guy",
-      "name": "Anh Shipper",
-      "ageRole": "Thanh niên năng động",
-      "summary": "Anh giao hàng xuất hiện mọi lúc mọi nơi, luôn vội vã nhưng nhiệt tình.",
-      "appearance": "Mắt sáng, miệng cười tươi rói, dáng vẻ nhanh nhẹn, luôn ngồi trên xe máy hoặc cầm gói hàng.",
-      "outfit": "Đồng phục màu vàng nổi bật (áo khoác và mũ bảo hiểm 3/4 màu vàng), thùng hàng 'Giao Hàng Nhanh' phía sau xe.",
-      "personality": [
-        "nhanh nhảu",
-        "nhiệt tình",
-        "luôn vội vàng",
-        "vui vẻ"
-      ],
-      "artStyle": "Pastel chibi 2D, energetic cartoon style",
-      "prompt": "Delivery driver character riding a scooter, wearing a bright yellow uniform jacket and yellow helmet. Big yellow delivery box on the back of the bike with text 'GIAO HANG'. Cheerful expression, waving hand, motion lines indicating speed. Cute pastel chibi 2D style, white background."
+      "default_outfit_id": "xnc_outfit_tumlum_everyday",
+      "default_uniform_id": "xnc_uniform_primary_female",
+      "locale": "Vietnam",
+      "notes": "Giữ mô tả Việt Nam 2D; màu signature nằm ở character, đồng phục không nhuộm màu cá nhân."
     },
     {
       "id": "tumla",
       "name": "Tùm-La",
+      "type": "main",
       "gender": "female",
       "role": "Thánh báo",
+      "age_role_vi": "Học sinh tiểu học",
+      "summary_vi": "Cô bé lanh chanh, tinh quái, hay chốt hạ câu khiến ai cũng cứng họng.",
       "base_desc_en": "Vietnamese primary school girl, short hair with big bow, red polka dot top, energetic stance, mischievous eyes",
+      "signature_items": [
+        "big_hair_bow"
+      ],
+      "signature_colors": [
+        "xnc_red",
+        "xnc_white"
+      ],
       "preferred_actions": [
         "point_accuse"
       ],
       "preferred_faces": [
         "side_eye_glance",
         "jaw_drop_shock"
-      ]
+      ],
+      "default_outfit_id": "xnc_outfit_tumla_everyday",
+      "default_uniform_id": "xnc_uniform_primary_female",
+      "locale": "Vietnam",
+      "notes": "Giữ mô tả Việt Nam 2D; màu signature nằm ở character, đồng phục không nhuộm màu cá nhân."
+    },
+    {
+      "id": "mom_bolo",
+      "name": "Mẹ Bolo",
+      "type": "supporting",
+      "gender": "female",
+      "role": "Mẹ của Bô-Lô",
+      "age_role_vi": "Phụ nữ trung niên (khoảng 45 tuổi)",
+      "summary_vi": "Người mẹ Việt truyền thống, thương con theo cách rất đời; hiền nhưng thực tế.",
+      "base_desc_en": "Vietnamese middle-aged mother, low bun hair, floral blouse, apron, warm kitchen light, cozy family vibe, pastel chibi 2D, not Korean",
+      "prompt_en": "Vietnamese middle-aged mother, low bun hair, floral blouse, apron, warm kitchen light, cozy family vibe, pastel chibi 2D, not Korean",
+      "signature_items": [
+        "low_bun_hair",
+        "kitchen_apron"
+      ],
+      "signature_colors": [
+        "xnc_warm_brown",
+        "xnc_pastel_green",
+        "xnc_rice_yellow"
+      ],
+      "preferred_actions": [],
+      "preferred_faces": [],
+      "default_outfit_id": "xnc_outfit_mom_bolo_everyday",
+      "locale": "Vietnam",
+      "notes": "Nhân vật phụ; outfit tham chiếu sang XNC_outfits.json."
+    },
+    {
+      "id": "dad_bolo",
+      "name": "Ba Bolo",
+      "type": "supporting",
+      "gender": "male",
+      "role": "Ba của Bô-Lô",
+      "age_role_vi": "Đàn ông trung niên (45–50 tuổi)",
+      "summary_vi": "Ông bố Việt hiền lành, thương con, hơi sợ vợ một cách đáng yêu.",
+      "base_desc_en": "Vietnamese middle-aged father, afraid of wife vibe, humorous, warm family style",
+      "prompt_en": "Vietnamese middle-aged father, afraid of wife vibe, humorous, warm family style",
+      "signature_items": [
+        "tired_gentle_face"
+      ],
+      "signature_colors": [
+        "xnc_faded_blue",
+        "xnc_gray",
+        "xnc_warm_brown"
+      ],
+      "preferred_actions": [],
+      "preferred_faces": [],
+      "default_outfit_id": "xnc_outfit_dad_bolo_everyday",
+      "locale": "Vietnam",
+      "notes": "Nhân vật phụ; outfit tham chiếu sang XNC_outfits.json."
+    },
+    {
+      "id": "xnc_chu_tu",
+      "name": "Chú Tư",
+      "type": "supporting",
+      "gender": "male",
+      "role": "Hàng xóm",
+      "age_role_vi": "Đàn ông trung niên (45–50 tuổi)",
+      "summary_vi": "Người đàn ông hiền, sợ vợ, hay lén lút và thường rơi vào tình huống dở khóc dở cười.",
+      "base_desc_en": "Vietnamese middle-aged man, age around 45–50, thin body, slightly hunched posture, awkward and guilty expression, clearly afraid of his wife, nervous smile, scratching head, eyes looking sideways. Wearing simple worn short-sleeve shirt, old trousers, plastic sandals. Body language shows hesitation and comedy. Vietnamese family house interior, warm indoor light. Style: pastel chibi 2D, Vietnamese countryside vibe, clean illustration, expressive facial acting, humorous, no text.",
+      "prompt_en": "Vietnamese middle-aged man, age around 45–50, thin body, slightly hunched posture, awkward and guilty expression, clearly afraid of his wife, nervous smile, scratching head, eyes looking sideways. Wearing simple worn short-sleeve shirt, old trousers, plastic sandals. Body language shows hesitation and comedy. Vietnamese family house interior, warm indoor light. Style: pastel chibi 2D, Vietnamese countryside vibe, clean illustration, expressive facial acting, humorous, no text.",
+      "signature_items": [
+        "nervous_smile",
+        "eyes_sideways"
+      ],
+      "signature_colors": [
+        "xnc_worn_blue",
+        "xnc_beige",
+        "xnc_plastic_sandal"
+      ],
+      "preferred_actions": [],
+      "preferred_faces": [],
+      "default_outfit_id": "xnc_outfit_chu_tu_everyday",
+      "locale": "Vietnam",
+      "notes": "Nhân vật phụ; outfit tham chiếu sang XNC_outfits.json."
+    },
+    {
+      "id": "thief_chicken",
+      "name": "Tên Trộm Gà",
+      "type": "supporting",
+      "gender": "male",
+      "role": "Phản diện hài",
+      "age_role_vi": "Thanh niên",
+      "summary_vi": "Kẻ trộm xui xẻo, chuyên đi bắt gà hàng xóm nhưng toàn gặp chuyện dở khóc dở cười.",
+      "base_desc_en": "Vietnamese young man thief, sneaky posture, nervous comedic expression, carrying a burlap sack with a chicken head peeking out, wearing dark Vietnamese countryside clothes and a khăn rằn scarf",
+      "prompt_en": "Vietnamese comedic thief in countryside at night, sneaky hunched posture, nervous smile, wearing a dark ao ba ba style shirt and dark pants, wearing a khăn rằn scarf, old cap, plastic sandals, carrying a burlap sack with a chicken head peeking out; pastel chibi 2D, expressive facial acting, no text, no Western prison stripes",
+      "signature_items": [
+        "burlap_sack",
+        "chicken_peeking"
+      ],
+      "signature_colors": [
+        "xnc_dark_brown",
+        "xnc_charcoal"
+      ],
+      "preferred_actions": [],
+      "preferred_faces": [],
+      "default_outfit_id": "xnc_outfit_thief_chicken_sneaky",
+      "locale": "Vietnam",
+      "notes": "Nhân vật phụ; outfit tham chiếu sang XNC_outfits.json."
+    },
+    {
+      "id": "ba_tam_pho",
+      "name": "Bà Tám Bán Phở",
+      "type": "supporting",
+      "gender": "female",
+      "role": "Đài phát thanh xóm",
+      "age_role_vi": "Phụ nữ trung niên (khoảng 50 tuổi)",
+      "summary_vi": "Bà chủ quán phở đầu ngõ, kiêm 'đài phát thanh' của xóm, biết tuốt mọi chuyện.",
+      "base_desc_en": "Vietnamese middle-aged woman, chubby friendly, short curly hair, wearing Vietnamese floral home wear (đồ bộ), sandals, gossiping pose",
+      "prompt_en": "Vietnamese middle-aged woman, chubby and friendly, short curly hair, wearing Vietnamese floral home wear (do bo), simple sandals, standing as if gossiping; pastel chibi 2D, Vietnamese daily life vibe, no text",
+      "signature_items": [
+        "gossip_pose"
+      ],
+      "signature_colors": [
+        "xnc_colorful_floral"
+      ],
+      "preferred_actions": [],
+      "preferred_faces": [],
+      "default_outfit_id": "xnc_outfit_ba_tam_pho_everyday",
+      "locale": "Vietnam",
+      "notes": "Nhân vật phụ; outfit tham chiếu sang XNC_outfits.json."
+    },
+    {
+      "id": "hai_ngan",
+      "name": "Cô Hai Ngàn",
+      "type": "supporting",
+      "gender": "female",
+      "role": "Cô bán sữa",
+      "age_role_vi": "Thiếu nữ (20–25 tuổi)",
+      "summary_vi": "Cô gái bán sữa hiền lành, nết na, là 'crush' của nhiều thanh niên trong xóm.",
+      "base_desc_en": "Vietnamese young woman, gentle shy expression, wearing ao ba ba brown and black trousers, non la conical hat, holding an aluminum milk can",
+      "prompt_en": "Vietnamese young woman, gentle and shy, wearing brown ao ba ba and black trousers, wearing conical hat (non la), holding an aluminum milk can; pastel chibi 2D, Vietnamese countryside vibe, no text",
+      "signature_items": [],
+      "signature_colors": [],
+      "preferred_actions": [],
+      "preferred_faces": [],
+      "default_outfit_id": "xnc_outfit_hai_ngan_milk",
+      "locale": "Vietnam",
+      "notes": "Nhân vật phụ; outfit tham chiếu sang XNC_outfits.json."
+    },
+    {
+      "id": "shipper_guy",
+      "name": "Anh Shipper",
+      "type": "supporting",
+      "gender": "male",
+      "role": "Shipper",
+      "age_role_vi": "Thanh niên",
+      "summary_vi": "Anh giao hàng xuất hiện mọi lúc mọi nơi, luôn vội vã nhưng nhiệt tình.",
+      "base_desc_en": "Vietnamese delivery guy on a scooter, wearing a bright yellow Vietnamese delivery uniform and helmet, big delivery box on the back (no brand text)",
+      "prompt_en": "Vietnamese delivery guy riding a scooter, wearing a bright yellow delivery jacket and yellow helmet, big delivery box on the back without any brand text; cheerful expression, motion lines, pastel chibi 2D, no text",
+      "signature_items": [],
+      "signature_colors": [],
+      "preferred_actions": [],
+      "preferred_faces": [],
+      "default_outfit_id": "xnc_outfit_shipper_uniform",
+      "locale": "Vietnam",
+      "notes": "Nhân vật phụ; outfit tham chiếu sang XNC_outfits.json."
     }
   ]
 }

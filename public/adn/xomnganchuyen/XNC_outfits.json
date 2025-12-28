@@ -1,0 +1,193 @@
+{
+  "version": "1.0",
+  "series_id": "XNC",
+  "schema": {
+    "outfit": {
+      "id": "string",
+      "name": "string",
+      "category": "uniform|personal|event",
+      "priority": "number",
+      "allow_signature_color": "boolean",
+      "variants": "{male?, female?}",
+      "fit_overrides": "optional",
+      "notes": "optional"
+    }
+  },
+  "outfits": [
+    {
+      "id": "xnc_uniform_primary_male",
+      "name": "Đồng phục tiểu học (Nam)",
+      "category": "uniform",
+      "priority": 100,
+      "allow_signature_color": false,
+      "notes": "Áo trắng, quần xanh đậm; phù hợp bối cảnh trường tiểu học Việt Nam.",
+      "variants": {
+        "male": {
+          "base_desc_vi": "Áo sơ mi trắng ngắn tay, quần tây xanh đậm, giày bata hoặc dép sandal học sinh, bảng tên nhỏ (không chữ).",
+          "base_desc_en": "Vietnamese primary school boy uniform: short-sleeve white shirt, dark navy trousers, simple student shoes or sandals, small blank name tag (no text)."
+        }
+      }
+    },
+    {
+      "id": "xnc_uniform_primary_female",
+      "name": "Đồng phục tiểu học (Nữ)",
+      "category": "uniform",
+      "priority": 100,
+      "allow_signature_color": false,
+      "notes": "Áo trắng, váy xanh đậm; kiểu đồng phục phổ biến ở Việt Nam.",
+      "variants": {
+        "female": {
+          "base_desc_vi": "Áo sơ mi trắng ngắn tay, váy xanh đậm (hoặc quần xanh đậm tùy trường), giày bata hoặc dép sandal học sinh, bảng tên nhỏ (không chữ).",
+          "base_desc_en": "Vietnamese primary school girl uniform: short-sleeve white shirt, dark navy skirt (or trousers depending on school), simple shoes or sandals, small blank name tag (no text)."
+        }
+      }
+    },
+    {
+      "id": "xnc_outfit_bolo_everyday",
+      "name": "Bô-Lô – đồ thường ngày",
+      "category": "personal",
+      "priority": 10,
+      "allow_signature_color": true,
+      "variants": {
+        "male": {
+          "base_desc_vi": "Áo thun xanh dương đơn giản, quần nâu, kính tròn nhỏ luôn đeo; phong cách học sinh nhà quê Việt Nam.",
+          "base_desc_en": "Vietnamese primary school boy everyday outfit: simple blue T-shirt, brown pants; always wears small round glasses; rural Vietnamese kid vibe."
+        }
+      }
+    },
+    {
+      "id": "xnc_outfit_bala_everyday",
+      "name": "Ba-La – đồ thường ngày",
+      "category": "personal",
+      "priority": 10,
+      "allow_signature_color": true,
+      "fit_overrides": {
+        "body_type": "chubby"
+      },
+      "variants": {
+        "male": {
+          "base_desc_vi": "Áo thun đỏ, quần short đen; dáng hơi mũm mĩm, nhìn hiền và nhanh miệng.",
+          "base_desc_en": "Vietnamese primary school boy everyday outfit: red T-shirt, black shorts; slightly chubby body; friendly talkative look."
+        }
+      }
+    },
+    {
+      "id": "xnc_outfit_tumlum_everyday",
+      "name": "Tùm-Lum – đồ thường ngày",
+      "category": "personal",
+      "priority": 10,
+      "allow_signature_color": true,
+      "variants": {
+        "female": {
+          "base_desc_vi": "Tóc dài hơi rối, cuốn lô to trên đầu; váy/vạt áo màu vàng nổi, phối phụ kiện lạ đời nhưng tự tin.",
+          "base_desc_en": "Vietnamese primary school girl everyday outfit: long slightly messy hair with big rollers; bright yellow quirky outfit; confident pose, comedic high-fashion vibe."
+        }
+      }
+    },
+    {
+      "id": "xnc_outfit_tumla_everyday",
+      "name": "Tùm-La – đồ thường ngày",
+      "category": "personal",
+      "priority": 10,
+      "allow_signature_color": true,
+      "variants": {
+        "female": {
+          "base_desc_vi": "Tóc ngắn cột nơ to; áo đỏ chấm bi, dáng đứng tinh quái, mắt láo liên.",
+          "base_desc_en": "Vietnamese primary school girl everyday outfit: short hair with a big bow; red polka-dot top; mischievous stance and eyes."
+        }
+      }
+    },
+    {
+      "id": "xnc_outfit_mom_bolo_everyday",
+      "name": "Mẹ Bô-Lô – ở nhà",
+      "category": "personal",
+      "priority": 10,
+      "allow_signature_color": true,
+      "variants": {
+        "female": {
+          "base_desc_vi": "Áo bông/áo hoa kiểu Việt Nam, tóc búi thấp, tạp dề bếp; không khí gia đình Việt.",
+          "base_desc_en": "Vietnamese middle-aged mother: low bun hair, simple floral blouse, kitchen apron; warm Vietnamese family vibe."
+        }
+      }
+    },
+    {
+      "id": "xnc_outfit_dad_bolo_everyday",
+      "name": "Ba Bô-Lô – ở nhà",
+      "category": "personal",
+      "priority": 10,
+      "allow_signature_color": true,
+      "variants": {
+        "male": {
+          "base_desc_vi": "Áo thun cũ hoặc sơ mi đơn giản, quần short, dép nhựa (dép tổ ong/dép lê); dáng hiền, hơi mệt.",
+          "base_desc_en": "Vietnamese middle-aged father: old T-shirt or simple button shirt, shorts, plastic sandals; gentle tired look."
+        }
+      }
+    },
+    {
+      "id": "xnc_outfit_chu_tu_everyday",
+      "name": "Chú Tư – đồ thường",
+      "category": "personal",
+      "priority": 10,
+      "allow_signature_color": true,
+      "variants": {
+        "male": {
+          "base_desc_vi": "Áo sơ mi ngắn tay cũ, quần vải sờn, dép nhựa/dép lê; dáng gầy hơi khom, lúng túng.",
+          "base_desc_en": "Vietnamese middle-aged man: worn short-sleeve shirt, old trousers, plastic sandals; thin slightly hunched posture, awkward comedic vibe."
+        }
+      }
+    },
+    {
+      "id": "xnc_outfit_thief_chicken_sneaky",
+      "name": "Tên trộm gà – lén lút",
+      "category": "personal",
+      "priority": 10,
+      "allow_signature_color": true,
+      "variants": {
+        "male": {
+          "base_desc_vi": "Áo bà ba tối màu, quần tối màu, quấn khăn rằn, đội nón cũ; vác bao tải có gà lòi đầu; tuyệt đối không đồ sọc tù kiểu Tây.",
+          "base_desc_en": "Vietnamese countryside thief outfit: dark ao ba ba style shirt, dark pants, khăn rằn scarf, old cap; carries a burlap sack with a chicken head peeking out; no Western prison stripes."
+        }
+      }
+    },
+    {
+      "id": "xnc_outfit_ba_tam_pho_everyday",
+      "name": "Bà Tám bán phở – đồ bộ",
+      "category": "personal",
+      "priority": 10,
+      "allow_signature_color": true,
+      "variants": {
+        "female": {
+          "base_desc_vi": "Đồ bộ hoa sặc sỡ kiểu Việt Nam, dép lê; dáng phúc hậu, miệng cười nói chuyện.",
+          "base_desc_en": "Vietnamese middle-aged woman: colorful floral do bo home wear, simple sandals; friendly chubby gossiping pose."
+        }
+      }
+    },
+    {
+      "id": "xnc_outfit_hai_ngan_milk",
+      "name": "Cô Hai Ngàn – bán sữa",
+      "category": "personal",
+      "priority": 10,
+      "allow_signature_color": true,
+      "variants": {
+        "female": {
+          "base_desc_vi": "Áo bà ba nâu đất, quần đen, đội nón lá; ôm bình sữa nhôm; nét hiền, e thẹn.",
+          "base_desc_en": "Vietnamese young woman: brown ao ba ba, black trousers, conical hat, holding an aluminum milk can; gentle shy expression."
+        }
+      }
+    },
+    {
+      "id": "xnc_outfit_shipper_uniform",
+      "name": "Anh shipper – đồng phục giao hàng",
+      "category": "personal",
+      "priority": 10,
+      "allow_signature_color": false,
+      "notes": "Giữ vibe giao hàng Việt Nam; không logo thương hiệu, không chữ.",
+      "variants": {
+        "male": {
+          "base_desc_vi": "Áo khoác giao hàng màu vàng, mũ bảo hiểm vàng, thùng hàng phía sau xe (không chữ, không logo).",
+          "base_desc_en": "Vietnamese delivery uniform: bright yellow jacket and helmet, delivery box on scooter (no text, no logo)."
+        }
+      }
+    }
+  ]
+}
