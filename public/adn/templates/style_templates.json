@@ -1,0 +1,449 @@
+{
+  "version": "1.0",
+  "schema": "style_template_list",
+  "templates": [
+    {
+      "id": "pastel_cozy_2d",
+      "name": "Pastel 2D Cozy",
+      "description": "2D vẽ tay, màu pastel ấm, phù hợp đời thường/hài nhẹ.",
+      "style": {
+        "brand_palette": {
+          "green_primary": "#8CCB7A",
+          "green_soft": "#CDECC1",
+          "brown_primary": "#B9885D",
+          "brown_soft": "#D8BFA8",
+          "accent_yellow": "#F4E8A2",
+          "primary": "#FFB703",
+          "secondary": "#8ECAE6",
+          "accent": "#FB8500"
+        },
+        "pastel_palette": [
+          "#FFEDD5",
+          "#E0F2FE",
+          "#DCFCE7",
+          "#FCE7F3",
+          "#FEF9C3",
+          "#EDE9FE"
+        ],
+        "emotion_tone_map": {
+          "happy": "#FFB703",
+          "warm": "#F9D3A2",
+          "comedy": "#FB8500",
+          "drama": "#333333",
+          "twist": "#5C3D8C",
+          "embarrassed": "#CDE4FF",
+          "calm": "#8ECAE6"
+        },
+        "camera": {
+          "closeup": "tight close-up, soft depth of field",
+          "medium": "mid-shot with clean classroom background",
+          "dramatic_low": "low-angle view with dramatic lighting",
+          "comedy_zoom": "fast punch-in zoom with squash-stretch feeling"
+        },
+        "lighting": {
+          "soft_pastel": "soft diffused pastel lighting",
+          "dramatic_spot": "spotlight with high contrast",
+          "warm_glow": "warm golden ambient light",
+          "school_daylight": "bright school fluorescent lighting",
+          "default": "soft_warm_day"
+        },
+        "narrative_modes": {
+          "funny": {
+            "label": "Comedy / Hài Hước (Bà Tám Radio)",
+            "script_instruction": "GENRE: Comedy / Sitcom. TONE: Noisy, argumentative, light-hearted satire, fast-paced. LANGUAGE_STYLE: Southern Vietnamese dialect (use terms like 'hèn chi', 'trời đất', 'nghen').",
+            "visual_prompt": "Bright high-key lighting, vibrant pastel colors, wide angle comedy shot, energetic atmosphere, high saturation."
+          },
+          "spooky": {
+            "label": "Cozy Horror / Chuyện Ma (Đêm Khuya)",
+            "script_instruction": "GENRE: Cozy Horror / Mystery. TONE: Mysterious but warm, whispering voice, focus on environmental sounds (crickets, wind). LANGUAGE_STYLE: Southern Vietnamese storytelling style.",
+            "visual_prompt": "Dim lighting, volumetric fog, cool blue and dark green tones, mysterious shadows (chiaroscuro), spotlight effect, cinematic night."
+          },
+          "emotional": {
+            "label": "Heartwarming / Cảm Động (Tâm Tình)",
+            "script_instruction": "GENRE: Drama / Heartwarming. TONE: Slow-paced, sentimental, focus on inner emotions and family values, touching. LANGUAGE_STYLE: Sincere Southern Vietnamese.",
+            "visual_prompt": "Golden hour lighting, warm tones, close-up shots on faces, soft focus, nostalgic aesthetic, cinematic depth of field."
+          },
+          "vlog": {
+            "label": "Vlog / Đời Sống (Review)",
+            "script_instruction": "GENRE: Modern Vlog / Review. TONE: Breaking the 4th wall (talking directly to audience), energetic, slang heavy. LANGUAGE_STYLE: Gen Z Vietnamese slang mixed with Southern accent.",
+            "visual_prompt": "Selfie angle or POV shot, bright natural lighting, casual composition, YouTube thumbnail style, sharp focus."
+          }
+        },
+        "art_styles": {
+          "3d_pixar": "3d animation style, pixar render, c4d, unreal engine 5, cute character design --ar 16:9",
+          "2d_anime": "2d anime style, flat color, ghibli studio style, hand drawn, high quality --ar 16:9",
+          "2d_comic": "comic book style, thick lines, vibrant colors, webtoon style --ar 16:9"
+        }
+      }
+    },
+    {
+      "id": "spooky_soft_night",
+      "name": "Spooky Soft Night",
+      "description": "Đêm huyền bí nhưng dễ thương, hợp chuyện ma nhí/cúp điện.",
+      "style": {
+        "brand_palette": {
+          "green_primary": "#8CCB7A",
+          "green_soft": "#CDECC1",
+          "brown_primary": "#B9885D",
+          "brown_soft": "#D8BFA8",
+          "accent_yellow": "#F4E8A2",
+          "primary": "#3A506B",
+          "secondary": "#5BC0BE",
+          "accent": "#F4D35E"
+        },
+        "pastel_palette": [
+          "#1B263B",
+          "#415A77",
+          "#778DA9",
+          "#E0E1DD",
+          "#F4D35E",
+          "#5BC0BE"
+        ],
+        "emotion_tone_map": {
+          "happy": "#C8F3E0",
+          "warm": "#F9D3A2",
+          "comedy": "#FFD93D",
+          "drama": "#1B263B",
+          "twist": "#5C3D8C",
+          "embarrassed": "#CDE4FF",
+          "spooky": "#3A506B"
+        },
+        "camera": {
+          "closeup": "tight close-up, soft depth of field",
+          "medium": "mid-shot with clean classroom background",
+          "dramatic_low": "low-angle view with dramatic lighting",
+          "comedy_zoom": "fast punch-in zoom with squash-stretch feeling"
+        },
+        "lighting": {
+          "soft_pastel": "soft diffused pastel lighting",
+          "dramatic_spot": "spotlight with high contrast",
+          "warm_glow": "warm golden ambient light",
+          "school_daylight": "bright school fluorescent lighting",
+          "default": "moonlight_soft"
+        },
+        "narrative_modes": {
+          "funny": {
+            "label": "Comedy / Hài Hước (Bà Tám Radio)",
+            "script_instruction": "GENRE: Comedy / Sitcom. TONE: Noisy, argumentative, light-hearted satire, fast-paced. LANGUAGE_STYLE: Southern Vietnamese dialect (use terms like 'hèn chi', 'trời đất', 'nghen').",
+            "visual_prompt": "Bright high-key lighting, vibrant pastel colors, wide angle comedy shot, energetic atmosphere, high saturation."
+          },
+          "spooky": {
+            "label": "Cozy Horror / Chuyện Ma (Đêm Khuya)",
+            "script_instruction": "GENRE: Cozy Horror / Mystery. TONE: Mysterious but warm, whispering voice, focus on environmental sounds (crickets, wind). LANGUAGE_STYLE: Southern Vietnamese storytelling style.",
+            "visual_prompt": "Dim lighting, volumetric fog, cool blue and dark green tones, mysterious shadows (chiaroscuro), spotlight effect, cinematic night."
+          },
+          "emotional": {
+            "label": "Heartwarming / Cảm Động (Tâm Tình)",
+            "script_instruction": "GENRE: Drama / Heartwarming. TONE: Slow-paced, sentimental, focus on inner emotions and family values, touching. LANGUAGE_STYLE: Sincere Southern Vietnamese.",
+            "visual_prompt": "Golden hour lighting, warm tones, close-up shots on faces, soft focus, nostalgic aesthetic, cinematic depth of field."
+          },
+          "vlog": {
+            "label": "Vlog / Đời Sống (Review)",
+            "script_instruction": "GENRE: Modern Vlog / Review. TONE: Breaking the 4th wall (talking directly to audience), energetic, slang heavy. LANGUAGE_STYLE: Gen Z Vietnamese slang mixed with Southern accent.",
+            "visual_prompt": "Selfie angle or POV shot, bright natural lighting, casual composition, YouTube thumbnail style, sharp focus."
+          }
+        },
+        "art_styles": {
+          "3d_pixar": "3d animation style, pixar render, c4d, unreal engine 5, cute character design --ar 16:9",
+          "2d_anime": "2d anime style, flat color, ghibli studio style, hand drawn, high quality --ar 16:9",
+          "2d_comic": "comic book style, thick lines, vibrant colors, webtoon style --ar 16:9"
+        }
+      }
+    },
+    {
+      "id": "warm_cinematic_story",
+      "name": "Warm Cinematic Story",
+      "description": "Ấm – điện ảnh – cảm xúc, hợp video dài/podcast mood.",
+      "style": {
+        "brand_palette": {
+          "green_primary": "#8CCB7A",
+          "green_soft": "#CDECC1",
+          "brown_primary": "#B9885D",
+          "brown_soft": "#D8BFA8",
+          "accent_yellow": "#F4E8A2",
+          "primary": "#D97706",
+          "secondary": "#FDE68A",
+          "accent": "#7C2D12"
+        },
+        "pastel_palette": [
+          "#FFF7ED",
+          "#FED7AA",
+          "#FDBA74",
+          "#FDE68A",
+          "#E7E5E4",
+          "#A8A29E"
+        ],
+        "emotion_tone_map": {
+          "happy": "#C8F3E0",
+          "warm": "#F9D3A2",
+          "comedy": "#FFD93D",
+          "drama": "#7C2D12",
+          "twist": "#5C3D8C",
+          "embarrassed": "#CDE4FF",
+          "emotional": "#D97706"
+        },
+        "camera": {
+          "closeup": "tight close-up, soft depth of field",
+          "medium": "mid-shot with clean classroom background",
+          "dramatic_low": "low-angle view with dramatic lighting",
+          "comedy_zoom": "fast punch-in zoom with squash-stretch feeling"
+        },
+        "lighting": {
+          "soft_pastel": "soft diffused pastel lighting",
+          "dramatic_spot": "spotlight with high contrast",
+          "warm_glow": "warm golden ambient light",
+          "school_daylight": "bright school fluorescent lighting",
+          "default": "golden_hour"
+        },
+        "narrative_modes": {
+          "funny": {
+            "label": "Comedy / Hài Hước (Bà Tám Radio)",
+            "script_instruction": "GENRE: Comedy / Sitcom. TONE: Noisy, argumentative, light-hearted satire, fast-paced. LANGUAGE_STYLE: Southern Vietnamese dialect (use terms like 'hèn chi', 'trời đất', 'nghen').",
+            "visual_prompt": "Bright high-key lighting, vibrant pastel colors, wide angle comedy shot, energetic atmosphere, high saturation."
+          },
+          "spooky": {
+            "label": "Cozy Horror / Chuyện Ma (Đêm Khuya)",
+            "script_instruction": "GENRE: Cozy Horror / Mystery. TONE: Mysterious but warm, whispering voice, focus on environmental sounds (crickets, wind). LANGUAGE_STYLE: Southern Vietnamese storytelling style.",
+            "visual_prompt": "Dim lighting, volumetric fog, cool blue and dark green tones, mysterious shadows (chiaroscuro), spotlight effect, cinematic night."
+          },
+          "emotional": {
+            "label": "Heartwarming / Cảm Động (Tâm Tình)",
+            "script_instruction": "GENRE: Drama / Heartwarming. TONE: Slow-paced, sentimental, focus on inner emotions and family values, touching. LANGUAGE_STYLE: Sincere Southern Vietnamese.",
+            "visual_prompt": "Golden hour lighting, warm tones, close-up shots on faces, soft focus, nostalgic aesthetic, cinematic depth of field."
+          },
+          "vlog": {
+            "label": "Vlog / Đời Sống (Review)",
+            "script_instruction": "GENRE: Modern Vlog / Review. TONE: Breaking the 4th wall (talking directly to audience), energetic, slang heavy. LANGUAGE_STYLE: Gen Z Vietnamese slang mixed with Southern accent.",
+            "visual_prompt": "Selfie angle or POV shot, bright natural lighting, casual composition, YouTube thumbnail style, sharp focus."
+          }
+        },
+        "art_styles": {
+          "3d_pixar": "3d animation style, pixar render, c4d, unreal engine 5, cute character design --ar 16:9",
+          "2d_anime": "2d anime style, flat color, ghibli studio style, hand drawn, high quality --ar 16:9",
+          "2d_comic": "comic book style, thick lines, vibrant colors, webtoon style --ar 16:9"
+        }
+      }
+    },
+    {
+      "id": "clean_comic_flat",
+      "name": "Clean Comic Flat",
+      "description": "Nét sạch, phẳng màu, rõ hình, hợp short nhịp nhanh.",
+      "style": {
+        "brand_palette": {
+          "green_primary": "#8CCB7A",
+          "green_soft": "#CDECC1",
+          "brown_primary": "#B9885D",
+          "brown_soft": "#D8BFA8",
+          "accent_yellow": "#F4E8A2",
+          "primary": "#111827",
+          "secondary": "#E5E7EB",
+          "accent": "#2563EB"
+        },
+        "pastel_palette": [
+          "#F9FAFB",
+          "#E5E7EB",
+          "#D1D5DB",
+          "#9CA3AF",
+          "#60A5FA",
+          "#2563EB"
+        ],
+        "emotion_tone_map": {
+          "happy": "#60A5FA",
+          "warm": "#F9D3A2",
+          "comedy": "#FFD93D",
+          "drama": "#333333",
+          "twist": "#5C3D8C",
+          "embarrassed": "#CDE4FF",
+          "calm": "#E5E7EB"
+        },
+        "camera": {
+          "closeup": "tight close-up, soft depth of field",
+          "medium": "mid-shot with clean classroom background",
+          "dramatic_low": "low-angle view with dramatic lighting",
+          "comedy_zoom": "fast punch-in zoom with squash-stretch feeling"
+        },
+        "lighting": {
+          "soft_pastel": "soft diffused pastel lighting",
+          "dramatic_spot": "spotlight with high contrast",
+          "warm_glow": "warm golden ambient light",
+          "school_daylight": "bright school fluorescent lighting",
+          "default": "overcast_soft"
+        },
+        "narrative_modes": {
+          "funny": {
+            "label": "Comedy / Hài Hước (Bà Tám Radio)",
+            "script_instruction": "GENRE: Comedy / Sitcom. TONE: Noisy, argumentative, light-hearted satire, fast-paced. LANGUAGE_STYLE: Southern Vietnamese dialect (use terms like 'hèn chi', 'trời đất', 'nghen').",
+            "visual_prompt": "Bright high-key lighting, vibrant pastel colors, wide angle comedy shot, energetic atmosphere, high saturation."
+          },
+          "spooky": {
+            "label": "Cozy Horror / Chuyện Ma (Đêm Khuya)",
+            "script_instruction": "GENRE: Cozy Horror / Mystery. TONE: Mysterious but warm, whispering voice, focus on environmental sounds (crickets, wind). LANGUAGE_STYLE: Southern Vietnamese storytelling style.",
+            "visual_prompt": "Dim lighting, volumetric fog, cool blue and dark green tones, mysterious shadows (chiaroscuro), spotlight effect, cinematic night."
+          },
+          "emotional": {
+            "label": "Heartwarming / Cảm Động (Tâm Tình)",
+            "script_instruction": "GENRE: Drama / Heartwarming. TONE: Slow-paced, sentimental, focus on inner emotions and family values, touching. LANGUAGE_STYLE: Sincere Southern Vietnamese.",
+            "visual_prompt": "Golden hour lighting, warm tones, close-up shots on faces, soft focus, nostalgic aesthetic, cinematic depth of field."
+          },
+          "vlog": {
+            "label": "Vlog / Đời Sống (Review)",
+            "script_instruction": "GENRE: Modern Vlog / Review. TONE: Breaking the 4th wall (talking directly to audience), energetic, slang heavy. LANGUAGE_STYLE: Gen Z Vietnamese slang mixed with Southern accent.",
+            "visual_prompt": "Selfie angle or POV shot, bright natural lighting, casual composition, YouTube thumbnail style, sharp focus."
+          }
+        },
+        "art_styles": {
+          "3d_pixar": "3d animation style, pixar render, c4d, unreal engine 5, cute character design --ar 16:9",
+          "2d_anime": "2d anime style, flat color, ghibli studio style, hand drawn, high quality --ar 16:9",
+          "2d_comic": "comic book style, thick lines, vibrant colors, webtoon style --ar 16:9"
+        }
+      }
+    },
+    {
+      "id": "watercolor_storybook",
+      "name": "Watercolor Storybook",
+      "description": "Màu nước cổ tích, mềm và thơ, hợp ngoại truyện/hồi tưởng.",
+      "style": {
+        "brand_palette": {
+          "green_primary": "#8CCB7A",
+          "green_soft": "#CDECC1",
+          "brown_primary": "#B9885D",
+          "brown_soft": "#D8BFA8",
+          "accent_yellow": "#F4E8A2",
+          "primary": "#84A59D",
+          "secondary": "#F6BD60",
+          "accent": "#F28482"
+        },
+        "pastel_palette": [
+          "#F7EDE2",
+          "#F6BD60",
+          "#F5CAC3",
+          "#84A59D",
+          "#D8E2DC",
+          "#CDEAC0"
+        ],
+        "emotion_tone_map": {
+          "happy": "#F6BD60",
+          "warm": "#F9D3A2",
+          "comedy": "#FFD93D",
+          "drama": "#333333",
+          "twist": "#5C3D8C",
+          "embarrassed": "#CDE4FF",
+          "calm": "#84A59D"
+        },
+        "camera": {
+          "closeup": "tight close-up, soft depth of field",
+          "medium": "mid-shot with clean classroom background",
+          "dramatic_low": "low-angle view with dramatic lighting",
+          "comedy_zoom": "fast punch-in zoom with squash-stretch feeling"
+        },
+        "lighting": {
+          "soft_pastel": "soft diffused pastel lighting",
+          "dramatic_spot": "spotlight with high contrast",
+          "warm_glow": "warm golden ambient light",
+          "school_daylight": "bright school fluorescent lighting",
+          "default": "soft_warm_day"
+        },
+        "narrative_modes": {
+          "funny": {
+            "label": "Comedy / Hài Hước (Bà Tám Radio)",
+            "script_instruction": "GENRE: Comedy / Sitcom. TONE: Noisy, argumentative, light-hearted satire, fast-paced. LANGUAGE_STYLE: Southern Vietnamese dialect (use terms like 'hèn chi', 'trời đất', 'nghen').",
+            "visual_prompt": "Bright high-key lighting, vibrant pastel colors, wide angle comedy shot, energetic atmosphere, high saturation."
+          },
+          "spooky": {
+            "label": "Cozy Horror / Chuyện Ma (Đêm Khuya)",
+            "script_instruction": "GENRE: Cozy Horror / Mystery. TONE: Mysterious but warm, whispering voice, focus on environmental sounds (crickets, wind). LANGUAGE_STYLE: Southern Vietnamese storytelling style.",
+            "visual_prompt": "Dim lighting, volumetric fog, cool blue and dark green tones, mysterious shadows (chiaroscuro), spotlight effect, cinematic night."
+          },
+          "emotional": {
+            "label": "Heartwarming / Cảm Động (Tâm Tình)",
+            "script_instruction": "GENRE: Drama / Heartwarming. TONE: Slow-paced, sentimental, focus on inner emotions and family values, touching. LANGUAGE_STYLE: Sincere Southern Vietnamese.",
+            "visual_prompt": "Golden hour lighting, warm tones, close-up shots on faces, soft focus, nostalgic aesthetic, cinematic depth of field."
+          },
+          "vlog": {
+            "label": "Vlog / Đời Sống (Review)",
+            "script_instruction": "GENRE: Modern Vlog / Review. TONE: Breaking the 4th wall (talking directly to audience), energetic, slang heavy. LANGUAGE_STYLE: Gen Z Vietnamese slang mixed with Southern accent.",
+            "visual_prompt": "Selfie angle or POV shot, bright natural lighting, casual composition, YouTube thumbnail style, sharp focus."
+          }
+        },
+        "art_styles": {
+          "3d_pixar": "3d animation style, pixar render, c4d, unreal engine 5, cute character design --ar 16:9",
+          "2d_anime": "2d anime style, flat color, ghibli studio style, hand drawn, high quality --ar 16:9",
+          "2d_comic": "comic book style, thick lines, vibrant colors, webtoon style --ar 16:9"
+        }
+      }
+    },
+    {
+      "id": "neon_city_pop",
+      "name": "Neon City Pop",
+      "description": "Neon hiện đại, nổi bật, hợp dự án đô thị/đời sống mới.",
+      "style": {
+        "brand_palette": {
+          "green_primary": "#8CCB7A",
+          "green_soft": "#CDECC1",
+          "brown_primary": "#B9885D",
+          "brown_soft": "#D8BFA8",
+          "accent_yellow": "#F4E8A2",
+          "primary": "#7C3AED",
+          "secondary": "#06B6D4",
+          "accent": "#F97316"
+        },
+        "pastel_palette": [
+          "#0B1020",
+          "#111827",
+          "#7C3AED",
+          "#06B6D4",
+          "#F97316",
+          "#FDE047"
+        ],
+        "emotion_tone_map": {
+          "happy": "#06B6D4",
+          "warm": "#F9D3A2",
+          "comedy": "#F97316",
+          "drama": "#333333",
+          "twist": "#5C3D8C",
+          "embarrassed": "#CDE4FF"
+        },
+        "camera": {
+          "closeup": "tight close-up, soft depth of field",
+          "medium": "mid-shot with clean classroom background",
+          "dramatic_low": "low-angle view with dramatic lighting",
+          "comedy_zoom": "fast punch-in zoom with squash-stretch feeling"
+        },
+        "lighting": {
+          "soft_pastel": "soft diffused pastel lighting",
+          "dramatic_spot": "spotlight with high contrast",
+          "warm_glow": "warm golden ambient light",
+          "school_daylight": "bright school fluorescent lighting",
+          "default": "neon_night"
+        },
+        "narrative_modes": {
+          "funny": {
+            "label": "Comedy / Hài Hước (Bà Tám Radio)",
+            "script_instruction": "GENRE: Comedy / Sitcom. TONE: Noisy, argumentative, light-hearted satire, fast-paced. LANGUAGE_STYLE: Southern Vietnamese dialect (use terms like 'hèn chi', 'trời đất', 'nghen').",
+            "visual_prompt": "Bright high-key lighting, vibrant pastel colors, wide angle comedy shot, energetic atmosphere, high saturation."
+          },
+          "spooky": {
+            "label": "Cozy Horror / Chuyện Ma (Đêm Khuya)",
+            "script_instruction": "GENRE: Cozy Horror / Mystery. TONE: Mysterious but warm, whispering voice, focus on environmental sounds (crickets, wind). LANGUAGE_STYLE: Southern Vietnamese storytelling style.",
+            "visual_prompt": "Dim lighting, volumetric fog, cool blue and dark green tones, mysterious shadows (chiaroscuro), spotlight effect, cinematic night."
+          },
+          "emotional": {
+            "label": "Heartwarming / Cảm Động (Tâm Tình)",
+            "script_instruction": "GENRE: Drama / Heartwarming. TONE: Slow-paced, sentimental, focus on inner emotions and family values, touching. LANGUAGE_STYLE: Sincere Southern Vietnamese.",
+            "visual_prompt": "Golden hour lighting, warm tones, close-up shots on faces, soft focus, nostalgic aesthetic, cinematic depth of field."
+          },
+          "vlog": {
+            "label": "Vlog / Đời Sống (Review)",
+            "script_instruction": "GENRE: Modern Vlog / Review. TONE: Breaking the 4th wall (talking directly to audience), energetic, slang heavy. LANGUAGE_STYLE: Gen Z Vietnamese slang mixed with Southern accent.",
+            "visual_prompt": "Selfie angle or POV shot, bright natural lighting, casual composition, YouTube thumbnail style, sharp focus."
+          }
+        },
+        "art_styles": {
+          "3d_pixar": "3d animation style, pixar render, c4d, unreal engine 5, cute character design --ar 16:9",
+          "2d_anime": "2d anime style, flat color, ghibli studio style, hand drawn, high quality --ar 16:9",
+          "2d_comic": "comic book style, thick lines, vibrant colors, webtoon style --ar 16:9"
+        }
+      }
+    }
+  ]
+}
