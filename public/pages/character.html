@@ -5,7 +5,8 @@
   <title>Tạo prompt Nhân Vật – LearnQuest AI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Dùng lại style chung -->
-  <link rel="stylesheet" href="../css/style.css" />
+  <!-- NOTE: style.css is served from /public/style.css -->
+  <link rel="stylesheet" href="/style.css" />
   <style>
     /* Một chút style riêng cho trang character, dùng chung tone với site */
 
@@ -168,7 +169,8 @@
 .field-row input[type="color"]{width:44px;height:34px;padding:0;border:none;background:transparent}
 
 </style>
-  <script src="../js/character.js" defer></script>
+  <!-- NOTE: character.js is served from /public/js/character.js -->
+  <script src="/js/character.js" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -372,7 +374,8 @@
         <div class="card">
           <h3>1) Load template</h3>
           <label class="lbl">Template source</label>
-          <input id="styleTemplateUrl" type="text" value="/adn/template/style_templates.json" />
+            <!-- NOTE: templates are served from /public/adn/templates/*.json -->
+            <input id="styleTemplateUrl" type="text" value="/adn/templates/style_templates.json" />
           <div class="row">
             <button id="btnLoadStyleTemplates">Load templates</button>
             <span id="styleTemplateStatus" class="muted"></span>
