@@ -251,9 +251,7 @@ function fillFormFromCharacter(c0) {
 }
 
 async function loadAdnFromUrl(url) {
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error("Không tải được: " + res.status);
-  const data = await res.json();
+  const data = await fetchJson(normalizeUrl(url));
   // Accept {characters:[...]} OR [...]
   const list = Array.isArray(data) ? data : (data.characters || data.items || []);
   adnCharactersCache = list.map(normalizeCharacter);
@@ -394,7 +392,7 @@ function normalizeUrl(url){
   if(!url) return url;
   // keep absolute URLs
   if(/^https?:\/\//i.test(url)) return url;
-  // convert relative (e.g. "adn/template/...") -> "/adn/template/..."
+  // convert relative (e.g. "adn/templates/...") -> "/adn/templates/..."
   if(url.startsWith('/')) return url;
   url = url.replace(/^\.\//,'');
   return '/' + url;
