@@ -1,0 +1,246 @@
+    /* XÓM NGÀN CHUYỆN – DNA BRAND THEME */
+    :root {
+      --bg-main: linear-gradient(135deg, #CDECC1, #F4E8A2);
+      --bg-card: #FFFFFF;
+      --primary: #8CCB7A;
+      --secondary: #B9885D;
+      --accent: #F4E8A2;
+      --text-main: #5D4037;
+      --text-muted: #8B5E3C;
+      --border: #D8BFA8;
+      --shadow: 0 15px 35px rgba(139, 94, 60, 0.15);
+      --radius: 14px;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      margin: 0;
+      background: var(--bg-main);
+      color: var(--text-main);
+      padding: 20px;
+    }
+
+    /* TOP BAR - Header chính (gradient xanh-nâu) */
+    .top {
+      position: sticky;
+      top: 0;
+      background: var(--primary);
+      border-bottom: 4px solid var(--secondary);
+      color: #fff;
+      padding: 16px 20px;
+      z-index: 10;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .top .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .top h1 {
+      font-size: 18px;
+      margin: 0;
+      font-weight: 800;
+      text-shadow: 1px 1px 0px rgba(93, 64, 55, 0.3);
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--bg-card);
+      border: 2px solid var(--primary);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin: 16px 0;
+      box-shadow: var(--shadow);
+    }
+
+    /* GRID LAYOUT */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .grid3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    @media(max-width: 900px) {
+      .grid, .grid3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* LABELS */
+    label {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    /* INPUTS & SELECTS - Nền trắng, viền nâu nhạt, focus xanh DNA */
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+      box-sizing: border-box;
+      background: #FAFAFA;
+      color: var(--text-main);
+      transition: all 0.2s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(140, 203, 122, 0.3);
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    /* TABS - Nút tab bo tròn, active màu nâu nổi bật */
+    .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+      padding: 12px 0;
+      border-top: 1px solid rgba(216, 191, 168, 0.3);
+    }
+
+    .tab {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 25px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .tab:hover {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .tab.active {
+      background: var(--secondary);
+      border-color: var(--secondary);
+      box-shadow: 0 4px 12px rgba(185, 136, 93, 0.4);
+    }
+
+    /* BUTTONS - Primary: gradient nâu 3D, Secondary: viền xanh */
+    .btn {
+      background: linear-gradient(135deg, var(--secondary), #A07045);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 0px rgba(93, 64, 55, 0.3);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .btn:hover {
+      background: linear-gradient(135deg, #8B5E3C, #8B5E3C);
+      transform: translateY(2px);
+      box-shadow: 0 2px 0px rgba(93, 64, 55, 0.3);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn.secondary {
+      background: #fff;
+      color: var(--text-main);
+      border: 2px solid var(--primary);
+      box-shadow: none;
+    }
+
+    .btn.secondary:hover {
+      background: #CDECC1;
+      border-color: var(--secondary);
+      transform: translateY(-1px);
+    }
+
+    /* MUTED TEXT & HELP */
+    .muted {
+      color: var(--text-muted) !important;
+      font-size: 12px;
+      margin: 8px 0 0;
+      line-height: 1.5;
+    }
+
+    /* ROW LAYOUT */
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .row > * {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    /* HIDE */
+    .hide {
+      display: none;
+    }
+
+    /* PRE/CODE OUTPUT - Nền xanh đậm kiểu code editor */
+    pre {
+      background: #2E3B28;
+      color: #CDECC1;
+      border-radius: 12px;
+      padding: 16px;
+      overflow: auto;
+      font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      border: 1px solid rgba(140, 203, 122, 0.3);
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 12px; }
+      .row > * { min-width: 100%; }
+      .top { padding: 14px 16px; }
+      .card { padding: 16px; margin: 12px 0; }
+    }
+
+    /* Scrollbar đẹp */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(216, 191, 168, 0.2);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 10px;
+    }
+  
