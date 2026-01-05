@@ -188,6 +188,171 @@
           "base_desc_en": "Vietnamese delivery uniform: bright yellow jacket and helmet, delivery box on scooter (no text, no logo)."
         }
       }
+    },
+    {
+    "id": "xnc_outfit_mira_modern_aodai",
+    "name": "Áo dài cách tân",
+    "category": "personal",
+    "priority": 20,
+    "allow_signature_color": true,
+    "notes": "Trang phục thanh lịch, hiện đại cho Mira; phối hợp với nét cáo thông minh.",
+    "variants": {
+      "female": {
+        "base_desc_vi": "Áo dài cách tân tà ngắn, họa tiết hoa nhí, quần ống rộng lửng; tóc xõa tự nhiên phối băng đô lụa.",
+        "base_desc_en": "Vietnamese modern stylized Ao Dai: short tunic with small floral patterns, cropped wide-leg pants; loose hair with a silk headband; elegant fox-girl vibe."
+      }
     }
+  },
+  {
+    "id": "xnc_outfit_mit_overalls",
+    "name": "Đồ yếm dạo phố",
+    "category": "personal",
+    "priority": 15,
+    "allow_signature_color": true,
+    "fit_overrides": {
+      "body_type": "chubby"
+    },
+    "variants": {
+      "female": {
+        "base_desc_vi": "Áo thun trắng bên trong, quần yếm jean (denim overalls), mang túi đeo chéo nhỏ; dáng vẻ tinh nghịch, bụng hơi tròn.",
+        "base_desc_en": "Cute streetwear: white T-shirt under denim overalls, small crossbody bag; chubby energetic kid look."
+      }
+    }
+  },
+  {
+    "id": "xnc_outfit_farmer_working",
+    "name": "Đồ đi làm đồng (kèm nón lá)",
+    "category": "uniform",
+    "priority": 50,
+    "allow_signature_color": false,
+    "variants": {
+      "male": {
+        "base_desc_vi": "Áo sơ mi dài tay màu tối sờn cũ, quần xắn gấu, đội nón lá, chân đi ủng nhựa; phong cách nông dân Việt Nam.",
+        "base_desc_en": "Vietnamese farmer working outfit: dark worn long-sleeve shirt, rolled-up trousers, conical hat (non la), rubber boots; authentic rural vibe."
+      }
+    }
+  },
+  {
+    "id": "xnc_outfit_children_rainy_day",
+    "name": "Áo mưa cánh dơi trẻ em",
+    "category": "event",
+    "priority": 30,
+    "allow_signature_color": true,
+    "variants": {
+      "male": {
+        "base_desc_vi": "Áo mưa cánh dơi màu sắc rực rỡ (vàng/xanh), chất liệu nhựa trong, mũ trùm kín đầu; dáng chạy nhảy trong mưa.",
+        "base_desc_en": "Kids' bat-wing raincoat: bright translucent plastic (yellow/blue), hood up; fun rainy day silhouette."
+      },
+      "female": {
+        "base_desc_vi": "Áo mưa cánh dơi màu hồng/đỏ, có họa tiết chấm bi nhẹ, trùm kín người; tay cầm cán dù nhỏ.",
+        "base_desc_en": "Girls' bat-wing raincoat: pink/red with subtle polka dots, fully covered; holding a small umbrella handle."
+      }
+    }
+  },
+  {
+    "id": "xnc_outfit_hunk_sleepwear",
+    "name": "ba bô-lô – Đồ ngủ/Ở nhà",
+    "category": "personal",
+    "priority": 10,
+    "allow_signature_color": true,
+    "variants": {
+      "male": {
+        "base_desc_vi": "Áo may ô (áo ba lỗ) trắng, quần đùi sọc, quấn khăn rằn ngang cổ; phong cách ông bố miền Tây thư giãn.",
+        "base_desc_en": "Vietnamese father home wear: white tank top (may o), striped boxers, khan ran scarf around the neck; relaxed rural dad vibe."
+      }
+    }
+  },
+    {
+    "id": "xnc_outfit_office_vn",
+    "name": "Đồ công sở Việt Nam",
+    "category": "uniform",
+    "priority": 80,
+    "allow_signature_color": true,
+    "variants": {
+      "male": {
+        "base_desc_vi": "Áo sơ mi trắng hoặc xanh nhạt đóng thùng, quần tây đen, thắt lưng da, giày tây; phong cách nhân viên văn phòng gọn gàng.",
+        "base_desc_en": "Vietnamese male office wear: tucked-in white or light blue button-down shirt, black trousers, leather belt, formal shoes; neat professional look."
+      },
+      "female": {
+        "base_desc_vi": "Áo sơ mi thắt nơ hoặc áo kiểu công sở, chân váy bút chì hoặc quần tây lửng, giày cao gót quai mảnh; thanh lịch và hiện đại.",
+        "base_desc_en": "Vietnamese female office wear: blouse with a bow or stylish top, pencil skirt or cropped trousers, slim high heels; elegant and modern."
+      }
+    }
+  },
+  {
+    "id": "xnc_outfit_mechanic_worker",
+    "name": "Đồ thợ máy / Kỹ thuật",
+    "category": "uniform",
+    "priority": 70,
+    "allow_signature_color": false,
+    "notes": "Trang phục bảo hộ lao động phổ biến tại Việt Nam.",
+    "variants": {
+      "male": {
+        "base_desc_vi": "Bộ đồ bảo hộ (jumpsuit) hoặc áo khoác kaki màu xanh bích/xám, nhiều túi hộp, dính vài vết dầu mỡ, dắt tua vít ở túi ngực.",
+        "base_desc_en": "Mechanic uniform: navy blue or grey khaki jumpsuit/work jacket, multiple cargo pockets, slight grease stains, a screwdriver peeking from the chest pocket."
+      }
+    }
+  },
+  {
+    "id": "xnc_outfit_teacher_aodai",
+    "name": "Áo dài truyền thống giáo viên",
+    "category": "event",
+    "priority": 90,
+    "allow_signature_color": true,
+    "notes": "Hình ảnh cô giáo Việt Nam điển hình.",
+    "variants": {
+      "female": {
+        "base_desc_vi": "Áo dài truyền thống cổ cao, tà dài chấm gót, màu sắc nhã nhặn hoặc họa tiết hoa văn nhẹ nhàng, tay cầm cặp da hoặc giáo án.",
+        "base_desc_en": "Traditional Vietnamese teacher Ao Dai: high collar, long flowing tunic reaching ankles, subtle colors or patterns; holding a leather briefcase or lesson plans."
+      }
+    }
+  },
+  {
+    "id": "xnc_outfit_party_dress",
+    "name": "Đầm dự tiệc",
+    "category": "event",
+    "priority": 60,
+    "allow_signature_color": true,
+    "variants": {
+      "female": {
+        "base_desc_vi": "Đầm xòe hoặc đầm ôm dự tiệc sang trọng, chất liệu lấp lánh hoặc ren, phối phụ kiện khuyên tai và túi cầm tay nhỏ.",
+        "base_desc_en": "Elegant party dress: flared or bodycon silhouette, sequined or lace fabric, accessorized with earrings and a small clutch bag."
+      }
+    }
+  },
+  {
+    "id": "xnc_outfit_picnic_camping",
+    "name": "Đồ đi dã ngoại / Picnic",
+    "category": "personal",
+    "priority": 40,
+    "allow_signature_color": true,
+    "variants": {
+      "male": {
+        "base_desc_vi": "Áo thun năng động, quần short túi hộp, đội mũ lưỡi trai, mang giày leo núi hoặc sandal quai hậu.",
+        "base_desc_en": "Outdoor picnic outfit: active T-shirt, cargo shorts, baseball cap, hiking shoes or sport sandals."
+      },
+      "female": {
+        "base_desc_vi": "Áo thun ôm phối quần jean ngắn hoặc váy yếm, đội mũ cói, mang balo nhỏ; phong cách trẻ trung thoải mái.",
+        "base_desc_en": "Cute camping outfit: fitted T-shirt with denim shorts or overall dress, straw hat, small backpack; youthful and comfortable."
+      }
+    }
+  },
+  {
+    "id": "xnc_outfit_gym_sport",
+    "name": "Đồ tập thể dục",
+    "category": "personal",
+    "priority": 30,
+    "allow_signature_color": true,
+    "variants": {
+      "male": {
+        "base_desc_vi": "Áo ba lỗ thể thao, quần short vải thun co giãn, mang giày chạy bộ, quấn băng cổ tay.",
+        "base_desc_en": "Sportswear: athletic tank top, stretchy shorts, running shoes, wristbands."
+      },
+      "female": {
+        "base_desc_vi": "Áo bra thể thao hoặc áo thun sát nách, quần legging ôm sát, tóc cột đuôi ngựa cao; năng động và khỏe khoắn.",
+        "base_desc_en": "Gym outfit: sports bra or sleeveless tee, tight leggings, high ponytail; energetic and healthy look."
+      }
+    }
+  }
   ]
 }
