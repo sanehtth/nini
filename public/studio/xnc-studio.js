@@ -1,42 +1,46 @@
 // ======================
-// XNC STUDIO – JS CHÍNH THỨC
-// BẢN CẬP NHẬT 20/12 – TỰ ĐỔI HÀNH ĐỘNG THEO VẬT THỂ
+// XNC STUDIO – JS ĐÃ SỬA LỖI (05/01/2026)
 // ======================
 
-// ----------------------
-// TẢI JSON
-// ----------------------
 let FACES = {};
 let HANDS = {};
 let MOTIONS = {};
 let OBJECTS = {};
 
 async function loadJSON(url) {
-    const res = await fetch(url);
-    return await res.json();
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+    } catch (err) {
+        console.error(`Không load được ${url}:`, err);
+        return null;
+    }
 }
 
 async function loadAllJSON() {
-    try {
-        FACES = await loadJSON("XNC_faces.extended.json");
-        HANDS = await loadJSON("XNC_hands.json");
-        MOTIONS = await loadJSON("XNC_motions.json");
-        OBJECTS = await loadJSON("XNC_objects.json");
+    console.log("Bắt đầu load JSON...");
 
-        console.log("Loaded JSON:", { FACES, HANDS, MOTIONS, OBJECTS });
+    FACES = await loadJSON("XNC_faces.extended.json");
+    HANDS = await loadJSON("XNC_hands.json");
+    MOTIONS = await loadJSON("XNC_motions.json");
+    OBJECTS = await loadJSON("XNC_objects.json");
 
-        populateDropdowns();
-    } catch (err) {
-        console.error("Lỗi load JSON:", err);
+    if (!FACES || !HANDS || !MOTIONS || !OBJECTS) {
+        document.getElementById("labelsStatus").textContent = "Lỗi load JSON – xem console (F12)";
+        document.getElementById("labelsStatus").style.background = "#e57373";
+        return;
     }
+
+    console.log("Đã load thành công tất cả JSON!");
+    document.getElementById("labelsStatus").textContent = "Labels đã load xong ✓";
+    document.getElementById("labelsStatus").style.background = "#8ccb7a";
+
+    populateDropdowns();
 }
 
 document.addEventListener("DOMContentLoaded", loadAllJSON);
 
-
-// ----------------------
-// TẠO DROPDOWN
-// ----------------------
 function populateDropdowns() {
     populateFaces();
     populateHands();
@@ -46,7 +50,7 @@ function populateDropdowns() {
 
 function populateFaces() {
     const sel = document.getElementById("pFace");
-    if (!sel) return;
+    if (!sel || !FACES.faces) return;
     sel.innerHTML = `<option value="">(none)</option>`;
     FACES.faces.forEach(f => {
         sel.innerHTML += `<option value="${f.id}">${f.label_v}</option>`;
@@ -55,7 +59,7 @@ function populateFaces() {
 
 function populateHands() {
     const sel = document.getElementById("pHand");
-    if (!sel) return;
+    if (!sel || !HANDS.hands) return;
     sel.innerHTML = `<option value="">(none)</option>`;
     HANDS.hands.forEach(h => {
         sel.innerHTML += `<option value="${h.id}">${h.label_v}</option>`;
@@ -64,7 +68,7 @@ function populateHands() {
 
 function populateMotions() {
     const sel = document.getElementById("pAction");
-    if (!sel) return;
+    if (!sel || !MOTIONS.motions) return;
     sel.innerHTML = `<option value="">(none)</option>`;
     MOTIONS.motions.forEach(m => {
         sel.innerHTML += `<option value="${m.id}">${m.label_v}</option>`;
@@ -73,33 +77,29 @@ function populateMotions() {
 
 function populateObjects() {
     const sel = document.getElementById("pObject");
-    if (!sel) return;
+    if (!sel || !OBJECTS.objects) return;
     sel.innerHTML = `<option value="">(none)</option>`;
     OBJECTS.objects.forEach(o => {
         sel.innerHTML += `<option value="${o.id}">${o.label_v}</option>`;
     });
 }
 
-
-
 // ======================================================
 // BUILD PROMPT
 // ======================================================
 function buildPromptVI() {
-
     let parts = [];
 
-    // Các input
     const character = getSelValue("pChar");
     const faceId = getSelValue("pFace");
     const actionId = getSelValue("pAction");
     const camAngle = getSelValue("pCam");
     const style = getSelValue("pStyle");
-    const backdrop = getSelValue("pBackground");
+    const backdrop = getSelValue("pBg"); // sửa từ pBackground
 
     const objectId = getSelValue("pObject");
     const objectCustom = getInputValue("pObjectCustom");
-    const objectQuantity = getInputValue("pObjectQty");
+    const objectQuantity = getInputValue("pObjectCount"); // sửa từ pObjectQty
 
     const handId = getSelValue("pHand");
     const handPose = getSelValue("pHandPose");
@@ -107,111 +107,69 @@ function buildPromptVI() {
     const camNote = getInputValue("pCamNote");
     const extraNote = getInputValue("pNote");
 
-    // 1 — Nhân vật
-    if (character) {
-        parts.push(`Nhân vật: ${character}.`);
-    }
-
-    // 2 — Biểu cảm mặt
+    if (character) parts.push(`Nhân vật: ${character}.`);
     if (faceId && FACES.faces) {
         const f = FACES.faces.find(x => x.id === faceId);
         if (f) parts.push(`Biểu cảm: ${f.label_v}.`);
     }
 
-    // 3 — XỬ LÝ ACTION CÓ [vật thể]
     let actionLabel = "";
     if (actionId && MOTIONS.motions) {
         const a = MOTIONS.motions.find(x => x.id === actionId);
         if (a) actionLabel = a.label_v;
     }
 
-    // Resolve object label
-    let objectLabel = "";
-    if (objectCustom) {
-        objectLabel = objectCustom.trim(); // ưu tiên text nhập tay
-    } else if (objectId && OBJECTS.objects) {
+    let objectLabel = objectCustom.trim() || "";
+    if (!objectLabel && objectId && OBJECTS.objects) {
         const o = OBJECTS.objects.find(x => x.id === objectId);
         if (o) objectLabel = o.label_v;
     }
 
-    // Replace placeholder
     if (actionLabel.includes("[vật thể]")) {
-        const repl = objectLabel || "vật thể";
-        actionLabel = actionLabel.replace("[vật thể]", repl);
+        actionLabel = actionLabel.replace("[vật thể]", objectLabel || "vật thể");
     }
 
-    if (actionLabel) {
-        parts.push(`Hành động: ${actionLabel}.`);
-    }
+    if (actionLabel) parts.push(`Hành động: ${actionLabel}.`);
 
-    // 4 — Bối cảnh
-    if (backdrop) {
-        parts.push(`Bối cảnh: ${backdrop}.`);
-    }
+    if (backdrop) parts.push(`Bối cảnh: ${backdrop}.`);
+    if (camAngle) parts.push(`Góc máy: ${camAngle}.`);
+    if (camNote) parts.push(`Ghi chú góc máy: ${camNote}.`);
+    if (objectLabel) parts.push(`Vật thể: ${objectLabel}.`);
+    if (objectQuantity) parts.push(`Số lượng: ${objectQuantity}.`);
 
-    // 5 — Camera
-    if (camAngle) {
-        parts.push(`Góc máy: ${camAngle}.`);
-    }
-    if (camNote) {
-        parts.push(`Ghi chú góc máy: ${camNote}.`);
-    }
-
-    // 6 — Vật thể (object)
-    if (objectLabel) {
-        parts.push(`Vật thể: ${objectLabel}.`);
-    }
-    if (objectQuantity) {
-        parts.push(`Số lượng: ${objectQuantity}.`);
-    }
-
-    // 7 — Tay nhân vật
     if (handId && HANDS.hands) {
         const h = HANDS.hands.find(x => x.id === handId);
         if (h) parts.push(`Tay nhân vật: ${h.label_v}.`);
     }
-    if (handPose) {
-        parts.push(`Tư thế tay: ${handPose}.`);
-    }
+    if (handPose) parts.push(`Tư thế tay: ${handPose}.`);
 
-    // 8 — Phong cách
-    if (style) {
-        parts.push(`Phong cách: ${style}.`);
-    }
+    if (style) parts.push(`Phong cách: ${style}.`);
+    if (extraNote) parts.push(extraNote);
 
-    // 9 — Extra note
-    if (extraNote) {
-        parts.push(extraNote);
-    }
-
-    // 10 — Tone
     parts.push("Tone: hài đời thường, Việt Nam, motion comic sạch, nhân vật rõ, không chữ, không logo, tránh vibe Hàn/Idol.");
 
     return parts.join(" ");
 }
 
-
-
 // ======================================================
 // BUTTON GENERATE
 // ======================================================
-function onGeneratePrompt() {
+document.getElementById("btnGen")?.addEventListener("click", () => {
     const vi = buildPromptVI();
-    document.getElementById("promptVI").value = vi;
+    document.getElementById("pOut").value = vi; // sửa ID
 
     const json = {
-        prompt_id: getInputValue("pID"),
+        prompt_id: getInputValue("pId"), // sửa thành pId
         name: getInputValue("pName"),
         type: getSelValue("pType"),
         character: getSelValue("pChar"),
         face: getSelValue("pFace"),
-        face_note: "",
         action: getSelValue("pAction"),
         camera: getSelValue("pCam"),
-        backdrop: getSelValue("pBackground"),
+        backdrop: getSelValue("pBg"),
         objects: getSelValue("pObject"),
         objects_custom: getInputValue("pObjectCustom"),
-        objects_qty: getInputValue("pObjectQty"),
+        objects_qty: getInputValue("pObjectCount"), // sửa
         hand: getSelValue("pHand"),
         hand_pose: getSelValue("pHandPose"),
         note: getInputValue("pNote"),
@@ -220,23 +178,18 @@ function onGeneratePrompt() {
         final_prompt: vi
     };
 
-    document.getElementById("promptJSON").value = JSON.stringify(json, null, 4);
-}
-
-
+    document.getElementById("pJson").value = JSON.stringify(json, null, 4); // sửa ID
+});
 
 // ======================================================
 // TIỆN ÍCH
 // ======================================================
 function getSelValue(id) {
     const el = document.getElementById(id);
-    if (!el) return "";
-    return el.value || "";
+    return el?.value || "";
 }
 
 function getInputValue(id) {
     const el = document.getElementById(id);
-    if (!el) return "";
-    return el.value || "";
+    return el?.value.trim() || "";
 }
-
