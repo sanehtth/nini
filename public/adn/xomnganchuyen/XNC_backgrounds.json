@@ -176,6 +176,84 @@
         "dining",
         "day"
       ]
-    }
+    },
+    {
+    "id": "xnc_riverside_sunrise",
+    "label": "Bờ sông lúc sáng sớm",
+    "desc_en": "Quiet Vietnamese riverside at early dawn, soft pink and orange sky reflecting on the water, light morning mist, silhouettes of coconut trees, a small wooden pier, calm and poetic atmosphere, pastel green-brown palette, 2D chibi background, no text",
+    "tags": ["morning", "riverside", "nature", "sunrise"]
+  },
+  {
+    "id": "xnc_floating_market_boat",
+    "label": "Trên thuyền giữa chợ nổi",
+    "desc_en": "View from a wooden boat in a bustling Vietnamese floating market, surrounded by other boats filled with colorful fruits like pineapple and watermelon, rippling river water, morning sunlight, vibrant but soft pastel tones, 2D chibi style, no text",
+    "tags": ["river", "market", "morning", "culture"]
+  },
+  {
+    "id": "xnc_ferry_terminal",
+    "label": "Bến phà quê",
+    "desc_en": "A simple Vietnamese rural ferry terminal, a large wooden or metal ferry docked at the riverbank, people waiting with motorbikes and bicycles, calm river, wide sky, rustic and nostalgic vibe, pastel green-brown palette, 2D chibi background, no text",
+    "tags": ["river", "transport", "day", "village"]
+  },
+  {
+    "id": "xnc_village_path_trees",
+    "label": "Con đường làng",
+    "desc_en": "Narrow dirt road winding through a Vietnamese village, tall bamboo thickets and fruit trees on both sides, small wooden fences, dappled sunlight on the ground, peaceful and cool atmosphere, pastel green-brown palette, 2D chibi background, no text",
+    "tags": ["village", "nature", "day", "path"]
+  },
+  {
+    "id": "xnc_local_market_fair",
+    "label": "Chợ phiên Việt Nam",
+    "desc_en": "Outdoor Vietnamese local market fair, colorful umbrellas and tarps, stalls with vegetables and handmade goods, rustic wooden tables, lively atmosphere, warm daylight, soft haze, pastel 2D chibi style, no readable text",
+    "tags": ["market", "street", "culture", "day"]
+  },
+    {
+    "id": "xnc_clothing_shop_vn",
+    "label": "Shop quần áo địa phương",
+    "desc_en": "Small Vietnamese clothing boutique, mannequins wearing colorful trendy outfits, racks of clothes, large mirrors, bright indoor lighting, tiled floor, cozy and modern vibe, pastel 2D chibi style, no text",
+    "tags": ["interior", "shop", "fashion", "day"]
+  },
+  {
+    "id": "xnc_supermarket_vn",
+    "label": "Siêu thị tiện lợi",
+    "desc_en": "Vietnamese mini-mart interior, shelves stocked with familiar snacks and drinks, bright fluorescent lighting, checkout counter with a small red stool, clean and organized, pastel green-brown palette, 2D chibi background, no text",
+    "tags": ["interior", "shop", "modern", "day"]
+  },
+  {
+    "id": "xnc_library_vn",
+    "label": "Thư viện trường học",
+    "desc_en": "Quiet Vietnamese school library, tall wooden bookshelves, long reading tables with small chairs, posters on the wall, soft sunlight from large windows, peaceful atmosphere, pastel 2D chibi style, no text",
+    "tags": ["interior", "school", "library", "day"]
+  },
+  {
+    "id": "xnc_cinema_vn",
+    "label": "Rạp chiếu phim",
+    "desc_en": "Vietnamese cinema hall interior, rows of red velvet seats, large dark screen, dim ambient lighting, carpeted floor, cozy and cinematic atmosphere, pastel 2D chibi style, no text",
+    "tags": ["interior", "entertainment", "night"]
+  },
+  {
+    "id": "xnc_public_park_vn",
+    "label": "Công viên thành phố",
+    "desc_en": "Vietnamese public park, stone benches, exercise equipment, paved walking paths, tall tropical trees, bright daylight with soft shadows, peaceful urban nature, pastel green-brown palette, 2D chibi style, no text",
+    "tags": ["outdoor", "park", "nature", "day"]
+  },
+  {
+    "id": "xnc_chicken_farm_vn",
+    "label": "Trại gà quê",
+    "desc_en": "Vietnamese rural chicken coop, wooden and wire fences, straw on the ground, simple thatched roof, chickens roaming around, rustic and earthy tones, sunlight filtering through trees, pastel 2D chibi style, no text",
+    "tags": ["outdoor", "farm", "animals", "countryside"]
+  },
+  {
+    "id": "xnc_fish_farm_vn",
+    "label": "Trại nuôi cá / Ao cá",
+    "desc_en": "Large fish pond in a Vietnamese village, wooden walkways over the water, floating fish cages, lush greenery around the pond, calm water surface, soft daylight, pastel green-brown palette, 2D chibi style, no text",
+    "tags": ["outdoor", "farm", "river", "countryside"]
+  },
+  {
+    "id": "xnc_pig_farm_vn",
+    "label": "Chuồng heo",
+    "desc_en": "Simple Vietnamese pigsty, concrete walls and floor, wooden gates, water troughs, rustic and slightly messy, warm afternoon light, pastel green-brown palette, 2D chibi style, no text",
+    "tags": ["outdoor", "farm", "animals", "countryside"]
+  }
   ]
 }
