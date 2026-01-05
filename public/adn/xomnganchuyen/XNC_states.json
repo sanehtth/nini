@@ -259,6 +259,36 @@
     "label": "Nháy mắt mỉm cười",
     "desc_en": "one eye closed in a wink, charming tilt of the head, confident and friendly smile, playful vibe",
     "intensity": "low"
+  },
+    {
+    "id": "eating_sneaky",
+    "label": "Ăn vụng",
+    "desc_en": "hiding in a corner, glancing around guiltily while chewing quickly, holding a small piece of food close to the chest",
+    "intensity": "low"
+  },
+  {
+    "id": "eating_voraciously",
+    "label": "Ăn ngấu nghiến",
+    "desc_en": "stuffing food into mouth, messy face, wide eyes, rapid chewing, leaning over the plate with intense focus",
+    "intensity": "high"
+  },
+  {
+    "id": "eating_slowly",
+    "label": "Ăn từ từ / Thưởng thức",
+    "desc_en": "taking small bites, eyes closed in delight, chewing slowly, relaxed and peaceful facial expression",
+    "intensity": "none"
+  },
+  {
+    "id": "eating_hurriedly",
+    "label": "Ăn vội vã",
+    "desc_en": "eating while standing or moving, glancing at a watch or looking ahead, swallowing quickly, slightly stressed expression",
+    "intensity": "med"
+  },
+  {
+    "id": "eating_stuffed_cheeks",
+    "label": "Ăn thốn một họng to",
+    "desc_en": "both cheeks puffed out like a squirrel, mouth completely full, unable to speak, funny and overwhelmed expression",
+    "intensity": "med_high"
   }
   ]
 }
