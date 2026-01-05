@@ -21,7 +21,7 @@ async function loadJSON(url) {
 async function loadAllJSON() {
     console.log("Bắt đầu load JSON...");
 
-    FACES = await loadJSON("XNC_faces.extended.json");
+    FACES = await loadJSON("XNC_faces.json");
     HANDS = await loadJSON("XNC_hands.json");
     MOTIONS = await loadJSON("XNC_motions.json");
     OBJECTS = await loadJSON("XNC_objects.json");
