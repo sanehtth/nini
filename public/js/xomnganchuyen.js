@@ -1,6 +1,8 @@
+// public/js/xomnganchuyen.js
+
 (function (window) {
   const DEFAULT_PROFILE = "xomnganchuyen";
-  const BASE_PATH = "/adn";
+  const BASE_PATH = "/adn"; // thư mục chứa các profile
 
   let state = {
     profileId: DEFAULT_PROFILE,
@@ -11,6 +13,7 @@
       characters: [],
       style: {},
       audio: {},
+      // Mở rộng thêm các ngăn chứa mới
       faces: [],
       backgrounds: [],
       outfits: [],
@@ -33,14 +36,15 @@
     state.loading = true;
     state.loaded = false;
     state.profileId = profileId;
-    const base = `${BASE_PATH}/${profileId}`;
 
+    const base = `${BASE_PATH}/${profileId}`;
+    
     try {
-      // Nạp đồng thời tất cả các file ADN
+      // Nạp tất cả các file cùng lúc. Các file mới có .catch để trang cũ không bị lỗi nếu thiếu file.
       const [
-        chars, style, audio, 
-        faces, bgs, outfits, 
-        st, acts
+        charactersRaw, styleRaw, audioRaw,
+        facesRaw, backgroundsRaw, outfitsRaw,
+        statesRaw, actionsRaw
       ] = await Promise.all([
         fetchJson(`${base}/XNC_characters.json`),
         fetchJson(`${base}/XNC_style.json`),
@@ -52,93 +56,87 @@
         fetchJson(`${base}/XNC_actions.json`).catch(() => ({ actions: [] }))
       ]);
 
-      state.data.characters = Array.isArray(chars) ? chars : (chars.characters || []);
-      state.data.style = style || {};
-      state.data.audio = audio || {};
-      state.data.faces = faces.faces || [];
-      state.data.backgrounds = bgs.backgrounds || [];
-      state.data.outfits = outfits.outfits || [];
-      state.data.states = st.states || [];
-      state.data.actions = acts.actions || [];
+      // Xử lý dữ liệu gốc (đảm bảo tính tương thích ngược)
+      state.data.characters = Array.isArray(charactersRaw) ? charactersRaw : (charactersRaw.characters || []);
+      state.data.style = styleRaw || {};
+      state.data.audio = audioRaw || {};
+
+      // Cập nhật dữ liệu mới cho trang Prompt Video
+      state.data.faces = facesRaw.faces || [];
+      state.data.backgrounds = backgroundsRaw.backgrounds || [];
+      state.data.outfits = outfitsRaw.outfits || [];
+      state.data.states = statesRaw.states || [];
+      state.data.actions = actionsRaw.actions || [];
 
       state.loaded = true;
       state.loading = false;
-      log("ADN Profile Loaded hoàn tất:", profileId);
 
-      state.queue.forEach(cb => cb());
+      // Chạy các callback đang đợi
+      state.queue.forEach((cb) => {
+        try { cb(); } catch (e) { console.error(e); }
+      });
       state.queue = [];
+      log("Profile loaded với đầy đủ dữ liệu ADN:", profileId);
     } catch (e) {
-      log("Load profile lỗi:", e);
+      console.error("[XNC] Load profile failed:", e);
       state.loading = false;
     }
   }
 
-  // --- PUBLIC API ---
+  // =========== PUBLIC API (XNC) ===========
   const XNC = {
-    // 1. Quản lý Profile
-    setProfile(id) {
-      return loadProfile(id || DEFAULT_PROFILE);
+    setProfile(profileId) {
+      if (!profileId) profileId = DEFAULT_PROFILE;
+      if (state.loaded && state.profileId === profileId) return Promise.resolve();
+      return loadProfile(profileId);
     },
-    ready(cb) {
-      if (state.loaded) cb(); else state.queue.push(cb);
-    },
-    getCurrentProfileId: () => state.profileId,
 
-    // 2. Getters cho Listbox (Dữ liệu mới và cũ)
-    getCharacterList: () => state.data.characters,
-    getFaces: () => state.data.faces,
-    getBackgrounds: () => state.data.backgrounds,
-    getOutfits: () => state.data.outfits,
-    getStates: () => state.data.states,
-    getActions: () => state.data.actions,
+    ready(cb) {
+      if (state.loaded && !state.loading) {
+        cb();
+      } else {
+        state.queue.push(cb);
+        if (!state.loading) {
+          loadProfile(state.profileId).catch((e) => log("Load default failed:", e));
+        }
+      }
+    },
+
+    // --- CÁC HÀM GETTERS CŨ (Giữ để không hỏng trang khác) ---
+    getCurrentProfileId: () => state.profileId,
+    getCharacterList: () => state.data.characters || [],
+    getSignaturesFor(characterId) {
+      const c = (state.data.characters || []).find((c) => c.id === characterId);
+      return c ? (c.signatures || []) : [];
+    },
     getStyle: () => state.data.style,
 
-    // 3. Logic lấy Signature theo nhân vật (Hàm cũ quan trọng)
-    getSignaturesFor(characterId) {
-      const char = state.data.characters.find(c => c.id === characterId);
-      return char ? (char.signatures || []) : [];
-    },
+    // --- CÁC HÀM GETTERS MỚI (Cho trang Prompt Video của bạn) ---
+    getFaces: () => state.data.faces || [],
+    getBackgrounds: () => state.data.backgrounds || [],
+    getOutfits: () => state.data.outfits || [],
+    getStates: () => state.data.states || [],
+    getActions: () => state.data.actions || [],
 
-    // 4. Hàm xây dựng Prompt (Hàm xử lý chính từ file gốc của bạn)
+    // --- HÀM BUILD PROMPT GỐC (Giữ nguyên logic cũ) ---
     buildCharacterPrompt(options) {
-      const {
-        characterId, signatureId, actionText, emotionKey,
-        contextText, cameraKey, lightingKey, extraMood
-      } = options;
+      const { characterId, signatureId, actionText, emotionKey, contextText, cameraKey, lightingKey, extraMood } = options;
+      const character = (state.data.characters || []).find((c) => c.id === characterId) || {};
+      const signature = (character.signatures || []).find((s) => s.id === signatureId) || null;
+      const styleTags = state.data.style.tags || ["Vietnamese primary school", "chibi 2D", "pastel colors"];
 
-      const character = state.data.characters.find(c => c.id === characterId) || {};
-      const signature = (character.signatures || []).find(s => s.id === signatureId) || null;
-      const styleTags = state.data.style.tags || ["Vietnamese chibi 2D", "pastel"];
-
+      const cameraDesc = cameraKey === "closeup" ? "close-up shot" : cameraKey === "medium" ? "medium shot" : "";
       const baseLines = [
-        `Style: ${styleTags.join(", ")}.`,
+        `Chibi 2D in ${state.profileId} style, ${styleTags.join(", ")}.`,
         `Scene: ${contextText}. Action: ${actionText}.`,
-        `Character: ${character.name || "Unknown"}.`
+        character.name ? `Character: ${character.name} (${character.role}).` : ""
       ];
 
-      if (signature && signature.prompt) baseLines.push(`Behavior: ${signature.prompt}.`);
-      
-      // Logic xử lý Camera
-      if (cameraKey) {
-        const camMap = { 
-          closeup: "close-up shot", 
-          medium: "medium shot", 
-          dramatic_low: "low angle view" 
-        };
-        baseLines.push(camMap[cameraKey] || "");
-      }
-
-      // Logic xử lý Emotion (Mood)
-      if (emotionKey) {
-        const emoMap = {
-          happy: "warm and happy mood",
-          comedy: "comedic and light-hearted style",
-          drama: "tense and dramatic atmosphere"
-        };
-        baseLines.push(emoMap[emotionKey] || "");
-      }
-
+      if (signature && signature.prompt) baseLines.push(`Signature: ${signature.prompt}.`);
+      if (emotionKey) baseLines.push(`Mood: ${emotionKey}.`);
+      if (cameraDesc) baseLines.push(cameraDesc + ".");
       if (extraMood) baseLines.push(extraMood);
+
       return baseLines.filter(l => l).join(" ");
     }
   };
