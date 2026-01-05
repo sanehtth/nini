@@ -218,6 +218,83 @@
       "desc_vi": "Cười nhếch mép, nhướng mày nhẹ, vẻ mặt châm chọc mỉa mai",
       "desc_en": "one-sided smirk, eyebrow slightly raised, subtle mocking expression",
       "intensity": "medium"
-     } 
+     }'
+    {
+    "id": "sleepy_dazed",
+    "label": "Mặt buồn ngủ ngơ ngác",
+    "desc_vi": "Mắt lờ đờ nửa nhắm nửa mở, con ngươi không tập trung, miệng hơi hé ra trông hơi ngơ",
+    "desc_en": "heavy half-lidded eyes, unfocused pupils, slightly open mouth, dazed and groggy facial expression",
+    "intensity": "medium"
+  },
+  {
+    "id": "sharp_piercing_glance",
+    "label": "Ánh mắt liếc sắc nhọn",
+    "desc_vi": "Đuôi mắt nheo lại sắc sảo, ánh nhìn lạnh lùng như dao cau, tập trung cao độ vào mục tiêu",
+    "desc_en": "sharp narrowed eyes, cold piercing gaze, intense focus, intimidating and sharp look",
+    "intensity": "high"
+  },
+  {
+    "id": "overacted_shock",
+    "label": "Bất ngờ làm quá (lố)",
+    "desc_vi": "Mắt mở to muốn rớt ra ngoài, chân mày bay cao, miệng há hốc hình chữ O cực đại",
+    "desc_en": "eyes popping out, sky-high eyebrows, exaggerated O-shaped mouth, comedic shock",
+    "intensity": "very_high"
+  },
+  {
+    "id": "heavenly_bliss_woo",
+    "label": "Vẻ mặt lúc 'Woo' cực đã",
+    "desc_vi": "Mắt nhắm tịt, mặt đỏ bừng hạnh phúc, miệng cười rạng rỡ như đang tận hưởng thứ gì đó cực phẩm",
+    "desc_en": "eyes tightly shut, flushed face, ecstatic wide grin, heavenly bliss expression",
+    "intensity": "very_high"
+  },
+  {
+    "id": "gentle_melancholy",
+    "label": "Buồn man mác",
+    "desc_vi": "Ánh mắt nhìn xa xăm, chân mày hơi rũ, nét mặt tĩnh lặng mang chút tâm sự nhẹ nhàng",
+    "desc_en": "distant gaze, slightly drooping brows, calm but soft sorrowful expression, poetic melancholy",
+    "intensity": "low"
+  },
+  {
+    "id": "lifeless_hollow",
+    "label": "Mất đi sức sống / Tâm hồn trống rỗng",
+    "desc_vi": "Mắt tối sầm không ánh sáng, gương mặt trắng bệch, biểu cảm trống rỗng như người mất hồn",
+    "desc_en": "dark lifeless eyes, pale face, hollow and vacant expression, completely drained of energy",
+    "intensity": "very_high"
+  },
+    {
+    "id": "sneering_smirk",
+    "label": "Cười nhếch mép",
+    "desc_vi": "Một bên khóe môi nhếch lên, ánh mắt đầy tự tin hoặc hơi khinh khỉnh, vẻ mặt đầy toan tính",
+    "desc_en": "one corner of the mouth lifted in a smirk, confident or slightly mocking eyes, devious expression",
+    "intensity": "medium"
+  },
+  {
+    "id": "hearty_laughter",
+    "label": "Cười sảng khoái",
+    "desc_vi": "Miệng há rộng, mắt nhắm tịt lại vì cười, đầu hơi ngả ra sau, toát ra năng lượng cực kỳ vui vẻ",
+    "desc_en": "wide open mouth, eyes closed tightly from laughing, head tilted back, bursting with joyful energy",
+    "intensity": "very_high"
+  },
+  {
+    "id": "shifty_eyes",
+    "label": "Mắt liếc qua lại",
+    "desc_vi": "Con ngươi đảo liên tục sang hai bên, chân mày hơi nhíu, vẻ mặt như đang giấu giếm điều gì đó",
+    "desc_en": "eyes darting quickly side to side, slightly furrowed brows, suspicious or secretive expression",
+    "intensity": "medium"
+  },
+  {
+    "id": "sneezing_face",
+    "label": "Hắt xì",
+    "desc_vi": "Mặt nhăn lại, mũi chun lên, mắt nhắm chặt, miệng chuẩn bị há ra để hắt hơi",
+    "desc_en": "scrunching face, wrinkled nose, eyes shut tight, mouth agape about to sneeze",
+    "intensity": "high"
+  },
+  {
+    "id": "shivering_trembling",
+    "label": "Run cầm cập",
+    "desc_vi": "Hàm răng đánh bò cạp, môi tái đi, cả khuôn mặt và vai rung bần bật vì lạnh hoặc quá sợ",
+    "desc_en": "chattering teeth, pale lips, entire face and shoulders shivering uncontrollably from cold or fear",
+    "intensity": "high"
+  }
   ]
 }
