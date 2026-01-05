@@ -1,0 +1,303 @@
+﻿<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>XNC Motion Comic Engine (JSON-driven)</title>
+  <style>
+    :root{
+      --bg-main:#CDECC1;
+      --bg-card:#FFFBEA;
+      --primary:#8CCB7A;
+      --secondary:#B9885D;
+      --accent:#F4E8A2;
+
+      --text-main:#2F2F2F;
+      --text-muted:#6B6B6B;
+      --border:rgba(0,0,0,.10);
+      --shadow:0 8px 20px rgba(0,0,0,.10);
+      --radius:16px;
+
+      /* Mapping để giữ tương thích với code cũ */
+      --bg: var(--bg-main);
+      --panel: var(--bg-card);
+      --card: var(--bg-card);
+      --stroke: var(--border);
+      --text: var(--text-main);
+      --muted: var(--text-muted);
+      --accent: var(--primary);
+      --accent2: var(--secondary);
+      --paper: var(--bg-card);
+      --r: var(--radius);
+    }
+
+    body{
+      margin:0;
+      background:var(--bg-main);
+      color:var(--text-main);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    header{
+      position:sticky;top:0;z-index:10;
+      background:linear-gradient(135deg, var(--primary), var(--secondary));
+      backdrop-filter: blur(8px);
+      border-bottom:1px solid var(--border);
+    }
+
+    .bar{display:flex;gap:12px;align-items:center;padding:14px 18px;}
+    .logo{display:flex;align-items:center;gap:10px;font-weight:700}
+    .badge{
+      width:34px;height:34px;border-radius:10px;
+      background:linear-gradient(135deg,var(--accent), #ffffff);
+      display:grid;place-items:center;color:#2F2F2F;font-weight:900
+    }
+    .sub{color:var(--text-muted);font-size:12px;margin-top:2px}
+    .grow{flex:1}
+    .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+    label.ctrl{
+      display:flex;gap:8px;align-items:center;
+      background:rgba(255,255,255,.75);
+      border:1px solid var(--border);
+      padding:8px 10px;border-radius:12px
+    }
+    label.ctrl span{font-size:12px;color:var(--text-muted)}
+
+    select,input,button,textarea{
+      background:rgba(255,255,255,.85);
+      color:var(--text-main);
+      border:1px solid rgba(0,0,0,.14);
+      border-radius:10px;padding:8px 10px;outline:none
+    }
+    select{padding-right:28px}
+
+    button{
+      cursor:pointer;
+      border:1px solid rgba(0,0,0,.12);
+      background:rgba(255,255,255,.75);
+      color:var(--text-main);
+      border-radius:12px;padding:9px 12px;font-weight:600;
+      transition:filter .15s ease;
+    }
+    button:hover{filter:brightness(1.05);}
+    button:active{transform:translateY(1px);}
+
+    button.ghost{
+      background:transparent;
+      border-color:rgba(0,0,0,.14);
+      color:var(--text-muted);
+    }
+    button:disabled{opacity:.5;cursor:not-allowed}
+
+    main{display:grid;grid-template-columns: 1.25fr .95fr;gap:16px;padding:16px 18px}
+    @media(max-width:1100px){main{grid-template-columns:1fr}}
+
+    .stage{
+      background:var(--bg-card);
+      border:1px solid var(--border);
+      border-radius:var(--r);
+      padding:14px;
+      box-shadow:var(--shadow);
+    }
+    .hint{color:var(--text-muted);font-size:12px;margin-bottom:10px}
+
+    #grid{
+      display:grid;gap:10px;
+      background:rgba(0,0,0,.04);
+      padding:10px;border-radius:var(--r);
+      border:1px dashed rgba(0,0,0,.12);
+    }
+
+    .panel{
+      position:relative;border-radius:18px;overflow:hidden;
+      border:2px solid rgba(0,0,0,.15);
+      background:var(--paper);
+      box-shadow: var(--shadow);
+      min-height:120px;
+    }
+    .panel.active{outline:3px solid var(--primary);}
+
+    .panelTag{
+      position:absolute;top:10px;left:10px;
+      background:rgba(0,0,0,.65);backdrop-filter:blur(6px);
+      color:#fff;border:1px solid rgba(255,255,255,.25);
+      padding:4px 8px;border-radius:999px;font-size:12px
+    }
+    .panelBgLabel{
+      position:absolute;left:12px;bottom:10px;right:12px;
+      font-size:12px;color:rgba(0,0,0,.55)
+    }
+
+    .actorChip{
+      position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+      padding:10px 12px;border-radius:14px;
+      background:rgba(255,255,255,.95);
+      border:1px solid rgba(0,0,0,.12);
+      box-shadow:0 10px 22px rgba(0,0,0,.15);
+      min-width:140px;text-align:center
+    }
+    .actorChip small{display:block;color:rgba(0,0,0,.55);margin-top:2px}
+
+    .sidebar{
+      background:var(--bg-card);
+      border:1px solid var(--border);
+      border-radius:var(--r);
+      padding:14px;
+      box-shadow:var(--shadow);
+    }
+
+    .cardTitle{font-weight:800;margin-bottom:10px}
+    .row{display:grid;grid-template-columns: 1fr 1fr;gap:10px}
+    .full{grid-column:1/-1}
+    .actorsList{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .actorRow{display:grid;grid-template-columns: 1fr 1fr 1fr 34px;gap:8px;align-items:center}
+    .actorRow button{padding:8px;border-radius:10px}
+
+    textarea{width:100%;min-height:70px;resize:vertical}
+
+    .outBar{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+
+    pre#output{
+      white-space:pre-wrap;
+      background:rgba(0,0,0,.06);
+      border:1px solid rgba(0,0,0,.12);
+      padding:10px;border-radius:12px;
+      color:var(--text-main);
+      min-height:120px;max-height:320px;overflow:auto;font-size:12px
+    }
+
+    .log{margin-top:10px}
+    pre#log{
+      white-space:pre-wrap;
+      background:rgba(0,0,0,.06);
+      border:1px solid rgba(0,0,0,.12);
+      padding:10px;border-radius:12px;
+      color:var(--text-muted);
+      min-height:80px;max-height:160px;overflow:auto;font-size:12px
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo">
+      <div class="badge">XNC</div>
+      <div>
+        <div>Motion Comic Engine</div>
+        <div class="sub">Cách A: Layout/Style/Background/Character/Action đều load từ JSON</div>
+      </div>
+    </div>
+
+    <div class="grow"></div>
+
+    <div class="controls">
+      <label class="ctrl"><span>Layout</span>
+        <select id="layoutSelect"></select>
+      </label>
+
+      <button id="btnExportPrompt">Xuất Prompt</button>
+      <button id="btnExportJSON" class="ghost">Xuất JSON</button>
+      <button id="btnCopy" class="ghost">Copy</button>
+      <button id="btnDownload" class="ghost">Download.json</button>
+      <button id="btnReset" class="ghost">Reset</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="stage">
+    <div class="hint">Click panel để chọn. Actor chip là placeholder (thay bằng PNG thật sau).</div>
+    <div id="grid"></div>
+  </section>
+
+  <aside class="sidebar">
+    <div class="cardTitle">Cấu hình Scene</div>
+
+    <div class="row">
+      <label class="ctrl full"><span>Panel đang chọn</span>
+        <select id="panelSelect"></select>
+      </label>
+
+      <label class="ctrl"><span>Bối cảnh</span>
+        <select id="bgSelect"></select>
+      </label>
+
+      <label class="ctrl"><span>Style</span>
+        <select id="styleSelect"></select>
+      </label>
+
+      <div class="subTitle">Shot settings (theo Panel)</div>
+
+      <label class="ctrl"><span>Góc camera</span>
+        <select id="cameraAngleSelect"></select>
+      </label>
+
+      <label class="ctrl"><span>Camera move</span>
+        <select id="cameraMoveSelect"></select>
+      </label>
+
+      <label class="ctrl"><span>Thời lượng panel (giây)</span>
+        <input id="panelDuration" type="number" min="0.2" max="10" step="0.1" value="1.5" />
+      </label>
+
+      <label class="ctrl full"><span>Mood chi tiết (tuỳ chọn)</span>
+        <textarea id="moodDetail" rows="2" placeholder="VD: hồi hộp nhưng hài, ánh trăng mờ, gió nhẹ..."></textarea>
+      </label>
+
+      <label class="ctrl full"><span>Prompt mẫu (tuỳ chọn)</span>
+        <textarea id="refPrompt" rows="3" placeholder="Paste prompt mẫu của AI khác để tham khảo. Engine sẽ giữ ADN XNC, không cho lệch style."></textarea>
+      </label>
+
+      <div class="hint">Tone: <b>XNC-A</b> (locked theo ADN)</div>
+
+      <label class="ctrl"><span>Tỉ lệ</span>
+        <select id="aspectSelect">
+          <option value="9:16">9:16 (Short)</option>
+          <option value="16:9">16:9 (Video)</option>
+          <option value="1:1">1:1</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="row">
+      <label class="ctrl full"><span>Ghi chú motion (tùy chọn)</span>
+        <input id="motionNote" placeholder="VD: camera push-in nhẹ; tay ném dép bay qua viền; rung nhẹ..." />
+      </label>
+    </div>
+
+    <div style="margin-top:10px;color:var(--text-muted);font-size:12px">Nhân vật trong panel</div>
+    <div class="actorsList" id="actorsList"></div>
+
+    <div class="row" style="margin-top:10px">
+      <label class="ctrl"><span>Nhân vật</span>
+        <select id="charSelect"></select>
+      </label>
+      <label class="ctrl"><span>Hành động (hình thể)</span>
+        <select id="actionSelect"></select>
+      </label>
+      <label class="ctrl"><span>Khuôn mặt</span>
+        <select id="faceSelect"></select>
+      </label>
+      <button id="btnAddActor">+ Add</button>
+    </div>
+
+    <div class="outBar">
+      <button id="btnExportPrompt2">Xuất Prompt</button>
+      <button class="btn" id="btnExportPanelPrompt">Xuất Prompt (Panel)</button>
+      <button id="btnExportJSON2" class="ghost">Xuất JSON</button>
+    </div>
+
+    <div style="margin-top:10px;color:var(--text-muted);font-size:12px">Output</div>
+    <pre id="output">Chưa có output. Chọn layout + cấu hình rồi bấm “Xuất Prompt” hoặc “Xuất JSON”.</pre>
+
+    <div class="log">
+      <div style="color:var(--text-muted);font-size:12px;margin-bottom:6px">Log</div>
+      <pre id="log"></pre>
+    </div>
+  </aside>
+</main>
+
+<script src="./xnc-engine.js"></script>
+</body>
+</html>
