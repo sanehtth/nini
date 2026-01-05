@@ -67,6 +67,36 @@
       "label": "Mặt ngầu lạnh tanh",
       "desc_en": "stone-cold face, sharp eyes, relaxed but dominant posture, intimidating calm",
       "intensity": "med"
-    }
+    },
+    {
+    "id": "fishing_relaxed",
+    "label": "Ngồi câu cá thư giãn",
+    "desc_en": "sitting calmly by the water, holding a fishing rod, patient expression, occasional gaze at the float",
+    "intensity": "none"
+  },
+  {
+    "id": "walking_curious",
+    "label": "Đi bộ ngó trái phải",
+    "desc_en": "walking at a steady pace, head turning side to side, observing surroundings with curiosity, relaxed arm swing",
+    "intensity": "low"
+  },
+  {
+    "id": "running_energetic",
+    "label": "Chạy bộ năng động",
+    "desc_en": "jogging with a rhythmic pace, focused breathing, swinging arms, determined facial expression, slight sweat",
+    "intensity": "med"
+  },
+  {
+    "id": "sunbathing_chill",
+    "label": "Nằm phơi nắng",
+    "desc_en": "lying down flat or reclined, eyes closed, relaxed limbs, peaceful expression, basking in the sun",
+    "intensity": "none"
+  },
+  {
+    "id": "running_panicked",
+    "label": "Chạy thục mạng",
+    "desc_en": "sprinting fast, eyes wide with panic, heavy breathing, frantic arm movement, looking back occasionally",
+    "intensity": "very_high"
+  }
   ]
 }
