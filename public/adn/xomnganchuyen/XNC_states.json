@@ -211,6 +211,54 @@
     "label": "Ngồi vắt chéo chân suy tư",
     "desc_en": "sitting with legs crossed, leaning forward slightly, chin resting on hand, looking serious and professional",
     "intensity": "low"
+  },
+    {
+    "id": "flying_kite",
+    "label": "Thả diều",
+    "desc_en": "running on a grassy field, looking up at the sky, holding a kite string spool, joyful expression, wind blowing through hair",
+    "intensity": "med"
+  },
+  {
+    "id": "hide_and_seek_blindfold",
+    "label": "Bịt mắt mò mẫm",
+    "desc_en": "wearing a cloth blindfold, arms extended forward, feeling the air, cautious steps, slight smirk of concentration",
+    "intensity": "low"
+  },
+  {
+    "id": "sneaking_around",
+    "label": "Lén la lén lút",
+    "desc_en": "tiptoeing, body hunched low, looking around suspiciously, finger on lips (shh), trying to be invisible",
+    "intensity": "low"
+  },
+  {
+    "id": "anxious_worry",
+    "label": "Thấp thỏm lo sợ",
+    "desc_en": "pacing back and forth, biting nails or clenching hands, darting eyes, sweating slightly, nervous energy",
+    "intensity": "med"
+  },
+  {
+    "id": "startled_jump",
+    "label": "Giật mình thót tim",
+    "desc_en": "body jerking upward, eyes wide open, hands flying up in surprise, gasping, shoulders shrugged high",
+    "intensity": "high"
+  },
+  {
+    "id": "extreme_panic",
+    "label": "Hoảng loạn cực độ",
+    "desc_en": "shaking violently, pupils dilated, hyperventilating, hands clutching head, desperate expression",
+    "intensity": "very_high"
+  },
+  {
+    "id": "fainting_shock",
+    "label": "Hết hồn té xỉu",
+    "desc_en": "eyes rolling back, body Limp and falling backward, arms spread out, unconscious but comical expression",
+    "intensity": "very_high"
+  },
+  {
+    "id": "winking_smile",
+    "label": "Nháy mắt mỉm cười",
+    "desc_en": "one eye closed in a wink, charming tilt of the head, confident and friendly smile, playful vibe",
+    "intensity": "low"
   }
   ]
 }
