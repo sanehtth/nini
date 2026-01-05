@@ -97,6 +97,120 @@
     "label": "Chạy thục mạng",
     "desc_en": "sprinting fast, eyes wide with panic, heavy breathing, frantic arm movement, looking back occasionally",
     "intensity": "very_high"
+  },
+    {
+    "id": "walking_umbrella",
+    "label": "Đi bộ che dù",
+    "desc_en": "walking gracefully, holding an umbrella over the shoulder, light steps, relaxed facial expression",
+    "intensity": "low"
+  },
+  {
+    "id": "watering_plants",
+    "label": "Tưới cây",
+    "desc_en": "standing and holding a watering can, looking down at the plants, gentle smile, peaceful gardening posture",
+    "intensity": "low"
+  },
+  {
+    "id": "drinking_coffee",
+    "label": "Uống cà phê",
+    "desc_en": "sitting at a small table, holding a coffee cup with both hands, steam rising, taking a slow sip, thoughtful gaze",
+    "intensity": "none"
+  },
+  {
+    "id": "dancing_energetic",
+    "label": "Nhảy dance cực sung",
+    "desc_en": "dynamic body movement, arms swinging, one leg lifted, joyful expression, energetic dance steps",
+    "intensity": "high"
+  },
+  {
+    "id": "clapping_joyfully",
+    "label": "Vỗ tay vui vẻ",
+    "desc_en": "clapping hands repeatedly, wide bright smile, sparkling eyes, leaning forward slightly in excitement",
+    "intensity": "med_high"
+  },
+  {
+    "id": "reading_book",
+    "label": "Ngồi đọc sách",
+    "desc_en": "sitting under a coconut tree, holding an open book, focused eyes, occasional slight nod or smile",
+    "intensity": "none"
+  },
+  {
+    "id": "sweeping_yard",
+    "label": "Quét sân",
+    "desc_en": "holding a broom, bending slightly, rhythmic sweeping motion, casual everyday clothes",
+    "intensity": "low"
+  },
+  {
+    "id": "taking_selfie",
+    "label": "Giơ máy chụp hình selfie",
+    "desc_en": "holding a phone up high, tilting head, making a V-sign with fingers, bright smile towards the screen",
+    "intensity": "med"
+  },
+    {
+    "id": "sleepy_yawning",
+    "label": "Buồn ngủ rũ rượi",
+    "desc_en": "heavy eyelids, mouth wide open in a yawn, watery eyes, slouching posture, hand covering mouth",
+    "intensity": "low"
+  },
+  {
+    "id": "sleeping_under_blanket",
+    "label": "Trùm chăn ngủ tiếp",
+    "desc_en": "wrapped tightly in a thick blanket, only the top of the head visible, peaceful sleeping face, cozy atmosphere",
+    "intensity": "none"
+  },
+  {
+    "id": "runny_nose_flu",
+    "label": "Sổ mũi, chảy mũi",
+    "desc_en": "red nose, holding a tissue, small drop hanging from the nose, tired eyes, slightly miserable expression",
+    "intensity": "med"
+  },
+  {
+    "id": "sweating_exhausted",
+    "label": "Đổ mồ hôi đầm đìa",
+    "desc_en": "beads of sweat rolling down the face, soaked collar, panting, wiping forehead with hand or sleeve",
+    "intensity": "med_high"
+  },
+  {
+    "id": "drooling_craving",
+    "label": "Thèm chảy nước miếng",
+    "desc_en": "eyes fixed on something (food), mouth slightly open with a drop of drool, dazed but hungry look",
+    "intensity": "med"
+  },
+  {
+    "id": "eureka_moment",
+    "label": "Mắt sáng rực như tìm ra ý tưởng",
+    "desc_en": "eyes sparkling with bright light, wide grin, lightbulb-like expression, finger pointing up, sudden energetic posture",
+    "intensity": "very_high"
+  },
+    {
+    "id": "thinking_hand_on_chin",
+    "label": "Ngồi chống tay lên bàn suy nghĩ",
+    "desc_en": "sitting at a table, one hand supporting the chin, gaze fixed on a distant point, thoughtful and focused expression",
+    "intensity": "low"
+  },
+  {
+    "id": "thinking_hand_on_forehead",
+    "label": "Gác tay lên trán suy nghĩ",
+    "desc_en": "leaning back or lying down, back of the hand resting on the forehead, eyes closed or looking upward, deep contemplative look",
+    "intensity": "low"
+  },
+  {
+    "id": "thinking_finger_on_temple",
+    "label": "Chỉ ngón tay lên màng tang tư duy",
+    "desc_en": "index finger pressing against the temple, eyes narrowed in concentration, slight frown, intellectual and analytical posture",
+    "intensity": "med"
+  },
+  {
+    "id": "sitting_cross_legged",
+    "label": "Ngồi vắt chéo chân",
+    "desc_en": "sitting on a chair or bench, one leg crossed over the other, relaxed hands on the lap, confident and composed posture",
+    "intensity": "none"
+  },
+  {
+    "id": "sitting_cross_legged_thinking",
+    "label": "Ngồi vắt chéo chân suy tư",
+    "desc_en": "sitting with legs crossed, leaning forward slightly, chin resting on hand, looking serious and professional",
+    "intensity": "low"
   }
   ]
 }
