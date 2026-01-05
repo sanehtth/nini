@@ -295,6 +295,69 @@
     "desc_vi": "Hàm răng đánh bò cạp, môi tái đi, cả khuôn mặt và vai rung bần bật vì lạnh hoặc quá sợ",
     "desc_en": "chattering teeth, pale lips, entire face and shoulders shivering uncontrollably from cold or fear",
     "intensity": "high"
+  },
+    {
+    "id": "coconut_sweet_joy",
+    "label": "Hít hà mùi quê hương",
+    "desc_vi": "Mắt nhắm nghiền, mũi hơi hếch lên như đang ngửi mùi hoa dừa, nụ cười hạnh phúc mãn nguyện",
+    "desc_en": "eyes tightly shut, nose slightly twitching as if smelling coconut flowers, blissful satisfied smile",
+    "intensity": "medium"
+  },
+  {
+    "id": "guilty_sweet_tooth",
+    "label": "Miệng dính đồ ăn",
+    "desc_vi": "Mắt đảo liên tục, miệng còn dính vụn bánh hoặc nước tương, cười gượng gạo vì bị bắt quả tang",
+    "desc_en": "eyes darting nervously, food crumbs on the corners of the mouth, awkward grin for being caught",
+    "intensity": "high"
+  },
+  {
+    "id": "mira_fox_wisdom",
+    "label": "Ánh mắt sắc sảo",
+    "desc_vi": "Đôi mắt cáo hẹp lại đầy tính toán, đồng tử thu nhỏ, khóe môi nhếch nhẹ đầy bí ẩn",
+    "desc_en": "narrowed fox-like eyes, small pupils, mysterious subtle smirk, calculating look",
+    "intensity": "medium"
+  },
+    {
+    "id": "hair_flip_radiant",
+    "label": "Hất tóc tỏa sáng",
+    "desc_vi": "Đầu hất nhẹ ra sau, tóc bay bổng lấp lánh, đôi mắt tự tin rạng rỡ với hiệu ứng hào quang xung quanh",
+    "desc_en": "flipping hair back with confidence, shining and flowing hair, sparkling eyes, radiant aura effect, glamorous facial expression",
+    "intensity": "high"
+  },
+  {
+    "id": "rapid_blinking_disbelief",
+    "label": "Chớp mắt liên tục",
+    "desc_vi": "Mắt chớp liên hồi, chân mày nhướng cao, biểu cảm ngơ ngác không tin vào mắt mình",
+    "desc_en": "blinking rapidly and repeatedly, raised eyebrows, confused and disbelieving gaze, comical fluttering eyelids",
+    "intensity": "medium"
+  },
+  {
+    "id": "rubbing_eyes_reality_check",
+    "label": "Dụi mắt kiểm tra sự thật",
+    "desc_vi": "Hai tay dụi mắt, sau đó mở to nhìn trừng trừng, mặt nghệt ra vì sốc trước sự việc đang diễn ra",
+    "desc_en": "rubbing eyes with hands, then staring wide-eyed, jaw slightly dropped, trying to verify reality, shocked and stunned expression",
+    "intensity": "high"
+  },
+    {
+    "id": "extreme_shame_dissolve",
+    "label": "Xấu hổ muốn độn thổ",
+    "desc_vi": "Mặt đỏ bừng như gạch nung, đầu cúi gằm, hai tay che mặt hoặc kéo cổ áo che kín miệng, mắt nhắm tịt vì quá quê",
+    "desc_en": "deep crimson face flush, head hanging very low, hands covering the face or pulling up the collar, eyes tightly shut in extreme embarrassment",
+    "intensity": "very_high"
+  },
+  {
+    "id": "teary_brink_of_crying",
+    "label": "Mắt rưng rưng muốn khóc",
+    "desc_vi": "Viền mắt đỏ hoe, nước mắt đọng lại lung linh ở khóe mắt, môi dưới hơi mím lại để ngăn tiếng nấc",
+    "desc_en": "reddened eye rims, shimmering large tears welling up in the eyes, lower lip slightly bitten to suppress a sob, vulnerable expression",
+    "intensity": "high"
+  },
+  {
+    "id": "overwhelming_gratitude",
+    "label": "Cảm động muốn chết",
+    "desc_vi": "Mắt sáng lấp lánh như có sao, hai tay áp lên ngực, miệng cười mếu máo vì quá hạnh phúc và biết ơn",
+    "desc_en": "sparkling teary eyes, hands pressed firmly against the chest, a trembling joyful smile, expression of being deeply moved and overwhelmed with gratitude",
+    "intensity": "very_high"
   }
   ]
 }
