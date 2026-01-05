@@ -10,27 +10,32 @@
   <!-- Theme xanh lá & nâu -->
   <link rel="stylesheet" href="/public/green-theme.css" />
 
-  <style>
+ <style>
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     .xnc-page {
-      max-width: 960px;
+      max-width: 1100px; /* Tăng chiều rộng một chút để chia cột đẹp hơn */
       margin: 0 auto;
       padding: 24px 16px 40px;
     }
-    .xnc-header {
-      margin-bottom: 20px;
+    /* Chia bố cục chính thành 2 cột */
+    .xnc-grid-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr; /* Chia 2 cột bằng nhau */
+      gap: 16px;
+      align-items: start;
     }
-    .xnc-header h1 {
-      margin: 0 0 4px;
-      font-size: 24px;
+    /* Cột bên phải chứa các ô Output (thường dài hơn) */
+    .xnc-column-output {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
-    .xnc-header p {
-      margin: 0;
-      opacity: 0.8;
-    }
+
+    .xnc-header { margin-bottom: 20px; }
+    .xnc-header h1 { margin: 0 0 4px; font-size: 24px; }
+    
     .xnc-block {
       background: rgba(255, 255, 255, 0.85);
       border-radius: 12px;
@@ -38,86 +43,27 @@
       margin-bottom: 16px;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
     }
-    .xnc-block h3 {
-      margin-top: 0;
-      margin-bottom: 8px;
-      font-size: 16px;
+    .xnc-block h3 { margin-top: 0; margin-bottom: 8px; font-size: 16px; }
+    .xnc-field { margin-bottom: 10px; }
+    .xnc-field label { display: block; font-size: 13px; margin-bottom: 4px; font-weight: 500; }
+    .xnc-field input, .xnc-field textarea, .xnc-field select {
+      width: 100%; border-radius: 8px; border: 1px solid #d3d3d3; padding: 6px 8px; font-size: 13px; box-sizing: border-box;
     }
-    .xnc-field {
-      margin-bottom: 10px;
-    }
-    .xnc-field label {
-      display: block;
-      font-size: 13px;
-      margin-bottom: 4px;
-      font-weight: 500;
-    }
-    .xnc-field input[type="text"],
-    .xnc-field input[type="password"],
-    .xnc-field textarea,
-    .xnc-field select {
-      width: 100%;
-      border-radius: 8px;
-      border: 1px solid #d3d3d3;
-      padding: 6px 8px;
-      font-size: 13px;
-      box-sizing: border-box;
-    }
-    .xnc-field textarea {
-      min-height: 56px;
-      resize: vertical;
-    }
-    .xnc-hint {
-      font-size: 12px;
-      opacity: 0.7;
-      margin-top: 4px;
-    }
-    .xnc-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 6px;
-      flex-wrap: wrap;
-    }
+    .xnc-field textarea { min-height: 50px; resize: vertical; }
+    .xnc-hint { font-size: 11px; opacity: 0.7; margin-top: 4px; }
     .xnc-btn {
-      border: none;
-      border-radius: 999px;
-      padding: 8px 14px;
-      font-size: 13px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #4caf50;
-      color: #fff;
+      border: none; border-radius: 999px; padding: 8px 14px; font-size: 13px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px; background: #4caf50; color: #fff;
     }
-    .xnc-btn.secondary {
-      background: #f0f0f0;
-      color: #333;
-    }
+    .xnc-btn.secondary { background: #f0f0f0; color: #333; }
     .xnc-output {
-      width: 100%;
-      min-height: 160px;
-      padding: 8px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      font-size: 13px;
-      box-sizing: border-box;
-      resize: vertical;
-      font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas,
-        "Liberation Mono", "Courier New", monospace;
+      width: 100%; min-height: 120px; padding: 8px; border-radius: 10px; border: 1px solid #ccc; font-size: 12px;
+      box-sizing: border-box; resize: vertical; font-family: monospace;
     }
-    .xnc-tag-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      font-size: 11px;
-      margin-top: 4px;
-    }
-    .xnc-tag {
-      border-radius: 999px;
-      padding: 2px 8px;
-      background: rgba(255, 255, 255, 0.7);
-      border: 1px solid rgba(0, 0, 0, 0.06);
+    
+    /* Responsive cho màn hình nhỏ/điện thoại: quay về 1 cột */
+    @media (max-width: 768px) {
+      .xnc-grid-container { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -125,269 +71,123 @@
   <div class="xnc-page">
     <header class="xnc-header">
       <h1>Prompt tạo VIDEO – Xóm Ngàn Chuyện</h1>
-      <p>Tool sinh prompt video &amp; 4 keyframe theo đúng ADN Xóm Ngàn Chuyện, có kèm JSON để lưu storyboard.</p>
+      <p>Tool sinh prompt video & 4 keyframe theo đúng ADN Xóm Ngàn Chuyện.</p>
     </header>
 
-    <!-- CẤU HÌNH API / PROVIDER -->
-    <section class="xnc-block">
-      <h3>Cấu hình AI dùng để chuẩn hoá prompt</h3>
-      <div class="xnc-field">
-        <label for="mpProvider">AI Provider</label>
-        <select id="mpProvider">
-          <option value="openai">OpenAI</option>
-          <option value="gemini">Google AI (Gemini)</option>
-          <option value="grok">Grok (xAI)</option>
-        </select>
-        <div class="xnc-hint" id="mpProviderHint">
-          Hiện tại chuẩn hoá prompt chỉ hỗ trợ OpenAI.
-        </div>
-      </div>
-      <div class="xnc-field">
-        <label for="mpApiKey">OpenAI API Key</label>
-        <input
-          type="password"
-          id="mpApiKey"
-          placeholder="sk-..."
-        />
-        <div class="xnc-hint">
-          Nếu để trống, hệ thống sẽ cố gắng đọc key từ cấu hình đã lưu trong <code>localStorage.apiProfiles</code>.
-        </div>
-      </div>
-    </section>
+    <div class="xnc-grid-container">
+      <div class="xnc-column-input">
+        <section class="xnc-block">
+          <h3>1. Cấu hình & ADN</h3>
+          <div class="xnc-field">
+            <label for="mpProvider">AI Provider</label>
+            <select id="mpProvider"><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select>
+          </div>
+          <div class="xnc-field">
+            <label for="mpApiKey">OpenAI API Key</label>
+            <input type="password" id="mpApiKey" placeholder="sk-..." />
+          </div>
+          <div class="xnc-field">
+            <label for="xncAdnProfile">ADN / thế giới</label>
+            <select id="xncAdnProfile"><option value="xomnganchuyen">Xóm Ngàn Chuyện</option></select>
+          </div>
+        </section>
 
-    <!-- CHỌN ADN / SERIES -->
-    <section class="xnc-block">
-      <h3>Chọn ADN / Series</h3>
+        <section class="xnc-block">
+          <h3>2. Thông tin cảnh</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="xnc-field">
+              <label for="xncVideoId">ID video *</label>
+              <input type="text" id="xncVideoId" placeholder="ep08_sc01" />
+            </div>
+            <div class="xnc-field">
+              <label for="xncDuration">Độ dài (s)</label>
+              <input type="text" id="xncDuration" value="2" />
+            </div>
+          </div>
+          <div class="xnc-field">
+            <label for="xncAction">Hành động chính *</label>
+            <input type="text" id="xncAction" placeholder="Hành động..." />
+          </div>
+          <div class="xnc-field">
+            <label for="xncContext">Bối cảnh *</label>
+            <input type="text" id="xncContext" placeholder="Địa điểm..." />
+          </div>
+          <div class="xnc-field">
+            <label for="xncMotion">Mô tả chuyển động *</label>
+            <textarea id="xncMotion" placeholder="Camera, nhân vật di chuyển thế nào..."></textarea>
+          </div>
+        </section>
 
-      <div class="xnc-field">
-        <label for="xncAdnProfile">ADN / thế giới *</label>
-        <select id="xncAdnProfile">
-          <option value="xomnganchuyen">Xóm Ngàn Chuyện (mặc định)</option>
-        </select>
-        <div class="xnc-hint">
-          Mỗi ADN ứng với thư mục <code>/adn/&lt;profileId&gt;</code> chứa JSON nhân vật, style, audio.
-        </div>
-      </div>
-    </section>
-
-    <!-- VIBE -->
-    <section class="xnc-block">
-      <h3>Vibe &amp; phong cách Xóm Ngàn Chuyện</h3>
-      <div class="xnc-tag-row">
-        <span class="xnc-tag">Green &amp; Brown Vietnamese vibe</span>
-        <span class="xnc-tag">Pastel chibi 2D</span>
-        <span class="xnc-tag">Vietnamese primary school</span>
-      </div>
-      <p class="xnc-hint">
-        ADN này được cố định bởi <code>xomnganchuyen.js</code> và JSON XNC_* trong thư mục <code>/adn</code>.
-      </p>
-    </section>
-
-    <!-- THÔNG TIN CẢNH VIDEO -->
-    <section class="xnc-block">
-      <h3>Thông tin cảnh video</h3>
-
-      <div class="xnc-field">
-        <label for="xncVideoId">ID video / ID cảnh *</label>
-        <input
-          type="text"
-          id="xncVideoId"
-          placeholder="Ví dụ: ep08_sc01_vid"
-        />
-        <div class="xnc-hint">
-          Dùng ID này để quản lý scene trong storyboard (tập – cảnh – loại: <code>ep08_sc01_vid</code>).
-        </div>
-      </div>
-
-      <div class="xnc-field">
-        <label for="xncAction">Hành động chính của cảnh *</label>
-        <input
-          type="text"
-          id="xncAction"
-          placeholder="Ví dụ: Bô-lô soi cuốn sổ đen, Tùm-la lao tới xử lý..."
-        />
-      </div>
-
-      <div class="xnc-field">
-        <label for="xncContext">Bối cảnh / không gian *</label>
-        <input
-          type="text"
-          id="xncContext"
-          placeholder="Ví dụ: trong lớp 2A, hành lang trường, sân trường giờ ra chơi..."
-        />
+        <section class="xnc-block">
+          <h3>3. Nhân vật & Mood</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="xnc-field">
+              <label for="xncCharacter">Nhân vật *</label>
+              <select id="xncCharacter"><option value="">-- Chọn --</option></select>
+            </div>
+            <div class="xnc-field">
+              <label for="xncSignature">Signature</label>
+              <select id="xncSignature"><option value="">-- Chọn --</option></select>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="xnc-field">
+              <label for="xncCamera">Camera</label>
+              <select id="xncCamera">
+                <option value="">(Tự động)</option>
+                <option value="closeup">Close-up</option>
+                <option value="medium">Medium</option>
+              </select>
+            </div>
+            <div class="xnc-field">
+              <label for="xncEmotion">Tone màu *</label>
+              <select id="xncEmotion">
+                <option value="comedy" selected>Hài hước</option>
+                <option value="happy">Vui vẻ</option>
+                <option value="drama">Drama</option>
+              </select>
+            </div>
+          </div>
+          <div class="xnc-field">
+            <label for="xncExtraMood">Mood chi tiết</label>
+            <textarea id="xncExtraMood"></textarea>
+          </div>
+        </section>
       </div>
 
-      <div class="xnc-field">
-        <label for="xncMotion">Mô tả chuyển động (motion) *</label>
-        <textarea
-          id="xncMotion"
-          placeholder="Ví dụ: camera đứng yên, nhân vật bước 1–2 bước về phía bảng, tay chỉ vào tờ giấy, miệng nói nhưng không cần sync thoại..."
-        ></textarea>
-        <div class="xnc-hint">
-          Phần này giúp video AI hiểu chuyển động: camera tĩnh/di chuyển, nhân vật đi/chạy, quay đầu, giơ tay, v.v.
-        </div>
+      <div class="xnc-column-output">
+        <section class="xnc-block">
+          <h3>🎬 Prompt Video & Chuẩn hóa</h3>
+          <div class="xnc-field">
+            <textarea id="xncSamplePrompt_vid" placeholder="Dán prompt mẫu vào đây để chuẩn hóa..."></textarea>
+          </div>
+          <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+            <button class="xnc-btn" id="btnNormalizeVideo">🪄 Chuẩn hóa</button>
+            <button class="xnc-btn" id="btnGenVideo">🎬 Tạo mới</button>
+            <button class="xnc-btn secondary" id="btnCopyVideo">📋 Copy</button>
+          </div>
+          <textarea id="xncVideoPrompt" class="xnc-output" readonly></textarea>
+        </section>
+
+        <section class="xnc-block">
+          <h3>🖼️ 4 Keyframes</h3>
+          <div style="margin-bottom: 10px;">
+            <button class="xnc-btn" id="btnGenFrames">🖼️ Tạo Frame</button>
+            <button class="xnc-btn secondary" id="btnCopyFrames">📋 Copy</button>
+          </div>
+          <textarea id="xncFramesPrompt" class="xnc-output" readonly></textarea>
+        </section>
+
+        <section class="xnc-block">
+          <h3>🧩 JSON Scene</h3>
+          <div style="margin-bottom: 10px;">
+            <button class="xnc-btn" id="btnGenJson">🧩 Tạo JSON</button>
+            <button class="xnc-btn secondary" id="btnCopyJson">📋 Copy</button>
+          </div>
+          <textarea id="xncJsonOutput" class="xnc-output" readonly></textarea>
+        </section>
       </div>
-
-      <div class="xnc-field">
-        <label for="xncDuration">Độ dài video (giây)</label>
-        <input
-          type="text"
-          id="xncDuration"
-          value="2"
-        />
-        <div class="xnc-hint">
-          Thường 1–2s cho short gag, bạn có thể đổi nếu cần.
-        </div>
-      </div>
-    </section>
-
-    <!-- NHÂN VẬT -->
-    <section class="xnc-block">
-      <h3>Nhân vật &amp; biểu cảm đặc trưng</h3>
-
-      <div class="xnc-field">
-        <label for="xncCharacter">Nhân vật *</label>
-        <select id="xncCharacter">
-          <option value="">-- Chọn nhân vật --</option>
-        </select>
-      </div>
-
-      <div class="xnc-field">
-        <label for="xncSignature">Biểu cảm / hành vi đặc trưng</label>
-        <select id="xncSignature">
-          <option value="">-- Chọn (không bắt buộc) --</option>
-        </select>
-        <div class="xnc-hint">
-          Nếu không chọn, video vẫn dùng hành động chính. Signature giúp nhân vật mang đúng “thói quen riêng”.
-        </div>
-      </div>
-    </section>
-
-    <!-- CAMERA & TONE -->
-    <section class="xnc-block">
-      <h3>Góc nhìn, tone cảm xúc &amp; mood</h3>
-
-      <div class="xnc-field">
-        <label for="xncCamera">Góc nhìn / camera</label>
-        <select id="xncCamera">
-          <option value="">(Không bắt buộc)</option>
-          <option value="closeup">Close-up (cận mặt)</option>
-          <option value="medium">Medium shot (nửa người / toàn thân)</option>
-          <option value="dramatic_low">Low angle drama</option>
-          <option value="comedy_zoom">Comedy punch-in</option>
-        </select>
-      </div>
-
-      <div class="xnc-field">
-        <label for="xncEmotion">Tone cảm xúc / màu chính *</label>
-        <select id="xncEmotion">
-          <option value="happy">Vui / ấm</option>
-          <option value="comedy" selected>Hài hước</option>
-          <option value="warm">Ấm áp</option>
-          <option value="drama">Drama / nghiêm túc</option>
-          <option value="twist">Twist / bất ngờ</option>
-          <option value="embarrassed">Ngại / xấu hổ</option>
-        </select>
-      </div>
-
-      <div class="xnc-field">
-        <label for="xncExtraMood">Mood chi tiết (tùy chọn)</label>
-        <textarea
-          id="xncExtraMood"
-          placeholder="Ví dụ: hơi căng thẳng nhưng vẫn pastel, cảm giác học đường Việt Nam, Noel vui nhộn..."
-        ></textarea>
-      </div>
-    </section>
-
-    <!-- PROMPT MẪU VIDEO -->
-    <section class="xnc-block">
-      <h3>Prompt mẫu VIDEO từ AI khác (tuỳ chọn)</h3>
-
-      <div class="xnc-field">
-        <label for="xncSamplePrompt_vid">Dán prompt video gốc</label>
-        <textarea
-          id="xncSamplePrompt_vid"
-          placeholder="Dán prompt video từ Sora / Flow / Meta / v.v..."
-        ></textarea>
-      </div>
-
-      <div class="xnc-field">
-        <button type="button" class="xnc-btn" id="btnNormalizeVideo">
-          Chuẩn hoá VIDEO theo ADN Xóm Ngàn Chuyện (OpenAI)
-        </button>
-      </div>
-    </section>
-
-    <!-- PROMPT VIDEO -->
-    <section class="xnc-block">
-      <h3>🎬 Prompt VIDEO (generic – dùng cho Sora / Meta / Flow)</h3>
-
-      <div class="xnc-actions">
-        <button type="button" class="xnc-btn" id="btnGenVideo">
-          🎬 Tạo Prompt Video
-        </button>
-        <button type="button" class="xnc-btn secondary" id="btnCopyVideo">
-          📋 Copy Prompt Video
-        </button>
-      </div>
-
-      <div class="xnc-field" style="margin-top: 10px;">
-        <textarea
-          id="xncVideoPrompt"
-          class="xnc-output"
-          placeholder="Prompt video sẽ hiện ở đây sau khi bạn bấm 'Tạo Prompt Video' hoặc sau khi chuẩn hoá từ prompt mẫu..."
-        ></textarea>
-      </div>
-    </section>
-
-    <!-- KEYFRAMES -->
-    <section class="xnc-block">
-      <h3>🖼️ Prompt 4 Keyframes (cho dựng video từ frame)</h3>
-
-      <div class="xnc-actions">
-        <button type="button" class="xnc-btn" id="btnGenFrames">
-          🖼️ Tạo 4 Frame
-        </button>
-        <button type="button" class="xnc-btn secondary" id="btnCopyFrames">
-          📋 Copy 4 Frame
-        </button>
-      </div>
-
-      <div class="xnc-field" style="margin-top: 10px;">
-        <textarea
-          id="xncFramesPrompt"
-          class="xnc-output"
-          placeholder="Prompt 4 frame (text liệt kê) sẽ hiện ở đây sau khi bạn bấm 'Tạo 4 Frame'..."
-        ></textarea>
-      </div>
-    </section>
-
-    <!-- JSON EXPORT -->
-    <section class="xnc-block">
-      <h3>🧩 JSON lưu scene VIDEO (shot)</h3>
-
-      <div class="xnc-actions">
-        <button type="button" class="xnc-btn" id="btnGenJson">
-          🧩 Tạo JSON
-        </button>
-        <button type="button" class="xnc-btn secondary" id="btnCopyJson">
-          📋 Copy JSON
-        </button>
-      </div>
-
-      <div class="xnc-field" style="margin-top: 10px;">
-        <textarea
-          id="xncJsonOutput"
-          class="xnc-output"
-          placeholder="JSON sẽ hiện ở đây sau khi bạn bấm 'Tạo JSON'..."
-        ></textarea>
-      </div>
-
-      <p class="xnc-hint">
-        JSON này có đầy đủ: ID scene, action, context, character, videoPrompt, keyframes.
-        Bạn có thể lưu thành file <code>.json</code> hoặc gửi cho người làm video.
-      </p>
-    </section>
+    </div>
   </div>
 
   <!-- JS ADN -->
@@ -844,4 +644,5 @@ Technical notes:
   </script>
 </body>
 </html>
+
 
