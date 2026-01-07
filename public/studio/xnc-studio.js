@@ -17,24 +17,25 @@ async function loadJSON(url) {
 }
 async function loadAllJSON() {
     try {
-        // Nạp object tổng
-        const resFaces = await loadJSON("XNC_faces.json");
-        const resHands = await loadJSON("XNC_hands.json");
-        const resMotions = await loadJSON("XNC_motions.json");
-        const resObjects = await loadJSON("XNC_objects.json");
+        // 1. Tải dữ liệu từ file
+        const dataFaces = await loadJSON("XNC_faces.json");
+        const dataHands = await loadJSON("XNC_hands.json");
+        const dataMotions = await loadJSON("XNC_motions.json");
+        const dataObjects = await loadJSON("XNC_objects.json");
 
-        // Gán mảng bên trong vào các biến toàn cục
-        // Lưu ý: Kiểm tra tên thuộc tính trong file JSON (ví dụ: .faces, .hands...)
-        FACES = resFaces.faces || []; 
-        HANDS = resHands.hands || [];
-        MOTIONS = resMotions.motions || [];
-        OBJECTS = resObjects.objects || [];
+        // 2. Gán vào biến toàn cục (phải khớp với key trong file JSON)
+        FACES = dataFaces.faces || [];
+        HANDS = dataHands.hands || [];
+        MOTIONS = dataMotions.motions || [];
+        OBJECTS = dataObjects.objects || [];
 
-        console.log("Loaded Data:", { FACES, HANDS, MOTIONS, OBJECTS });
+        console.log("Dữ liệu đã nạp:", { FACES, HANDS, MOTIONS, OBJECTS });
 
+        // 3. Chỉ gọi đổ dữ liệu khi đã có mảng
         populateDropdowns();
+
     } catch (err) {
-        console.error("Lỗi load JSON:", err);
+        console.error("Lỗi thực thi loadAllJSON:", err);
     }
 }
 /* async function loadAllJSON() {
