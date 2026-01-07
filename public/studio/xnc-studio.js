@@ -69,18 +69,22 @@ function populateDropdowns() {
 function populateFaces() {
     const sel = document.getElementById("pFace");
     if (!sel) return;
-    sel.innerHTML = `<option value="">(none)</option>`;
-    FACES.faces.forEach(f => {
-        sel.innerHTML += `<option value="${f.id}">${f.label_v}</option>`;
+    sel.innerHTML = '<option value="">(none)</option>';
+    
+    // Sửa chỗ này: Bỏ chữ .faces đi
+    FACES.forEach(f => {
+        sel.innerHTML += `<option value="${f.id}">${f.label}</option>`;
     });
 }
 
 function populateHands() {
     const sel = document.getElementById("pHand");
     if (!sel) return;
-    sel.innerHTML = `<option value="">(none)</option>`;
-    HANDS.hands.forEach(h => {
-        sel.innerHTML += `<option value="${h.id}">${h.label_v}</option>`;
+    sel.innerHTML = '<option value="">(none)</option>';
+    
+    // Sửa chỗ này: Bỏ chữ .hands đi
+    HANDS.forEach(h => {
+        sel.innerHTML += `<option value="${h.id}">${h.label}</option>`;
     });
 }
 
