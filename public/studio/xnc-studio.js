@@ -18,16 +18,16 @@ async function loadJSON(url) {
 async function loadAllJSON() {
     try {
         // 1. Tải dữ liệu từ file
-        const dataFaces = await loadJSON("XNC_faces.json");
-        const dataHands = await loadJSON("XNC_hands.json");
-        const dataMotions = await loadJSON("XNC_motions.json");
-        const dataObjects = await loadJSON("XNC_objects.json");
+        const resFaces = await loadJSON("XNC_faces.json");
+        const resHands = await loadJSON("XNC_hands.json");
+        const resMotions = await loadJSON("XNC_motions.json");
+        const resObjects = await loadJSON("XNC_objects.json");
 
         // 2. Gán vào biến toàn cục (phải khớp với key trong file JSON)
-        FACES = dataFaces.faces || [];
-        HANDS = dataHands.hands || [];
-        MOTIONS = dataMotions.motions || [];
-        OBJECTS = dataObjects.objects || [];
+       FACES = resFaces.faces || [];
+HANDS = resHands.hands || []; // Lưu ý kiểm tra lại key 'hands' trong JSON
+MOTIONS = resMotions.motions || [];
+OBJECTS = resObjects.objects || [];
 
         console.log("Dữ liệu đã nạp:", { FACES, HANDS, MOTIONS, OBJECTS });
 
