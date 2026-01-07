@@ -15,7 +15,7 @@ async function loadJSON(url) {
     const res = await fetch(url);
     return await res.json();
 }
-/*async function loadAllJSON() {
+async function loadAllJSON() {
     try {
         // 1. Tải dữ liệu từ file
         const resFaces = await loadJSON("XNC_faces.json");
@@ -37,8 +37,8 @@ OBJECTS = resObjects.objects || [];
     } catch (err) {
         console.error("Lỗi thực thi loadAllJSON:", err);
     }
-}*/
- async function loadAllJSON() {
+}
+/* async function loadAllJSON() {
     try {
         FACES = await loadJSON("XNC_faces.json");
         HANDS = await loadJSON("XNC_hands.json");
@@ -51,7 +51,7 @@ OBJECTS = resObjects.objects || [];
     } catch (err) {
         console.error("Lỗi load JSON:", err);
     }
-} 
+} */
 
 document.addEventListener("DOMContentLoaded", loadAllJSON);
 
