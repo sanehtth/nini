@@ -15,8 +15,29 @@ async function loadJSON(url) {
     const res = await fetch(url);
     return await res.json();
 }
-
 async function loadAllJSON() {
+    try {
+        // Nạp object tổng
+        const resFaces = await loadJSON("XNC_faces.json");
+        const resHands = await loadJSON("XNC_hands.json");
+        const resMotions = await loadJSON("XNC_motions.json");
+        const resObjects = await loadJSON("XNC_objects.json");
+
+        // Gán mảng bên trong vào các biến toàn cục
+        // Lưu ý: Kiểm tra tên thuộc tính trong file JSON (ví dụ: .faces, .hands...)
+        FACES = resFaces.faces || []; 
+        HANDS = resHands.hands || [];
+        MOTIONS = resMotions.motions || [];
+        OBJECTS = resObjects.objects || [];
+
+        console.log("Loaded Data:", { FACES, HANDS, MOTIONS, OBJECTS });
+
+        populateDropdowns();
+    } catch (err) {
+        console.error("Lỗi load JSON:", err);
+    }
+}
+/* async function loadAllJSON() {
     try {
         FACES = await loadJSON("XNC_faces.json");
         HANDS = await loadJSON("XNC_hands.json");
@@ -29,7 +50,7 @@ async function loadAllJSON() {
     } catch (err) {
         console.error("Lỗi load JSON:", err);
     }
-}
+} */
 
 document.addEventListener("DOMContentLoaded", loadAllJSON);
 
