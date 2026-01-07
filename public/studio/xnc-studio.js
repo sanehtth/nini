@@ -92,7 +92,7 @@ function populateMotions() {
     const sel = document.getElementById("pAction");
     if (!sel) return;
     sel.innerHTML = `<option value="">(none)</option>`;
-    MOTIONS.motions.forEach(m => {
+    MOTIONS.forEach(m => {
         sel.innerHTML += `<option value="${m.id}">${m.label_v}</option>`;
     });
 }
@@ -101,7 +101,7 @@ function populateObjects() {
     const sel = document.getElementById("pObject");
     if (!sel) return;
     sel.innerHTML = `<option value="">(none)</option>`;
-    OBJECTS.objects.forEach(o => {
+    OBJECTS.forEach(o => {
         sel.innerHTML += `<option value="${o.id}">${o.label_v}</option>`;
     });
 }
