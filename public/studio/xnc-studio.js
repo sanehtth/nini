@@ -265,3 +265,22 @@ function getInputValue(id) {
     if (!el) return "";
     return el.value || "";
 }
+// Logic chuyển đổi Tab
+document.querySelectorAll('.tabbtn').forEach(button => {
+    button.addEventListener('click', () => {
+        const tabName = button.getAttribute('data-tab');
+
+        // 1. Đổi trạng thái active của nút
+        document.querySelectorAll('.tabbtn').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+
+        // 2. Ẩn/Hiện nội dung tương ứng
+        if (tabName === 'prompt') {
+            document.getElementById('tab-prompt').classList.remove('hidden');
+            document.getElementById('tab-compose').classList.add('hidden');
+        } else {
+            document.getElementById('tab-prompt').classList.add('hidden');
+            document.getElementById('tab-compose').classList.remove('hidden');
+        }
+    });
+});
