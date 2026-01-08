@@ -17,6 +17,7 @@ function getStyles(){       return _getADN()?.styles       || {}; }
 function getCharacters(){   return _getADN()?.characters   || {}; }
 function getActions(){      return _getADN()?.actions      || {}; }
 function getStates(){       return _getADN()?.states       || {}; }
+function getOutfits(){       return _getADN()?.outfits       || {}; }
 
 function log(msg){
   const el = $("log");
@@ -48,9 +49,10 @@ const ADN_URLS = {
   actions: "/adn/xomnganchuyen/XNC_actions.json",
   faces: "/adn/xomnganchuyen/XNC_faces.json",   // NEW (faces)
   style: "/adn/xomnganchuyen/XNC_style.json",
+  outfits: "/adn/xomnganchuyen/XNC_outfits.json",
 };
 
-const ADN = { layouts: [], backgrounds: [], characters: [], actions: [], faces: [], style: [] };
+const ADN = { layouts: [], backgrounds: [], characters: [], actions: [], faces: [], style: [], outfits[] };
 
 // ADN guardrails
 const TONE_LOCKED_ID = "A";
