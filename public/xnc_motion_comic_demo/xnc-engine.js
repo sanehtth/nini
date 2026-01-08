@@ -52,7 +52,7 @@ const ADN_URLS = {
   outfits: "/adn/xomnganchuyen/XNC_outfits.json",
 };
 
-const ADN = { layouts: [], backgrounds: [], characters: [], actions: [], faces: [], style: [], outfits[], };
+const ADN = { layouts: [], backgrounds: [], characters: [], actions: [], faces: [], style: [], outfits: [], };
 
 // ADN guardrails
 const TONE_LOCKED_ID = "A";
