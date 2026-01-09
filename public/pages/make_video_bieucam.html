@@ -4,40 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>XNC Prompt Generator</title>
-  <link rel="stylesheet" href="/green-theme.css" />
-  
-  <style>
-    /* Chỉ override nhẹ cho đẹp hơn */
-    .container { max-width: 1200px; }
-    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
-    .upload-box { display: none; } /* Ẩn phần upload vì dùng hard-code */
-    #final-prompt {
-      min-height: 140px;
-      background: #1e1e1e;
-      color: #e0e0e0;
-      padding: 16px;
-      border-radius: 12px;
-      font-family: 'Consolas', monospace;
-      white-space: pre-wrap;
-      position: relative;
-      box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
-    }
-    #copy-btn {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      padding: 8px 16px;
-      font-size: 14px;
-    }
-    .section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: end; }
-    @media (max-width: 768px) { .section { grid-template-columns: 1fr; } }
-  </style>
-</head>
+  <link rel="stylesheet" href="/css/make_video.css" />
+   </head>
 <body>
   <div class="container">
     <main>
       <div class="card" style="text-align: center; margin-bottom: 32px;">
-        <h1 style="margin:0; font-size:32px; color:var(--secondary);">🎬 XNC Prompt Generator</h1>
+        <h1 style="margin:0; font-size:32px;">🎬 XNC Prompt Generator</h1>
         <p class="muted">Tạo prompt video cận cảnh biểu cảm & hành động nhân vật XNC</p>
       </div>
 
@@ -107,43 +80,14 @@
         </div>
       </div>
 
-     <!-- Final Prompt & Management -->
-<div class="card" style="margin-top:32px;">
-  <h3 style="margin-top:0; color:var(--primary);">Prompt hiện tại:</h3>
-  
-  <div style="margin-bottom:16px;">
-    <label><strong>ID Video:</strong></label>
-    <input type="text" id="video-id" placeholder="ví dụ: XNC001" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);" />
-  </div>
-  
-  <div style="margin-bottom:16px;">
-    <label><strong>Tên Video:</strong></label>
-    <input type="text" id="video-title" placeholder="ví dụ: Bô-lô soi chuyện lớp học" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);" />
-  </div>
-  
-  <div id="final-prompt" style="min-height:160px; background:#1e1e1e; color:#e0e0e0; padding:16px; border-radius:12px; font-family:monospace; white-space:pre-wrap; margin-bottom:16px;">
-    Chọn và bấm "Tạo Prompt" để xem kết quả...
-  </div>
-  
-  <div style="text-align:center; margin-bottom:20px;">
-    <button id="generate-btn" class="btn btn-primary" style="padding:12px 24px;">🚀 Tạo Prompt</button>
-    <button id="add-btn" class="btn btn-secondary" style="padding:12px 24px; margin-left:12px;">➕ Add vào Danh sách</button>
-  </div>
-  
-  <button id="copy-btn" class="btn btn-primary" style="position:absolute; top:12px; right:12px;">📋 Sao chép</button>
-</div>
-
-<!-- Danh sách Prompt đã lưu -->
-<div class="card" style="margin-top:32px;">
-  <h3 style="color:var(--primary);">Danh sách Prompt đã lưu (<span id="count">0</span>)</h3>
-  <div id="prompt-list" style="max-height:400px; overflow-y:auto;">
-    <p class="muted">Chưa có prompt nào. Bấm "Add vào Danh sách" để lưu đầu tiên!</p>
-  </div>
-  <div style="text-align:center; margin-top:16px;">
-    <button id="export-all-btn" class="btn btn-danger">📥 Export All to JSON</button>
-    <button id="clear-all-btn" class="btn" style="margin-left:12px; background:#eee;">🗑️ Xóa hết</button>
-  </div>
-</div>
+      <!-- Final Prompt -->
+      <div class="card" style="margin-top:32px;">
+        <h3 style="margin-top:0;">Prompt cuối cùng:</h3>
+        <div id="final-prompt" contenteditable="true" spellcheck="false"></div>
+        <button id="generate-btn" class="main-btn" style="margin-top:20px;">Tạo Prompt</button>
+        <button id="copy-btn" class="sub-btn" style="margin-left:10px;">Sao chép Prompt</button>
+        <button id="export-json" class="sub-btn" style="margin-left:10px;">Xuất JSON</button>
+      </div>
     </main>
   </div>
 
