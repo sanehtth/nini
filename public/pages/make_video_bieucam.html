@@ -3,77 +3,52 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>XNC Prompt Generator</title>
+  <title>XNC Multi-Character Prompt Generator</title>
   <link rel="stylesheet" href="/css/make_video.css" />
   <link rel="stylesheet" href="/green-theme.css" />
- </head>
+  <style>
+    .character-slot { border: 1px solid var(--border); padding: 15px; border-radius: 12px; margin-bottom: 20px; background: rgba(255,255,255,0.05); position: relative; }
+    .slot-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+    .btn-remove { background: #ff4d4d; color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; }
+    .btn-add-slot { background: var(--secondary); color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; margin-bottom: 20px; }
+  </style>
+</head>
 <body class="green-theme">
   <div class="container">
     <main>
       <div class="card" style="text-align: center; margin-bottom: 32px;">
         <h1 style="margin:0; font-size:32px; color:var(--secondary);">🎬 XNC Prompt Generator</h1>
-        <p class="muted">Tạo prompt video cận cảnh biểu cảm & hành động nhân vật XNC</p>
+        <p class="muted">Tạo prompt video đa nhân vật (Sane, Mira, Na, Bắp, Mít...)</p>
       </div>
 
-      <!-- Selections -->
-      <div class="card">
-        <div class="section">
-          <div>
-            <label>🧑 Nhân vật:</label>
-            <select id="character">
-              <option value="">-- Chọn --</option>
-            </select>
-          </div>
-          <div>
-            <label>✨ Hành động đặc trưng:</label>
-            <select id="signature">
-              <option value="">-- Chọn --</option>
-            </select>
-          </div>
-          <div>
-            <label>😊 Biểu cảm khuôn mặt:</label>
-            <select id="face">
-              <option value="">-- Chọn --</option>
-            </select>
-          </div>
+      <div id="characters-container">
         </div>
+
+      <div style="text-align: center;">
+        <button id="add-char-btn" class="btn-add-slot">➕ Thêm nhân vật khác</button>
+      </div>
+
+      <div class="card" style="margin-top: 20px;">
+        <h3 style="margin-top:0;">⚙️ Cấu hình chung (Cảnh & Camera)</h3>
         <div class="section">
-          <div>
-            <label>🌟 Trạng thái:</label>
-            <select id="state">
-              <option value="">-- Chọn --</option>
-            </select>
-          </div>
           <div>
             <label>🎥 Góc máy:</label>
-            <select id="camera">
-              <option value="">-- Chọn --</option>
-            </select>
+            <select id="camera"><option value="">-- Chọn --</option></select>
           </div>
           <div>
             <label>💡 Ánh sáng:</label>
-            <select id="lighting">
-              <option value="">-- Chọn --</option>
-            </select>
+            <select id="lighting"><option value="">-- Chọn --</option></select>
+          </div>
+          <div>
+            <label>🖼️ Nền cảnh:</label>
+            <select id="background"><option value="">-- Chọn --</option></select>
           </div>
         </div>
         <div class="section">
           <div>
-            <label>🖼️ Nền cảnh (Background):</label>
-            <select id="background">
-              <option value="">-- Chọn --</option>
-            </select>
-          </div>
-          <div>
-            <label>👗 Trang phục (Outfit):</label>
-            <select id="outfit">
-              <option value="">-- Chọn --</option>
-            </select>
-          </div>
-          <div>
             <label>📐 Khung hình:</label>
             <select id="aspect">
-              <option value="16:9">16:9 (Ngang)</option>
+              <option value="16:9" selected>16:9 (Ngang)</option>
               <option value="9:16">9:16 (Dọc)</option>
               <option value="1:1">1:1 (Vuông)</option>
             </select>
@@ -81,46 +56,32 @@
         </div>
       </div>
 
-     <!-- Final Prompt & Management -->
-<div class="card" style="margin-top:32px;">
-  <h3 style="margin-top:0; color:var(--primary);">Prompt hiện tại:</h3>
-  
-  <div style="margin-bottom:16px;">
-    <label><strong>ID Video:</strong></label>
-    <input type="text" id="video-id" placeholder="ví dụ: XNC001" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);" />
-  </div>
-  
-  <div style="margin-bottom:16px;">
-    <label><strong>Tên Video:</strong></label>
-    <input type="text" id="video-title" placeholder="ví dụ: Bô-lô soi chuyện lớp học" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);" />
-  </div>
-  
-  <div id="final-prompt" style="min-height:160px; background:#1e1e1e; color:#e0e0e0; padding:16px; border-radius:12px; font-family:monospace; white-space:pre-wrap; margin-bottom:16px;">
-    Chọn và bấm "Tạo Prompt" để xem kết quả...
-  </div>
-  
-  <div style="text-align:center; margin-bottom:20px;">
-    <button id="generate-btn" class="btn btn-primary" style="padding:12px 24px;">🚀 Tạo Prompt</button>
-    <button id="add-btn" class="btn btn-secondary" style="padding:12px 24px; margin-left:12px;">➕ Add vào Danh sách</button>
-  </div>
-  
-  <button id="copy-btn" class="btn btn-primary" style="position:absolute; top:12px; right:12px;">📋 Sao chép</button>
-</div>
+      <div class="card" style="margin-top:32px; position: relative;">
+        <h3 style="margin-top:0; color:var(--primary);">Prompt hiện tại:</h3>
+        <div style="margin-bottom:16px;">
+          <input type="text" id="video-id" placeholder="ID Video (XNC001)" style="width:48%; padding:10px; border-radius:8px; border:1px solid var(--border);" />
+          <input type="text" id="video-title" placeholder="Tên Video" style="width:48%; padding:10px; border-radius:8px; border:1px solid var(--border);" />
+        </div>
+        <div id="final-prompt" style="min-height:160px; background:#1e1e1e; color:#e0e0e0; padding:16px; border-radius:12px; font-family:monospace; white-space:pre-wrap; margin-bottom:16px;">
+          Đang khởi tạo...
+        </div>
+        <div style="text-align:center;">
+          <button id="generate-btn" class="btn btn-primary">🚀 Tạo Prompt</button>
+          <button id="add-btn" class="btn btn-secondary" style="margin-left:12px;">➕ Lưu vào Danh sách</button>
+        </div>
+        <button id="copy-btn" class="btn btn-primary" style="position:absolute; top:12px; right:12px;">📋 Sao chép</button>
+      </div>
 
-<!-- Danh sách Prompt đã lưu -->
-<div class="card" style="margin-top:32px;">
-  <h3 style="color:var(--primary);">Danh sách Prompt đã lưu (<span id="count">0</span>)</h3>
-  <div id="prompt-list" style="max-height:400px; overflow-y:auto;">
-    <p class="muted">Chưa có prompt nào. Bấm "Add vào Danh sách" để lưu đầu tiên!</p>
-  </div>
-  <div style="text-align:center; margin-top:16px;">
-    <button id="export-all-btn" class="btn btn-danger">📥 Export All to JSON</button>
-    <button id="clear-all-btn" class="btn" style="margin-left:12px; background:#eee;">🗑️ Xóa hết</button>
-  </div>
-</div>
+      <div class="card" style="margin-top:32px;">
+        <h3 style="color:var(--primary);">Danh sách đã lưu (<span id="count">0</span>)</h3>
+        <div id="prompt-list" style="max-height:400px; overflow-y:auto;"></div>
+        <div style="text-align:center; margin-top:16px;">
+          <button id="export-all-btn" class="btn btn-danger">📥 Xuất JSON</button>
+          <button id="clear-all-btn" class="btn" style="margin-left:12px; background:#eee;">🗑️ Xóa hết</button>
+        </div>
+      </div>
     </main>
   </div>
-
   <script src="/js/make_video_bieucam.js"></script>
 </body>
 </html>
