@@ -73,7 +73,84 @@ async function init() {
   document.getElementById('final-prompt').textContent = '✅ Tải xong! Chọn và bấm "Tạo Prompt".';
 }
 
-// Hàm populate cũ giữ nguyên...
+function populateCharacters() {
+  const select = document.getElementById('character');
+  select.innerHTML = '<option value="">-- Chọn nhân vật --</option>';
+  Object.keys(data.characters).forEach(key => {
+    const char = data.characters[key];
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = `${char.name} (${char.role})`;
+    select.appendChild(opt);
+  });
+}
+
+function updateSignatures() {
+  const charKey = document.getElementById('character').value;
+  const sigSelect = document.getElementById('signature');
+  sigSelect.innerHTML = '<option value="">-- Chọn hành động đặc trưng --</option>';
+
+  if (!charKey) return;
+
+  const char = data.characters[charKey];
+  if (!char?.signatures?.length) return;
+
+  char.signatures.forEach(sig => {
+    const opt = document.createElement('option');
+    opt.value = sig.id;
+    opt.textContent = sig.label;
+    opt.dataset.desc = sig.desc || '';
+    sigSelect.appendChild(opt);
+  });
+}
+
+function populateFaces() {
+  const select = document.getElementById('face');
+  select.innerHTML = '<option value="">-- Chọn biểu cảm --</option>';
+  data.faces.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f.id;
+    opt.textContent = f.label;
+    opt.dataset.desc = f.desc_en || f.desc_vi || f.label;
+    select.appendChild(opt);
+  });
+}
+
+function populateStates() {
+  const select = document.getElementById('state');
+  select.innerHTML = '<option value="">-- Chọn trạng thái --</option>';
+  data.states.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = s.label;
+    opt.dataset.desc = s.desc_en || s.label;
+    select.appendChild(opt);
+  });
+}
+
+function populateCamera() {
+  const select = document.getElementById('camera');
+  select.innerHTML = '<option value="">-- Chọn góc máy --</option>';
+  Object.keys(data.camera).forEach(key => {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = key.replace(/_/g, ' ').toUpperCase();
+    opt.dataset.desc = data.camera[key];
+    select.appendChild(opt);
+  });
+}
+
+function populateLighting() {
+  const select = document.getElementById('lighting');
+  select.innerHTML = '<option value="">-- Chọn ánh sáng --</option>';
+  Object.keys(data.lighting).forEach(key => {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = key.replace(/_/g, ' ').toUpperCase();
+    opt.dataset.desc = data.lighting[key];
+    select.appendChild(opt);
+  });
+}
 
 function populateBackgrounds() {  // Hàm mới
   const select = document.getElementById('background');
