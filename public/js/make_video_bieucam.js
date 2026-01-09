@@ -84,15 +84,38 @@ function updateSignatures() {
   const sigSelect = document.getElementById('signature');
   sigSelect.innerHTML = '<option value="">-- Chọn hành động đặc trưng --</option>';
 
-  if (charKey && data.characters[charKey].signatures) {
-    data.characters[charKey].signatures.forEach(sig => {
-      const opt = document.createElement('option');
-      opt.value = sig.id;
-      opt.textContent = sig.label;
-      opt.dataset.desc = sig.desc || '';
-      sigSelect.appendChild(opt);
-    });
+  if (!charKey) {
+    generatePrompt();
+    return;
   }
+
+  // FIX CHÍNH Ở ĐÂY: Lấy đúng object characters
+  const characters = data.characters; // data.characters là object { bolo: {...}, bala: {...}, tumlum: {...} }
+
+  if (!characters || !characters[charKey]) {
+    console.error('Không tìm thấy nhân vật:', charKey);
+    sigSelect.innerHTML += '<option disabled>Lỗi: Không tìm thấy signatures cho nhân vật này</option>';
+    generatePrompt();
+    return;
+  }
+
+  const char = characters[charKey];
+  if (!char.signatures || char.signatures.length === 0) {
+    console.error('Nhân vật này không có signatures:', charKey);
+    sigSelect.innerHTML += '<option disabled>Nhân vật này chưa có hành động đặc trưng</option>';
+    generatePrompt();
+    return;
+  }
+
+  char.signatures.forEach(sig => {
+    const opt = document.createElement('option');
+    opt.value = sig.id;
+    opt.textContent = sig.label;
+    opt.dataset.desc = sig.desc || sig.desc_en || '';
+    sigSelect.appendChild(opt);
+  });
+
+  console.log('Đã load signatures cho', char.name, ':', char.signatures.length, 'hành động');
   generatePrompt();
 }
 
