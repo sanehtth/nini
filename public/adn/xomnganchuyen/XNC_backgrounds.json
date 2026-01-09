@@ -137,10 +137,10 @@
       ]
     },
     {
-  "id": "xnc_garden_bolo",
-   "label": "Vườn cây nhà Bolo",
-  "desc_en": "Vietnamese family backyard garden, small cozy garden with many potted plants, bonsai and fruit trees, slightly messy, cement ground, brick wall, warm afternoon light, pastel 2D comic style, no people, no text",
-    "tags": ["outside", "day"],
+      "id": "xnc_garden_bolo",
+      "label": "Vườn cây nhà Bolo",
+      "desc_en": "Vietnamese family backyard garden, small cozy garden with many potted plants, bonsai and fruit trees, slightly messy, cement ground, brick wall, warm afternoon light, pastel 2D comic style, no people, no text",
+      "tags": ["outside", "day"]
     },
     {
       "id": "xnc_rice_field",
