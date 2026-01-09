@@ -384,4 +384,39 @@ function clearAllPrompts() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+// Chờ DOM load xong mới chạy init
+document.addEventListener('DOMContentLoaded', function() {
+  // Thêm kiểm tra element tồn tại trước khi add event
+  const characterSelect = document.getElementById('character');
+  if (characterSelect) {
+    characterSelect.addEventListener('change', updateSignatures);
+  } else {
+    console.warn('Không tìm thấy element #character');
+  }
+
+  // Các event khác cũng kiểm tra tương tự
+  const elements = ['signature','face','state','camera','lighting','background','outfit','aspect'];
+  elements.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', generatePrompt);
+  });
+
+  // Nút bấm
+  const genBtn = document.getElementById('generate-btn');
+  if (genBtn) genBtn.addEventListener('click', generatePrompt);
+
+  const addBtn = document.getElementById('add-btn');
+  if (addBtn) addBtn.addEventListener('click', addCurrentPrompt);
+
+  const copyBtn = document.getElementById('copy-btn');
+  if (copyBtn) copyBtn.addEventListener('click', copyCurrentPrompt);
+
+  const exportBtn = document.getElementById('export-all-btn');
+  if (exportBtn) exportBtn.addEventListener('click', exportAllPrompts);
+
+  const clearBtn = document.getElementById('clear-all-btn');
+  if (clearBtn) clearBtn.addEventListener('click', clearAllPrompts);
+
+  // Chạy init sau khi bind event
+  init();
+});
