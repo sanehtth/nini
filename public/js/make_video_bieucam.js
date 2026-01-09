@@ -171,28 +171,37 @@ function generatePrompt() {
   const charKey = document.getElementById('character').value;
   const sigId   = document.getElementById('signature').value;
   const faceId  = document.getElementById('face').value;
-  const stateId = document.getElementById('state').value;
-  const camId   = document.getElementById('camera').value;
-  const lightId = document.getElementById('lighting').value;
+  const stateId = document.getElementById('state').value || 'neutral'; // fallback
+  const camId   = document.getElementById('camera').value || 'closeup';
+  const lightId = document.getElementById('lighting').value || 'soft_pastel';
   const aspect  = document.getElementById('aspect').value || '16:9';
 
-  if (!charKey || !sigId || !faceId || !stateId || !camId || !lightId) {
+  // Bắt buộc phải có nhân vật và biểu cảm
+  if (!charKey || !faceId) {
     document.getElementById('final-prompt').textContent = 
-      '👆 Chọn đầy đủ các mục trên để tạo prompt hoàn chỉnh nhé!';
+      '👋 Vui lòng chọn ít nhất: Nhân vật + Biểu cảm khuôn mặt\nCác mục khác có thể bỏ qua, mình sẽ tự bổ sung phù hợp!';
     return;
   }
 
-  const char   = data.characters[charKey];
-  const sig    = char.signatures.find(s => s.id === sigId);
-  const face   = data.faces.find(f => f.id === faceId);
-  const state  = data.states.find(s => s.id === stateId);
-  const cam    = data.camera[camId];
-  const light  = data.lighting[lightId];
+  const char  = data.characters[charKey];
+  const face  = data.faces.find(f => f.id === faceId);
+  const state = data.states.find(s => s.id === stateId) || { label: 'bình thường', desc_en: 'normal posture and movement' };
+  const cam   = data.camera[camId] || data.camera['closeup'] || 'tight close-up';
+  const light = data.lighting[lightId] || data.lighting['soft_pastel'] || 'soft diffused pastel lighting';
 
-  const prompt = `Tạo một video hoạt hình ngắn phong cách cute chibi anime series XNC.
+  // Fallback hành động đặc trưng
+  let actionText = '';
+  if (sigId) {
+    const sig = char.signatures.find(s => s.id === sigId);
+    actionText = `thực hiện hành động đặc trưng: ${sig.desc || sig.label}`;
+  } else {
+    actionText = `đang đứng tự nhiên, chuyển động nhẹ nhàng phù hợp với biểu cảm`;
+  }
+
+  const prompt = `Tạo video hoạt hình ngắn phong cách cute chibi anime series XNC.
 
 Nhân vật: ${char.name} (${char.role})
-Hành động đặc trưng: ${sig.desc}
+Hành động: ${actionText}
 
 Biểu cảm khuôn mặt: ${face.desc_en || face.desc_vi || face.label}
 Trạng thái cảm xúc: ${state.desc_en || state.label}
@@ -200,11 +209,10 @@ Trạng thái cảm xúc: ${state.desc_en || state.label}
 Góc máy: ${cam}
 Ánh sáng: ${light}
 
-Màu sắc: pastel tươi sáng, dễ thương, năng lượng hài hước.
-Chuyển động mượt mà, biểu cảm phóng đại vui nhộn.
+Phong cách: màu pastel tươi sáng, dễ thương, năng lượng hài hước, chuyển động mượt mà, biểu cảm phóng đại vui nhộn.
 Tỷ lệ khung hình: ${aspect}.
 
-High quality animation, expressive, funny, adorable.`;
+High quality, expressive, funny, adorable animation.`;
 
   document.getElementById('final-prompt').textContent = prompt.trim();
 }
@@ -221,6 +229,12 @@ document.getElementById('copy-btn').addEventListener('click', () => {
     alert('Copy không thành công, bạn chọn toàn bộ text rồi Ctrl+C nhé!');
   });
 });
+// Nút Tạo Prompt
+document.getElementById('generate-btn').addEventListener('click', generatePrompt);
 
+// Vẫn giữ tự động generate khi thay đổi dropdown (tùy chọn)
+['character', 'signature', 'face', 'state', 'camera', 'lighting', 'aspect'].forEach(id => {
+  document.getElementById(id).addEventListener('change', generatePrompt);
+});
 // Khởi động khi trang load xong
 document.addEventListener('DOMContentLoaded', init);
