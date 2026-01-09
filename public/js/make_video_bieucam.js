@@ -1,56 +1,59 @@
-// Hard-code đường dẫn JSON (bạn thay đổi link này nếu cần)
+// =============== ĐƯỜNG DẪN 4 FILE JSON (SỬA Ở ĐÂY) ===============
 const JSON_URLS = {
-  characters: '/public/adn/xomnganchuyen/XNC_characters.json',   // Thay bằng link raw GitHub của bạn
-  faces:      '/public/adn/xomnganchuyenXNC_faces.json',
-  states:     '/public/adn/xomnganchuyenXNC_style_states.json' 
-  style:      '/public/adn/xomnganchuyenXNC_style_style.json'  // Gộp states + style vào 1 file
+  characters: '/public/adn/xomnganchuyen/XNC_characters.json',          // hoặc link raw GitHub
+  faces:      '/public/adn/xomnganchuyen/XNC_faces (1).json',           // chú ý tên file có dấu cách và (1)
+  states:     '/public/adn/xomnganchuyen/XNC_states.json',
+  style:      '/public/adn/xomnganchuyen/XNC_style.json'
 };
+// Nếu dùng online GitHub raw, ví dụ:
+// 'https://raw.githubusercontent.com/username/repo/main/XNC_characters.json'
 
 let data = {
   characters: null,
   faces: null,
   states: null,
-  style: null,
   camera: null,
   lighting: null
 };
 
 async function loadJSON(url) {
   try {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Lỗi tải ${url}: ${response.status}`);
-    return await response.json();
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
   } catch (err) {
-    console.error(err);
-    alert(`Không tải được file JSON: ${url}\nKiểm tra link hoặc mạng nhé!`);
+    console.error(`Lỗi tải ${url}:`, err);
+    alert(`Không tải được: ${url}\nKiểm tra tên file và đường dẫn!\n(XNC_faces (1).json có đúng tên không?)`);
     return null;
   }
 }
 
 async function init() {
-  // Tải đồng thời 3 file
-  const [charData, faceData, statesData, styleData] = await Promise.all([
+  document.getElementById('final-prompt').textContent = '⏳ Đang tải 4 file JSON...';
+
+  const [charJson, facesJson, statesJson, styleJson] = await Promise.all([
     loadJSON(JSON_URLS.characters),
     loadJSON(JSON_URLS.faces),
     loadJSON(JSON_URLS.states),
     loadJSON(JSON_URLS.style)
   ]);
 
-  if (!charData || !faceData|| !statesData  || !styleData) return;
+  // Kiểm tra dữ liệu
+  if (!charJson || !facesJson || !statesJson || !styleJson) {
+    document.getElementById('final-prompt').textContent = '❌ Lỗi tải một hoặc nhiều file JSON. Xem console (F12) để biết chi tiết.';
+    return;
+  }
 
-  // Gán dữ liệu
-  data.characters = charData.characters || charData;
-  data.faces      = faceData.faces || faceData;
-  data.states     = statesData.states || [];
-  data.style     = styleData.style || [];
-  data.camera     = styleData.style?.camera || {};
-  data.lighting   = styleData.style?.lighting || {};
+  data.characters = charJson.characters || charJson;
+  data.faces      = facesJson.faces || facesJson;
+  data.states     = statesJson.states || statesJson;
+  data.camera     = styleJson.style?.camera || {};
+  data.lighting   = styleJson.style?.lighting || {};
 
   // Populate dropdowns
   populateCharacters();
   populateFaces();
   populateStates();
-  populateStyle();
   populateCamera();
   populateLighting();
 
@@ -61,8 +64,7 @@ async function init() {
     document.getElementById(id).addEventListener('change', generatePrompt);
   });
 
-  // Tự generate lần đầu nếu muốn
-  generatePrompt();
+  document.getElementById('final-prompt').textContent = '✅ Tải thành công! Chọn nhân vật để bắt đầu tạo prompt nào 💚';
 }
 
 function populateCharacters() {
@@ -78,12 +80,12 @@ function populateCharacters() {
 }
 
 function updateSignatures() {
-  const key = document.getElementById('character').value;
+  const charKey = document.getElementById('character').value;
   const sigSelect = document.getElementById('signature');
-  sigSelect.innerHTML = '<option value="">-- Chọn hành động --</option>';
+  sigSelect.innerHTML = '<option value="">-- Chọn hành động đặc trưng --</option>';
 
-  if (key && data.characters[key]?.signatures) {
-    data.characters[key].signatures.forEach(sig => {
+  if (charKey && data.characters[charKey].signatures) {
+    data.characters[charKey].signatures.forEach(sig => {
       const opt = document.createElement('option');
       opt.value = sig.id;
       opt.textContent = sig.label;
@@ -149,44 +151,53 @@ function generatePrompt() {
   const stateId = document.getElementById('state').value;
   const camId   = document.getElementById('camera').value;
   const lightId = document.getElementById('lighting').value;
-  const aspect  = document.getElementById('aspect').value;
+  const aspect  = document.getElementById('aspect').value || '16:9';
 
   if (!charKey || !sigId || !faceId || !stateId || !camId || !lightId) {
     document.getElementById('final-prompt').textContent = 
-      "Chọn đầy đủ các mục để tạo prompt siêu xịn nhé! 💚✨";
+      '👆 Chọn đầy đủ các mục trên để tạo prompt hoàn chỉnh nhé!';
     return;
   }
 
-  const char = data.characters[charKey];
-  const sig  = char.signatures.find(s => s.id === sigId);
-  const face = data.faces.find(f => f.id === faceId);
-  const state= data.states.find(s => s.id === stateId);
-  const camDesc  = data.camera[camId];
-  const lightDesc= data.lighting[lightId];
+  const char   = data.characters[charKey];
+  const sig    = char.signatures.find(s => s.id === sigId);
+  const face   = data.faces.find(f => f.id === faceId);
+  const state  = data.states.find(s => s.id === stateId);
+  const cam    = data.camera[camId];
+  const light  = data.lighting[lightId];
 
-  const prompt = `Tạo video hoạt hình ngắn cute chibi anime về nhân vật "${char.name}" (${char.role}) đang thực hiện hành động: "${sig.desc}"
+  const prompt = `Tạo một video hoạt hình ngắn phong cách cute chibi anime series XNC.
 
-Biểu cảm khuôn mặt: "${face.desc_en || face.label}"
-Trạng thái cảm xúc: "${state.desc_en || state.label}"
-Góc máy: ${camDesc}
-Ánh sáng: ${lightDesc}
+Nhân vật: ${char.name} (${char.role})
+Hành động đặc trưng: ${sig.desc}
 
-Phong cách: màu pastel tươi sáng, chuyển động mượt mà, biểu cảm phóng đại hài hước, nhân vật XNC series.
-Tỷ lệ khung hình: ${aspect}.`;
+Biểu cảm khuôn mặt: ${face.desc_en || face.desc_vi || face.label}
+Trạng thái cảm xúc: ${state.desc_en || state.label}
+
+Góc máy: ${cam}
+Ánh sáng: ${light}
+
+Màu sắc: pastel tươi sáng, dễ thương, năng lượng hài hước.
+Chuyển động mượt mà, biểu cảm phóng đại vui nhộn.
+Tỷ lệ khung hình: ${aspect}.
+
+High quality animation, expressive, funny, adorable.`;
 
   document.getElementById('final-prompt').textContent = prompt.trim();
 }
 
-// Copy button
+// Nút Copy Prompt
 document.getElementById('copy-btn').addEventListener('click', () => {
   const text = document.getElementById('final-prompt').textContent;
   navigator.clipboard.writeText(text).then(() => {
     const btn = document.getElementById('copy-btn');
-    const oldText = btn.textContent;
-    btn.textContent = 'Đã copy! 🎉';
-    setTimeout(() => btn.textContent = oldText, 2000);
+    const old = btn.textContent;
+    btn.textContent = '✅ Đã copy!';
+    setTimeout(() => btn.textContent = old, 2000);
+  }).catch(() => {
+    alert('Copy không thành công, bạn chọn toàn bộ text rồi Ctrl+C nhé!');
   });
 });
 
-// Khởi động
-init();
+// Khởi động khi trang load xong
+document.addEventListener('DOMContentLoaded', init);
