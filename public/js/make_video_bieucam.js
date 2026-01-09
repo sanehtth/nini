@@ -157,7 +157,7 @@ function generatePrompt() {
   const cam = document.getElementById('camera').value;
   const aspect = document.getElementById('aspect').value;
 
-  const final = `Create a 3D chibi anime video for XNC series.
+  const final = `Create a chibi anime video for XNC series.
 Characters involved:
 ${charPrompts.join('\n')}
 
