@@ -101,14 +101,24 @@
         </div>
       </div>
 
-      <!-- Final Prompt -->
-      <div class="card" style="margin-top:32px;">
-        <h3 style="margin-top:0; color:var(--primary);">Prompt cuối cùng (copy dán vào AI):</h3>
-        <div id="final-prompt" contenteditable="true" spellcheck="false">
-Đang tải dữ liệu... Hãy chọn nhân vật và các mục để tạo prompt nhé! 💚
-        </div>
-        <button id="copy-btn" class="btn btn-primary">📋 Sao chép Prompt</button>
-      </div>
+     <!-- Final Prompt -->
+<div class="card" style="margin-top:32px; position:relative;">
+  <h3 style="margin-top:0; color:var(--primary);">Prompt cuối cùng (copy dán vào AI):</h3>
+  
+  <div id="final-prompt" style="min-height:140px; background:#1e1e1e; color:#e0e0e0; padding:16px; border-radius:12px; font-family:Consolas,monospace; white-space:pre-wrap; margin-bottom:16px;">
+    Chọn các mục và bấm "Tạo Prompt" để xem kết quả nhé! 💚
+  </div>
+  
+  <div style="text-align:center;">
+    <button id="generate-btn" class="btn btn-primary" style="padding:12px 32px; font-size:18px; font-weight:700;">
+      🚀 Tạo Prompt Ngay
+    </button>
+  </div>
+  
+  <button id="copy-btn" class="btn btn-primary" style="position:absolute; top:12px; right:12px; padding:8px 16px;">
+    📋 Sao chép Prompt
+  </button>
+</div>
     </main>
   </div>
 
