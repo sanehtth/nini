@@ -185,14 +185,14 @@ function generatePrompt() {
   const camValue = (camEl && camEl.options[camEl.selectedIndex]) ? camEl.options[camEl.selectedIndex].text : 'MEDIUM';
 
   const final = `Create a chibi anime video for XNC series.
-Nhân vật trong cảnh:
+character:
 ${charPrompts.length > 0 ? charPrompts.join('\n') : 'Chưa chọn nhân vật'}
 
-Bối cảnh: ${bg ? bg.desc_en : 'Sân trường hoặc xóm dừa'}
-Góc máy: ${camValue}
-Ánh sáng: ${light ? light.replace(/_/g,' ') : 'tự nhiên'}
-Tỷ lệ khung hình: ${aspect}
-Phong cách: Màu sắc tươi sáng, hài hước, mượt mà.`;
+background: ${bg ? bg.desc_en : 'Sân trường hoặc xóm dừa'}
+camera: ${camValue}
+Lighting: ${light ? light.replace(/_/g,' ') : 'tự nhiên'}
+Aspect Ratio: ${aspect}
+style: Vibrant colors, funny atmosphere, smooth animation. No text.`;
 
   document.getElementById('final-prompt').textContent = final;
 }
