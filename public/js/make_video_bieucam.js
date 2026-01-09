@@ -231,17 +231,35 @@ function generatePrompt() {
   const preferredFace = char.preferred_faces?.[0] || null;
   const faceNote = preferredFace ? `(preferred: ${preferredFace})` : '';
 
-  const fullPrompt = `Create cute chibi anime video for XNC character: ${char.name} (${char.role || 'kid'})
+    // Lấy background
+  const bgId = document.getElementById('background').value;
+  const bg = data.backgrounds?.find(b => b.id === bgId);
+  const bgDesc = bg ? bg.desc_en : 'simple clean background, no distractions';
 
-Description: ${char.base_desc_en || char.summary_en || 'Vietnamese primary school student'}
+  // Lấy outfit
+  const outfitId = document.getElementById('outfit').value;
+  const outfit = data.outfits?.find(o => o.id === outfitId);
+  let outfitDesc = '';
+  if (outfit) {
+    outfitDesc = outfit.variants?.male?.base_desc_en || outfit.variants?.female?.base_desc_en || outfit.name;
+    outfitDesc = `wearing ${outfitDesc}, `;
+  }
 
-Action: ${action}
-Facial expression: ${face.desc_en || face.label} ${faceNote}
+  const fullPrompt = `Create a short cute chibi anime video from XNC series.
 
-${colorDesc}
+Character: ${char.name} (${char.role || 'kid'}), ${outfitDesc}performing action: "${action}"
 
-Style: pastel colors, exaggerated funny expressions, smooth animation, adorable.
-High quality.`;
+Facial expression: ${face.desc_en || face.desc_vi || face.label} ${faceNote}
+Emotional state: ${state.desc_en || state.label}
+
+Background: ${bgDesc}
+Camera: ${cam}
+Lighting: ${light}
+
+${colorDesc ? colorDesc + '\n' : ''}
+
+Style: vibrant pastel colors, exaggerated funny expressions, smooth animation, adorable and humorous.
+Aspect ratio: ${aspect}. High quality, detailed, no text overlay.`;
 
   document.getElementById('final-prompt').textContent = fullPrompt.trim();
 }
