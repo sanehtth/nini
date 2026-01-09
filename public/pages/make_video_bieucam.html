@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>XNC Prompt Generator</title>
+  <link rel="stylesheet" href="theme-xnc.css" />
+  <link rel="stylesheet" href="style.css" /> <!-- Nếu bạn muốn thêm style riêng -->
+  <style>
+    /* Chỉ override nhẹ cho đẹp hơn */
+    .container { max-width: 1200px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+    .upload-box { display: none; } /* Ẩn phần upload vì dùng hard-code */
+    #final-prompt {
+      min-height: 140px;
+      background: #1e1e1e;
+      color: #e0e0e0;
+      padding: 16px;
+      border-radius: 12px;
+      font-family: 'Consolas', monospace;
+      white-space: pre-wrap;
+      position: relative;
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+    }
+    #copy-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+    .section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: end; }
+    @media (max-width: 768px) { .section { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <main>
+      <div class="card text-center" style="margin-bottom: 40px;">
+        <h1 style="margin:0; font-size:32px; color:var(--secondary);">🎬 XNC Prompt Generator</h1>
+        <p class="muted">Tạo prompt video cận cảnh biểu cảm & hành động nhân vật XNC siêu nhanh!</p>
+      </div>
+
+      <!-- Selection Area -->
+      <div class="card">
+        <div class="section">
+          <div>
+            <label><strong>🧑 Nhân vật:</strong></label>
+            <select id="character">
+              <option value="">-- Chọn nhân vật --</option>
+            </select>
+          </div>
+
+          <div>
+            <label><strong>✨ Hành động đặc trưng:</strong></label>
+            <select id="signature">
+              <option value="">-- Chọn hành động --</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section" style="margin-top:24px;">
+          <div>
+            <label><strong>😊 Biểu cảm khuôn mặt:</strong></label>
+            <select id="face">
+              <option value="">-- Chọn biểu cảm --</option>
+            </select>
+          </div>
+
+          <div>
+            <label><strong>🎥 Góc máy:</strong></label>
+            <select id="camera">
+              <option value="">-- Chọn góc máy --</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section" style="margin-top:24px; grid-template-columns: 1fr 1fr 1fr;">
+          <div>
+            <label><strong>🌟 Trạng thái (States):</strong></label>
+            <select id="state">
+              <option value="">-- Chọn trạng thái --</option>
+            </select>
+          </div>
+
+          <div>
+            <label><strong>💡 Ánh sáng:</strong></label>
+            <select id="lighting">
+              <option value="">-- Chọn ánh sáng --</option>
+            </select>
+          </div>
+
+          <div>
+            <label><strong>📐 Khung hình:</strong></label>
+            <select id="aspect">
+              <option value="16:9">16:9 (Ngang - YouTube)</option>
+              <option value="9:16">9:16 (Dọc - TikTok/Reels)</option>
+              <option value="1:1">1:1 (Vuông)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Final Prompt -->
+      <div class="card" style="margin-top:32px;">
+        <h3 style="margin-top:0; color:var(--primary);">Prompt cuối cùng (copy dán vào AI):</h3>
+        <div id="final-prompt" contenteditable="true" spellcheck="false">
+Đang tải dữ liệu... Hãy chọn nhân vật và các mục để tạo prompt nhé! 💚
+        </div>
+        <button id="copy-btn" class="btn btn-primary">📋 Sao chép Prompt</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/make_video_bieucam.js"></script>
+</body>
+</html>
