@@ -217,33 +217,51 @@ function generatePrompt() {
   }
 
   const char = data.characters[charKey];
-  const faceId = document.getElementById('face').value;
-  const face = data.faces.find(f => f.id === faceId) || { label: 'default face' };
+  if (!char) {
+    document.getElementById('final-prompt').textContent = 'Nhân vật không tồn tại!';
+    return;
+  }
 
-  const sigId = document.getElementById('signature').value;
-  let action = sigId || char.preferred_actions?.[0] || 'natural standing pose';
+  // Khai báo tất cả biến cần dùng (đây là phần bị thiếu)
+  const sigId   = document.getElementById('signature').value || '';
+  const faceId  = document.getElementById('face').value;
+  const stateId = document.getElementById('state').value || '';
+  const camId   = document.getElementById('camera').value || 'closeup';
+  const lightId = document.getElementById('lighting').value || 'soft_pastel';
+  const bgId    = document.getElementById('background').value || '';
+  const outfitId= document.getElementById('outfit').value || '';
+  const aspect  = document.getElementById('aspect').value || '16:9';
 
-  // Bổ sung signature_colors vào prompt
-  const colors = char.signature_colors || [];
-  const colorDesc = colors.length ? `dominant signature colors: ${colors.join(', ')}` : '';
+  // Tìm object tương ứng
+  const face   = data.faces.find(f => f.id === faceId) || { desc_en: 'default expression' };
+  const state  = data.states.find(s => s.id === stateId) || { desc_en: 'neutral' };
+  const cam    = data.camera[camId] || 'tight close-up, soft depth of field';
+  const light  = data.lighting[lightId] || 'soft diffused pastel lighting';
+  const bg     = data.backgrounds.find(b => b.id === bgId) || { desc_en: 'simple clean background' };
+  const outfit = data.outfits.find(o => o.id === outfitId);
 
-  // Nếu có preferred_faces, ưu tiên gợi ý
-  const preferredFace = char.preferred_faces?.[0] || null;
-  const faceNote = preferredFace ? `(preferred: ${preferredFace})` : '';
+  // Xử lý action
+  let action = 'standing naturally with subtle movements';
+  if (sigId) {
+    // Dùng signature_items hoặc preferred_actions
+    const sig = char.signature_items?.find(item => item === sigId) || 
+                char.preferred_actions?.find(item => item === sigId);
+    action = sig || sigId.replace(/_/g, ' ');
+  }
 
-    // Lấy background
-  const bgId = document.getElementById('background').value;
-  const bg = data.backgrounds?.find(b => b.id === bgId);
-  const bgDesc = bg ? bg.desc_en : 'simple clean background, no distractions';
-
-  // Lấy outfit
-  const outfitId = document.getElementById('outfit').value;
-  const outfit = data.outfits?.find(o => o.id === outfitId);
+  // Outfit description
   let outfitDesc = '';
   if (outfit) {
     outfitDesc = outfit.variants?.male?.base_desc_en || outfit.variants?.female?.base_desc_en || outfit.name;
     outfitDesc = `wearing ${outfitDesc}, `;
   }
+
+  // Signature colors
+  const colors = char.signature_colors || [];
+  const colorDesc = colors.length ? `dominant signature colors: ${colors.join(', ')}` : '';
+
+  // Preferred face note
+  const faceNote = char.preferred_faces?.includes(faceId) ? '(preferred face)' : '';
 
   const fullPrompt = `Create a short cute chibi anime video from XNC series.
 
@@ -252,7 +270,7 @@ Character: ${char.name} (${char.role || 'kid'}), ${outfitDesc}performing action:
 Facial expression: ${face.desc_en || face.desc_vi || face.label} ${faceNote}
 Emotional state: ${state.desc_en || state.label}
 
-Background: ${bgDesc}
+Background: ${bg.desc_en}
 Camera: ${cam}
 Lighting: ${light}
 
