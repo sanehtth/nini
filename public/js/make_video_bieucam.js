@@ -1,11 +1,11 @@
 // Đường dẫn 6 file JSON (thêm backgrounds và outfits)
 const JSON_URLS = {
-  characters: '/public/adn/xomnganchuyen/XNC_characters.json',
-  faces: '/public/adn/xomnganchuyen/XNC_faces.json',
-  states: '/public/adn/xomnganchuyen/XNC_states.json',
-  style: '/public/adn/xomnganchuyen/XNC_style.json',
-  backgrounds: '/public/adn/xomnganchuyen/XNC_backgrounds.json',  // Thêm mới
-  outfits: '/public/adn/xomnganchuyen/XNC_outfits.json'               // Thêm mới
+  characters: '/adn/xomnganchuyen/XNC_characters.json',
+  faces: '/adn/xomnganchuyen/XNC_faces.json',
+  states: '/adn/xomnganchuyen/XNC_states.json',
+  style: '/adn/xomnganchuyen/XNC_style.json',
+  backgrounds: '/adn/xomnganchuyen/XNC_backgrounds.json',  // Thêm mới
+  outfits: '/adn/xomnganchuyen/XNC_outfits.json'               // Thêm mới
 };
 
 let data = {
