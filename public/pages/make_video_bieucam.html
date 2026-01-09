@@ -36,89 +36,85 @@
 <body>
   <div class="container">
     <main>
-      <div class="card text-center" style="margin-bottom: 40px;">
+      <div class="card" style="text-align: center; margin-bottom: 32px;">
         <h1 style="margin:0; font-size:32px; color:var(--secondary);">🎬 XNC Prompt Generator</h1>
-        <p class="muted">Tạo prompt video cận cảnh biểu cảm & hành động nhân vật XNC siêu nhanh!</p>
+        <p class="muted">Tạo prompt video cận cảnh biểu cảm & hành động nhân vật XNC</p>
       </div>
 
-      <!-- Selection Area -->
+      <!-- Selections -->
       <div class="card">
         <div class="section">
           <div>
-            <label><strong>🧑 Nhân vật:</strong></label>
+            <label>🧑 Nhân vật:</label>
             <select id="character">
-              <option value="">-- Chọn nhân vật --</option>
+              <option value="">-- Chọn --</option>
             </select>
           </div>
-
           <div>
-            <label><strong>✨ Hành động đặc trưng:</strong></label>
+            <label>✨ Hành động đặc trưng:</label>
             <select id="signature">
-              <option value="">-- Chọn hành động --</option>
+              <option value="">-- Chọn --</option>
             </select>
           </div>
-        </div>
-
-        <div class="section" style="margin-top:24px;">
           <div>
-            <label><strong>😊 Biểu cảm khuôn mặt:</strong></label>
+            <label>😊 Biểu cảm khuôn mặt:</label>
             <select id="face">
-              <option value="">-- Chọn biểu cảm --</option>
-            </select>
-          </div>
-
-          <div>
-            <label><strong>🎥 Góc máy:</strong></label>
-            <select id="camera">
-              <option value="">-- Chọn góc máy --</option>
+              <option value="">-- Chọn --</option>
             </select>
           </div>
         </div>
-
-        <div class="section" style="margin-top:24px; grid-template-columns: 1fr 1fr 1fr;">
+        <div class="section">
           <div>
-            <label><strong>🌟 Trạng thái (States):</strong></label>
+            <label>🌟 Trạng thái:</label>
             <select id="state">
-              <option value="">-- Chọn trạng thái --</option>
+              <option value="">-- Chọn --</option>
             </select>
           </div>
-
           <div>
-            <label><strong>💡 Ánh sáng:</strong></label>
+            <label>🎥 Góc máy:</label>
+            <select id="camera">
+              <option value="">-- Chọn --</option>
+            </select>
+          </div>
+          <div>
+            <label>💡 Ánh sáng:</label>
             <select id="lighting">
-              <option value="">-- Chọn ánh sáng --</option>
+              <option value="">-- Chọn --</option>
             </select>
           </div>
-
+        </div>
+        <div class="section">
           <div>
-            <label><strong>📐 Khung hình:</strong></label>
+            <label>🖼️ Nền cảnh (Background):</label>
+            <select id="background">
+              <option value="">-- Chọn --</option>
+            </select>
+          </div>
+          <div>
+            <label>👗 Trang phục (Outfit):</label>
+            <select id="outfit">
+              <option value="">-- Chọn --</option>
+            </select>
+          </div>
+          <div>
+            <label>📐 Khung hình:</label>
             <select id="aspect">
-              <option value="16:9">16:9 (Ngang - YouTube)</option>
-              <option value="9:16">9:16 (Dọc - TikTok/Reels)</option>
+              <option value="16:9">16:9 (Ngang)</option>
+              <option value="9:16">9:16 (Dọc)</option>
               <option value="1:1">1:1 (Vuông)</option>
             </select>
           </div>
         </div>
       </div>
 
-     <!-- Final Prompt -->
-<div class="card" style="margin-top:32px; position:relative;">
-  <h3 style="margin-top:0; color:var(--primary);">Prompt cuối cùng (copy dán vào AI):</h3>
-  
-  <div id="final-prompt" style="min-height:140px; background:#1e1e1e; color:#e0e0e0; padding:16px; border-radius:12px; font-family:Consolas,monospace; white-space:pre-wrap; margin-bottom:16px;">
-    Chọn các mục và bấm "Tạo Prompt" để xem kết quả nhé! 💚
-  </div>
-  
-  <div style="text-align:center;">
-    <button id="generate-btn" class="btn btn-primary" style="padding:12px 32px; font-size:18px; font-weight:700;">
-      🚀 Tạo Prompt Ngay
-    </button>
-  </div>
-  
-  <button id="copy-btn" class="btn btn-primary" style="position:absolute; top:12px; right:12px; padding:8px 16px;">
-    📋 Sao chép Prompt
-  </button>
-</div>
+      <!-- Final Prompt -->
+      <div class="card" style="margin-top:32px;">
+        <h3 style="margin-top:0; color:var(--primary);">Prompt cuối cùng:</h3>
+        <div id="final-prompt" contenteditable="true" spellcheck="false"></div>
+        <button id="generate-btn" class="btn btn-primary" style="margin-top:20px;">Tạo Prompt</button>
+        <button id="copy-btn" class="btn btn-secondary" style="margin-left:10px;">Sao chép Prompt</button>
+        <button id="export-json" class="btn btn-danger" style="margin-left:10px;">Xuất JSON</button>
+      </div>
     </main>
   </div>
 
