@@ -24,14 +24,14 @@ async function loadJSON(url) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {
-    console.error(err);
-    alert(`Không tải được: ${url}`);
+    console.error(`Lỗi tải ${url}:`, err);
+    alert(`Không tải được file: ${url}\nĐảm bảo file tồn tại trong thư mục và tên đúng chính tả!`);
     return null;
   }
 }
 
 async function init() {
-  document.getElementById('final-prompt').textContent = '⏳ Đang tải dữ liệu...';
+  document.getElementById('final-prompt').textContent = 'Đang tải 6 file JSON...';
 
   const [charJson, facesJson, statesJson, styleJson, bgJson, outfitJson] = await Promise.all([
     loadJSON(JSON_URLS.characters),
@@ -42,7 +42,10 @@ async function init() {
     loadJSON(JSON_URLS.outfits)
   ]);
 
-  if (!charJson || !facesJson || !statesJson || !styleJson || !bgJson || !outfitJson) return;
+  if (!charJson || !facesJson || !statesJson || !styleJson || !bgJson || !outfitJson) {
+    document.getElementById('final-prompt').textContent = 'Lỗi tải file JSON. Xem console (F12).';
+    return;
+  }
 
   data.characters  = charJson.characters;
   data.faces       = facesJson.faces;
@@ -52,15 +55,6 @@ async function init() {
   data.backgrounds = bgJson.backgrounds;
   data.outfits     = outfitJson.outfits;
 
-  populateAllDropdowns();
-  setupEventListeners();
-  renderSavedList();
-  updateCounter();
-
-  document.getElementById('final-prompt').textContent = '✅ Sẵn sàng! Chọn và bấm Tạo Prompt nhé!';
-}
-
-function populateAllDropdowns() {
   populateCharacters();
   populateFaces();
   populateStates();
@@ -68,9 +62,25 @@ function populateAllDropdowns() {
   populateLighting();
   populateBackgrounds();
   populateOutfits();
+
+  document.getElementById('character').addEventListener('change', updateSignatures);
+
+  const changeElements = ['signature','face','state','camera','lighting','background','outfit','aspect'];
+  changeElements.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', generatePrompt);
+  });
+
+  document.getElementById('generate-btn').addEventListener('click', generatePrompt);
+  document.getElementById('add-btn').addEventListener('click', addCurrentPrompt);
+  document.getElementById('copy-btn').addEventListener('click', copyCurrentPrompt);
+  document.getElementById('export-all-btn').addEventListener('click', exportAllPrompts);
+  document.getElementById('clear-all-btn').addEventListener('click', clearAllPrompts);
+
+  renderSavedList();
+  document.getElementById('final-prompt').textContent = 'Sẵn sàng! Chọn và bấm "Tạo Prompt" để bắt đầu.';
 }
 
-// Các hàm populate giống cũ (em giữ nguyên, chỉ liệt kê tên)
 function populateCharacters() {
   const select = document.getElementById('character');
   select.innerHTML = '<option value="">-- Chọn nhân vật --</option>';
@@ -91,7 +101,7 @@ function updateSignatures() {
   if (!charKey) return;
 
   const char = data.characters[charKey];
-  if (!char?.signatures?.length) return;
+  if (!char || !char.signatures || char.signatures.length === 0) return;
 
   char.signatures.forEach(sig => {
     const opt = document.createElement('option');
@@ -100,6 +110,7 @@ function updateSignatures() {
     opt.dataset.desc = sig.desc || '';
     sigSelect.appendChild(opt);
   });
+  generatePrompt();
 }
 
 function populateFaces() {
@@ -150,61 +161,97 @@ function populateLighting() {
   });
 }
 
-function populateBackgrounds() {  // Hàm mới
+function populateBackgrounds() {
   const select = document.getElementById('background');
-  select.innerHTML = '<option value="">-- Chọn nền cảnh --</option>';
+  select.innerHTML = '<option value="">-- Không chọn nền --</option>';
   data.backgrounds.forEach(bg => {
     const opt = document.createElement('option');
     opt.value = bg.id;
     opt.textContent = bg.label;
-    opt.dataset.desc = bg.desc_en || bg.label;
+    opt.dataset.desc = bg.desc_en;
     select.appendChild(opt);
   });
 }
 
-function populateOutfits() {  // Hàm mới
+function populateOutfits() {
   const select = document.getElementById('outfit');
-  select.innerHTML = '<option value="">-- Chọn trang phục --</option>';
+  select.innerHTML = '<option value="">-- Trang phục mặc định --</option>';
   data.outfits.forEach(out => {
     const opt = document.createElement('option');
     opt.value = out.id;
     opt.textContent = out.name;
-    opt.dataset.desc = out.variants?.male?.base_desc_en || out.variants?.female?.base_desc_en || out.name;
+    const desc = out.variants?.male?.base_desc_en || out.variants?.female?.base_desc_en || out.name;
+    opt.dataset.desc = desc;
     select.appendChild(opt);
   });
 }
 
-function setupEventListeners() {
-  document.getElementById('character').addEventListener('change', updateSignatures);
-  ['signature','face','state','camera','lighting','background','outfit','aspect'].forEach(id => {
-    document.getElementById(id).addEventListener('change', generatePrompt);
-  });
-
-  document.getElementById('generate-btn').addEventListener('click', generatePrompt);
-  document.getElementById('add-btn').addEventListener('click', addCurrentPrompt);
-  document.getElementById('copy-btn').addEventListener('click', copyCurrentPrompt);
-  document.getElementById('export-all-btn').addEventListener('click', exportAllPrompts);
-  document.getElementById('clear-all-btn').addEventListener('click', clearAllPrompts);
-}
-
 function generatePrompt() {
-  // Code generate prompt giống phiên bản mới trước đó (em giữ nguyên logic)
-  // ... (copy từ phiên bản mới có background + outfit)
-  // Cuối cùng gán vào #final-prompt
-  document.getElementById('final-prompt').textContent = prompt.trim();
+  const charKey = document.getElementById('character').value;
+  const sigId   = document.getElementById('signature').value;
+  const faceId  = document.getElementById('face').value;
+  const stateId = document.getElementById('state').value;
+  const camId   = document.getElementById('camera').value || 'closeup';
+  const lightId = document.getElementById('lighting').value || 'soft_pastel';
+  const bgId    = document.getElementById('background').value;
+  const outfitId= document.getElementById('outfit').value;
+  const aspect  = document.getElementById('aspect').value || '16:9';
+
+  if (!charKey || !faceId) {
+    document.getElementById('final-prompt').textContent = 'Chọn ít nhất Nhân vật + Biểu cảm để tạo prompt!';
+    return;
+  }
+
+  const char   = data.characters[charKey];
+  const face   = data.faces.find(f => f.id === faceId);
+  const state  = data.states.find(s => s.id === stateId) || { desc_en: 'neutral posture' };
+  const cam    = data.camera[camId] || 'tight close-up, soft depth of field';
+  const light  = data.lighting[lightId] || 'soft diffused pastel lighting';
+  const bg     = data.backgrounds.find(b => b.id === bgId) || { desc_en: 'simple clean background' };
+  const outfit = data.outfits.find(o => o.id === outfitId);
+
+  let action = 'standing naturally with subtle movements';
+  if (sigId) {
+    const sig = char.signatures?.find(s => s.id === sigId);
+    if (sig) action = sig.desc || sig.label;
+  }
+
+  let outfitDesc = '';
+  if (outfit) {
+    const desc = outfit.variants?.male?.base_desc_en || outfit.variants?.female?.base_desc_en || outfit.name;
+    outfitDesc = `${desc}, `;
+  }
+
+  const fullPrompt = `Create a short cute chibi anime video from XNC series.
+
+Character: ${char.name} (${char.role}), ${outfitDesc}performing action: "${action}"
+
+Facial expression: ${face.desc_en || face.desc_vi || face.label}
+Emotional state: ${state.desc_en || state.label}
+
+Background: ${bg.desc_en}
+Camera: ${cam}
+Lighting: ${light}
+
+Style: vibrant pastel colors, exaggerated funny expressions, smooth animation, adorable and humorous.
+Aspect ratio: ${aspect}. High quality.`;
+
+  document.getElementById('final-prompt').textContent = fullPrompt.trim();
 }
 
 function addCurrentPrompt() {
+  generatePrompt(); // Đảm bảo prompt mới nhất
   const promptText = document.getElementById('final-prompt').textContent.trim();
+
   if (!promptText || promptText.includes('Chọn ít nhất')) {
-    alert('⚠️ Hãy tạo prompt hợp lệ trước khi lưu!');
+    alert('Hãy tạo prompt hợp lệ trước!');
     return;
   }
 
   const videoId = document.getElementById('video-id').value.trim() || `XNC${String(promptCounter).padStart(3, '0')}`;
-  const videoTitle = document.getElementById('video-title').value.trim() || `Video ${promptCounter}`;
+  const videoTitle = document.getElementById('video-title').value.trim() || `Video XNC ${promptCounter}`;
 
-  const selections = {
+  const entry = {
     id: videoId,
     title: videoTitle,
     timestamp: new Date().toISOString(),
@@ -222,88 +269,53 @@ function addCurrentPrompt() {
     prompt: promptText
   };
 
-  // Kiểm tra trùng ID
   if (savedPrompts.some(p => p.id === videoId)) {
-    if (!confirm(`ID "${videoId}" đã tồn tại! Ghi đè?`)) return;
+    if (!confirm(`ID ${videoId} đã tồn tại. Ghi đè?`)) return;
     savedPrompts = savedPrompts.filter(p => p.id !== videoId);
   }
 
-  savedPrompts.push(selections);
+  savedPrompts.push(entry);
   localStorage.setItem('xnc_saved_prompts', JSON.stringify(savedPrompts));
   promptCounter++;
   localStorage.setItem('xnc_counter', promptCounter);
 
-  // Clear input
   document.getElementById('video-id').value = '';
   document.getElementById('video-title').value = '';
 
   renderSavedList();
-  updateCounter();
-  alert(`✅ Đã lưu prompt "${videoTitle}" với ID ${videoId}!`);
+  alert(`Đã lưu "${videoTitle}" (ID: ${videoId})`);
 }
 
 function renderSavedList() {
   const container = document.getElementById('prompt-list');
-  updateCounter();
+  document.getElementById('count').textContent = savedPrompts.length;
 
   if (savedPrompts.length === 0) {
-    container.innerHTML = '<p class="muted">Chưa có prompt nào. Bấm "Add vào Danh sách" để lưu đầu tiên!</p>';
+    container.innerHTML = '<p class="muted">Chưa có prompt nào.</p>';
     return;
   }
 
-  container.innerHTML = `
-    <table style="width:100%; border-collapse:collapse;">
-      <thead>
-        <tr style="background:var(--accent);">
-          <th style="padding:8px; text-align:left;">ID</th>
-          <th style="padding:8px; text-align:left;">Tên Video</th>
-          <th style="padding:8px; text-align:left;">Nhân vật</th>
-          <th style="padding:8px; text-align:center;">Thời gian</th>
-          <th style="padding:8px;"></th>
-        </tr>
-      </thead>
-      <tbody>
-        ${savedPrompts.map(p => {
-          const char = data.characters[p.selections.character];
-          const charName = char ? char.name : 'N/A';
-          const date = new Date(p.timestamp).toLocaleString('vi-VN');
-          return `
-            <tr style="border-bottom:1px solid var(--border);">
-              <td style="padding:8px;"><code>${p.id}</code></td>
-              <td style="padding:8px;">${p.title}</td>
-              <td style="padding:8px;">${charName}</td>
-              <td style="padding:8px; text-align:center; font-size:12px;">${date}</td>
-              <td style="padding:8px; text-align:center;">
-                <button onclick="copySavedPrompt('${p.id}')" class="btn" style="padding:4px 8px; font-size:12px;">Copy</button>
-                <button onclick="deleteSavedPrompt('${p.id}')" class="btn" style="padding:4px 8px; font-size:12px; background:#fcc;">Del</button>
-              </td>
-            </tr>
-          `;
-        }).join('')}
-      </tbody>
-    </table>
-  `;
+  container.innerHTML = '<table style="width:100%; border-collapse:collapse;"><thead><tr style="background:var(--accent);"><th>ID</th><th>Tên</th><th>Nhân vật</th><th>Thời gian</th><th></th></tr></thead><tbody>' +
+    savedPrompts.map(p => {
+      const char = data.characters[p.selections.character]?.name || 'N/A';
+      const date = new Date(p.timestamp).toLocaleString('vi-VN');
+      return `<tr><td><code>${p.id}</code></td><td>${p.title}</td><td>${char}</td><td>${date}</td><td><button onclick="copySaved('${p.id}')">Copy</button> <button onclick="delSaved('${p.id}')">Del</button></td></tr>`;
+    }).join('') + '</tbody></table>';
 }
 
-function updateCounter() {
-  document.getElementById('count').textContent = savedPrompts.length;
-}
-
-function copySavedPrompt(id) {
+window.copySaved = function(id) {
   const p = savedPrompts.find(x => x.id === id);
-  if (p) {
-    navigator.clipboard.writeText(p.prompt);
-    alert(`Đã copy prompt "${p.title}"!`);
-  }
-}
+  navigator.clipboard.writeText(p.prompt);
+  alert('Đã copy!');
+};
 
-function deleteSavedPrompt(id) {
+window.delSaved = function(id) {
   if (confirm('Xóa prompt này?')) {
     savedPrompts = savedPrompts.filter(x => x.id !== id);
     localStorage.setItem('xnc_saved_prompts', JSON.stringify(savedPrompts));
     renderSavedList();
   }
-}
+};
 
 function copyCurrentPrompt() {
   const text = document.getElementById('final-prompt').textContent;
@@ -315,18 +327,17 @@ function exportAllPrompts() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `xnc_all_prompts_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = 'xnc_all_prompts.json';
   a.click();
 }
 
 function clearAllPrompts() {
-  if (confirm('Xóa TOÀN BỘ prompt đã lưu? Không thể khôi phục!')) {
+  if (confirm('Xóa toàn bộ? Không khôi phục được!')) {
     savedPrompts = [];
     promptCounter = 1;
-    localStorage.clear();
+    localStorage.removeItem('xnc_saved_prompts');
+    localStorage.removeItem('xnc_counter');
     renderSavedList();
-    updateCounter();
-    alert('Đã xóa hết!');
   }
 }
 
