@@ -1,7 +1,7 @@
 // =============== ĐƯỜNG DẪN 4 FILE JSON (SỬA Ở ĐÂY) ===============
 const JSON_URLS = {
   characters: '/public/adn/xomnganchuyen/XNC_characters.json',          // hoặc link raw GitHub
-  faces:      '/public/adn/xomnganchuyen/XNC_faces (1).json',           // chú ý tên file có dấu cách và (1)
+  faces:      '/public/adn/xomnganchuyen/XNC_faces.json',           // chú ý tên file có dấu cách và (1)
   states:     '/public/adn/xomnganchuyen/XNC_states.json',
   style:      '/public/adn/xomnganchuyen/XNC_style.json'
 };
