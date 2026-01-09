@@ -12,7 +12,7 @@
     }
 
     body.green-theme .container {
-      background: #ffffff;
+      background: #f0fff0;
       border-radius: 20px;
       box-shadow: 0 15px 35px rgba(0,0,0,0.08);
     }
@@ -238,6 +238,6 @@
     body.green-theme .section { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px; }
     body.green-theme #final-prompt { min-height: 200px; background: #1e1e1e; color: #e0e0e0; padding: 16px; border-radius: 12px; font-family: monospace; white-space: pre-wrap; position: relative; }
     body.green-theme #generate-btn { padding: 12px 24px; font-size: 16px; }
-    body.green-theme #copy-btn { position: absolute; top: 12px; right: 12px; }
+    body.green-theme #copy-btn { position: absolute; top: 12px; right: 12px; border-radius: 8px; border: 1px solid var(--border); }
     body.green-theme label { font-weight: bold; margin-bottom: 5px; display: block; }
     body.green-theme select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
