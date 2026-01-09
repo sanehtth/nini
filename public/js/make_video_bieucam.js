@@ -184,7 +184,7 @@ function generatePrompt() {
   const camEl = document.getElementById('camera');
   const camValue = (camEl && camEl.options[camEl.selectedIndex]) ? camEl.options[camEl.selectedIndex].text : 'MEDIUM';
 
-  const final = `Create a 3D chibi anime video for XNC series.
+  const final = `Create a chibi anime video for XNC series.
 Nhân vật trong cảnh:
 ${charPrompts.length > 0 ? charPrompts.join('\n') : 'Chưa chọn nhân vật'}
 
