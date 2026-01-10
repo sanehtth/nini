@@ -51,6 +51,20 @@
 <section class="panel active" id="tab-story">
 <div class="story-wrap">
 <div class="story-card">
+<div class="grid2" style="align-items:end;margin-bottom:10px">
+  <div>
+    <label><b>Chọn truyện từ JSON (substance)</b> <span class="muted">(đọc từ manifest)</span></label>
+    <select id="story-select">
+      <option value="">-- Chọn truyện --</option>
+    </select>
+    <div class="muted" style="margin-top:6px">Manifest: <code id="manifest-path">chưa load</code></div>
+  </div>
+  <div class="row" style="justify-content:flex-end;gap:8px">
+    <button class="btn secondary" id="reload-manifest-btn" type="button">Reload manifest</button>
+    <button class="btn" id="load-story-btn" type="button">Load truyện</button>
+  </div>
+</div>
+
 <h2 style="margin:0 0 8px 0">Tách scene &amp; thoại (Tab 1)</h2>
 <div class="muted">Bạn dán story vào đây (từ V19) hoặc nạp story đã lưu, rồi bấm “Tách Scene &amp; Thoại”. Sau đó export JSON thoại để đem qua Studio V19 tạo voice library.</div>
 </div>
@@ -182,6 +196,6 @@
 </div>
 <!-- Lưu ý: bạn đang dùng file local (make_video_bieucam (1).js). Khi deploy, đổi path cho đúng nếu cần. -->
 </section>
-<script src="/js/make_video_bieucam.js"></script>
+<script src="make_video_bieucam_v6.js"></script>
 </body>
 </html>
