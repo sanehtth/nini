@@ -8,6 +8,9 @@ const JSON_URLS = {
   outfits: '/adn/xomnganchuyen/XNC_outfits.json'
 };
 
+// Global app state (for tabs / scene split / mapping)
+const appState = window.appState || (window.appState = {});
+
 let data = {
   characters: [],
   characterMap: {},
@@ -72,6 +75,8 @@ async function init() {
   // Gán dữ liệu (dùng dấu ?. và || [] để nếu file lỗi trang web vẫn chạy tiếp)
   // Lưu ý: các JSON của bạn dùng mảng (characters/faces/states/outfits/backgrounds). Trước đó code đang hiểu sai dạng object.
   data.characters  = Array.isArray(charJson?.characters) ? charJson.characters : [];
+  appState.characters = data.characters;
+
   data.faces       = Array.isArray(facesJson?.faces) ? facesJson.faces : [];
   data.states      = Array.isArray(statesJson?.states) ? statesJson.states : [];
   data.camera      = styleJson?.style?.camera || {};
