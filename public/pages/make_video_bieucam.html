@@ -1,65 +1,204 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>XNC Prompt Generator</title>
+
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; }
-    .tabs { display: flex; background: #222; }
-    .tab { padding: 12px 16px; color: #fff; cursor: pointer; }
-    .tab.active { background: #444; }
-    .panel { display: none; padding: 16px; }
+    body { font-family: Arial, sans-serif; margin: 0; background: #fafafa; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #1f2937;
+      align-items: center;
+    }
+    .tab {
+      color: #e5e7eb;
+      background: transparent;
+      border: 1px solid transparent;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+    }
+    .tab.active {
+      background: #111827;
+      border-color: #374151;
+      color: #fff;
+    }
+
+    .container { padding: 16px; max-width: 1200px; margin: 0 auto; }
+
+    .panel { display: none; }
     .panel.active { display: block; }
-    label { display: block; margin-top: 10px; }
-    input, textarea, select { width: 100%; padding: 6px; }
-    button { margin-top: 10px; }
-    textarea { min-height: 120px; }
+
+    .field { margin: 10px 0; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; }
+    input[type="text"], textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #fff;
+    }
+    textarea { min-height: 140px; resize: vertical; }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 900px) { .row { grid-template-columns: 1fr; } }
+
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    button {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.primary { background: #111827; color: #fff; border-color: #111827; }
+    button.danger { background: #ef4444; color: #fff; border-color: #ef4444; }
+
+    .subactions {
+      display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap;
+    }
+    .subactions .spacer { flex: 1; }
+    .muted { color: #6b7280; font-size: 13px; }
+
+    /* Character cards */
+    .char-grid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap:10px;
+      margin-top:10px;
+    }
+    .char-card{
+      border:1px solid #e5e7eb;
+      border-radius:12px;
+      padding:10px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      cursor:pointer;
+      background:#fff;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .char-card:hover{ border-color:#cbd5e1; }
+    .char-card.selected{
+      border-color:#3b82f6;
+      box-shadow:0 0 0 3px rgba(59,130,246,.15);
+    }
+    .char-badge{
+      width:10px; height:10px; border-radius:50%;
+      background:#999; flex:0 0 auto;
+    }
+    .char-name{ font-weight:700; }
+    .char-meta{ font-size:12px; color:#6b7280; }
+    @media (max-width: 900px){ .char-grid{ grid-template-columns: repeat(2, 1fr);} }
+    @media (max-width: 520px){ .char-grid{ grid-template-columns: repeat(1, 1fr);} }
+
+    pre {
+      background: #0b1020;
+      color: #e5e7eb;
+      padding: 12px;
+      border-radius: 12px;
+      overflow: auto;
+      max-height: 340px;
+    }
+
+    .notice {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      margin: 12px 0;
+    }
   </style>
 </head>
+
 <body>
+  <div class="tabs">
+    <div class="tab active" data-tab="story">📖 Tạo câu chuyện</div>
+    <div class="tab" data-tab="prompt">🎬 Tạo prompt video</div>
+    <div class="muted" style="margin-left:auto;">XNC</div>
+  </div>
 
-<div class="tabs">
-  <div class="tab active" data-tab="story">📖 Tạo câu chuyện</div>
-  <div class="tab" data-tab="prompt">🎬 Tạo prompt video</div>
-</div>
+  <div class="container">
 
-<div id="story" class="panel active">
-  <h2>Tạo câu chuyện</h2>
+    <!-- TAB: STORY -->
+    <section id="story" class="panel active">
+      <h2>Tạo câu chuyện</h2>
 
-  <label>ID câu chuyện</label>
-  <input id="story-id">
+      <div class="row">
+        <div class="field">
+          <label for="story-id">ID câu chuyện</label>
+          <input id="story-id" type="text" placeholder="VD: XNC-20250110-0001" />
+        </div>
+        <div class="field">
+          <label for="story-title">Tên câu chuyện</label>
+          <input id="story-title" type="text" placeholder="VD: Bài kiểm tra cuối kỳ" />
+        </div>
+      </div>
 
-  <label>Tên câu chuyện</label>
-  <input id="story-title">
+      <div class="field">
+        <label for="story-content">Nội dung</label>
+        <textarea id="story-content" placeholder="Dán đoạn câu chuyện vào đây..."></textarea>
+      </div>
 
-  <label>Nội dung</label>
-  <textarea id="story-content"></textarea>
+      <div class="field">
+        <label>Nhân vật tham gia</label>
+        <input id="char-search" type="text" placeholder="Tìm nhân vật..." />
+        <div class="subactions">
+          <button type="button" id="btn-select-all">Chọn tất cả</button>
+          <button type="button" id="btn-clear-all">Bỏ chọn</button>
+          <div class="spacer"></div>
+          <div id="char-count" class="muted">Đã chọn: 0</div>
+        </div>
+        <div id="story-characters-cards" class="char-grid"></div>
+      </div>
 
- <label>Nhân vật tham gia</label>
+      <div class="actions">
+        <button class="primary" type="button" id="btn-create-story">Tạo câu chuyện</button>
+        <button type="button" id="btn-export-json">Xuất JSON</button>
+        <button type="button" id="btn-download-json">Lưu file</button>
+        <button class="danger" type="button" id="btn-clear-preview">Xóa preview</button>
+      </div>
 
-<input id="char-search" placeholder="Tìm nhân vật..." oninput="filterCharacterCards()" />
+      <div class="notice">
+        <div class="muted" style="margin-bottom:6px;">Preview / JSON output</div>
+        <pre id="story-preview">{}</pre>
+      </div>
 
-<div style="margin-top:8px; display:flex; gap:8px;">
-  <button type="button" onclick="selectAllCharacters()">Chọn tất cả</button>
-  <button type="button" onclick="clearAllCharacters()">Bỏ chọn</button>
-  <div id="char-count" style="margin-left:auto;"></div>
-</div>
+      <div class="notice">
+        <div class="muted" style="margin-bottom:6px;">Stories đã lưu (Local)</div>
+        <div class="subactions">
+          <select id="saved-stories" style="padding:10px;border-radius:10px;border:1px solid #d1d5db;min-width:320px;"></select>
+          <button type="button" id="btn-load-story">Nạp</button>
+          <button class="danger" type="button" id="btn-delete-story">Xóa</button>
+          <div class="muted">Lưu tại localStorage (máy hiện tại).</div>
+        </div>
+      </div>
+    </section>
 
-<div id="story-characters-cards" class="char-grid"></div>
+    <!-- TAB: PROMPT -->
+    <section id="prompt" class="panel">
+      <h2>Tạo prompt video</h2>
+      <div class="notice">
+        Tab này bạn giữ code hiện tại. Nếu bạn muốn mình “merge” phần prompt generator của bạn vào file này cho đồng bộ 100%,
+        bạn gửi mình bản HTML/JS đang chạy tab prompt hiện tại, mình sẽ gộp không làm mất chức năng.
+      </div>
+    </section>
 
+  </div>
 
-  <button onclick="createStory()">Tạo câu chuyện</button>
-  <button onclick="exportStory()">Xuất JSON</button>
-  <button onclick="downloadStory()">Lưu file</button>
-
-  <pre id="story-preview"></pre>
-</div>
-
-<div id="prompt" class="panel">
-  <h2>Tạo prompt video</h2>
-  <p>(Tab này giữ nguyên phần bạn đang làm)</p>
-</div>
-
-<script src="/js/make_video_bieucam.js"></script>
+  <!-- IMPORTANT: đổi path nếu JS của bạn nằm chỗ khác -->
+  <script src="make_video_bieucam.js"></script>
 </body>
 </html>
