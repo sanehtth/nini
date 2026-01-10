@@ -233,6 +233,30 @@
       "notes": "Nhân vật phụ; outfit tham chiếu sang XNC_outfits.json."
     },
     {
+      "id": "thief_duck",
+      "name": "Tên Trộm Vịt",
+      "type": "supporting",
+      "gender": "male",
+      "role": "Phản diện hài",
+      "age_role_vi": "Thanh niên",
+      "summary_vi": "Kẻ trộm xui xẻo, chuyên đi bắt gà hàng xóm nhưng toàn gặp chuyện dở khóc dở cười.",
+      "base_desc_en": "Vietnamese young man thief, sneaky posture, nervous comedic expression, carrying a burlap sack with a chicken head peeking out, wearing dark Vietnamese countryside clothes and a khăn rằn scarf",
+      "prompt_en": "Vietnamese comedic thief in countryside at night, sneaky hunched posture, nervous smile, wearing a dark ao ba ba style shirt and dark pants, wearing a khăn rằn scarf, old cap, plastic sandals, carrying a burlap sack with a chicken head peeking out; pastel chibi 2D, expressive facial acting, no text, no Western prison stripes",
+      "signature_items": [
+        "burlap_sack",
+        "duck_peeking"
+      ],
+      "signature_colors": [
+        "xnc_dark_brown",
+        "xnc_charcoal"
+      ],
+      "preferred_actions": [],
+      "preferred_faces": [],
+      "default_outfit_id": "xnc_outfit_thief_chicken_sneaky",
+      "locale": "Vietnam",
+      "notes": "Nhân vật phụ; outfit tham chiếu sang XNC_outfits.json."
+    },
+    {
       "id": "ba_tam_pho",
       "name": "Bà Tám Bán Phở",
       "type": "supporting",
