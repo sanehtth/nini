@@ -8,20 +8,7 @@ const JSON_URLS = {
   outfits: '/adn/xomnganchuyen/XNC_outfits.json'
 };
 
-let data = {
-  characters: [],
-  characterMap: {},
-  faces: [],
-  states: [],
-  camera: {},
-  lighting: {},
-  backgrounds: [],
-  outfits: [],
-  outfitMap: {},
-  backgroundMap: {},
-  faceMap: {},
-  stateMap: {}
-};
+let data = { characters: [], characterMap: {}, faces: [], states: [], camera: {}, lighting: {}, backgrounds: [], outfits: [] };
 let savedPrompts = JSON.parse(localStorage.getItem('xnc_saved_prompts') || '[]');
 let promptCounter = parseInt(localStorage.getItem('xnc_counter') || '1');
 let charSlotCount = 0;
@@ -52,25 +39,21 @@ async function init() {
   ]);
 
   // Gán dữ liệu (dùng dấu ?. và || [] để nếu file lỗi trang web vẫn chạy tiếp)
-  // Lưu ý: các JSON của bạn dùng mảng (characters/faces/states/outfits/backgrounds). Trước đó code đang hiểu sai dạng object.
-  data.characters  = Array.isArray(charJson?.characters) ? charJson.characters : [];
-  data.faces       = Array.isArray(facesJson?.faces) ? facesJson.faces : [];
-  data.states      = Array.isArray(statesJson?.states) ? statesJson.states : [];
+  data.characters  = Array.isArray(charJson?.characters) ? charJson.characters : (charJson?.characters ? Object.values(charJson.characters) : []);
+  data.characterMap = Object.fromEntries(data.characters.map(c => [c.id, c]));
+  data.faces       = facesJson?.faces || [];
+  data.states      = statesJson?.states || [];
+  data.rawStyleJson = styleJson || {};
   data.camera      = styleJson?.style?.camera || {};
   data.lighting    = styleJson?.style?.lighting || {};
-  data.backgrounds = Array.isArray(bgJson?.backgrounds) ? bgJson.backgrounds : [];
-  data.outfits     = Array.isArray(outfitJson?.outfits) ? outfitJson.outfits : [];
-
-  // Build quick lookup maps
-  data.characterMap = Object.fromEntries(data.characters.map(c => [c.id, c]));
-  data.outfitMap = Object.fromEntries(data.outfits.map(o => [o.id, o]));
-  data.backgroundMap = Object.fromEntries(data.backgrounds.map(b => [b.id, b]));
-  data.faceMap = Object.fromEntries(data.faces.map(f => [f.id, f]));
-  data.stateMap = Object.fromEntries(data.states.map(s => [s.id, s]));
+  data.backgrounds = bgJson?.backgrounds || [];
+  data.outfits     = outfitJson?.outfits || [];
 
   // Điền dữ liệu vào các menu chung (Camera, Ánh sáng, Nền)
   populateSelect('lighting', Object.keys(data.lighting));
   populateSelect('background', data.backgrounds);
+
+  initStoryTab();
 
   // MẶC ĐỊNH: Luôn thêm 1 nhân vật ngay khi trang vừa load xong
   addCharacterSlot();
@@ -88,19 +71,9 @@ async function init() {
   const clearBtn = document.getElementById('clear-all-btn');
   if (clearBtn) clearBtn.onclick = clearAllPrompts;
 
-  const exportBtn = document.getElementById('export-json-btn');
-  if (exportBtn) exportBtn.onclick = exportSavedAsJSON;
-
-  const copyBtn = document.getElementById('copy-btn');
-  if (copyBtn) copyBtn.onclick = copyCurrentPrompt;
-
   renderSavedList();
-
-  // Story tab
-  setupTabs();
-  initStoryTab();
-
 }
+
 // Hàm nạp dữ liệu cho các SelectBox đơn giản
 function populateSelect(id, items) {
   const el = document.getElementById(id);
@@ -133,7 +106,7 @@ function addCharacterSlot() {
           <label>Chọn NV:</label>
           <select class="char-sel" onchange="updateSigs('${slotId}')" style="width:100%;">
             <option value="">-- Chọn --</option>
-            ${data.characters.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+            ${data.characters.map(c => `<option value="${c.id}">${c.name || c.id}</option>`).join('')}
           </select>
         </div>
         <div style="flex: 1; min-width: 150px;">
@@ -175,385 +148,67 @@ window.removeSlot = (id) => {
 window.updateSigs = (slotId) => {
   const slot = document.getElementById(slotId);
   if (!slot) return;
-  const charId = slot.querySelector('.char-sel').value;
-  const actionSel = slot.querySelector('.sig-sel');
-  const outfitSel = slot.querySelector('.out-sel');
-  const faceSel = slot.querySelector('.face-sel');
+  const charKey = slot.querySelector('.char-sel').value;
+  const sigSel = slot.querySelector('.sig-sel');
+  sigSel.innerHTML = '<option value="">-- Chọn --</option>';
 
-  actionSel.innerHTML = '<option value="">-- Select --</option>';
-
-  const char = charId ? data.characterMap[charId] : null;
-  if (!char) return;
-
-  // Preferred actions (per character) are the correct source for “Hành động”
-  const actions = Array.isArray(char.preferred_actions) ? char.preferred_actions : [];
-  actions.forEach(a => {
-    const opt = document.createElement('option');
-    opt.value = a;
-    opt.textContent = toHumanText(a);
-    actionSel.appendChild(opt);
-  });
-
-  // If the character has a default outfit, preselect it when user hasn't chosen any outfit yet.
-  if (outfitSel && !outfitSel.value && char.default_outfit_id) {
-    outfitSel.value = char.default_outfit_id;
-  }
-
-  // If character has preferred faces, put them on top (but keep full list).
-  if (faceSel && Array.isArray(char.preferred_faces) && char.preferred_faces.length > 0) {
-    const existing = new Set(Array.from(faceSel.options).map(o => o.value));
-    // Rebuild: preferred first, then the rest.
-    const allFaces = data.faces.map(f => ({ id: f.id, label: f.label }));
-    const preferred = char.preferred_faces.filter(id => data.faceMap[id]);
-    const rest = allFaces.filter(f => !preferred.includes(f.id));
-    faceSel.innerHTML = '';
-    [...preferred.map(id => ({ id, label: data.faceMap[id].label })), ...rest].forEach(f => {
+  if (charKey && data.characterMap[charKey]) {
+    const char = data.characterMap[charKey];
+    const actions = char.signature_items || char.signatures || [];
+    actions.forEach(a => {
       const opt = document.createElement('option');
-      opt.value = f.id;
-      opt.textContent = f.label;
-      faceSel.appendChild(opt);
+      opt.value = a; 
+      opt.textContent = a.replace(/_/g,' ').replace(/([A-Z])/g, ' $1').trim();
+      sigSel.appendChild(opt);
     });
-    // Keep previous selection if still exists.
-    if (!existing.has(faceSel.value)) faceSel.value = preferred[0] || faceSel.options[0]?.value || '';
   }
 };
 
-function toHumanText(s) {
-  if (!s) return '';
-  return String(s)
-    .replace(/_/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/^\w/, c => c.toUpperCase());
-}
-
 function generatePrompt() {
-  const promptObj = buildCurrentPromptObject();
-  const promptText = buildRenderFriendlyPrompt(promptObj);
-  document.getElementById('final-prompt').textContent = promptText;
-  return promptObj;
-}
-
-function getBackgroundDescEn(bg) {
-  if (!bg) return '';
-  return bg.desc_en || bg.prompt || bg.description || bg.label || '';
-}
-
-function getOutfitDescEn(outfit, gender) {
-  if (!outfit) return '';
-  const g = (gender || 'unknown').toLowerCase();
-  const variants = outfit.variants || {};
-  const variant = variants[g] || variants.male || variants.female || null;
-  return (
-    variant?.base_desc_en ||
-    outfit.base_desc_en ||
-    outfit.desc_en ||
-    outfit.name ||
-    ''
-  );
-}
-
-function buildCurrentPromptObject() {
   const slots = document.querySelectorAll('.character-slot');
-  const videoId = (document.getElementById('video-id')?.value || '').trim();
-  const videoTitle = (document.getElementById('video-title')?.value || '').trim();
+  let charPrompts = [];
 
-  const bgId = document.getElementById('background')?.value || '';
-  const lightingKey = document.getElementById('lighting')?.value || '';
-  const aspect = document.getElementById('aspect')?.value || '16:9';
-  const camEl = document.getElementById('camera');
-  const cameraKey = camEl?.value || 'MEDIUM_SHOT';
-  const cameraLabel = camEl?.options?.[camEl.selectedIndex]?.text || cameraKey;
-
-
-  const wardrobeMode = document.getElementById('wardrobe-priority-mode')?.value || 'auto';
-
-  const bg = bgId ? data.backgroundMap[bgId] : null;
-  const lightingDesc = lightingKey ? (data.lighting[lightingKey] || toHumanText(lightingKey)) : '';
-
-  const characters = [];
   slots.forEach((slot, index) => {
-    const charId = slot.querySelector('.char-sel')?.value;
-    if (!charId) return;
-    const char = data.characterMap[charId];
-    if (!char) return;
+    const charKey = slot.querySelector('.char-sel').value;
+    if (!charKey) return;
 
-    const faceId = slot.querySelector('.face-sel')?.value || '';
-    const stateId = slot.querySelector('.state-sel')?.value || '';
-    const actionId = slot.querySelector('.sig-sel')?.value || '';
+    const char = data.characterMap[charKey];
+    const face = data.faces.find(f => f.id === slot.querySelector('.face-sel').value);
+    const outfit = data.outfits.find(o => o.id === slot.querySelector('.out-sel').value);
+    const action = slot.querySelector('.sig-sel').value;
 
-    const explicitOutfitId = slot.querySelector('.out-sel')?.value || '';
-    const outfitId = resolveWardrobeId(explicitOutfitId, char, wardrobeMode);
-    const outfit = outfitId ? data.outfitMap[outfitId] : null;
-
-    const face = faceId ? data.faceMap[faceId] : null;
-    const state = stateId ? data.stateMap[stateId] : null;
-
-    characters.push({
-      index: index + 1,
-      id: char.id,
-      name: char.name,
-      type: char.type,
-      gender: char.gender,
-      role: char.role,
-      age_role_vi: char.age_role_vi,
-      base_desc_en: char.base_desc_en || '',
-      prompt_en: char.prompt_en || '',
-      signature_items: Array.isArray(char.signature_items) ? char.signature_items : [],
-      signature_colors: Array.isArray(char.signature_colors) ? char.signature_colors : [],
-      outfit: outfit ? {
-        id: outfit.id,
-        name: outfit.name,
-        desc_en: getOutfitDescEn(outfit, char.gender)
-      } : null,
-      action: actionId ? { id: actionId, desc_en: toHumanText(actionId) } : null,
-      face: face ? { id: face.id, label: face.label, desc_en: face.desc_en || '' } : null,
-      state: state ? { id: state.id, label: state.label, desc_en: state.desc_en || '' } : null
-    });
+    let desc = `- Nhân vật ${index+1} (${char.name}): ${outfit ? 'mặc ' + outfit.name : 'trang phục gốc'}, `;
+    desc += `hành động "${action || 'đứng tự nhiên'}", biểu cảm: ${face ? face.desc_en : 'cute'}`;
+    charPrompts.push(desc);
   });
 
-  return {
-    schema: 'xnc_video_prompt_v1',
-    created_at: new Date().toISOString(),
-    video: { id: videoId || null, title: videoTitle || null },
-    scene: {
-      aspect_ratio: aspect,
-      wardrobe_priority_mode: wardrobeMode,
-      camera: { id: cameraKey, label: cameraLabel },
-      lighting: { id: lightingKey || null, desc_en: lightingDesc || null },
-      background: bg ? { id: bg.id, label: bg.label || bg.name || bg.id, desc_en: getBackgroundDescEn(bg) } : null
-    },
-    characters
-  };
+  const bg = data.backgrounds.find(b => b.id === document.getElementById('background').value);
+  const light = document.getElementById('lighting').value;
+  const aspect = document.getElementById('aspect').value;
+  const camEl = document.getElementById('camera');
+  const camValue = (camEl && camEl.options[camEl.selectedIndex]) ? camEl.options[camEl.selectedIndex].text : 'MEDIUM';
+
+  const final = `Create a chibi anime video for XNC series.
+character:
+${charPrompts.length > 0 ? charPrompts.join('\n') : 'Chưa chọn nhân vật'}
+
+background: ${bg ? bg.desc_en : 'Sân trường hoặc xóm dừa'}
+camera: ${camValue}
+Lighting: ${light ? light.replace(/_/g,' ') : 'tự nhiên'}
+Aspect Ratio: ${aspect}
+style: Vibrant colors, funny atmosphere, smooth animation. No text.`;
+
+  document.getElementById('final-prompt').textContent = final;
 }
 
-function buildRenderFriendlyPrompt(p) {
-  const cameraLine = p.scene.camera?.label ? `${p.scene.camera.label}` : 'MEDIUM SHOT';
-  const lightingLine = p.scene.lighting?.desc_en ? p.scene.lighting.desc_en : 'natural soft daylight';
-  const backgroundLine = p.scene.background?.desc_en ? p.scene.background.desc_en : 'Vietnamese countryside street, pastel 2D chibi background, no text';
-
-  const styleLines = [
-    'STYLE: pastel 2D chibi animation, Vietnamese everyday vibe, clean lineart, soft shading, stable design turnarounds.',
-    'REFERENCE SAFETY: Do NOT change the character identity when changing wardrobe. Identity means: face shape, hairstyle, skin tone, body proportions, signature items (e.g., glasses), and overall silhouette.',
-    'WARDROBE SWAPS: You may change outfits/uniforms, but keep the same person. Do not reinterpret the character as a different age, different ethnicity, different haircut, or different accessories unless explicitly specified.',
-    'COLOR RULE: Signature colors are part of the character identity. If the selected wardrobe item says "do NOT recolor", keep its original uniform colors and only use signature colors for allowed accents.',
-    'QUALITY: consistent character identity across frames (same face features, same signature items, same palette discipline).',
-    'RULES: no captions, no logos, no watermarks, no readable text.'
-  ];
-
-  const header = [
-    'VIDEO PROMPT (XNC)',
-    p.video?.title ? `Title: ${p.video.title}` : null,
-    p.video?.id ? `Video ID: ${p.video.id}` : null,
-    `Aspect ratio: ${p.scene.aspect_ratio}`,
-    `Camera: ${cameraLine}`,
-    `Lighting: ${lightingLine}`,
-    `Background: ${backgroundLine}`,
-    ...styleLines,
-    ''
-  ].filter(Boolean);
-
-  const charLines = (p.characters || []).length
-    ? p.characters.flatMap((c) => {
-        const profile = c.profile || {};
-        const base = (profile.prompt_en || profile.base_desc_en || c.prompt_en || c.base_desc_en || '').trim();
-
-        const sigItems = Array.isArray(profile.signature_items) && profile.signature_items.length
-          ? profile.signature_items.join(', ')
-          : (Array.isArray(c.signature_items) && c.signature_items.length ? c.signature_items.join(', ') : 'none');
-
-        const sigColors = Array.isArray(profile.signature_colors) && profile.signature_colors.length
-          ? profile.signature_colors.join(', ')
-          : (Array.isArray(c.signature_colors) && c.signature_colors.length ? c.signature_colors.join(', ') : 'none');
-
-        const outfitLine = buildOutfitLine(c.outfit ? data.outfitMap[c.outfit.id] || c.outfit : null, profile.gender || c.gender, (profile.signature_colors || c.signature_colors || []));
-        const action = c.action?.desc_en ? c.action.desc_en : 'idle / natural standing';
-        const face = c.face?.desc_en ? c.face.desc_en : 'neutral expression';
-        const state = c.state?.desc_en ? c.state.desc_en : 'neutral posture';
-
-        // Include ALL character profile fields in a render-friendly way, while keeping the PROMPT in English:
-        // - Skip Vietnamese-only fields (*_vi) in the text output (they remain in JSON export).
-        // - Prefer stable identity locks (name, gender, base_desc_en, signature items/colors).
-        const profileLines = [];
-        Object.keys(profile).forEach((k) => {
-          if (/_vi$/i.test(k)) return; // keep prompt English-only
-          const v = profile[k];
-          if (v === null || typeof v === 'undefined') return;
-          if (typeof v === 'string' && !v.trim()) return;
-
-          if (Array.isArray(v)) {
-            profileLines.push(`  - ${k}: ${v.join(', ')}`);
-            return;
-          }
-          if (typeof v === 'object') {
-            profileLines.push(`  - ${k}: ${JSON.stringify(v)}`);
-            return;
-          }
-          profileLines.push(`  - ${k}: ${String(v)}`);
-        });
-
-        return [
-          `CHARACTER ${c.index}: ${c.name} (${c.id})`,
-          `IDENTITY LOCK (do not change across shots):`,
-          `- Base description: ${base || 'N/A'}`,
-          `- Signature items (keep visible): ${sigItems}`,
-          `- Signature colors (keep consistent): ${sigColors}`,
-          `WARDROBE (may be swapped without changing identity):`,
-          `- Outfit / uniform: ${outfitLine}`,
-          `PERFORMANCE:`,
-          `- Action: ${action}`,
-          `- Face (facial expression): ${face}`,
-          `- Body state / pose: ${state}`,
-          `PROFILE FIELDS (English-only view; *_vi fields are stored in JSON export):`,
-          ...(profileLines.length ? profileLines : [`  - (none)`])
-        ];
-      })
-    : ['CHARACTERS: (none selected)'];
-
-  return [...header, ...charLines].join('\n');
-}
-
-function persistSavedList() {
-  localStorage.setItem('xnc_saved_prompts', JSON.stringify(savedPrompts));
-  localStorage.setItem('xnc_counter', String(promptCounter));
-}
-
+// Hàm lưu và hiển thị danh sách (Giữ cơ bản để trang không lỗi)
 function addCurrentPrompt() {
-  const obj = generatePrompt();
-  const promptText = document.getElementById('final-prompt')?.textContent || '';
-  const videoId = obj.video?.id || `xnc_${promptCounter}`;
-  const videoTitle = obj.video?.title || `XNC Prompt #${promptCounter}`;
-
-  const entry = {
-    saved_at: new Date().toISOString(),
-    seq: promptCounter,
-    video_id: videoId,
-    video_title: videoTitle,
-    prompt_text: promptText,
-    data: obj
-  };
-
-  savedPrompts.unshift(entry);
-  promptCounter += 1;
-  persistSavedList();
-  renderSavedList();
+  alert("Tính năng lưu đang được khởi tạo!");
 }
 
 function renderSavedList() {
   const countEl = document.getElementById('count');
   if (countEl) countEl.textContent = savedPrompts.length;
-
-  const listEl = document.getElementById('prompt-list');
-  if (!listEl) return;
-
-  if (!savedPrompts.length) {
-    listEl.innerHTML = '<p class="muted">No saved prompts yet.</p>';
-    return;
-  }
-
-  listEl.innerHTML = savedPrompts
-    .map((p, idx) => {
-      const title = escapeHtml(p.video_title || 'Untitled');
-      const vid = escapeHtml(p.video_id || '');
-      const dt = escapeHtml(new Date(p.saved_at).toLocaleString());
-      return `
-        <div class="card" style="margin: 12px 0;">
-          <div style="display:flex; gap:10px; justify-content:space-between; align-items:flex-start; flex-wrap:wrap;">
-            <div style="min-width:240px;">
-              <div style="font-weight:700;">${title}</div>
-              <div class="muted" style="font-size: 13px;">ID: ${vid} • Saved: ${dt}</div>
-            </div>
-            <div style="display:flex; gap:8px;">
-              <button class="btn btn-primary" onclick="copySavedPrompt(${idx})">Copy</button>
-              <button class="btn btn-secondary" onclick="exportOneAsJSON(${idx})">Export JSON</button>
-              <button class="btn btn-secondary" onclick="removeSavedPrompt(${idx})" style="background:#ff4d4d; color:#fff;">Delete</button>
-            </div>
-          </div>
-          <div style="margin-top:10px; background:#1e1e1e; color:#e0e0e0; padding:12px; border-radius:10px; font-family:monospace; white-space:pre-wrap; max-height: 220px; overflow:auto;">${escapeHtml(p.prompt_text || '')}</div>
-        </div>
-      `;
-    })
-    .join('');
-}
-
-function downloadJSON(filename, obj) {
-  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-function exportSavedAsJSON() {
-  const payload = {
-    schema: 'xnc_saved_prompts_v1',
-    exported_at: new Date().toISOString(),
-    count: savedPrompts.length,
-    saved_prompts: savedPrompts
-  };
-  downloadJSON('xnc_saved_prompts.json', payload);
-}
-
-function exportOneAsJSON(index) {
-  const item = savedPrompts[index];
-  if (!item) return;
-  const safeId = (item.video_id || `xnc_${item.seq || index + 1}`)
-    .toString()
-    .replace(/[^a-zA-Z0-9_-]/g, '_');
-  downloadJSON(`xnc_prompt_${safeId}.json`, item);
-}
-
-function copyToClipboard(text) {
-  if (!text) return;
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text);
-    return;
-  }
-  // Fallback
-  const ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.position = 'fixed';
-  ta.style.left = '-9999px';
-  document.body.appendChild(ta);
-  ta.select();
-  document.execCommand('copy');
-  ta.remove();
-}
-
-function copyCurrentPrompt() {
-  const text = document.getElementById('final-prompt')?.textContent || '';
-  copyToClipboard(text);
-}
-
-function copySavedPrompt(index) {
-  const item = savedPrompts[index];
-  if (!item) return;
-  copyToClipboard(item.prompt_text || '');
-}
-
-function removeSavedPrompt(index) {
-  if (!Number.isInteger(index)) return;
-  savedPrompts.splice(index, 1);
-  persistSavedList();
-  renderSavedList();
-}
-
-// Expose to inline onclick handlers
-window.copySavedPrompt = copySavedPrompt;
-window.exportOneAsJSON = exportOneAsJSON;
-window.removeSavedPrompt = removeSavedPrompt;
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
 }
 
 function clearAllPrompts() {
@@ -568,377 +223,55 @@ function clearAllPrompts() {
 document.addEventListener('DOMContentLoaded', init);
 
 
+// ===================== STORY TAB (optional) =====================
+// This block is safe: it only activates if story tab elements exist.
 
-function resolveWardrobeId(explicitOutfitId, charProfile, wardrobeMode) {
-  // If user explicitly chose an outfit/uniform, honor it.
-  if (explicitOutfitId) return explicitOutfitId;
+const XNC_STORY_STORAGE_KEY = 'xnc_stories_v1';
+const selectedStoryCharacterIds = new Set();
 
-  const defaultOutfitId = charProfile?.default_outfit_id || '';
-  const defaultUniformId = charProfile?.default_uniform_id || '';
-
-  // If only one exists, use it.
-  if (defaultOutfitId && !defaultUniformId) return defaultOutfitId;
-  if (defaultUniformId && !defaultOutfitId) return defaultUniformId;
-
-  // Both exist: apply priority mode.
-  const outfitObj = defaultOutfitId ? data.outfitMap[defaultOutfitId] : null;
-  const uniformObj = defaultUniformId ? data.outfitMap[defaultUniformId] : null;
-
-  const outfitPr = typeof outfitObj?.priority === 'number' ? outfitObj.priority : 0;
-  const uniformPr = typeof uniformObj?.priority === 'number' ? uniformObj.priority : 0;
-
-  if (wardrobeMode === 'prefer_uniform') return defaultUniformId || defaultOutfitId || '';
-  if (wardrobeMode === 'prefer_outfit') return defaultOutfitId || defaultUniformId || '';
-
-  // auto: choose the higher priority; tie-breaker prefers uniform (safer for "reference" consistency).
-  if (uniformPr > outfitPr) return defaultUniformId;
-  if (outfitPr > uniformPr) return defaultOutfitId;
-  return defaultUniformId || defaultOutfitId || '';
+function storyElsExist(){
+  return document.getElementById('story-id') && document.getElementById('story-title') &&
+         document.getElementById('story-content') && document.getElementById('story-characters-cards');
 }
 
-// --- Signature colorway helpers (for wardrobe recolor without identity drift) ---
-const COLOR_TOKEN_MAP = {
-  xnc_blue: 'royal blue',
-  xnc_yellow: 'sunny yellow',
-  xnc_red: 'bright red',
-  xnc_black: 'black',
-  xnc_white: 'white',
-  xnc_brown: 'warm brown',
-  xnc_warm_brown: 'warm brown',
-  xnc_pastel: 'soft pastel tones',
-  xnc_pastel_green: 'pastel green',
-  xnc_pastel_yellow: 'pastel yellow',
-  xnc_rice_yellow: 'rice-yellow',
-  xnc_pink: 'pink',
-  xnc_purple: 'purple',
-  xnc_orange: 'orange',
-  xnc_green: 'green',
-};
-
-function colorTokenToEnglish(token) {
-  if (!token) return '';
-  const key = String(token).trim();
-  const normalized = key.replace(/^xnc_/, 'xnc_');
-  const bare = normalized.replace(/^xnc_/, '');
-  if (COLOR_TOKEN_MAP[normalized]) return COLOR_TOKEN_MAP[normalized];
-  if (COLOR_TOKEN_MAP[bare]) return COLOR_TOKEN_MAP[bare];
-  // fallback: turn tokens into readable English
-  return bare.replace(/_/g, ' ').trim();
-}
-
-function formatSignatureColorway(signatureColors) {
-  const list = (signatureColors || []).map(colorTokenToEnglish).filter(Boolean);
-  if (!list.length) return null;
-  const primary = list[0];
-  const accents = list.slice(1);
-  const accentsText = accents.length ? accents.join(', ') : primary;
-  return { primary, accentsText, listText: list.join(', ') };
-}
-
-function containsColorWords(text) {
-  const t = String(text || '').toLowerCase();
-  return /\b(black|white|red|blue|yellow|green|purple|pink|orange|brown|gray|grey|beige|gold|silver)\b/.test(t);
-}
-
-function buildOutfitLine(outfit, gender, signatureColors) {
-  if (!outfit) return 'default outfit';
-  const desc = getOutfitDescEn(outfit, gender) || outfit.name || 'outfit';
-  const allowSig = outfit.allow_signature_color === true;
-
-  const colorway = formatSignatureColorway(signatureColors);
-  if (!colorway) return desc;
-
-  // If this wardrobe allows signature recolor, explicitly lock identity and recolor clothing only.
-  if (allowSig) {
-    // Enforce character recognition through a stable primary-color TOP (shirt/jacket),
-    // while allowing the rest of the outfit (pants/skirt/shoes/accessories) to vary
-    // within accents/neutrals for group harmony.
-    const overrideNote = containsColorWords(desc)
-      ? 'Override any garment colors mentioned above using the signature color policy below.'
-      : 'Apply the signature color policy below to the clothing.';
-
-    return `${desc}. ${overrideNote} Signature color policy: TOP (shirt/jacket) must be primarily ${colorway.primary} (this is the character\'s signature/recognition color). Bottoms (pants/shorts/skirt) may use ${colorway.accentsText} or neutral tones as long as the overall palette remains harmonious. Keep the garment cut/material/pattern details intact; recolor CLOTHING ONLY; do not change skin, hair, face, or body identity.`;
-  }
-
-  // Otherwise, keep the wardrobe colors fixed to protect reference consistency.
-  return `${desc} (do NOT recolor this wardrobe item using signature colors; keep its original colors)`;
-}
-
-
-
-/* ---------------------------
-   STORY TAB (Local storage)
-----------------------------*/
-
-const STORY_STORAGE_KEY = 'xnc_stories_v1';
-
-function setupTabs() {
-  const storyBtn = document.getElementById('tab-story-btn');
-  const promptBtn = document.getElementById('tab-prompt-btn');
-  const storyTab = document.getElementById('tab-story');
-  const promptTab = document.getElementById('tab-prompt');
-
-  // If page doesn't have tabs (older HTML), do nothing
-  if (!storyBtn || !promptBtn || !storyTab || !promptTab) return;
-
-  const activate = (which) => {
-    const isStory = which === 'story';
-    storyBtn.classList.toggle('active', isStory);
-    promptBtn.classList.toggle('active', !isStory);
-    storyTab.classList.toggle('active', isStory);
-    promptTab.classList.toggle('active', !isStory);
+function signatureColorToHex(token){
+  // If style json has token map, use it
+  const map = (data && data.styleTokenMap) ? data.styleTokenMap : null;
+  if(map && token && map[token]) return map[token];
+  // Fallback
+  const fallback = {
+    xnc_warm_yellow:'#F7D774',
+    xnc_soft_blue:'#8FB7E8',
+    xnc_mint_green:'#87D8C6',
+    xnc_soft_orange:'#F4B184'
   };
-
-  storyBtn.addEventListener('click', () => activate('story'));
-  promptBtn.addEventListener('click', () => activate('prompt'));
-
-  // Default: story first
-  activate('story');
+  return fallback[token] || '#999';
 }
 
-function initStoryTab() {
-  // Populate character multi-select
-  const sel = document.getElementById('story-characters');
-  if (sel) {
-    sel.innerHTML = '';
-    data.characters.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.id;
-      opt.textContent = `${c.name || c.id} (${c.id})`;
-      sel.appendChild(opt);
-    });
-  }
-
-  const createBtn = document.getElementById('create-story-btn');
-  if (createBtn) createBtn.onclick = createStory;
-
-  const exportBtn = document.getElementById('export-story-json-btn');
-  if (exportBtn) exportBtn.onclick = exportCurrentStoryJSON;
-
-  const saveFileBtn = document.getElementById('save-story-file-btn');
-  if (saveFileBtn) saveFileBtn.onclick = downloadCurrentStoryJSON;
-
-  const loadBtn = document.getElementById('load-story-btn');
-  if (loadBtn) loadBtn.onclick = loadSelectedStory;
-
-  const delBtn = document.getElementById('delete-story-btn');
-  if (delBtn) delBtn.onclick = deleteSelectedStory;
-
-  renderStoryList();
-}
-
-function getStories() {
-  try {
-    const raw = localStorage.getItem(STORY_STORAGE_KEY);
-    const arr = raw ? JSON.parse(raw) : [];
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
-  }
-}
-
-function setStories(stories) {
-  localStorage.setItem(STORY_STORAGE_KEY, JSON.stringify(stories, null, 2));
-}
-
-function renderStoryList() {
-  const list = document.getElementById('story-list');
-  if (!list) return;
-
-  const stories = getStories();
-  list.innerHTML = '';
-  const placeholder = document.createElement('option');
-  placeholder.value = '';
-  placeholder.textContent = stories.length ? '— Chọn một câu chuyện —' : 'Chưa có câu chuyện nào (Local)';
-  list.appendChild(placeholder);
-
-  stories
-    .slice()
-    .sort((a,b) => (b.updated_at || b.created_at || '').localeCompare(a.updated_at || a.created_at || ''))
-    .forEach(st => {
-      const opt = document.createElement('option');
-      opt.value = st.story_id || '';
-      opt.textContent = `${st.story_title || '(no title)'} — ${st.story_id || '(no id)'}`;
-      list.appendChild(opt);
-    });
-}
-
-function getSelectedMultiValues(selectEl) {
-  if (!selectEl) return [];
-  return Array.from(selectEl.selectedOptions || []).map(o => o.value).filter(Boolean);
-}
-
-function buildStoryObjectFromForm() {
-  const storyId = (document.getElementById('story-id')?.value || '').trim();
-  const storyTitle = (document.getElementById('story-title')?.value || '').trim();
-  const content = (document.getElementById('story-content')?.value || '').trim();
-  const selectedIds = getSelectedMultiValues(document.getElementById('story-characters'));
-
-  const characterSnapshots = selectedIds
-    .map(id => data.characterMap?.[id])
-    .filter(Boolean);
-
-  const now = new Date().toISOString();
-
-  // We keep a full snapshot for portability, while also storing ids for referential integrity.
-  return {
-    story_id: storyId,
-    story_title: storyTitle,
-    content: content,
-    character_ids: selectedIds,
-    characters: characterSnapshots,
-    created_at: now,
-    updated_at: now
-  };
-}
-
-function writeStoryPreview(storyObj) {
-  const out = document.getElementById('story-json-output');
-  if (!out) return;
-  out.value = JSON.stringify(storyObj, null, 2);
-}
-
-function createStory() {
-  const storyObj = buildStoryObjectFromForm();
-  if (!storyObj.story_id) {
-    alert('Bạn cần nhập ID câu chuyện.');
-    return;
-  }
-  if (!storyObj.story_title) {
-    alert('Bạn cần nhập Tên câu chuyện.');
-    return;
-  }
-  if (!storyObj.content) {
-    alert('Bạn cần nhập Nội dung câu chuyện.');
-    return;
-  }
-  if (!storyObj.character_ids.length) {
-    alert('Bạn cần chọn ít nhất 1 nhân vật tham gia.');
-    return;
-  }
-
-  const stories = getStories();
-  const idx = stories.findIndex(s => s.story_id === storyObj.story_id);
-
-  if (idx >= 0) {
-    // Preserve created_at
-    storyObj.created_at = stories[idx].created_at || storyObj.created_at;
-    stories[idx] = { ...stories[idx], ...storyObj, updated_at: new Date().toISOString() };
-  } else {
-    stories.push(storyObj);
-  }
-
-  setStories(stories);
-  writeStoryPreview(storyObj);
-  renderStoryList();
-}
-
-function exportCurrentStoryJSON() {
-  const out = document.getElementById('story-json-output');
-  const jsonText = (out?.value || '').trim();
-  if (!jsonText) {
-    alert('Chưa có JSON để xuất. Hãy bấm "Tạo câu chuyện" trước.');
-    return;
-  }
-  navigator.clipboard?.writeText(jsonText);
-  alert('Đã copy JSON câu chuyện vào clipboard.');
-}
-
-function downloadCurrentStoryJSON() {
-  const out = document.getElementById('story-json-output');
-  const jsonText = (out?.value || '').trim();
-  if (!jsonText) {
-    alert('Chưa có JSON để lưu file. Hãy bấm "Tạo câu chuyện" trước.');
-    return;
-  }
-  let storyId = 'story';
-  try {
-    const obj = JSON.parse(jsonText);
-    storyId = obj.story_id || storyId;
-  } catch {}
-  downloadTextFile(`${storyId}.json`, jsonText);
-}
-
-function loadSelectedStory() {
-  const list = document.getElementById('story-list');
-  const selectedId = list?.value || '';
-  if (!selectedId) return;
-
-  const stories = getStories();
-  const st = stories.find(s => s.story_id === selectedId);
-  if (!st) return;
-
-  const idEl = document.getElementById('story-id');
-  const titleEl = document.getElementById('story-title');
-  const contentEl = document.getElementById('story-content');
-  const charsEl = document.getElementById('story-characters');
-
-  if (idEl) idEl.value = st.story_id || '';
-  if (titleEl) titleEl.value = st.story_title || '';
-  if (contentEl) contentEl.value = st.content || '';
-
-  if (charsEl) {
-    const ids = new Set(st.character_ids || []);
-    Array.from(charsEl.options).forEach(opt => { opt.selected = ids.has(opt.value); });
-  }
-
-  writeStoryPreview(st);
-}
-
-function deleteSelectedStory() {
-  const list = document.getElementById('story-list');
-  const selectedId = list?.value || '';
-  if (!selectedId) return;
-
-  const stories = getStories();
-  const next = stories.filter(s => s.story_id !== selectedId);
-  setStories(next);
-  renderStoryList();
-
-  // Clear preview if it was the deleted one
-  const out = document.getElementById('story-json-output');
-  if (out) out.value = '';
-}
-
-function downloadTextFile(filename, content) {
-  const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-const selectedCharacterIds = new Set();
-let allCharacters = [];
-
-function renderCharacterCards(list){
-  const wrap = document.getElementById("story-characters-cards");
-  wrap.innerHTML = "";
+function renderStoryCharacterCards(list){
+  const wrap = document.getElementById('story-characters-cards');
+  if(!wrap) return;
+  wrap.innerHTML = '';
 
   list.forEach(c => {
-    const card = document.createElement("div");
-    card.className = "char-card" + (selectedCharacterIds.has(c.id) ? " selected" : "");
+    const card = document.createElement('div');
+    card.className = 'char-card' + (selectedStoryCharacterIds.has(c.id) ? ' selected' : '');
     card.dataset.id = c.id;
 
-    // nếu bạn có signature_colors[0] thì dùng làm badge (fallback xám)
-    const badgeColor = signatureColorToHex(c.signature_colors?.[0]); // bạn có thể map sau
-    const badge = document.createElement("div");
-    badge.className = "char-badge";
-    badge.style.background = badgeColor || "#999";
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = selectedStoryCharacterIds.has(c.id);
+    cb.onclick = (e) => { e.stopPropagation(); toggleStoryCharacter(c.id); };
 
-    const name = document.createElement("div");
-    name.className = "char-name";
+    const badge = document.createElement('div');
+    badge.className = 'char-badge';
+    badge.style.background = signatureColorToHex(c.signature_colors?.[0]);
+
+    const name = document.createElement('div');
+    name.className = 'char-name';
     name.textContent = c.name || c.id;
 
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.checked = selectedCharacterIds.has(c.id);
-    cb.onclick = (e) => { e.stopPropagation(); toggleCharacter(c.id); };
-
-    card.onclick = () => toggleCharacter(c.id);
+    card.onclick = () => toggleStoryCharacter(c.id);
 
     card.appendChild(cb);
     card.appendChild(badge);
@@ -946,45 +279,103 @@ function renderCharacterCards(list){
     wrap.appendChild(card);
   });
 
-  updateCharCount();
+  updateStoryCharCount();
 }
 
-function toggleCharacter(id){
-  if(selectedCharacterIds.has(id)) selectedCharacterIds.delete(id);
-  else selectedCharacterIds.add(id);
-
-  filterCharacterCards(true); // rerender theo search hiện tại
+function toggleStoryCharacter(id){
+  if(selectedStoryCharacterIds.has(id)) selectedStoryCharacterIds.delete(id);
+  else selectedStoryCharacterIds.add(id);
+  filterStoryCharacterCards();
 }
 
-function updateCharCount(){
-  const el = document.getElementById("char-count");
-  if(el) el.textContent = `Đã chọn: ${selectedCharacterIds.size}`;
+function updateStoryCharCount(){
+  const el = document.getElementById('char-count');
+  if(el) el.textContent = `Đã chọn: ${selectedStoryCharacterIds.size}`;
 }
 
-function filterCharacterCards(skipInputRead=false){
-  const q = (document.getElementById("char-search")?.value || "").trim().toLowerCase();
-  const filtered = q
-    ? allCharacters.filter(c => (c.name || "").toLowerCase().includes(q) || (c.id || "").toLowerCase().includes(q))
-    : allCharacters;
-  renderCharacterCards(filtered);
+function filterStoryCharacterCards(){
+  const q = (document.getElementById('char-search')?.value || '').trim().toLowerCase();
+  const list = q ? data.characters.filter(c => (c.name||'').toLowerCase().includes(q) || (c.id||'').toLowerCase().includes(q)) : data.characters;
+  renderStoryCharacterCards(list);
 }
 
 function selectAllCharacters(){
-  allCharacters.forEach(c => selectedCharacterIds.add(c.id));
-  filterCharacterCards(true);
-}
-function clearAllCharacters(){
-  selectedCharacterIds.clear();
-  filterCharacterCards(true);
+  data.characters.forEach(c => selectedStoryCharacterIds.add(c.id));
+  filterStoryCharacterCards();
 }
 
-// map màu signature -> hex (tạm thời; bạn có palette thì map chuẩn theo palette)
-function signatureColorToHex(token){
-  const map = {
-    xnc_warm_yellow:"#F7D774",
-    xnc_soft_blue:"#8FB7E8",
-    xnc_mint_green:"#87D8C6",
-    xnc_soft_orange:"#F4B184"
+function clearAllCharacters(){
+  selectedStoryCharacterIds.clear();
+  filterStoryCharacterCards();
+}
+
+function getStories(){
+  try { return JSON.parse(localStorage.getItem(XNC_STORY_STORAGE_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function setStories(list){
+  localStorage.setItem(XNC_STORY_STORAGE_KEY, JSON.stringify(list, null, 2));
+}
+
+function buildStoryObject(){
+  const id = (document.getElementById('story-id').value || '').trim();
+  const title = (document.getElementById('story-title').value || '').trim();
+  const content = (document.getElementById('story-content').value || '').trim();
+  const character_ids = Array.from(selectedStoryCharacterIds);
+
+  // Snapshot full character objects for portability
+  const characters_snapshot = character_ids.map(cid => data.characterMap[cid]).filter(Boolean);
+
+  return {
+    id: id || `STORY-${Date.now()}`,
+    title: title || 'Untitled story',
+    content,
+    character_ids,
+    characters_snapshot,
+    created_at: new Date().toISOString()
   };
-  return map[token] || "#999";
+}
+
+// Exposed to HTML buttons (keep names per your UI)
+function createStory(){
+  const story = buildStoryObject();
+  const list = getStories();
+  // upsert by id
+  const idx = list.findIndex(s => s.id === story.id);
+  if(idx >= 0) list[idx] = story; else list.push(story);
+  setStories(list);
+
+  const pre = document.getElementById('story-preview');
+  if(pre) pre.textContent = JSON.stringify(story, null, 2);
+  alert('Đã lưu câu chuyện vào local.');
+}
+
+function exportStory(){
+  const story = buildStoryObject();
+  const pre = document.getElementById('story-preview');
+  if(pre) pre.textContent = JSON.stringify(story, null, 2);
+
+  const txt = JSON.stringify(story, null, 2);
+  if(navigator.clipboard) navigator.clipboard.writeText(txt).catch(()=>{});
+  alert('Đã xuất JSON (đồng thời copy clipboard nếu trình duyệt cho phép).');
+}
+
+function downloadStory(){
+  const story = buildStoryObject();
+  const txt = JSON.stringify(story, null, 2);
+  const blob = new Blob([txt], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${story.id}.json`;
+  a.click();
+}
+
+// Hook after JSON loaded
+function initStoryTab(){
+  if(!storyElsExist()) return;
+  // Try to read token->hex from style json if available
+  data.styleTokenMap = data?.styleTokenMap || (data?.rawStyleJson?.style?.xnc_color_tokens || null);
+  renderStoryCharacterCards(data.characters);
+  updateStoryCharCount();
 }
