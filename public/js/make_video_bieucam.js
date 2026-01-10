@@ -118,6 +118,41 @@ async function init() {
   setupTabs();
   initStoryTab();
 
+
+  // ===== Scene/Frame navigator bindings =====
+  const btnPrev = document.getElementById('btn-prev-scene');
+  const btnNext = document.getElementById('btn-next-scene');
+  const txScene = document.getElementById('current-scene-note');
+  const txFrame = document.getElementById('current-frame-note');
+
+  if (btnPrev) btnPrev.addEventListener('click', () => {
+    const max = (appState?.scene_manifest?.scenes?.length || 1) - 1;
+    const nextIdx = Math.max(0, (currentSceneIdx || 0) - 1);
+    setCurrentSceneFrame(nextIdx, 0);
+  });
+
+  if (btnNext) btnNext.addEventListener('click', () => {
+    const max = (appState?.scene_manifest?.scenes?.length || 1) - 1;
+    const nextIdx = Math.min(max, (currentSceneIdx || 0) + 1);
+    setCurrentSceneFrame(nextIdx, 0);
+  });
+
+  if (txScene) txScene.addEventListener('input', (e) => {
+    const sc = appState?.scene_manifest?.scenes?.[currentSceneIdx];
+    if (!sc) return;
+    sc.scene_note = e.target.value || '';
+    saveSceneDraftLocal();
+  });
+
+  if (txFrame) txFrame.addEventListener('input', (e) => {
+    const sc = appState?.scene_manifest?.scenes?.[currentSceneIdx];
+    if (!sc) return;
+    sc.frames = Array.isArray(sc.frames) ? sc.frames : [];
+    sc.frames[currentFrameIdx] = sc.frames[currentFrameIdx] || { frame_id: `F${String(currentFrameIdx+1).padStart(2,'0')}` };
+    sc.frames[currentFrameIdx].frame_note = e.target.value || '';
+    saveSceneDraftLocal();
+  });
+
 }
 // Hàm nạp dữ liệu cho các SelectBox đơn giản
 function populateSelect(id, items) {
@@ -688,7 +723,71 @@ function buildOutfitLine(outfit, gender, signatureColors) {
    STORY TAB (Local storage)
 ----------------------------*/
 
+let currentSceneIdx = 0;
+let currentFrameIdx = 0;
+
 const STORY_STORAGE_KEY = 'xnc_stories_v1';
+
+const SCENE_DRAFT_KEY_PREFIX = 'xnc_scene_manifest_draft::';
+
+function getDraftKey() {
+  const sid = (document.getElementById('story-id')?.value || '').trim();
+  return SCENE_DRAFT_KEY_PREFIX + (sid || 'unknown');
+}
+
+function saveSceneDraftLocal() {
+  try {
+    if (!appState?.scene_manifest) return;
+    localStorage.setItem(getDraftKey(), JSON.stringify(appState.scene_manifest));
+  } catch (e) {}
+}
+
+function loadSceneDraftLocal() {
+  try {
+    const raw = localStorage.getItem(getDraftKey());
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    return obj && typeof obj === 'object' ? obj : null;
+  } catch (e) { return null; }
+}
+
+function setCurrentSceneFrame(si=0, fi=0) {
+  currentSceneIdx = Math.max(0, Number(si) || 0);
+  currentFrameIdx = Math.max(0, Number(fi) || 0);
+  updateCurrentScenePanel();
+  // highlight
+  const box = document.getElementById('scenes-output');
+  if (box) {
+    box.querySelectorAll('.scene-card').forEach(card => {
+      const idx = Number(card.dataset.sceneIdx);
+      card.classList.toggle('active', idx === currentSceneIdx);
+    });
+  }
+}
+
+function updateCurrentScenePanel() {
+  const label = document.getElementById('current-scene-label');
+  const sceneNote = document.getElementById('current-scene-note');
+  const frameNote = document.getElementById('current-frame-note');
+  const sc = appState?.scene_manifest?.scenes?.[currentSceneIdx];
+  if (!label || !sceneNote || !frameNote) return;
+
+  if (!sc) {
+    label.textContent = 'Chưa có Scene';
+    sceneNote.value = '';
+    frameNote.value = '';
+    return;
+  }
+
+  const sid = sc.scene_id || `S${String(currentSceneIdx+1).padStart(2,'0')}`;
+  const fid = sc.frames?.[currentFrameIdx]?.frame_id || `F${String(currentFrameIdx+1).padStart(2,'0')}`;
+  label.textContent = `${sid} • ${fid} • Mode: ${sc.mode || 'dialogue'}`;
+
+  sceneNote.value = sc.scene_note || '';
+  frameNote.value = (sc.frames?.[currentFrameIdx]?.frame_note) || '';
+}
+
+
 
 function setupTabs() {
   const storyBtn = document.getElementById('tab-story-btn');
@@ -1249,7 +1348,10 @@ function splitScenesFromStory() {
       scene_id: s.scene_id,
       title: s.title || '',
       mode: 'dialogue', // default, user can change later
-      characters: Array.from(new Set(s.dialogue.map(d => d.char_label))).filter(Boolean),
+      
+      scene_note: '',
+      frames: [{ frame_id: 'F01', frame_note: '' }],
+characters: Array.from(new Set(s.dialogue.map(d => d.char_label))).filter(Boolean),
       dialogue: s.dialogue,
       extras: s.extras,
       raw_text: s.raw_text
@@ -1258,6 +1360,38 @@ function splitScenesFromStory() {
 
   renderSceneManifestUI();
   setStoryJSONPreview(appState.scene_manifest);
+}
+
+
+function autoSceneNote(sc) {
+  // Simple heuristic: use first 2 dialogues + first SFX/Narration line.
+  const dlg = Array.isArray(sc.dialogue) ? sc.dialogue : [];
+  const firstLines = dlg.slice(0, 2).map(d => `${d.char_label || d.char_id || 'NV'}: ${d.text}`.trim());
+  const extras = Array.isArray(sc.extras) ? sc.extras : [];
+  const sfx = extras.find(x => x.type === 'sfx');
+  const narr = extras.find(x => x.type === 'narration');
+  const parts = [];
+  if (sc.background_label || sc.background_id) parts.push(`Setting: ${sc.background_label || sc.background_id}.`);
+  if (narr?.text) parts.push(`Context: ${narr.text}`);
+  if (sfx?.text) parts.push(`SFX: ${sfx.text}`);
+  if (firstLines.length) parts.push(`Key lines: ${firstLines.join(' | ')}`);
+  return parts.join(' ').replace(/\s+/g, ' ').trim();
+}
+
+function autoFrameNote(sc, frameIdx=0) {
+  const f = sc?.frames?.[frameIdx] || {};
+  const actors = Array.isArray(f.actors) ? f.actors : [];
+  const focus = actors[0]?.char_label || actors[0]?.char_id;
+  const action = actors[0]?.action_label || actors[0]?.action_id;
+  const face = actors[0]?.face_label || actors[0]?.face_id;
+  const parts = [];
+  if (focus) parts.push(`Shot focuses on ${focus}.`);
+  if (action) parts.push(`Action: ${action}.`);
+  if (face) parts.push(`Expression: ${face}.`);
+  // attach first dialogue line in this scene as hint
+  const dlg = Array.isArray(sc.dialogue) ? sc.dialogue : [];
+  if (dlg[0]?.text) parts.push(`Dialogue hint: "${dlg[0].text}"`);
+  return parts.join(' ').replace(/\s+/g, ' ').trim();
 }
 
 function renderSceneManifestUI() {
@@ -1278,7 +1412,7 @@ function renderSceneManifestUI() {
     const narr = (sc.extras || []).filter(x => x.type === 'narration').slice(0,3).map(x => `<div class="nar-line">${escapeHtml(x.text)}</div>`).join('');
 
     return `
-      <div class="scene-card">
+      <div class="scene-card ${idx===currentSceneIdx?'active':''}" data-scene-idx="${idx}">
         <div class="scene-head">
           <div>
             <div class="scene-title">${escapeHtml(sc.scene_id)} ${sc.title ? '— ' + escapeHtml(sc.title) : ''}</div>
@@ -1304,7 +1438,30 @@ function renderSceneManifestUI() {
 
         <details>
           <summary>Raw text</summary>
-          <textarea class="scene-raw" data-scene-idx="${idx}" rows="6">${escapeHtml(sc.raw_text||'')}</textarea>
+          <textarea class="scene-raw" data-scene-idx="${idx}" rows="6">${escapeHtml(sc.raw_text||'')}
+</textarea>
+
+          <div class="row" style="gap:10px; margin-top:10px; align-items:flex-start;">
+            <div style="flex:1; min-width:260px;">
+              <div class="label">Scene Note (tóm tắt nội dung cảnh)</div>
+              <textarea class="scene-note" data-scene-idx="${idx}" rows="3" placeholder="VD: Bối cảnh + mục tiêu cảnh + cảm xúc chính...">${escapeHtml(sc.scene_note || '')}</textarea>
+              <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" class="btn small btn-auto-scene-note" data-scene-idx="${idx}">Auto-gợi ý</button>
+                <button type="button" class="btn small btn-clear-scene-note" data-scene-idx="${idx}">Xóa</button>
+              </div>
+            </div>
+
+            <div style="flex:1; min-width:260px;">
+              <div class="label">Frame Note (tóm tắt shot hiện tại)</div>
+              <textarea class="frame-note" data-scene-idx="${idx}" data-frame-idx="0" rows="3" placeholder="VD: Cận mặt ai? hành động nhỏ? cảm xúc?">${escapeHtml((sc.frames?.[0]?.frame_note) || '')}</textarea>
+              <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" class="btn small btn-auto-frame-note" data-scene-idx="${idx}" data-frame-idx="0">Auto-gợi ý</button>
+                <button type="button" class="btn small btn-copy-scene-to-frame" data-scene-idx="${idx}" data-frame-idx="0">Copy từ Scene Note</button>
+                <button type="button" class="btn small btn-clear-frame-note" data-scene-idx="${idx}" data-frame-idx="0">Xóa</button>
+              </div>
+            </div>
+          </div>
+
           <div class="muted">Bạn có thể sửa raw text rồi bấm “Tách lại thoại từ raw” (ở nút export) nếu cần.</div>
         </details>
       </div>
@@ -1333,6 +1490,17 @@ function renderSceneManifestUI() {
       setStoryJSONPreview(appState.scene_manifest);
     });
   });
+
+  // click scene card to select current
+  box.querySelectorAll('.scene-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const i = Number(card.dataset.sceneIdx || 0);
+      setCurrentSceneFrame(i, 0);
+      saveSceneDraftLocal();
+    });
+  });
+
+  updateCurrentScenePanel();
 }
 
 function buildDialogueExport() {
