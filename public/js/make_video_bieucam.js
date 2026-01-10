@@ -261,6 +261,9 @@ function buildCurrentPromptObject() {
   const cameraKey = camEl?.value || 'MEDIUM_SHOT';
   const cameraLabel = camEl?.options?.[camEl.selectedIndex]?.text || cameraKey;
 
+
+  const wardrobeMode = document.getElementById('wardrobe-priority-mode')?.value || 'auto';
+
   const bg = bgId ? data.backgroundMap[bgId] : null;
   const lightingDesc = lightingKey ? (data.lighting[lightingKey] || toHumanText(lightingKey)) : '';
 
@@ -275,7 +278,8 @@ function buildCurrentPromptObject() {
     const stateId = slot.querySelector('.state-sel')?.value || '';
     const actionId = slot.querySelector('.sig-sel')?.value || '';
 
-    const outfitId = slot.querySelector('.out-sel')?.value || char.default_outfit_id || '';
+    const explicitOutfitId = slot.querySelector('.out-sel')?.value || '';
+    const outfitId = resolveWardrobeId(explicitOutfitId, char, wardrobeMode);
     const outfit = outfitId ? data.outfitMap[outfitId] : null;
 
     const face = faceId ? data.faceMap[faceId] : null;
@@ -310,6 +314,7 @@ function buildCurrentPromptObject() {
     video: { id: videoId || null, title: videoTitle || null },
     scene: {
       aspect_ratio: aspect,
+      wardrobe_priority_mode: wardrobeMode,
       camera: { id: cameraKey, label: cameraLabel },
       lighting: { id: lightingKey || null, desc_en: lightingDesc || null },
       background: bg ? { id: bg.id, label: bg.label || bg.name || bg.id, desc_en: getBackgroundDescEn(bg) } : null
@@ -324,8 +329,11 @@ function buildRenderFriendlyPrompt(p) {
   const backgroundLine = p.scene.background?.desc_en ? p.scene.background.desc_en : 'Vietnamese countryside street, pastel 2D chibi background, no text';
 
   const styleLines = [
-    'STYLE: pastel 2D chibi animation, Vietnamese countryside vibe, clean illustration, expressive facial acting.',
-    'QUALITY: consistent character identity across frames (same face, colors, and signature items).',
+    'STYLE: pastel 2D chibi animation, Vietnamese everyday vibe, clean lineart, soft shading, stable design turnarounds.',
+    'REFERENCE SAFETY: Do NOT change the character identity when changing wardrobe. Identity means: face shape, hairstyle, skin tone, body proportions, signature items (e.g., glasses), and overall silhouette.',
+    'WARDROBE SWAPS: You may change outfits/uniforms, but keep the same person. Do not reinterpret the character as a different age, different ethnicity, different haircut, or different accessories unless explicitly specified.',
+    'COLOR RULE: Signature colors are part of the character identity. If the selected wardrobe item says "do NOT recolor", keep its original uniform colors and only use signature colors for allowed accents.',
+    'QUALITY: consistent character identity across frames (same face features, same signature items, same palette discipline).',
     'RULES: no captions, no logos, no watermarks, no readable text.'
   ];
 
@@ -343,24 +351,57 @@ function buildRenderFriendlyPrompt(p) {
 
   const charLines = (p.characters || []).length
     ? p.characters.flatMap((c) => {
-        const base = (c.prompt_en || c.base_desc_en || '').trim();
-        const sigItems = (c.signature_items || []).length ? c.signature_items.join(', ') : 'none';
-        const sigColors = (c.signature_colors || []).length ? c.signature_colors.join(', ') : 'none';
-        const outfit = c.outfit?.desc_en ? c.outfit.desc_en : (c.outfit?.name || 'default outfit');
+        const profile = c.profile || {};
+        const base = (profile.prompt_en || profile.base_desc_en || c.prompt_en || c.base_desc_en || '').trim();
+
+        const sigItems = Array.isArray(profile.signature_items) && profile.signature_items.length
+          ? profile.signature_items.join(', ')
+          : (Array.isArray(c.signature_items) && c.signature_items.length ? c.signature_items.join(', ') : 'none');
+
+        const sigColors = Array.isArray(profile.signature_colors) && profile.signature_colors.length
+          ? profile.signature_colors.join(', ')
+          : (Array.isArray(c.signature_colors) && c.signature_colors.length ? c.signature_colors.join(', ') : 'none');
+
+        const outfitLine = buildOutfitLine(c.outfit ? data.outfitMap[c.outfit.id] || c.outfit : null, profile.gender || c.gender, (profile.signature_colors || c.signature_colors || []));
         const action = c.action?.desc_en ? c.action.desc_en : 'idle / natural standing';
         const face = c.face?.desc_en ? c.face.desc_en : 'neutral expression';
         const state = c.state?.desc_en ? c.state.desc_en : 'neutral posture';
 
+        // Include ALL character profile fields in a render-friendly way, while keeping the PROMPT in English:
+        // - Skip Vietnamese-only fields (*_vi) in the text output (they remain in JSON export).
+        // - Prefer stable identity locks (name, gender, base_desc_en, signature items/colors).
+        const profileLines = [];
+        Object.keys(profile).forEach((k) => {
+          if (/_vi$/i.test(k)) return; // keep prompt English-only
+          const v = profile[k];
+          if (v === null || typeof v === 'undefined') return;
+          if (typeof v === 'string' && !v.trim()) return;
+
+          if (Array.isArray(v)) {
+            profileLines.push(`  - ${k}: ${v.join(', ')}`);
+            return;
+          }
+          if (typeof v === 'object') {
+            profileLines.push(`  - ${k}: ${JSON.stringify(v)}`);
+            return;
+          }
+          profileLines.push(`  - ${k}: ${String(v)}`);
+        });
+
         return [
           `CHARACTER ${c.index}: ${c.name} (${c.id})`,
+          `IDENTITY LOCK (do not change across shots):`,
           `- Base description: ${base || 'N/A'}`,
           `- Signature items (keep visible): ${sigItems}`,
           `- Signature colors (keep consistent): ${sigColors}`,
-          `- Outfit: ${outfit}`,
+          `WARDROBE (may be swapped without changing identity):`,
+          `- Outfit / uniform: ${outfitLine}`,
+          `PERFORMANCE:`,
           `- Action: ${action}`,
           `- Face (facial expression): ${face}`,
-          `- State (body posture / behavior): ${state}`,
-          ''
+          `- Body state / pose: ${state}`,
+          `PROFILE FIELDS (English-only view; *_vi fields are stored in JSON export):`,
+          ...(profileLines.length ? profileLines : [`  - (none)`])
         ];
       })
     : ['CHARACTERS: (none selected)'];
@@ -521,3 +562,96 @@ function clearAllPrompts() {
 
 // Khởi chạy khi trang sẵn sàng
 document.addEventListener('DOMContentLoaded', init);
+
+
+
+function resolveWardrobeId(explicitOutfitId, charProfile, wardrobeMode) {
+  // If user explicitly chose an outfit/uniform, honor it.
+  if (explicitOutfitId) return explicitOutfitId;
+
+  const defaultOutfitId = charProfile?.default_outfit_id || '';
+  const defaultUniformId = charProfile?.default_uniform_id || '';
+
+  // If only one exists, use it.
+  if (defaultOutfitId && !defaultUniformId) return defaultOutfitId;
+  if (defaultUniformId && !defaultOutfitId) return defaultUniformId;
+
+  // Both exist: apply priority mode.
+  const outfitObj = defaultOutfitId ? data.outfitMap[defaultOutfitId] : null;
+  const uniformObj = defaultUniformId ? data.outfitMap[defaultUniformId] : null;
+
+  const outfitPr = typeof outfitObj?.priority === 'number' ? outfitObj.priority : 0;
+  const uniformPr = typeof uniformObj?.priority === 'number' ? uniformObj.priority : 0;
+
+  if (wardrobeMode === 'prefer_uniform') return defaultUniformId || defaultOutfitId || '';
+  if (wardrobeMode === 'prefer_outfit') return defaultOutfitId || defaultUniformId || '';
+
+  // auto: choose the higher priority; tie-breaker prefers uniform (safer for "reference" consistency).
+  if (uniformPr > outfitPr) return defaultUniformId;
+  if (outfitPr > uniformPr) return defaultOutfitId;
+  return defaultUniformId || defaultOutfitId || '';
+}
+
+// --- Signature colorway helpers (for wardrobe recolor without identity drift) ---
+const COLOR_TOKEN_MAP = {
+  xnc_blue: 'royal blue',
+  xnc_yellow: 'sunny yellow',
+  xnc_red: 'bright red',
+  xnc_black: 'black',
+  xnc_white: 'white',
+  xnc_brown: 'warm brown',
+  xnc_warm_brown: 'warm brown',
+  xnc_pastel: 'soft pastel tones',
+  xnc_pastel_green: 'pastel green',
+  xnc_pastel_yellow: 'pastel yellow',
+  xnc_rice_yellow: 'rice-yellow',
+  xnc_pink: 'pink',
+  xnc_purple: 'purple',
+  xnc_orange: 'orange',
+  xnc_green: 'green',
+};
+
+function colorTokenToEnglish(token) {
+  if (!token) return '';
+  const key = String(token).trim();
+  const normalized = key.replace(/^xnc_/, 'xnc_');
+  const bare = normalized.replace(/^xnc_/, '');
+  if (COLOR_TOKEN_MAP[normalized]) return COLOR_TOKEN_MAP[normalized];
+  if (COLOR_TOKEN_MAP[bare]) return COLOR_TOKEN_MAP[bare];
+  // fallback: turn tokens into readable English
+  return bare.replace(/_/g, ' ').trim();
+}
+
+function formatSignatureColorway(signatureColors) {
+  const list = (signatureColors || []).map(colorTokenToEnglish).filter(Boolean);
+  if (!list.length) return null;
+  const primary = list[0];
+  const accents = list.slice(1);
+  const accentsText = accents.length ? accents.join(', ') : primary;
+  return { primary, accentsText, listText: list.join(', ') };
+}
+
+function containsColorWords(text) {
+  const t = String(text || '').toLowerCase();
+  return /\b(black|white|red|blue|yellow|green|purple|pink|orange|brown|gray|grey|beige|gold|silver)\b/.test(t);
+}
+
+function buildOutfitLine(outfit, gender, signatureColors) {
+  if (!outfit) return 'default outfit';
+  const desc = getOutfitDescEn(outfit, gender) || outfit.name || 'outfit';
+  const allowSig = outfit.allow_signature_color === true;
+
+  const colorway = formatSignatureColorway(signatureColors);
+  if (!colorway) return desc;
+
+  // If this wardrobe allows signature recolor, explicitly lock identity and recolor clothing only.
+  if (allowSig) {
+    const overrideNote = containsColorWords(desc)
+      ? 'Override any garment colors mentioned above to match the signature colorway.'
+      : 'Apply the signature colorway to the clothing.';
+    return `${desc}. Wardrobe colorway override: Primary = ${colorway.primary}; Accents = ${colorway.accentsText}. ${overrideNote} Keep the outfit cut, materials, patterns, and logos unchanged. Recolor CLOTHING ONLY; do not change skin, hair, face, or body identity.`;
+  }
+
+  // Otherwise, keep the wardrobe colors fixed to protect reference consistency.
+  return `${desc} (do NOT recolor this wardrobe item using signature colors; keep its original colors)`;
+}
