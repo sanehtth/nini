@@ -352,6 +352,111 @@
     "desc_en": "reddened eye rims, shimmering large tears welling up in the eyes, lower lip slightly bitten to suppress a sob, vulnerable expression",
     "intensity": "high"
   },
+{
+    "id": "winking_smile",
+    "label": "Nháy mắt mỉm cười",
+    "desc_vi": "Một mắt nhắm hờ, nghiêng đầu duyên dáng, nụ cười tự tin và thân thiện, phong thái tinh nghịch",
+    "desc_en": "one eye closed in a wink, charming tilt of the head, confident and friendly smile, playful vibe",
+    "intensity": "low"
+  },
+    {
+    "id": "eating_sneaky",
+    "label": "Ăn vụng",
+    "desc_vi":"Nấp trong một góc, liếc nhìn xung quanh với vẻ áy náy trong khi nhai nhanh, ôm chặt một miếng thức ăn nhỏ vào ngực",
+    "desc_en": "hiding in a corner, glancing around guiltily while chewing quickly, holding a small piece of food close to the chest",
+    "intensity": "low"
+  },
+{
+    "id": "runny_nose_flu",
+    "label": "Sổ mũi, chảy mũi",
+    "desc_vi": "Mũi đỏ ửng, tay cầm khăn giấy, một giọt nước mắt nhỏ đọng lại trên mũi, đôi mắt mệt mỏi, vẻ mặt hơi buồn rầu",
+    "desc_en": "red nose, holding a tissue, small drop hanging from the nose, tired eyes, slightly miserable expression",
+    "intensity": "med"
+  },
+  {
+    "id": "sweating_exhausted",
+    "label": "Đổ mồ hôi đầm đìa",
+    "desc_vi": "Những giọt mồ hôi lăn dài trên mặt, cổ áo ướt sũng, thở hổn hển, lau trán bằng tay hoặc tay áo",
+    "desc_en": "beads of sweat rolling down the face, soaked collar, panting, wiping forehead with hand or sleeve",
+    "intensity": "med_high"
+  },
+  {
+    "id": "drooling_craving",
+    "label": "Thèm chảy nước miếng",
+    "desc_vi": "Mắt dán chặt vào thứ gì đó (thức ăn), miệng hơi hé mở với một giọt nước dãi, vẻ mặt ngơ ngác nhưng đói khát",
+    "desc_en": "eyes fixed on something (food), mouth slightly open with a drop of drool, dazed but hungry look",
+    "intensity": "med"
+  },
+  {
+    "id": "eureka_moment",
+    "label": "Mắt sáng rực như tìm ra ý tưởng",
+    "desc_vi": "Đôi mắt lấp lánh ánh sáng, nụ cười rạng rỡ, biểu cảm như bóng đèn, ngón tay chỉ lên, tư thế tràn đầy năng lượng đột ngột",
+    "desc_en": "eyes sparkling with bright light, wide grin, lightbulb-like expression, finger pointing up, sudden energetic posture",
+    "intensity": "very_high"
+  },
+  {
+    "id": "eating_voraciously",
+    "label": "Ăn ngấu nghiến",
+    "desc_vi": "Nhét thức ăn vào miệng, mặt mũi lem luốc, mắt mở to, nhai nhanh, cúi gập người xuống đĩa với vẻ tập trung cao độ ",
+    "desc_en": "stuffing food into mouth, messy face, wide eyes, rapid chewing, leaning over the plate with intense focus",
+    "intensity": "high"
+  },
+  {
+    "id": "eating_slowly",
+    "label": "Ăn từ từ / Thưởng thức",
+    "desc_vi":"Ăn từng miếng nhỏ, nhắm mắt lại vì thích thú, nhai chậm rãi, vẻ mặt thư thái và bình thản.",
+    "desc_en": "taking small bites, eyes closed in delight, chewing slowly, relaxed and peaceful facial expression",
+    "intensity": "none"
+  },
+{
+    "id": "eating_hurriedly",
+    "label": "Ăn vội vã",
+    "desc_vi": Ăn trong khi đứng hoặc di chuyển, liếc nhìn đồng hồ hoặc nhìn thẳng về phía trước, nuốt nhanh, vẻ mặt hơi căng thẳng",
+    "desc_en": "eating while standing or moving, glancing at a watch or looking ahead, swallowing quickly, slightly stressed expression",
+    "intensity": "med"
+  },
+{
+    "id": "eating_stuffed_cheeks",
+    "label": "Ăn thốn một họng to",
+    "desc_vi": "Hai má phồng lên như má sóc, miệng đầy ắp thức ăn, không nói nên lời, vẻ mặt vừa buồn cười vừa choáng ngợp.",
+    "desc_en": "both cheeks puffed out like a squirrel, mouth completely full, unable to speak, funny and overwhelmed expression",
+    "intensity": "med_high"
+  },
+   {
+      "id": "slightly_scared",
+      "label": "Rén nhẹ",
+      "desc_vi": "Vai hơi rũ xuống, ánh mắt lo lắng, dáng vẻ do dự, biểu hiện sợ hãi tinh tế",
+      "desc_en": "shoulders slightly hunched, nervous eyes, hesitant posture, subtle fear expression",
+      "intensity": "low"
+    },
+    {
+      "id": "embarrassed_melt",
+      "label": "Quê... muốn độn thổ",
+      "desc_vi": "Mặt đỏ bừng, mắt nhìn xuống, nụ cười gượng gạo, thân thể co rúm lại",
+      "desc_en": "face blushing, eyes looking down, awkward smile, body shrinking inward",
+      "intensity": "med"
+    },
+    {
+      "id": "sweet_pleading",
+      "label": "Mặt nịnh nọt",
+      "desc_vi": "Ánh mắt dịu dàng, nụ cười gượng gạo, đầu hơi nghiêng, vẻ mặt cầu khẩn",
+      "desc_en": "soft eyes, forced sweet smile, head slightly tilted, pleading expression",
+      "intensity": "low"
+    },
+    {
+      "id": "extreme_flattery",
+      "label": "Siêu cấp nịnh nọt",
+      "desc_vi": "Nụ cười ngọt ngào quá mức, ánh mắt lấp lánh, hai tay nắm chặt, sự ngưỡng mộ giả tạo",
+      "desc_en": "overly exaggerated sweet smile, sparkling eyes, clasped hands, fake admiration",
+      "intensity": "med_high"
+    },
+    {
+      "id": "cold_gangster",
+      "label": "Mặt ngầu lạnh tanh",
+      "desc_vi": "Khuôn mặt lạnh lùng, ánh mắt sắc bén, dáng vẻ thư thái nhưng đầy uy quyền, sự điềm tĩnh đáng sợ",
+      "desc_en": "stone-cold face, sharp eyes, relaxed but dominant posture, intimidating calm",
+      "intensity": "med"
+    },
   {
     "id": "overwhelming_gratitude",
     "label": "Cảm động muốn chết",
