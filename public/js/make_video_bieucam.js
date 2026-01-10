@@ -31,6 +31,18 @@ let charSlotCount = 0;
 let storyManifest = { stories: [] };
 let storyManifestPath = '';
 
+// --- Preview helpers ---
+function setStoryJSONPreview(obj) {
+  const pre = document.getElementById('story-json-output');
+  if (!pre) return;
+  try {
+    pre.textContent = JSON.stringify(obj ?? {}, null, 2);
+  } catch (e) {
+    pre.textContent = String(obj);
+  }
+}
+
+
 async function loadJSON(url) {
   try {
     const res = await fetch(url);
