@@ -95,8 +95,12 @@ async function init() {
   if (copyBtn) copyBtn.onclick = copyCurrentPrompt;
 
   renderSavedList();
-}
 
+  // Story tab
+  setupTabs();
+  initStoryTab();
+
+}
 // Hàm nạp dữ liệu cho các SelectBox đơn giản
 function populateSelect(id, items) {
   const el = document.getElementById(id);
@@ -658,4 +662,252 @@ function buildOutfitLine(outfit, gender, signatureColors) {
 
   // Otherwise, keep the wardrobe colors fixed to protect reference consistency.
   return `${desc} (do NOT recolor this wardrobe item using signature colors; keep its original colors)`;
+}
+
+
+
+/* ---------------------------
+   STORY TAB (Local storage)
+----------------------------*/
+
+const STORY_STORAGE_KEY = 'xnc_stories_v1';
+
+function setupTabs() {
+  const storyBtn = document.getElementById('tab-story-btn');
+  const promptBtn = document.getElementById('tab-prompt-btn');
+  const storyTab = document.getElementById('tab-story');
+  const promptTab = document.getElementById('tab-prompt');
+
+  // If page doesn't have tabs (older HTML), do nothing
+  if (!storyBtn || !promptBtn || !storyTab || !promptTab) return;
+
+  const activate = (which) => {
+    const isStory = which === 'story';
+    storyBtn.classList.toggle('active', isStory);
+    promptBtn.classList.toggle('active', !isStory);
+    storyTab.classList.toggle('active', isStory);
+    promptTab.classList.toggle('active', !isStory);
+  };
+
+  storyBtn.addEventListener('click', () => activate('story'));
+  promptBtn.addEventListener('click', () => activate('prompt'));
+
+  // Default: story first
+  activate('story');
+}
+
+function initStoryTab() {
+  // Populate character multi-select
+  const sel = document.getElementById('story-characters');
+  if (sel) {
+    sel.innerHTML = '';
+    data.characters.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = `${c.name || c.id} (${c.id})`;
+      sel.appendChild(opt);
+    });
+  }
+
+  const createBtn = document.getElementById('create-story-btn');
+  if (createBtn) createBtn.onclick = createStory;
+
+  const exportBtn = document.getElementById('export-story-json-btn');
+  if (exportBtn) exportBtn.onclick = exportCurrentStoryJSON;
+
+  const saveFileBtn = document.getElementById('save-story-file-btn');
+  if (saveFileBtn) saveFileBtn.onclick = downloadCurrentStoryJSON;
+
+  const loadBtn = document.getElementById('load-story-btn');
+  if (loadBtn) loadBtn.onclick = loadSelectedStory;
+
+  const delBtn = document.getElementById('delete-story-btn');
+  if (delBtn) delBtn.onclick = deleteSelectedStory;
+
+  renderStoryList();
+}
+
+function getStories() {
+  try {
+    const raw = localStorage.getItem(STORY_STORAGE_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function setStories(stories) {
+  localStorage.setItem(STORY_STORAGE_KEY, JSON.stringify(stories, null, 2));
+}
+
+function renderStoryList() {
+  const list = document.getElementById('story-list');
+  if (!list) return;
+
+  const stories = getStories();
+  list.innerHTML = '';
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = stories.length ? '— Chọn một câu chuyện —' : 'Chưa có câu chuyện nào (Local)';
+  list.appendChild(placeholder);
+
+  stories
+    .slice()
+    .sort((a,b) => (b.updated_at || b.created_at || '').localeCompare(a.updated_at || a.created_at || ''))
+    .forEach(st => {
+      const opt = document.createElement('option');
+      opt.value = st.story_id || '';
+      opt.textContent = `${st.story_title || '(no title)'} — ${st.story_id || '(no id)'}`;
+      list.appendChild(opt);
+    });
+}
+
+function getSelectedMultiValues(selectEl) {
+  if (!selectEl) return [];
+  return Array.from(selectEl.selectedOptions || []).map(o => o.value).filter(Boolean);
+}
+
+function buildStoryObjectFromForm() {
+  const storyId = (document.getElementById('story-id')?.value || '').trim();
+  const storyTitle = (document.getElementById('story-title')?.value || '').trim();
+  const content = (document.getElementById('story-content')?.value || '').trim();
+  const selectedIds = getSelectedMultiValues(document.getElementById('story-characters'));
+
+  const characterSnapshots = selectedIds
+    .map(id => data.characterMap?.[id])
+    .filter(Boolean);
+
+  const now = new Date().toISOString();
+
+  // We keep a full snapshot for portability, while also storing ids for referential integrity.
+  return {
+    story_id: storyId,
+    story_title: storyTitle,
+    content: content,
+    character_ids: selectedIds,
+    characters: characterSnapshots,
+    created_at: now,
+    updated_at: now
+  };
+}
+
+function writeStoryPreview(storyObj) {
+  const out = document.getElementById('story-json-output');
+  if (!out) return;
+  out.value = JSON.stringify(storyObj, null, 2);
+}
+
+function createStory() {
+  const storyObj = buildStoryObjectFromForm();
+  if (!storyObj.story_id) {
+    alert('Bạn cần nhập ID câu chuyện.');
+    return;
+  }
+  if (!storyObj.story_title) {
+    alert('Bạn cần nhập Tên câu chuyện.');
+    return;
+  }
+  if (!storyObj.content) {
+    alert('Bạn cần nhập Nội dung câu chuyện.');
+    return;
+  }
+  if (!storyObj.character_ids.length) {
+    alert('Bạn cần chọn ít nhất 1 nhân vật tham gia.');
+    return;
+  }
+
+  const stories = getStories();
+  const idx = stories.findIndex(s => s.story_id === storyObj.story_id);
+
+  if (idx >= 0) {
+    // Preserve created_at
+    storyObj.created_at = stories[idx].created_at || storyObj.created_at;
+    stories[idx] = { ...stories[idx], ...storyObj, updated_at: new Date().toISOString() };
+  } else {
+    stories.push(storyObj);
+  }
+
+  setStories(stories);
+  writeStoryPreview(storyObj);
+  renderStoryList();
+}
+
+function exportCurrentStoryJSON() {
+  const out = document.getElementById('story-json-output');
+  const jsonText = (out?.value || '').trim();
+  if (!jsonText) {
+    alert('Chưa có JSON để xuất. Hãy bấm "Tạo câu chuyện" trước.');
+    return;
+  }
+  navigator.clipboard?.writeText(jsonText);
+  alert('Đã copy JSON câu chuyện vào clipboard.');
+}
+
+function downloadCurrentStoryJSON() {
+  const out = document.getElementById('story-json-output');
+  const jsonText = (out?.value || '').trim();
+  if (!jsonText) {
+    alert('Chưa có JSON để lưu file. Hãy bấm "Tạo câu chuyện" trước.');
+    return;
+  }
+  let storyId = 'story';
+  try {
+    const obj = JSON.parse(jsonText);
+    storyId = obj.story_id || storyId;
+  } catch {}
+  downloadTextFile(`${storyId}.json`, jsonText);
+}
+
+function loadSelectedStory() {
+  const list = document.getElementById('story-list');
+  const selectedId = list?.value || '';
+  if (!selectedId) return;
+
+  const stories = getStories();
+  const st = stories.find(s => s.story_id === selectedId);
+  if (!st) return;
+
+  const idEl = document.getElementById('story-id');
+  const titleEl = document.getElementById('story-title');
+  const contentEl = document.getElementById('story-content');
+  const charsEl = document.getElementById('story-characters');
+
+  if (idEl) idEl.value = st.story_id || '';
+  if (titleEl) titleEl.value = st.story_title || '';
+  if (contentEl) contentEl.value = st.content || '';
+
+  if (charsEl) {
+    const ids = new Set(st.character_ids || []);
+    Array.from(charsEl.options).forEach(opt => { opt.selected = ids.has(opt.value); });
+  }
+
+  writeStoryPreview(st);
+}
+
+function deleteSelectedStory() {
+  const list = document.getElementById('story-list');
+  const selectedId = list?.value || '';
+  if (!selectedId) return;
+
+  const stories = getStories();
+  const next = stories.filter(s => s.story_id !== selectedId);
+  setStories(next);
+  renderStoryList();
+
+  // Clear preview if it was the deleted one
+  const out = document.getElementById('story-json-output');
+  if (out) out.value = '';
+}
+
+function downloadTextFile(filename, content) {
+  const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
