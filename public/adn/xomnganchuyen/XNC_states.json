@@ -1,4 +1,4 @@
-{
+﻿{
   "version": "1.0",
   "series_id": "XNC",
   "states": [
@@ -38,36 +38,7 @@
       "desc_en": "leaning forward, mouth wide open shouting, aggressive pointing, intense eye contact",
       "intensity": "very_high"
     },
-    {
-      "id": "slightly_scared",
-      "label": "Rén nhẹ",
-      "desc_en": "shoulders slightly hunched, nervous eyes, hesitant posture, subtle fear expression",
-      "intensity": "low"
-    },
-    {
-      "id": "embarrassed_melt",
-      "label": "Quê... muốn độn thổ",
-      "desc_en": "face blushing, eyes looking down, awkward smile, body shrinking inward",
-      "intensity": "med"
-    },
-    {
-      "id": "sweet_pleading",
-      "label": "Mặt nịnh nọt",
-      "desc_en": "soft eyes, forced sweet smile, head slightly tilted, pleading expression",
-      "intensity": "low"
-    },
-    {
-      "id": "extreme_flattery",
-      "label": "Siêu cấp nịnh nọt",
-      "desc_en": "overly exaggerated sweet smile, sparkling eyes, clasped hands, fake admiration",
-      "intensity": "med_high"
-    },
-    {
-      "id": "cold_gangster",
-      "label": "Mặt ngầu lạnh tanh",
-      "desc_en": "stone-cold face, sharp eyes, relaxed but dominant posture, intimidating calm",
-      "intensity": "med"
-    },
+ 
     {
     "id": "fishing_relaxed",
     "label": "Ngồi câu cá thư giãn",
@@ -158,30 +129,7 @@
     "desc_en": "wrapped tightly in a thick blanket, only the top of the head visible, peaceful sleeping face, cozy atmosphere",
     "intensity": "none"
   },
-  {
-    "id": "runny_nose_flu",
-    "label": "Sổ mũi, chảy mũi",
-    "desc_en": "red nose, holding a tissue, small drop hanging from the nose, tired eyes, slightly miserable expression",
-    "intensity": "med"
-  },
-  {
-    "id": "sweating_exhausted",
-    "label": "Đổ mồ hôi đầm đìa",
-    "desc_en": "beads of sweat rolling down the face, soaked collar, panting, wiping forehead with hand or sleeve",
-    "intensity": "med_high"
-  },
-  {
-    "id": "drooling_craving",
-    "label": "Thèm chảy nước miếng",
-    "desc_en": "eyes fixed on something (food), mouth slightly open with a drop of drool, dazed but hungry look",
-    "intensity": "med"
-  },
-  {
-    "id": "eureka_moment",
-    "label": "Mắt sáng rực như tìm ra ý tưởng",
-    "desc_en": "eyes sparkling with bright light, wide grin, lightbulb-like expression, finger pointing up, sudden energetic posture",
-    "intensity": "very_high"
-  },
+  
     {
     "id": "thinking_hand_on_chin",
     "label": "Ngồi chống tay lên bàn suy nghĩ",
@@ -253,42 +201,7 @@
     "label": "Hết hồn té xỉu",
     "desc_en": "eyes rolling back, body Limp and falling backward, arms spread out, unconscious but comical expression",
     "intensity": "very_high"
-  },
-  {
-    "id": "winking_smile",
-    "label": "Nháy mắt mỉm cười",
-    "desc_en": "one eye closed in a wink, charming tilt of the head, confident and friendly smile, playful vibe",
-    "intensity": "low"
-  },
-    {
-    "id": "eating_sneaky",
-    "label": "Ăn vụng",
-    "desc_en": "hiding in a corner, glancing around guiltily while chewing quickly, holding a small piece of food close to the chest",
-    "intensity": "low"
-  },
-  {
-    "id": "eating_voraciously",
-    "label": "Ăn ngấu nghiến",
-    "desc_en": "stuffing food into mouth, messy face, wide eyes, rapid chewing, leaning over the plate with intense focus",
-    "intensity": "high"
-  },
-  {
-    "id": "eating_slowly",
-    "label": "Ăn từ từ / Thưởng thức",
-    "desc_en": "taking small bites, eyes closed in delight, chewing slowly, relaxed and peaceful facial expression",
-    "intensity": "none"
-  },
-  {
-    "id": "eating_hurriedly",
-    "label": "Ăn vội vã",
-    "desc_en": "eating while standing or moving, glancing at a watch or looking ahead, swallowing quickly, slightly stressed expression",
-    "intensity": "med"
-  },
-  {
-    "id": "eating_stuffed_cheeks",
-    "label": "Ăn thốn một họng to",
-    "desc_en": "both cheeks puffed out like a squirrel, mouth completely full, unable to speak, funny and overwhelmed expression",
-    "intensity": "med_high"
   }
+  
   ]
 }
