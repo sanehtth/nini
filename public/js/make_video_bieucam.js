@@ -232,8 +232,30 @@ async function loadStoryFromSelected() {
   }
 
   // file có thể là relative trong /substance/..., hoặc absolute
-  const path = file.startsWith("/") ? file : ("/" + file.replace(/^\.?\//, ""));
-  const storyJson = await fetchJSON(path);
+  // file có thể là relative trong /substance/..., hoặc absolute
+let path = String(file || "").trim();
+
+// absolute url
+if (/^https?:\/\//i.test(path)) {
+  // giữ nguyên
+} else {
+  // bỏ ./ nếu có
+  path = path.replace(/^\.\//, "");
+
+  // nếu chưa có "/" đầu -> coi như tên file, mặc định nằm trong /substance/
+  if (!path.startsWith("/")) path = "/substance/" + path;
+
+  // nếu có "/" đầu nhưng không có "/substance/" và chỉ là "/XNC-....json" -> fix lại
+  if (path.startsWith("/") && !path.startsWith("/substance/")) {
+    // nếu chỉ là "/XNC-xxx.json" (không có thư mục)
+    if (!path.slice(1).includes("/")) {
+      path = "/substance/" + path.slice(1);
+    }
+  }
+}
+
+const storyJson = await fetchJSON(path);
+
 
   // support your existing story json:
   // { id, title, story, characters:[...] }
@@ -679,6 +701,20 @@ function renderSceneList() {
   box.querySelectorAll("[data-goto-scene]").forEach(btn => {
     btn.onclick = () => setActiveScene(parseInt(btn.dataset.gotoScene, 10) || 0);
   });
+}
+//=======================================
+function normalizeStoryPath(p) {
+  if (!p) return "";
+  p = String(p).trim();
+
+  // Nếu đã là URL tuyệt đối http(s) thì giữ nguyên
+  if (/^https?:\/\//i.test(p)) return p;
+
+  // Nếu đã có "/substance/" hoặc bắt đầu bằng "/" thì giữ nguyên (chỉ fix trường hợp thiếu)
+  if (p.startsWith("/")) return p;
+
+  // Nếu manifest chỉ ghi "XNC-xxxx.json" thì tự prefix folder đúng
+  return "/substance/" + p.replace(/^\.?\//, "");
 }
 
 /* ---------- Main render ---------- */
