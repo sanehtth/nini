@@ -35,8 +35,18 @@
   <label>Nội dung</label>
   <textarea id="story-content"></textarea>
 
-  <label>Nhân vật tham gia</label>
-  <select id="story-characters" multiple></select>
+ <label>Nhân vật tham gia</label>
+
+<input id="char-search" placeholder="Tìm nhân vật..." oninput="filterCharacterCards()" />
+
+<div style="margin-top:8px; display:flex; gap:8px;">
+  <button type="button" onclick="selectAllCharacters()">Chọn tất cả</button>
+  <button type="button" onclick="clearAllCharacters()">Bỏ chọn</button>
+  <div id="char-count" style="margin-left:auto;"></div>
+</div>
+
+<div id="story-characters-cards" class="char-grid"></div>
+
 
   <button onclick="createStory()">Tạo câu chuyện</button>
   <button onclick="exportStory()">Xuất JSON</button>
