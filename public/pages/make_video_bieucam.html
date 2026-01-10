@@ -68,6 +68,14 @@
           <input type="text" id="video-id" placeholder="ID Video" style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--border);" />
           <input type="text" id="video-title" placeholder="Tên Video" style="flex:2; padding:10px; border-radius:8px; border:1px solid var(--border);" />
         </div>
+        <div style="display:flex; gap:12px; margin-bottom:16px; align-items:center; flex-wrap:wrap;">
+          <label for="wardrobe-priority-mode" class="muted" style="min-width:180px;">Wardrobe priority</label>
+          <select id="wardrobe-priority-mode" style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--border);">
+            <option value="auto">AUTO (use outfit priority; tie => uniform)</option>
+            <option value="prefer_uniform">Prefer UNIFORM</option>
+            <option value="prefer_outfit">Prefer OUTFIT</option>
+          </select>
+        </div>
         <div id="final-prompt" style="min-height:150px; background:#1e1e1e; color:#e0e0e0; padding:16px; border-radius:12px; font-family:monospace; white-space:pre-wrap; margin-bottom:16px;">
           Đang khởi tạo...
         </div>
