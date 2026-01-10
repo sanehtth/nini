@@ -107,6 +107,9 @@ async function init() {
   populateSelect('lighting', Object.keys(data.lighting));
   populateSelect('background', data.backgrounds);
 
+  // Participants (Nhân vật tham gia)
+  setupParticipantsUI();
+
   // MẶC ĐỊNH: Luôn thêm 1 nhân vật ngay khi trang vừa load xong
   addCharacterSlot();
 
@@ -1578,3 +1581,125 @@ async function copyDialogueJSON() {
     alert('Copy thất bại. Hãy dùng nút Export JSON để tải file.');
   }
 }
+/* =====================
+   Participants (Nhân vật tham gia)
+   - Dùng để map thoại cho đúng nhân vật
+   - KHÁC với "Nhân vật #1" (actor slot) phía dưới
+===================== */
+
+function normalizeCharId(s) {
+  return String(s || '')
+    .trim()
+    .toLowerCase()
+    .replace(/đ/g,'d')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'_')
+    .replace(/^_+|_+$/g,'');
+}
+
+function setupParticipantsUI() {
+  const grid = document.getElementById('participants-grid');
+  const search = document.getElementById('char-search');
+  const btnAll = document.getElementById('btn-select-all');
+  const btnClear = document.getElementById('btn-clear');
+  const count = document.getElementById('selected-count');
+
+  if (!grid || !search || !btnAll || !btnClear || !count) {
+    console.warn('[XNC] Participants UI missing in HTML.');
+    return;
+  }
+
+  const render = () => {
+    const q = (search.value || '').trim().toLowerCase();
+    const list = Array.isArray(data.characters) ? data.characters : [];
+
+    const filtered = !q ? list : list.filter(c => {
+      const label = (c.label || c.name || '').toLowerCase();
+      const role = (c.role || '').toLowerCase();
+      return label.includes(q) || role.includes(q);
+    });
+
+    grid.innerHTML = filtered.map(c => {
+      const id = c.id || normalizeCharId(c.label || c.name);
+      const label = c.label || c.name || id;
+      const meta = [c.gender, c.role].filter(Boolean).join(' • ');
+      const isOn = selectedCharacterIds.has(id);
+      return `
+        <div class="char-card ${isOn ? 'selected' : ''}" data-char-id="${escapeHtml(id)}">
+          <input type="checkbox" ${isOn ? 'checked' : ''} tabindex="-1" />
+          <div style="min-width:0">
+            <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(label)}</div>
+            <div style="font-size:12px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(meta)}</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    count.textContent = String(selectedCharacterIds.size);
+
+    // Bind click
+    grid.querySelectorAll('.char-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const id = card.getAttribute('data-char-id');
+        if (!id) return;
+        if (selectedCharacterIds.has(id)) selectedCharacterIds.delete(id);
+        else selectedCharacterIds.add(id);
+        render();
+      });
+    });
+  };
+
+  search.addEventListener('input', render);
+
+  btnAll.addEventListener('click', () => {
+    const list = Array.isArray(data.characters) ? data.characters : [];
+    list.forEach(c => {
+      const id = c.id || normalizeCharId(c.label || c.name);
+      if (id) selectedCharacterIds.add(id);
+    });
+    render();
+  });
+
+  btnClear.addEventListener('click', () => {
+    selectedCharacterIds.clear();
+    render();
+  });
+
+  // Lần đầu
+  render();
+}
+
+// Khi load story từ JSON (substance), pre-select nhân vật đã có trong story.characters
+function applyStoryCharacterSelection(storyObj) {
+  try {
+    const arr = Array.isArray(storyObj?.characters) ? storyObj.characters : [];
+    if (!arr.length) return;
+
+    const lookup = new Map();
+    (Array.isArray(data.characters) ? data.characters : []).forEach(c => {
+      const id = c.id || normalizeCharId(c.label || c.name);
+      const label = (c.label || c.name || '').trim();
+      if (id) lookup.set(label.toLowerCase(), id);
+      if (id) lookup.set(id.toLowerCase(), id);
+    });
+
+    arr.forEach(nameOrId => {
+      const key = String(nameOrId || '').trim().toLowerCase();
+      const id = lookup.get(key) || normalizeCharId(nameOrId);
+      if (id) selectedCharacterIds.add(id);
+    });
+
+    const count = document.getElementById('selected-count');
+    if (count) count.textContent = String(selectedCharacterIds.size);
+
+    // Re-render UI if present
+    const grid = document.getElementById('participants-grid');
+    if (grid) {
+      // trigger render by dispatching input event
+      const search = document.getElementById('char-search');
+      if (search) search.dispatchEvent(new Event('input'));
+    }
+  } catch (e) {
+    console.warn('[XNC] applyStoryCharacterSelection failed', e);
+  }
+}
+
