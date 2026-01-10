@@ -272,7 +272,7 @@ async function fetchJsonFirstOk(paths) {
 async function loadCharacters() {
   // Dò các path phổ biến theo cấu trúc bạn đang host (pages/js/..., pages/..., root, data)
   const candidates = [
-  "/xomnganchuyen/XNC_characters.json",   // ✅ PATH ĐÚNG CỦA BẠN (QUAN TRỌNG)
+  "/adn/xomnganchuyen/XNC_characters.json",   // ✅ PATH ĐÚNG CỦA BẠN (QUAN TRỌNG)
   "./XNC_characters.json",
   "../XNC_characters.json",
   "/XNC_characters.json",
