@@ -411,7 +411,7 @@
 {
     "id": "eating_hurriedly",
     "label": "Ăn vội vã",
-    "desc_vi": Ăn trong khi đứng hoặc di chuyển, liếc nhìn đồng hồ hoặc nhìn thẳng về phía trước, nuốt nhanh, vẻ mặt hơi căng thẳng",
+    "desc_vi": "Ăn trong khi đứng hoặc di chuyển, liếc nhìn đồng hồ hoặc nhìn thẳng về phía trước, nuốt nhanh, vẻ mặt hơi căng thẳng",
     "desc_en": "eating while standing or moving, glancing at a watch or looking ahead, swallowing quickly, slightly stressed expression",
     "intensity": "med"
   },
