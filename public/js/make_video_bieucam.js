@@ -25,6 +25,8 @@ let data = {
 let savedPrompts = JSON.parse(localStorage.getItem('xnc_saved_prompts') || '[]');
 let promptCounter = parseInt(localStorage.getItem('xnc_counter') || '1');
 let charSlotCount = 0;
+let storyManifest = { stories: [] };
+let storyManifestPath = '';
 
 async function loadJSON(url) {
   try {
@@ -39,6 +41,22 @@ async function loadJSON(url) {
     return null;
   }
 }
+
+async function loadJSONFirstOk(paths) {
+  let lastErr = null;
+  for (const p of paths) {
+    try {
+      const j = await loadJSON(p);
+      if (j) return { path: p, json: j };
+      lastErr = `Not found: ${p}`;
+    } catch (e) {
+      lastErr = String(e);
+    }
+  }
+  console.warn('[XNC] Cannot load JSON from any path.', lastErr);
+  return null;
+}
+
 
 async function init() {
   // Tải dữ liệu song song
@@ -696,6 +714,146 @@ function setupTabs() {
   activate('story');
 }
 
+/* =========================
+   Story Manifest (substance)
+   ========================= */
+
+function normalizeStoriesFromManifest(man) {
+  if (!man) return [];
+  if (Array.isArray(man)) return man;
+  if (Array.isArray(man.stories)) return man.stories;
+  if (Array.isArray(man.items)) return man.items;
+  return [];
+}
+
+function pickStoryId(st) { return st.id || st.story_id || st.storyId || ''; }
+function pickStoryTitle(st) { return st.title || st.story_title || st.storyTitle || ''; }
+function pickStoryFile(st) { return st.file || st.path || st.url || ''; }
+
+function normalizeStoryFilePath(st) {
+  const f = pickStoryFile(st);
+  const id = pickStoryId(st);
+  if (f && typeof f === 'string') {
+    if (f.startsWith('/')) return f;
+    // relative
+    if (f.startsWith('substance/')) return '/' + f;
+    return '/substance/' + f;
+  }
+  if (id) return '/substance/' + id + '.json';
+  return '';
+}
+
+async function loadStoryManifestIntoUI() {
+  const manifestPaths = [
+    '/substance/manifest.json',
+    '/substance/stories_manifest.json',
+    '/substance/story_manifest.json',
+    '../substance/manifest.json',
+    './substance/manifest.json'
+  ];
+
+  const out = await loadJSONFirstOk(manifestPaths);
+  const select = document.getElementById('story-select');
+  const pathEl = document.getElementById('manifest-path');
+  if (!select) return;
+
+  select.innerHTML = '<option value="">-- Chọn truyện --</option>';
+
+  if (!out) {
+    storyManifest = { stories: [] };
+    storyManifestPath = '';
+    if (pathEl) pathEl.textContent = 'không tìm thấy manifest.json';
+    return;
+  }
+
+  storyManifestPath = out.path;
+  if (pathEl) pathEl.textContent = out.path;
+
+  const list = normalizeStoriesFromManifest(out.json);
+  storyManifest = { stories: list };
+
+  list
+    .slice()
+    .sort((a,b) => {
+      const da = (a.updatedAt || a.updated_at || a.createdAt || a.created_at || '');
+      const db = (b.updatedAt || b.updated_at || b.createdAt || b.created_at || '');
+      return String(db).localeCompare(String(da));
+    })
+    .forEach(st => {
+      const id = pickStoryId(st);
+      const title = pickStoryTitle(st);
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = `${title || '(no title)'} — ${id || '(no id)'}`;
+      select.appendChild(opt);
+    });
+}
+
+async function loadSelectedStoryFromManifest() {
+  const select = document.getElementById('story-select');
+  if (!select || !select.value) {
+    alert('Bạn chưa chọn truyện.');
+    return;
+  }
+  const id = select.value;
+  const st = (storyManifest?.stories || []).find(x => pickStoryId(x) === id);
+  if (!st) {
+    alert('Không tìm thấy truyện trong manifest.');
+    return;
+  }
+
+  const filePath = normalizeStoryFilePath(st);
+  if (!filePath) {
+    alert('Manifest thiếu đường dẫn file story.');
+    return;
+  }
+
+  const storyJson = await loadJSON(filePath);
+  if (!storyJson) {
+    alert('Không load được story JSON: ' + filePath);
+    return;
+  }
+
+  // Fill form
+  const idEl = document.getElementById('story-id');
+  const titleEl = document.getElementById('story-title');
+  const contentEl = document.getElementById('story-content');
+
+  if (idEl) idEl.value = storyJson.id || storyJson.story_id || id;
+  if (titleEl) titleEl.value = storyJson.title || storyJson.story_title || pickStoryTitle(st) || '';
+  if (contentEl) contentEl.value = storyJson.story || storyJson.content || storyJson.text || '';
+
+  // Auto select participating characters (if form supports it)
+  const chars = storyJson.characters || storyJson.cast || [];
+  // If checkbox-card UI exists (data-char-id), tick it
+  if (Array.isArray(chars) && chars.length) {
+    document.querySelectorAll('[data-char-id]').forEach(card => {
+      const cid = card.getAttribute('data-char-id');
+      const cb = card.querySelector('input[type="checkbox"]');
+      if (cb) cb.checked = chars.includes(cid) || chars.includes(card.getAttribute('data-char-name'));
+    });
+    const countEl = document.getElementById('selected-count');
+    if (countEl) {
+      const checked = document.querySelectorAll('[data-char-id] input[type="checkbox"]:checked').length;
+      countEl.textContent = `Đã chọn: ${checked}`;
+    }
+  }
+
+  // Hint: user can now click split to build scenes & dialogue
+  console.log('[XNC] Story loaded. You can now split scenes & dialogue.');
+}
+
+function setupStoryManifestPicker() {
+  const reloadBtn = document.getElementById('reload-manifest-btn');
+  const loadBtn = document.getElementById('load-story-btn');
+
+  if (reloadBtn) reloadBtn.onclick = loadStoryManifestIntoUI;
+  if (loadBtn) loadBtn.onclick = loadSelectedStoryFromManifest;
+
+  // Load once on init
+  loadStoryManifestIntoUI();
+}
+
 function initStoryTab() {
   // Populate character multi-select
   const sel = document.getElementById('story-characters');
@@ -741,6 +899,7 @@ function initStoryTab() {
   const delBtn = document.getElementById('delete-story-btn');
   if (delBtn) delBtn.onclick = deleteSelectedStory;
 
+  setupStoryManifestPicker();
   renderStoryList();
 }
 
@@ -847,6 +1006,7 @@ function createStory() {
 
   setStories(stories);
   writeStoryPreview(storyObj);
+  setupStoryManifestPicker();
   renderStoryList();
 }
 
@@ -910,6 +1070,7 @@ function deleteSelectedStory() {
   const stories = getStories();
   const next = stories.filter(s => s.story_id !== selectedId);
   setStories(next);
+  setupStoryManifestPicker();
   renderStoryList();
 
   // Clear preview if it was the deleted one
