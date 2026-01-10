@@ -1,207 +1,166 @@
-<!DOCTYPE html>
-
+<!doctype html>
 <html lang="vi">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>XNC Prompt Generator</title>
-<link href="/css/make_video.css" rel="stylesheet"/>
-<link href="/green-theme.css" rel="stylesheet"/>
-<style>
-    body.green-theme { background-color: #e8f5e9; } /* Nền xanh lá nhạt theo ý bạn */
-    .character-slot { border-left: 5px solid var(--secondary); padding: 15px; margin-bottom: 20px; background: #f7fff7; border-radius: 8px; position: relative; }
-    .btn-remove { background: #ff4d4d; color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; float: right; }
-  
-.scene-card.active{outline:3px solid rgba(35,111,255,0.35); box-shadow:0 0 0 4px rgba(35,111,255,0.12);}
-.pill{display:inline-flex; align-items:center; padding:6px 10px; border-radius:999px; background:rgba(0,0,0,0.06); font-weight:600;}
-
-</style>
-
-<style>
-  pre#story-json-output{max-height:260px;overflow:auto;background:#0b1220;color:#e5e7eb;border-radius:12px;padding:12px}
-  .character-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-  .char-card{display:flex;gap:10px;align-items:center;border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#fff;cursor:pointer;user-select:none}
-  .char-card input{transform:scale(1.1)}
-  .char-card .meta{line-height:1.2}
-  .char-card .name{font-weight:700}
-  .char-card .desc{font-size:12px;color:#6b7280}
-  .char-card.selected{border-color:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,.15)}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>XNC - Tách scene & thoại</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 16px; background:#d9efb9; }
+    .topbar { display:flex; gap:8px; margin-bottom:12px; }
+    .btn { padding:8px 10px; border:1px solid #333; border-radius:6px; background:#fff; cursor:pointer; }
+    .btn.primary { background:#0b1320; color:#fff; border-color:#0b1320; }
+    .btn.danger { background:#b30000; color:#fff; border-color:#b30000; }
+    .grid { display:grid; grid-template-columns: 420px 1fr; gap: 12px; align-items:start; }
+    .card { background:#fff; border:1px solid #b5caa2; border-radius:10px; padding:12px; }
+    .row { display:flex; gap:8px; align-items:center; margin:8px 0; flex-wrap:wrap; }
+    label { font-size: 13px; color:#222; }
+    input[type="text"], textarea, select { width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; }
+    textarea { min-height: 150px; }
+    .muted { color:#666; font-size:12px; }
+    .participants { margin-top:8px; }
+    .participants .char-row { display:flex; gap:10px; align-items:center; padding:10px; border:1px solid #e6e6e6; border-radius:10px; margin:8px 0; }
+    .participants .char-row.checked { outline:2px solid #22c55e; }
+    .participants b { min-width: 120px; }
+    .split { margin-top:12px; }
+    pre { background:#0b1320; color:#fff; padding:12px; border-radius:10px; overflow:auto; }
+    details { background:#f6f6f6; border:1px solid #e6e6e6; border-radius:10px; padding:8px; margin-top:8px; }
+    summary { cursor:pointer; }
+    .scene-list .scene-item { border:1px solid #e6e6e6; border-radius:10px; padding:10px; margin:10px 0; }
+    .scene-item .head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .scene-item .title { font-weight:700; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid #ddd; font-size:12px; background:#fafafa; }
+    .editor { border:2px solid #c6d9f5; border-radius:12px; padding:10px; margin-top:10px; background:#f9fbff; }
+    .editor .head { display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+    .editor textarea { min-height: 60px; }
+  </style>
 </head>
-<body class="green-theme">
-<div class="topbar">
-<button class="tab-btn active" id="tab-story-btn" type="button">Tách scene &amp; thoại</button>
-<button class="tab-btn" id="tab-prompt-btn" type="button">Tạo prompt video</button>
-<div class="muted" style="margin-left:auto">XNC</div>
-</div>
-<section class="panel active" id="tab-story">
-<div class="story-wrap">
-<div class="story-card">
-<div class="grid2" style="align-items:end;margin-bottom:10px">
-  <div>
-    <label><b>Chọn truyện từ JSON (substance)</b> <span class="muted">(đọc từ manifest)</span></label>
-    <select id="story-select">
-      <option value="">-- Chọn truyện --</option>
-    </select>
-    <div class="muted" style="margin-top:6px">Manifest: <code id="manifest-path">chưa load</code></div>
-  </div>
-  <div class="row" style="justify-content:flex-end;gap:8px">
-    <button class="btn secondary" id="reload-manifest-btn" type="button">Reload manifest</button>
-    <button class="btn" id="load-story-btn" type="button">Load truyện</button>
-  </div>
-</div>
 
-<h2 style="margin:0 0 8px 0">Tách scene &amp; thoại (Tab 1)</h2>
-<div class="muted">Bạn dán story vào đây (từ V19) hoặc nạp story đã lưu, rồi bấm “Tách Scene &amp; Thoại”. Sau đó export JSON thoại để đem qua Studio V19 tạo voice library.</div>
-</div>
-<div class="story-card">
-<div class="grid2">
-<div>
-<label><b>ID câu chuyện</b></label>
-<input id="story-id" placeholder="VD: XNC-20251226-0004"/>
-</div>
-<div>
-<label><b>Tên câu chuyện</b></label>
-<input id="story-title" placeholder="VD: Bài kiểm tra cuối kỳ"/>
-</div>
-</div>
-<div style="margin-top:10px">
-<label><b>Nội dung</b></label>
-<textarea id="story-content" placeholder="Dán story text vào đây..." rows="10"></textarea>
-</div>
-<div style="margin-top:10px">
-<label><b>Nhân vật tham gia</b> <span class="muted">(chọn để map thoại tốt hơn)</span></label>
-<input id="char-search" placeholder="Tìm nhân vật..."/>
-<div class="row" style="margin-top:8px">
-<button class="btn secondary" id="btn-select-all" type="button">Chọn tất cả</button>
-<button class="btn secondary" id="btn-clear" type="button">Bỏ chọn</button>
-<div class="muted" style="margin-left:auto">Đã chọn: <span id="selected-count">0</span></div>
-</div>
-<div id="participants-grid" style="margin-top:10px"></div>
-</div>
-<div class="row" style="margin-top:12px">
-<button class="btn" id="create-story-btn" type="button">Lưu story (local)</button>
-<button class="btn secondary" id="export-story-json-btn" type="button">Xuất JSON story</button>
-<button class="btn secondary" id="save-story-file-btn" type="button">Lưu file .json</button>
-<button class="btn" id="split-scenes-btn" type="button">Tách Scene &amp; Thoại</button>
-<button class="btn secondary" id="export-dialogue-json-btn" type="button">Export JSON thoại</button>
-<button class="btn secondary" id="copy-dialogue-json-btn" type="button">Copy JSON thoại</button>
-<button class="btn danger" id="clear-scenes-btn" type="button">Xóa preview</button>
-</div>
-<div style="margin-top:10px">
-<b>Preview / JSON output</b>
-<pre id="story-json-output">{}</pre>
-</div>
-<div style="margin-top:10px">
-<b>Stories đã lưu (Local)</b>
-<div class="row" style="margin-top:6px">
-<select id="story-list" style="min-width:260px"></select>
-<button class="btn secondary" id="load-story-btn" type="button">Nạp</button>
-<button class="btn danger" id="delete-story-btn" type="button">Xóa</button>
-</div>
-</div>
-</div>
-<div class="story-card">
-<h3 style="margin:0 0 8px 0">Scene manifest (sau khi tách)</h3>
-
-<div class="row" style="gap:10px; align-items:center; margin:10px 0;">
-  <div class="label" style="margin:0; min-width:160px;">Đang chỉnh</div>
-  <div id="current-scene-label" class="pill">Chưa chọn Scene</div>
-  <div style="flex:1"></div>
-  <button type="button" class="btn small" id="btn-prev-scene">← Scene trước</button>
-  <button type="button" class="btn small" id="btn-next-scene">Scene sau →</button>
-</div>
-<div class="row" style="gap:10px; align-items:flex-start; margin:0 0 10px 0;">
-  <div style="flex:1; min-width:260px;">
-    <div class="label">Ghi chú Scene (để bạn nhớ đang làm gì)</div>
-    <textarea id="current-scene-note" rows="3" placeholder="VD: Mục tiêu cảnh, cảm xúc chính, nhịp kể, điểm nhấn..."></textarea>
+<body>
+  <div class="topbar">
+    <button class="btn primary" id="btnTab1">Tách scene & thoại</button>
+    <button class="btn" id="btnTab2">Tạo prompt video</button>
   </div>
-  <div style="flex:1; min-width:260px;">
-    <div class="label">Ghi chú Frame (shot hiện tại trong Scene)</div>
-    <textarea id="current-frame-note" rows="3" placeholder="VD: Shot cận/xa, ai là focus, hành động nhỏ, biểu cảm, ý đồ..."></textarea>
-  </div>
-</div>
 
-<div id="scenes-output"></div>
-</div>
-</div>
-</section>
-<section class="panel" id="tab-prompt">
-<div class="container">
-<main>
-<div class="card" style="text-align: center; margin-bottom: 32px;">
-<h1 style="margin:0; font-size:32px; color:var(--secondary);">🎬 XNC Prompt Generator</h1>
-<p class="muted">Tạo prompt video đa nhân vật (Sane, Mira, Na, Bắp, Mít...)</p>
-</div>
-<div id="prompt-characters-container"></div>
-<div style="text-align: center; margin-bottom: 20px;">
-<button class="btn btn-secondary" id="add-char-btn">➕ Thêm nhân vật khác</button>
-</div>
-<div class="card">
-<h3 style="margin-top:0;">⚙️ Cấu hình chung (Cảnh &amp; Camera)</h3>
-<div class="section">
-<div>
-<label>🎥 Góc máy:</label>
-<select id="camera">
-<option value="EXTREME_CLOSEUP">EXTREME CLOSE-UP (Cực cận)</option>
-<option value="CLOSEUP">CLOSE-UP (Cận cảnh)</option>
-<option value="MEDIUM_CLOSEUP">MEDIUM CLOSE-UP (Trung cận)</option>
-<option value="MEDIUM_SHOT">MEDIUM SHOT (Trung cảnh)</option>
-<option value="FULL_SHOT">FULL SHOT (Toàn cảnh)</option>
-<option value="WIDE_SHOT">WIDE SHOT (Góc rộng)</option>
-<option value="POV">POV (Góc nhìn nhân vật)</option>
-</select>
-</div>
-<div>
-<label>💡 Ánh sáng:</label>
-<select id="lighting"><option value="">-- Chọn --</option></select>
-</div>
-<div>
-<label>🖼️ Nền cảnh:</label>
-<select id="background"><option value="">-- Chọn --</option></select>
-</div>
-</div>
-<div class="section">
-<div>
-<label>📐 Khung hình:</label>
-<select id="aspect">
-<option selected="" value="16:9">16:9 (Ngang)</option>
-<option value="9:16">9:16 (Dọc)</option>
-<option value="1:1">1:1 (Vuông)</option>
-</select>
-</div>
-</div>
-</div>
-<div class="card" style="margin-top:32px; position: relative;">
-<h3 style="margin-top:0; color:var(--primary);">Prompt hiện tại:</h3>
-<div style="margin-bottom:12px; display: flex; gap: 10px;">
-<input id="video-id" placeholder="ID Video" style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--border);" type="text"/>
-<input id="video-title" placeholder="Tên Video" style="flex:2; padding:10px; border-radius:8px; border:1px solid var(--border);" type="text"/>
-</div>
-<div id="final-prompt" style="min-height:150px; background:#1e1e1e; color:#e0e0e0; padding:16px; border-radius:12px; font-family:monospace; white-space:pre-wrap; margin-bottom:16px;">
-          Đang khởi tạo...
+  <!-- TAB 1 -->
+  <section id="tab1" class="card">
+    <h2 style="margin:0 0 8px 0;">Tách scene & thoại (Tab 1)</h2>
+
+    <div class="row">
+      <div style="flex:1; min-width:260px;">
+        <label><b>Chọn truyện từ JSON (substance manifest)</b></label>
+        <select id="storySelect">
+          <option value="">-- Chọn truyện --</option>
+        </select>
+        <div class="muted" id="manifestStatus">Manifest: chưa load</div>
+      </div>
+
+      <div class="row" style="margin-top:18px;">
+        <button class="btn" id="btnReloadManifest">Reload manifest</button>
+        <button class="btn primary" id="btnLoadStory">Load truyện</button>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top:12px;">
+      <div class="card">
+        <label><b>ID câu chuyện</b></label>
+        <input id="storyId" type="text" placeholder="VD: XNC-20250110-112841" />
+
+        <div style="height:8px"></div>
+
+        <label><b>Tên câu chuyện</b></label>
+        <input id="storyTitle" type="text" placeholder="VD: Bài kiểm tra cuối kỳ" />
+
+        <div style="height:8px"></div>
+
+        <label><b>Nội dung</b></label>
+        <textarea id="storyText" placeholder="Dán story text hoặc load từ manifest..."></textarea>
+
+        <div class="split">
+          <label><b>Nhân vật tham gia</b> <span class="muted">(chọn để map thoại tốt hơn)</span></label>
+          <input id="participantsSearch" type="text" placeholder="Tìm nhân vật..." />
+          <div class="row">
+            <button class="btn" id="btnPickAll">Chọn tất cả</button>
+            <button class="btn" id="btnPickNone">Bỏ chọn</button>
+            <span class="muted" id="participantsCount">Đã chọn: 0</span>
+          </div>
+          <div id="participantsBox" class="participants"></div>
         </div>
-<div style="text-align:center;">
-<button class="btn btn-primary" id="generate-btn">🚀 Tạo Prompt</button>
-<button class="btn btn-secondary" id="add-btn" style="margin-left:12px;">➕ Lưu vào Danh sách</button>
-</div>
-<button class="btn btn-primary" id="copy-btn" style="position:absolute; top:12px; right:12px;">📋 Copy</button>
-</div>
-<div class="card" style="margin-top:32px;">
-<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-<h3 style="margin:0;">Danh sách đã lưu (<span id="count">0</span>)</h3>
-<div style="display:flex; gap:10px;">
-<button class="btn btn-secondary" id="export-json-btn">⬇️ Export JSON</button>
-<button class="btn btn-secondary" id="clear-all-btn" style="background:#ff4d4d; color:#fff;">🗑️ Xóa hết</button>
-</div>
-</div>
-<div id="prompt-list"></div>
-</div>
-</main>
-</div>
-<!-- Lưu ý: bạn đang dùng file local (make_video_bieucam (1).js). Khi deploy, đổi path cho đúng nếu cần. -->
-</section>
-<script src="/js/make_video_bieucam.js?v=13"></script>
 
+        <div class="row" style="margin-top:10px;">
+          <button class="btn" id="btnSaveLocal">Lưu story (local)</button>
+          <button class="btn" id="btnExportStory">Xuất JSON story</button>
+          <button class="btn primary" id="btnSplit">Tách Scene & Thoại</button>
+          <button class="btn" id="btnExportDialogue">Export JSON thoại</button>
+          <button class="btn danger" id="btnClearPreview">Xóa preview</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <label><b>Preview / JSON output</b></label>
+        <pre id="preview">{}</pre>
+
+        <div style="height:10px"></div>
+
+        <h3 style="margin:10px 0 8px 0;">Scene manifest (sau khi tách)</h3>
+
+        <!-- Editor header -->
+        <div class="editor">
+          <div class="head">
+            <div>
+              <span class="pill" id="activeLabel">Chưa có Scene</span>
+            </div>
+            <div class="row" style="margin:0;">
+              <button class="btn" id="btnPrevScene">← Scene trước</button>
+              <button class="btn" id="btnNextScene">Scene sau →</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <div style="flex:1; min-width:240px;">
+              <label>Chọn Scene</label>
+              <select id="sceneSelect">
+                <option value="">--</option>
+              </select>
+            </div>
+            <div style="flex:1; min-width:240px;">
+              <label>Chọn Frame</label>
+              <select id="frameSelect">
+                <option value="">--</option>
+              </select>
+            </div>
+            <div style="flex:1; min-width:240px;">
+              <label>Mode</label>
+              <select id="modeSelect">
+                <option value="dialogue">Dialogue (2 người/1 khung)</option>
+                <option value="closeup">Close-up (1 người/khung)</option>
+                <option value="hybrid">Hybrid</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div style="flex:1;">
+              <label>Ghi chú Scene (để bạn nhớ đang làm gì)</label>
+              <textarea id="sceneNote" placeholder="VD: Mục tiêu cảnh, cảm xúc chính, nhịp kể, điểm nhấn..."></textarea>
+            </div>
+            <div style="flex:1;">
+              <label>Ghi chú Frame (shot hiện tại trong Scene)</label>
+              <textarea id="frameNote" placeholder="VD: Shot cận/xa, ai là focus, hành động nhỏ, biểu cảm, ý đồ..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div id="sceneList" class="scene-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 2 placeholder -->
+  <section id="tab2" class="card" style="display:none;">
+    <h2 style="margin:0 0 8px 0;">Tạo prompt video (Tab 2)</h2>
+    <div class="muted">Tab 2 bạn đang dùng bản khác rồi; v14 tập trung làm sạch Tab 1 trước (tách scene + thoại + manifest).</div>
+  </section>
+
+  <script src="/js/make_video_bieucam.js"></script>
 </body>
 </html>
