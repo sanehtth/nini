@@ -241,3 +241,28 @@
     body.green-theme #copy-btn { position: absolute; top: 12px; right: 12px; border-radius: 8px; border: 1px solid var(--border); }
     body.green-theme label { font-weight: bold; margin-bottom: 5px; display: block; }
     body.green-theme select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
+.char-grid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap:10px;
+  margin-top:10px;
+}
+.char-card{
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  cursor:pointer;
+  background:#fff;
+}
+.char-card:hover{ border-color:#bbb; }
+.char-card.selected{ border-color:#3b82f6; box-shadow:0 0 0 2px rgba(59,130,246,.15); }
+.char-badge{
+  width:10px; height:10px; border-radius:50%;
+  background:#999; flex:0 0 auto;
+}
+.char-name{ font-weight:600; }
+@media (max-width: 900px){ .char-grid{ grid-template-columns: repeat(2, 1fr);} }
+@media (max-width: 520px){ .char-grid{ grid-template-columns: repeat(1, 1fr);} }
