@@ -79,11 +79,18 @@
       </div>
 
       <div class="card" style="margin-top:32px;">
-        <h3>Danh sách đã lưu (<span id="count">0</span>)</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+          <h3 style="margin:0;">Danh sách đã lưu (<span id="count">0</span>)</h3>
+          <div style="display:flex; gap:10px;">
+            <button id="export-json-btn" class="btn btn-secondary">⬇️ Export JSON</button>
+            <button id="clear-all-btn" class="btn btn-secondary" style="background:#ff4d4d; color:#fff;">🗑️ Xóa hết</button>
+          </div>
+        </div>
         <div id="prompt-list"></div>
       </div>
     </main>
   </div>
+  <!-- Lưu ý: bạn đang dùng file local (make_video_bieucam (1).js). Khi deploy, đổi path cho đúng nếu cần. -->
   <script src="/js/make_video_bieucam.js"></script>
 </body>
 </html>
