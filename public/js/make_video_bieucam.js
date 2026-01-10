@@ -25,6 +25,9 @@ let data = {
   faceMap: {},
   stateMap: {}
 };
+
+// Selected participants for dialogue mapping
+const selectedCharacterIds = new Set();
 let savedPrompts = JSON.parse(localStorage.getItem('xnc_saved_prompts') || '[]');
 let promptCounter = parseInt(localStorage.getItem('xnc_counter') || '1');
 let charSlotCount = 0;
