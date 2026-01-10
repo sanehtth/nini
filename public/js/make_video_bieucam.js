@@ -253,16 +253,44 @@ function deleteSelectedStory() {
 }
 
 /* ---------- Data Load ---------- */
-async function loadCharacters() {
-  // IMPORTANT: đổi path cho đúng nơi bạn host JSON
-  // Ví dụ nếu JSON nằm /data/XNC_characters.json thì sửa ở đây.
-  const res = await fetch("XNC_characters.json", { cache: "no-store" });
-  const data = await res.json();
+async function fetchJsonFirstOk(paths) {
+  let lastErr = null;
 
-  // Schema của bạn: { characters: [...] }
-  allCharacters = Array.isArray(data.characters) ? data.characters : [];
-  renderCharacterCards(allCharacters);
+  for (const p of paths) {
+    try {
+      const res = await fetch(p, { cache: "no-store" });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return { path: p, json: await res.json() };
+    } catch (e) {
+      lastErr = { path: p, error: String(e) };
+    }
+  }
+
+  throw new Error(`Cannot load JSON from any path. Last error: ${lastErr?.path} -> ${lastErr?.error}`);
 }
+
+async function loadCharacters() {
+  // Dò các path phổ biến theo cấu trúc bạn đang host (pages/js/..., pages/..., root, data)
+  const candidates = [
+    "./XNC_characters.json",
+    "../XNC_characters.json",
+    "/XNC_characters.json",
+    "/pages/XNC_characters.json",
+    "/pages/data/XNC_characters.json",
+    "/data/XNC_characters.json",
+    "/json/XNC_characters.json"
+  ];
+
+  const { path, json } = await fetchJsonFirstOk(candidates);
+
+  const chars = Array.isArray(json.characters) ? json.characters : [];
+  allCharacters = chars;
+
+  console.log("[XNC] Loaded characters:", chars.length, "from", path);
+
+  renderCharacterCards(getFilteredCharacters());
+}
+
 
 /* ---------- Init ---------- */
 document.addEventListener("DOMContentLoaded", async () => {
