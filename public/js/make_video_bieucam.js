@@ -646,10 +646,14 @@ function buildOutfitLine(outfit, gender, signatureColors) {
 
   // If this wardrobe allows signature recolor, explicitly lock identity and recolor clothing only.
   if (allowSig) {
+    // Enforce character recognition through a stable primary-color TOP (shirt/jacket),
+    // while allowing the rest of the outfit (pants/skirt/shoes/accessories) to vary
+    // within accents/neutrals for group harmony.
     const overrideNote = containsColorWords(desc)
-      ? 'Override any garment colors mentioned above to match the signature colorway.'
-      : 'Apply the signature colorway to the clothing.';
-    return `${desc}. Wardrobe colorway override: Primary = ${colorway.primary}; Accents = ${colorway.accentsText}. ${overrideNote} Keep the outfit cut, materials, patterns, and logos unchanged. Recolor CLOTHING ONLY; do not change skin, hair, face, or body identity.`;
+      ? 'Override any garment colors mentioned above using the signature color policy below.'
+      : 'Apply the signature color policy below to the clothing.';
+
+    return `${desc}. ${overrideNote} Signature color policy: TOP (shirt/jacket) must be primarily ${colorway.primary} (this is the character\'s signature/recognition color). Bottoms (pants/shorts/skirt) may use ${colorway.accentsText} or neutral tones as long as the overall palette remains harmonious. Keep the garment cut/material/pattern details intact; recolor CLOTHING ONLY; do not change skin, hair, face, or body identity.`;
   }
 
   // Otherwise, keep the wardrobe colors fixed to protect reference consistency.
