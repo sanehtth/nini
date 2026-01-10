@@ -1,381 +1,310 @@
-// script.js - Phiên bản sửa lỗi mất giao diện khi thiếu file JSON
-const JSON_URLS = {
-  characters: '/adn/xomnganchuyen/XNC_characters.json',
-  faces: '/adn/xomnganchuyen/XNC_faces.json',
-  states: '/adn/xomnganchuyen/XNC_states.json',
-  style: '/adn/xomnganchuyen/XNC_style.json',
-  backgrounds: '/adn/xomnganchuyen/XNC_backgrounds.json',
-  outfits: '/adn/xomnganchuyen/XNC_outfits.json'
-};
+/* =========================
+   XNC - Make Story + Tabs + Character Cards
+   ========================= */
 
-let data = { characters: [], characterMap: {}, faces: [], states: [], camera: {}, lighting: {}, backgrounds: [], outfits: [] };
-let savedPrompts = JSON.parse(localStorage.getItem('xnc_saved_prompts') || '[]');
-let promptCounter = parseInt(localStorage.getItem('xnc_counter') || '1');
-let charSlotCount = 0;
+const STORAGE_KEY = "xnc_stories_v1";
 
-async function loadJSON(url) {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) {
-        console.warn(`Cảnh báo: Không tìm thấy file tại ${url}`);
-        return null; 
-    }
-    return await res.json();
-  } catch (err) {
-    console.error(`Lỗi hệ thống khi tải ${url}`);
-    return null;
-  }
-}
+let allCharacters = [];
+const selectedCharacterIds = new Set();
 
-async function init() {
-  // Tải dữ liệu song song
-  const [charJson, facesJson, statesJson, styleJson, bgJson, outfitJson] = await Promise.all([
-    loadJSON(JSON_URLS.characters),
-    loadJSON(JSON_URLS.faces),
-    loadJSON(JSON_URLS.states),
-    loadJSON(JSON_URLS.style),
-    loadJSON(JSON_URLS.backgrounds),
-    loadJSON(JSON_URLS.outfits)
-  ]);
-
-  // Gán dữ liệu (dùng dấu ?. và || [] để nếu file lỗi trang web vẫn chạy tiếp)
-  data.characters  = Array.isArray(charJson?.characters) ? charJson.characters : (charJson?.characters ? Object.values(charJson.characters) : []);
-  data.characterMap = Object.fromEntries(data.characters.map(c => [c.id, c]));
-  data.faces       = facesJson?.faces || [];
-  data.states      = statesJson?.states || [];
-  data.rawStyleJson = styleJson || {};
-  data.camera      = styleJson?.style?.camera || {};
-  data.lighting    = styleJson?.style?.lighting || {};
-  data.backgrounds = bgJson?.backgrounds || [];
-  data.outfits     = outfitJson?.outfits || [];
-
-  // Điền dữ liệu vào các menu chung (Camera, Ánh sáng, Nền)
-  populateSelect('lighting', Object.keys(data.lighting));
-  populateSelect('background', data.backgrounds);
-
-  initStoryTab();
-
-  // MẶC ĐỊNH: Luôn thêm 1 nhân vật ngay khi trang vừa load xong
-  addCharacterSlot();
-
-  // Gán sự kiện cho các nút bấm cố định
-  const addBtn = document.getElementById('add-char-btn');
-  if (addBtn) addBtn.onclick = addCharacterSlot;
-
-  const genBtn = document.getElementById('generate-btn');
-  if (genBtn) genBtn.onclick = generatePrompt;
-
-  const saveBtn = document.getElementById('add-btn');
-  if (saveBtn) saveBtn.onclick = addCurrentPrompt;
-  
-  const clearBtn = document.getElementById('clear-all-btn');
-  if (clearBtn) clearBtn.onclick = clearAllPrompts;
-
-  renderSavedList();
-}
-
-// Hàm nạp dữ liệu cho các SelectBox đơn giản
-function populateSelect(id, items) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.innerHTML = '<option value="">-- Chọn --</option>';
-  items.forEach(item => {
-    const opt = document.createElement('option');
-    opt.value = typeof item === 'string' ? item : item.id;
-    opt.textContent = typeof item === 'string' ? item.replace(/_/g,' ').toUpperCase() : item.label;
-    el.appendChild(opt);
+/* ---------- Tabs ---------- */
+function switchTab(tabId) {
+  document.querySelectorAll(".tab").forEach(t => {
+    t.classList.toggle("active", t.dataset.tab === tabId);
+  });
+  document.querySelectorAll(".panel").forEach(p => {
+    p.classList.toggle("active", p.id === tabId);
   });
 }
 
-// Hàm thêm khung nhân vật (Quan trọng nhất)
-function addCharacterSlot() {
-  charSlotCount++;
-  const container = document.getElementById('characters-container');
-  if (!container) return;
-
-  const slotId = `slot-${charSlotCount}`;
-  
-  const html = `
-    <div class="character-slot card" id="${slotId}" style="border-left: 5px solid var(--secondary); margin-bottom: 20px; background: #f7fff7; padding: 15px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; margin-bottom: 10px; padding-bottom: 5px;">
-        <strong style="color: var(--secondary);">🧑 Nhân vật #${charSlotCount}</strong>
-        ${charSlotCount > 1 ? `<button onclick="removeSlot('${slotId}')" style="background:#ff4d4d; color:white; border:none; padding:2px 8px; border-radius:4px; cursor:pointer;">Xóa</button>` : ''}
-      </div>
-      <div class="section" style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 150px;">
-          <label>Chọn NV:</label>
-          <select class="char-sel" onchange="updateSigs('${slotId}')" style="width:100%;">
-            <option value="">-- Chọn --</option>
-            ${data.characters.map(c => `<option value="${c.id}">${c.name || c.id}</option>`).join('')}
-          </select>
-        </div>
-        <div style="flex: 1; min-width: 150px;">
-          <label>Hành động:</label>
-          <select class="sig-sel" style="width:100%;"><option value="">-- Chọn nhân vật trước --</option></select>
-        </div>
-        <div style="flex: 1; min-width: 150px;">
-          <label>Trang phục:</label>
-          <select class="out-sel" style="width:100%;">
-            <option value="">Mặc định</option>
-            ${data.outfits.map(o => `<option value="${o.id}">${o.name}</option>`).join('')}
-          </select>
-        </div>
-      </div>
-      <div class="section" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
-        <div style="flex: 1; min-width: 150px;">
-          <label>Biểu cảm:</label>
-          <select class="face-sel" style="width:100%;">
-            ${data.faces.map(f => `<option value="${f.id}">${f.label}</option>`).join('')}
-          </select>
-        </div>
-        <div style="flex: 1; min-width: 150px;">
-          <label>Trạng thái:</label>
-          <select class="state-sel" style="width:100%;">
-            ${data.states.map(s => `<option value="${s.id}">${s.label}</option>`).join('')}
-          </select>
-        </div>
-      </div>
-    </div>
-  `;
-  container.insertAdjacentHTML('beforeend', html);
+/* ---------- Utils ---------- */
+function safeJsonParse(s, fallback) {
+  try { return JSON.parse(s); } catch { return fallback; }
 }
 
-window.removeSlot = (id) => {
-  const el = document.getElementById(id);
-  if (el) el.remove();
-};
-
-window.updateSigs = (slotId) => {
-  const slot = document.getElementById(slotId);
-  if (!slot) return;
-  const charKey = slot.querySelector('.char-sel').value;
-  const sigSel = slot.querySelector('.sig-sel');
-  sigSel.innerHTML = '<option value="">-- Chọn --</option>';
-
-  if (charKey && data.characterMap[charKey]) {
-    const char = data.characterMap[charKey];
-    const actions = char.signature_items || char.signatures || [];
-    actions.forEach(a => {
-      const opt = document.createElement('option');
-      opt.value = a; 
-      opt.textContent = a.replace(/_/g,' ').replace(/([A-Z])/g, ' $1').trim();
-      sigSel.appendChild(opt);
-    });
-  }
-};
-
-function generatePrompt() {
-  const slots = document.querySelectorAll('.character-slot');
-  let charPrompts = [];
-
-  slots.forEach((slot, index) => {
-    const charKey = slot.querySelector('.char-sel').value;
-    if (!charKey) return;
-
-    const char = data.characterMap[charKey];
-    const face = data.faces.find(f => f.id === slot.querySelector('.face-sel').value);
-    const outfit = data.outfits.find(o => o.id === slot.querySelector('.out-sel').value);
-    const action = slot.querySelector('.sig-sel').value;
-
-    let desc = `- Nhân vật ${index+1} (${char.name}): ${outfit ? 'mặc ' + outfit.name : 'trang phục gốc'}, `;
-    desc += `hành động "${action || 'đứng tự nhiên'}", biểu cảm: ${face ? face.desc_en : 'cute'}`;
-    charPrompts.push(desc);
-  });
-
-  const bg = data.backgrounds.find(b => b.id === document.getElementById('background').value);
-  const light = document.getElementById('lighting').value;
-  const aspect = document.getElementById('aspect').value;
-  const camEl = document.getElementById('camera');
-  const camValue = (camEl && camEl.options[camEl.selectedIndex]) ? camEl.options[camEl.selectedIndex].text : 'MEDIUM';
-
-  const final = `Create a chibi anime video for XNC series.
-character:
-${charPrompts.length > 0 ? charPrompts.join('\n') : 'Chưa chọn nhân vật'}
-
-background: ${bg ? bg.desc_en : 'Sân trường hoặc xóm dừa'}
-camera: ${camValue}
-Lighting: ${light ? light.replace(/_/g,' ') : 'tự nhiên'}
-Aspect Ratio: ${aspect}
-style: Vibrant colors, funny atmosphere, smooth animation. No text.`;
-
-  document.getElementById('final-prompt').textContent = final;
+function nowIso() {
+  return new Date().toISOString();
 }
 
-// Hàm lưu và hiển thị danh sách (Giữ cơ bản để trang không lỗi)
-function addCurrentPrompt() {
-  alert("Tính năng lưu đang được khởi tạo!");
+function makeDefaultStoryId() {
+  // XNC-YYYYMMDD-HHMMSS
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `XNC-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
 }
 
-function renderSavedList() {
-  const countEl = document.getElementById('count');
-  if (countEl) countEl.textContent = savedPrompts.length;
-}
-
-function clearAllPrompts() {
-  if (confirm("Xóa hết danh sách?")) {
-    savedPrompts = [];
-    localStorage.removeItem('xnc_saved_prompts');
-    renderSavedList();
-  }
-}
-
-// Khởi chạy khi trang sẵn sàng
-document.addEventListener('DOMContentLoaded', init);
-
-
-// ===================== STORY TAB (optional) =====================
-// This block is safe: it only activates if story tab elements exist.
-
-const XNC_STORY_STORAGE_KEY = 'xnc_stories_v1';
-const selectedStoryCharacterIds = new Set();
-
-function storyElsExist(){
-  return document.getElementById('story-id') && document.getElementById('story-title') &&
-         document.getElementById('story-content') && document.getElementById('story-characters-cards');
-}
-
-function signatureColorToHex(token){
-  // If style json has token map, use it
-  const map = (data && data.styleTokenMap) ? data.styleTokenMap : null;
-  if(map && token && map[token]) return map[token];
-  // Fallback
-  const fallback = {
-    xnc_warm_yellow:'#F7D774',
-    xnc_soft_blue:'#8FB7E8',
-    xnc_mint_green:'#87D8C6',
-    xnc_soft_orange:'#F4B184'
+function signatureColorToHex(token) {
+  // Bạn có palette chuẩn thì map đầy đủ sau.
+  const map = {
+    xnc_warm_yellow: "#F7D774",
+    xnc_soft_blue: "#8FB7E8",
+    xnc_mint_green: "#87D8C6",
+    xnc_soft_orange: "#F4B184",
+    xnc_yellow: "#F7D774",
+    xnc_blue: "#5FA8FF",
+    xnc_green: "#5AD7B3",
+    xnc_orange: "#F7A35C",
+    xnc_pink: "#F39BC4"
   };
-  return fallback[token] || '#999';
+  return map[token] || "#9CA3AF";
 }
 
-function renderStoryCharacterCards(list){
-  const wrap = document.getElementById('story-characters-cards');
-  if(!wrap) return;
-  wrap.innerHTML = '';
+/* ---------- Character Cards ---------- */
+function updateCharCount() {
+  const el = document.getElementById("char-count");
+  if (el) el.textContent = `Đã chọn: ${selectedCharacterIds.size}`;
+}
+
+function toggleCharacter(id) {
+  if (selectedCharacterIds.has(id)) selectedCharacterIds.delete(id);
+  else selectedCharacterIds.add(id);
+  renderCharacterCards(getFilteredCharacters());
+}
+
+function getFilteredCharacters() {
+  const q = (document.getElementById("char-search")?.value || "").trim().toLowerCase();
+  if (!q) return allCharacters;
+
+  return allCharacters.filter(c => {
+    const name = (c.name || "").toLowerCase();
+    const cid = (c.id || "").toLowerCase();
+    return name.includes(q) || cid.includes(q);
+  });
+}
+
+function renderCharacterCards(list) {
+  const wrap = document.getElementById("story-characters-cards");
+  if (!wrap) return;
+
+  wrap.innerHTML = "";
 
   list.forEach(c => {
-    const card = document.createElement('div');
-    card.className = 'char-card' + (selectedStoryCharacterIds.has(c.id) ? ' selected' : '');
+    const card = document.createElement("div");
+    card.className = "char-card" + (selectedCharacterIds.has(c.id) ? " selected" : "");
     card.dataset.id = c.id;
 
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = selectedStoryCharacterIds.has(c.id);
-    cb.onclick = (e) => { e.stopPropagation(); toggleStoryCharacter(c.id); };
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = selectedCharacterIds.has(c.id);
+    cb.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleCharacter(c.id);
+    });
 
-    const badge = document.createElement('div');
-    badge.className = 'char-badge';
+    const badge = document.createElement("div");
+    badge.className = "char-badge";
     badge.style.background = signatureColorToHex(c.signature_colors?.[0]);
 
-    const name = document.createElement('div');
-    name.className = 'char-name';
+    const info = document.createElement("div");
+    const name = document.createElement("div");
+    name.className = "char-name";
     name.textContent = c.name || c.id;
 
-    card.onclick = () => toggleStoryCharacter(c.id);
+    const meta = document.createElement("div");
+    meta.className = "char-meta";
+    const gender = c.gender ? String(c.gender) : "";
+    const role = c.role ? String(c.role) : "";
+    meta.textContent = [gender, role].filter(Boolean).join(" • ");
+
+    info.appendChild(name);
+    if (meta.textContent) info.appendChild(meta);
 
     card.appendChild(cb);
     card.appendChild(badge);
-    card.appendChild(name);
+    card.appendChild(info);
+
+    card.addEventListener("click", () => toggleCharacter(c.id));
+
     wrap.appendChild(card);
   });
 
-  updateStoryCharCount();
+  updateCharCount();
 }
 
-function toggleStoryCharacter(id){
-  if(selectedStoryCharacterIds.has(id)) selectedStoryCharacterIds.delete(id);
-  else selectedStoryCharacterIds.add(id);
-  filterStoryCharacterCards();
+/* ---------- Story CRUD ---------- */
+function loadStories() {
+  return safeJsonParse(localStorage.getItem(STORAGE_KEY) || "[]", []);
 }
 
-function updateStoryCharCount(){
-  const el = document.getElementById('char-count');
-  if(el) el.textContent = `Đã chọn: ${selectedStoryCharacterIds.size}`;
+function saveStories(stories) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(stories, null, 2));
 }
 
-function filterStoryCharacterCards(){
-  const q = (document.getElementById('char-search')?.value || '').trim().toLowerCase();
-  const list = q ? data.characters.filter(c => (c.name||'').toLowerCase().includes(q) || (c.id||'').toLowerCase().includes(q)) : data.characters;
-  renderStoryCharacterCards(list);
+function refreshSavedStoriesDropdown() {
+  const sel = document.getElementById("saved-stories");
+  if (!sel) return;
+
+  const stories = loadStories();
+  sel.innerHTML = "";
+
+  const opt0 = document.createElement("option");
+  opt0.value = "";
+  opt0.textContent = stories.length ? `-- Chọn story (${stories.length}) --` : "-- Chưa có story nào --";
+  sel.appendChild(opt0);
+
+  stories.forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = s.id;
+    opt.textContent = `${s.id} — ${s.title || "(no title)"}`;
+    sel.appendChild(opt);
+  });
 }
 
-function selectAllCharacters(){
-  data.characters.forEach(c => selectedStoryCharacterIds.add(c.id));
-  filterStoryCharacterCards();
-}
+function buildStoryObject() {
+  const idEl = document.getElementById("story-id");
+  const titleEl = document.getElementById("story-title");
+  const contentEl = document.getElementById("story-content");
 
-function clearAllCharacters(){
-  selectedStoryCharacterIds.clear();
-  filterStoryCharacterCards();
-}
+  const id = (idEl?.value || "").trim() || makeDefaultStoryId();
+  const title = (titleEl?.value || "").trim();
+  const content = (contentEl?.value || "").trim();
 
-function getStories(){
-  try { return JSON.parse(localStorage.getItem(XNC_STORY_STORAGE_KEY) || '[]'); }
-  catch { return []; }
-}
-
-function setStories(list){
-  localStorage.setItem(XNC_STORY_STORAGE_KEY, JSON.stringify(list, null, 2));
-}
-
-function buildStoryObject(){
-  const id = (document.getElementById('story-id').value || '').trim();
-  const title = (document.getElementById('story-title').value || '').trim();
-  const content = (document.getElementById('story-content').value || '').trim();
-  const character_ids = Array.from(selectedStoryCharacterIds);
-
-  // Snapshot full character objects for portability
-  const characters_snapshot = character_ids.map(cid => data.characterMap[cid]).filter(Boolean);
+  // Snapshot full character objects (để đem đi máy khác vẫn đủ info)
+  const selectedIds = Array.from(selectedCharacterIds);
+  const selectedChars = allCharacters.filter(c => selectedCharacterIds.has(c.id));
 
   return {
-    id: id || `STORY-${Date.now()}`,
-    title: title || 'Untitled story',
+    id,
+    title,
     content,
-    character_ids,
-    characters_snapshot,
-    created_at: new Date().toISOString()
+    character_ids: selectedIds,
+    characters_snapshot: selectedChars,
+    created_at: nowIso()
   };
 }
 
-// Exposed to HTML buttons (keep names per your UI)
-function createStory(){
+function setStoryPreview(obj) {
+  const pre = document.getElementById("story-preview");
+  if (pre) pre.textContent = JSON.stringify(obj, null, 2);
+}
+
+function createStory() {
   const story = buildStoryObject();
-  const list = getStories();
+  const stories = loadStories();
+
   // upsert by id
-  const idx = list.findIndex(s => s.id === story.id);
-  if(idx >= 0) list[idx] = story; else list.push(story);
-  setStories(list);
+  const idx = stories.findIndex(s => s.id === story.id);
+  if (idx >= 0) stories[idx] = story;
+  else stories.push(story);
 
-  const pre = document.getElementById('story-preview');
-  if(pre) pre.textContent = JSON.stringify(story, null, 2);
-  alert('Đã lưu câu chuyện vào local.');
+  saveStories(stories);
+  refreshSavedStoriesDropdown();
+  setStoryPreview(story);
+
+  // write back ID if it was auto-generated
+  const idEl = document.getElementById("story-id");
+  if (idEl && !idEl.value.trim()) idEl.value = story.id;
 }
 
-function exportStory(){
-  const story = buildStoryObject();
-  const pre = document.getElementById('story-preview');
-  if(pre) pre.textContent = JSON.stringify(story, null, 2);
-
-  const txt = JSON.stringify(story, null, 2);
-  if(navigator.clipboard) navigator.clipboard.writeText(txt).catch(()=>{});
-  alert('Đã xuất JSON (đồng thời copy clipboard nếu trình duyệt cho phép).');
+function exportStoriesJson() {
+  const stories = loadStories();
+  setStoryPreview(stories);
 }
 
-function downloadStory(){
-  const story = buildStoryObject();
-  const txt = JSON.stringify(story, null, 2);
-  const blob = new Blob([txt], { type: 'application/json' });
-  const a = document.createElement('a');
+function downloadStoriesJson() {
+  const stories = loadStories();
+  const blob = new Blob([JSON.stringify(stories, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `${story.id}.json`;
+  a.download = "xnc_stories.json";
   a.click();
+  URL.revokeObjectURL(a.href);
 }
 
-// Hook after JSON loaded
-function initStoryTab(){
-  if(!storyElsExist()) return;
-  // Try to read token->hex from style json if available
-  data.styleTokenMap = data?.styleTokenMap || (data?.rawStyleJson?.style?.xnc_color_tokens || null);
-  renderStoryCharacterCards(data.characters);
-  updateStoryCharCount();
+function clearPreview() {
+  setStoryPreview({});
 }
+
+function loadSelectedStoryToForm() {
+  const sel = document.getElementById("saved-stories");
+  const chosenId = sel?.value;
+  if (!chosenId) return;
+
+  const stories = loadStories();
+  const story = stories.find(s => s.id === chosenId);
+  if (!story) return;
+
+  // Fill form
+  const idEl = document.getElementById("story-id");
+  const titleEl = document.getElementById("story-title");
+  const contentEl = document.getElementById("story-content");
+
+  if (idEl) idEl.value = story.id || "";
+  if (titleEl) titleEl.value = story.title || "";
+  if (contentEl) contentEl.value = story.content || "";
+
+  // Restore selected characters
+  selectedCharacterIds.clear();
+  (story.character_ids || []).forEach(id => selectedCharacterIds.add(id));
+
+  renderCharacterCards(getFilteredCharacters());
+  setStoryPreview(story);
+}
+
+function deleteSelectedStory() {
+  const sel = document.getElementById("saved-stories");
+  const chosenId = sel?.value;
+  if (!chosenId) return;
+
+  const stories = loadStories().filter(s => s.id !== chosenId);
+  saveStories(stories);
+  refreshSavedStoriesDropdown();
+  clearPreview();
+}
+
+/* ---------- Data Load ---------- */
+async function loadCharacters() {
+  // IMPORTANT: đổi path cho đúng nơi bạn host JSON
+  // Ví dụ nếu JSON nằm /data/XNC_characters.json thì sửa ở đây.
+  const res = await fetch("XNC_characters.json", { cache: "no-store" });
+  const data = await res.json();
+
+  // Schema của bạn: { characters: [...] }
+  allCharacters = Array.isArray(data.characters) ? data.characters : [];
+  renderCharacterCards(allCharacters);
+}
+
+/* ---------- Init ---------- */
+document.addEventListener("DOMContentLoaded", async () => {
+  // Tabs click handler
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => switchTab(tab.dataset.tab));
+  });
+
+  // Default story id if empty
+  const idEl = document.getElementById("story-id");
+  if (idEl && !idEl.value.trim()) idEl.placeholder = makeDefaultStoryId();
+
+  // Button handlers
+  document.getElementById("btn-create-story")?.addEventListener("click", createStory);
+  document.getElementById("btn-export-json")?.addEventListener("click", exportStoriesJson);
+  document.getElementById("btn-download-json")?.addEventListener("click", downloadStoriesJson);
+  document.getElementById("btn-clear-preview")?.addEventListener("click", clearPreview);
+
+  document.getElementById("btn-load-story")?.addEventListener("click", loadSelectedStoryToForm);
+  document.getElementById("btn-delete-story")?.addEventListener("click", deleteSelectedStory);
+
+  document.getElementById("btn-select-all")?.addEventListener("click", () => {
+    allCharacters.forEach(c => selectedCharacterIds.add(c.id));
+    renderCharacterCards(getFilteredCharacters());
+  });
+  document.getElementById("btn-clear-all")?.addEventListener("click", () => {
+    selectedCharacterIds.clear();
+    renderCharacterCards(getFilteredCharacters());
+  });
+
+  document.getElementById("char-search")?.addEventListener("input", () => {
+    renderCharacterCards(getFilteredCharacters());
+  });
+
+  // Load saved stories
+  refreshSavedStoriesDropdown();
+
+  // Load characters (render cards)
+  try {
+    await loadCharacters();
+  } catch (e) {
+    // Nếu JSON path sai, bạn sẽ thấy lỗi ở console.
+    console.error("Failed to load XNC_characters.json:", e);
+  }
+});
