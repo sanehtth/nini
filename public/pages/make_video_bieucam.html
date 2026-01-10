@@ -1,204 +1,187 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>XNC Prompt Generator</title>
-
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; background: #fafafa; }
-
-    .tabs {
-      display: flex;
-      gap: 8px;
-      padding: 10px 12px;
-      background: #1f2937;
-      align-items: center;
-    }
-    .tab {
-      color: #e5e7eb;
-      background: transparent;
-      border: 1px solid transparent;
-      padding: 8px 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      user-select: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 600;
-    }
-    .tab.active {
-      background: #111827;
-      border-color: #374151;
-      color: #fff;
-    }
-
-    .container { padding: 16px; max-width: 1200px; margin: 0 auto; }
-
-    .panel { display: none; }
-    .panel.active { display: block; }
-
-    .field { margin: 10px 0; }
-    label { display: block; font-weight: 600; margin-bottom: 6px; }
-    input[type="text"], textarea {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 10px;
-      border: 1px solid #d1d5db;
-      border-radius: 10px;
-      background: #fff;
-    }
-    textarea { min-height: 140px; resize: vertical; }
-
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 900px) { .row { grid-template-columns: 1fr; } }
-
-    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-    button {
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid #d1d5db;
-      background: #fff;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    button.primary { background: #111827; color: #fff; border-color: #111827; }
-    button.danger { background: #ef4444; color: #fff; border-color: #ef4444; }
-
-    .subactions {
-      display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap;
-    }
-    .subactions .spacer { flex: 1; }
-    .muted { color: #6b7280; font-size: 13px; }
-
-    /* Character cards */
-    .char-grid{
-      display:grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap:10px;
-      margin-top:10px;
-    }
-    .char-card{
-      border:1px solid #e5e7eb;
-      border-radius:12px;
-      padding:10px;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      cursor:pointer;
-      background:#fff;
-      transition: border-color .15s, box-shadow .15s;
-    }
-    .char-card:hover{ border-color:#cbd5e1; }
-    .char-card.selected{
-      border-color:#3b82f6;
-      box-shadow:0 0 0 3px rgba(59,130,246,.15);
-    }
-    .char-badge{
-      width:10px; height:10px; border-radius:50%;
-      background:#999; flex:0 0 auto;
-    }
-    .char-name{ font-weight:700; }
-    .char-meta{ font-size:12px; color:#6b7280; }
-    @media (max-width: 900px){ .char-grid{ grid-template-columns: repeat(2, 1fr);} }
-    @media (max-width: 520px){ .char-grid{ grid-template-columns: repeat(1, 1fr);} }
-
-    pre {
-      background: #0b1020;
-      color: #e5e7eb;
-      padding: 12px;
-      border-radius: 12px;
-      overflow: auto;
-      max-height: 340px;
-    }
-
-    .notice {
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: 1px solid #e5e7eb;
-      background: #fff;
-      margin: 12px 0;
-    }
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>XNC Prompt Generator</title>
+<link href="/css/make_video.css" rel="stylesheet"/>
+<link href="/green-theme.css" rel="stylesheet"/>
+<style>
+    body.green-theme { background-color: #e8f5e9; } /* Nền xanh lá nhạt theo ý bạn */
+    .character-slot { border-left: 5px solid var(--secondary); padding: 15px; margin-bottom: 20px; background: #f7fff7; border-radius: 8px; position: relative; }
+    .btn-remove { background: #ff4d4d; color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; float: right; }
   </style>
+
+<style>
+  .topbar{display:flex;gap:10px;align-items:center;padding:10px 12px;background:#1f2937;color:#fff;position:sticky;top:0;z-index:10}
+  .tab-btn{border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:600}
+  .tab-btn.active{background:#fff;color:#111827}
+  .panel{display:none}
+  .panel.active{display:block}
+  .story-wrap{max-width:1200px;margin:16px auto;padding:0 12px}
+  .story-card{background:#fff;border-radius:14px;border:1px solid #e5e7eb;padding:14px;margin-bottom:14px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:900px){.grid2{grid-template-columns:1fr}}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .row input,.row select,.row textarea{width:100%}
+  .btn{border:1px solid #d1d5db;background:#111827;color:#fff;padding:8px 12px;border-radius:10px;cursor:pointer}
+  .btn.secondary{background:#fff;color:#111827}
+  .btn.danger{background:#b91c1c}
+  .muted{color:#6b7280;font-size:13px}
+  .scene-card{border:1px solid #e5e7eb;border-radius:14px;padding:12px;margin:10px 0;background:#fafafa}
+  .scene-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+  .scene-title{font-weight:800}
+  .scene-meta{font-size:13px;color:#6b7280}
+  .dlg-box{margin-top:8px;padding:10px;border-radius:10px;background:#fff;border:1px solid #eee}
+  .dlg-line{padding:3px 0}
+  .dlg-speaker{font-weight:700}
+  .sfx-line{padding:3px 0;color:#7c2d12}
+  .nar-line{padding:3px 0}
+  textarea.scene-raw{width:100%;border:1px solid #e5e7eb;border-radius:10px;padding:10px}
+  pre#story-json-output{max-height:260px;overflow:auto;background:#0b1220;color:#e5e7eb;border-radius:12px;padding:12px}
+</style>
 </head>
-
-<body>
-  <div class="tabs">
-    <div class="tab active" data-tab="story">📖 Tạo câu chuyện</div>
-    <div class="tab" data-tab="prompt">🎬 Tạo prompt video</div>
-    <div class="muted" style="margin-left:auto;">XNC</div>
-  </div>
-
-  <div class="container">
-
-    <!-- TAB: STORY -->
-    <section id="story" class="panel active">
-      <h2>Tạo câu chuyện</h2>
-
-      <div class="row">
-        <div class="field">
-          <label for="story-id">ID câu chuyện</label>
-          <input id="story-id" type="text" placeholder="VD: XNC-20250110-0001" />
+<body class="green-theme">
+<div class="topbar">
+<button class="tab-btn active" id="tab-story-btn" type="button">Tách scene &amp; thoại</button>
+<button class="tab-btn" id="tab-prompt-btn" type="button">Tạo prompt video</button>
+<div class="muted" style="margin-left:auto">XNC</div>
+</div>
+<section class="panel active" id="tab-story">
+<div class="story-wrap">
+<div class="story-card">
+<h2 style="margin:0 0 8px 0">Tách scene &amp; thoại (Tab 1)</h2>
+<div class="muted">Bạn dán story vào đây (từ V19) hoặc nạp story đã lưu, rồi bấm “Tách Scene &amp; Thoại”. Sau đó export JSON thoại để đem qua Studio V19 tạo voice library.</div>
+</div>
+<div class="story-card">
+<div class="grid2">
+<div>
+<label><b>ID câu chuyện</b></label>
+<input id="story-id" placeholder="VD: XNC-20251226-0004"/>
+</div>
+<div>
+<label><b>Tên câu chuyện</b></label>
+<input id="story-title" placeholder="VD: Bài kiểm tra cuối kỳ"/>
+</div>
+</div>
+<div style="margin-top:10px">
+<label><b>Nội dung</b></label>
+<textarea id="story-content" placeholder="Dán story text vào đây..." rows="10"></textarea>
+</div>
+<div style="margin-top:10px">
+<label><b>Nhân vật tham gia</b> <span class="muted">(chọn để map thoại tốt hơn)</span></label>
+<input id="story-search" placeholder="Tìm nhân vật..."/>
+<div class="row" style="margin-top:8px">
+<button class="btn secondary" id="select-all-btn" type="button">Chọn tất cả</button>
+<button class="btn secondary" id="clear-all-btn" type="button">Bỏ chọn</button>
+<div class="muted" style="margin-left:auto">Đã chọn: <span id="count">0</span></div>
+</div>
+<div id="characters-container" style="margin-top:10px"></div>
+</div>
+<div class="row" style="margin-top:12px">
+<button class="btn" id="create-story-btn" type="button">Lưu story (local)</button>
+<button class="btn secondary" id="export-story-json-btn" type="button">Xuất JSON story</button>
+<button class="btn secondary" id="save-story-file-btn" type="button">Lưu file .json</button>
+<button class="btn" id="split-scenes-btn" type="button">Tách Scene &amp; Thoại</button>
+<button class="btn secondary" id="export-dialogue-json-btn" type="button">Export JSON thoại</button>
+<button class="btn secondary" id="copy-dialogue-json-btn" type="button">Copy JSON thoại</button>
+<button class="btn danger" id="clear-scenes-btn" type="button">Xóa preview</button>
+</div>
+<div style="margin-top:10px">
+<b>Preview / JSON output</b>
+<pre id="story-json-output">{}</pre>
+</div>
+<div style="margin-top:10px">
+<b>Stories đã lưu (Local)</b>
+<div class="row" style="margin-top:6px">
+<select id="story-list" style="min-width:260px"></select>
+<button class="btn secondary" id="load-story-btn" type="button">Nạp</button>
+<button class="btn danger" id="delete-story-btn" type="button">Xóa</button>
+</div>
+</div>
+</div>
+<div class="story-card">
+<h3 style="margin:0 0 8px 0">Scene manifest (sau khi tách)</h3>
+<div id="scenes-output"></div>
+</div>
+</div>
+</section>
+<section class="panel" id="tab-prompt">
+<div class="container">
+<main>
+<div class="card" style="text-align: center; margin-bottom: 32px;">
+<h1 style="margin:0; font-size:32px; color:var(--secondary);">🎬 XNC Prompt Generator</h1>
+<p class="muted">Tạo prompt video đa nhân vật (Sane, Mira, Na, Bắp, Mít...)</p>
+</div>
+<div id="characters-container"></div>
+<div style="text-align: center; margin-bottom: 20px;">
+<button class="btn btn-secondary" id="add-char-btn">➕ Thêm nhân vật khác</button>
+</div>
+<div class="card">
+<h3 style="margin-top:0;">⚙️ Cấu hình chung (Cảnh &amp; Camera)</h3>
+<div class="section">
+<div>
+<label>🎥 Góc máy:</label>
+<select id="camera">
+<option value="EXTREME_CLOSEUP">EXTREME CLOSE-UP (Cực cận)</option>
+<option value="CLOSEUP">CLOSE-UP (Cận cảnh)</option>
+<option value="MEDIUM_CLOSEUP">MEDIUM CLOSE-UP (Trung cận)</option>
+<option value="MEDIUM_SHOT">MEDIUM SHOT (Trung cảnh)</option>
+<option value="FULL_SHOT">FULL SHOT (Toàn cảnh)</option>
+<option value="WIDE_SHOT">WIDE SHOT (Góc rộng)</option>
+<option value="POV">POV (Góc nhìn nhân vật)</option>
+</select>
+</div>
+<div>
+<label>💡 Ánh sáng:</label>
+<select id="lighting"><option value="">-- Chọn --</option></select>
+</div>
+<div>
+<label>🖼️ Nền cảnh:</label>
+<select id="background"><option value="">-- Chọn --</option></select>
+</div>
+</div>
+<div class="section">
+<div>
+<label>📐 Khung hình:</label>
+<select id="aspect">
+<option selected="" value="16:9">16:9 (Ngang)</option>
+<option value="9:16">9:16 (Dọc)</option>
+<option value="1:1">1:1 (Vuông)</option>
+</select>
+</div>
+</div>
+</div>
+<div class="card" style="margin-top:32px; position: relative;">
+<h3 style="margin-top:0; color:var(--primary);">Prompt hiện tại:</h3>
+<div style="margin-bottom:12px; display: flex; gap: 10px;">
+<input id="video-id" placeholder="ID Video" style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--border);" type="text"/>
+<input id="video-title" placeholder="Tên Video" style="flex:2; padding:10px; border-radius:8px; border:1px solid var(--border);" type="text"/>
+</div>
+<div id="final-prompt" style="min-height:150px; background:#1e1e1e; color:#e0e0e0; padding:16px; border-radius:12px; font-family:monospace; white-space:pre-wrap; margin-bottom:16px;">
+          Đang khởi tạo...
         </div>
-        <div class="field">
-          <label for="story-title">Tên câu chuyện</label>
-          <input id="story-title" type="text" placeholder="VD: Bài kiểm tra cuối kỳ" />
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="story-content">Nội dung</label>
-        <textarea id="story-content" placeholder="Dán đoạn câu chuyện vào đây..."></textarea>
-      </div>
-
-      <div class="field">
-        <label>Nhân vật tham gia</label>
-        <input id="char-search" type="text" placeholder="Tìm nhân vật..." />
-        <div class="subactions">
-          <button type="button" id="btn-select-all">Chọn tất cả</button>
-          <button type="button" id="btn-clear-all">Bỏ chọn</button>
-          <div class="spacer"></div>
-          <div id="char-count" class="muted">Đã chọn: 0</div>
-        </div>
-        <div id="story-characters-cards" class="char-grid"></div>
-      </div>
-
-      <div class="actions">
-        <button class="primary" type="button" id="btn-create-story">Tạo câu chuyện</button>
-        <button type="button" id="btn-export-json">Xuất JSON</button>
-        <button type="button" id="btn-download-json">Lưu file</button>
-        <button class="danger" type="button" id="btn-clear-preview">Xóa preview</button>
-      </div>
-
-      <div class="notice">
-        <div class="muted" style="margin-bottom:6px;">Preview / JSON output</div>
-        <pre id="story-preview">{}</pre>
-      </div>
-
-      <div class="notice">
-        <div class="muted" style="margin-bottom:6px;">Stories đã lưu (Local)</div>
-        <div class="subactions">
-          <select id="saved-stories" style="padding:10px;border-radius:10px;border:1px solid #d1d5db;min-width:320px;"></select>
-          <button type="button" id="btn-load-story">Nạp</button>
-          <button class="danger" type="button" id="btn-delete-story">Xóa</button>
-          <div class="muted">Lưu tại localStorage (máy hiện tại).</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB: PROMPT -->
-    <section id="prompt" class="panel">
-      <h2>Tạo prompt video</h2>
-      <div class="notice">
-        Tab này bạn giữ code hiện tại. Nếu bạn muốn mình “merge” phần prompt generator của bạn vào file này cho đồng bộ 100%,
-        bạn gửi mình bản HTML/JS đang chạy tab prompt hiện tại, mình sẽ gộp không làm mất chức năng.
-      </div>
-    </section>
-
-  </div>
-
-  <!-- IMPORTANT: đổi path nếu JS của bạn nằm chỗ khác -->
-  <script src="/js/make_video_bieucam.js"></script>
+<div style="text-align:center;">
+<button class="btn btn-primary" id="generate-btn">🚀 Tạo Prompt</button>
+<button class="btn btn-secondary" id="add-btn" style="margin-left:12px;">➕ Lưu vào Danh sách</button>
+</div>
+<button class="btn btn-primary" id="copy-btn" style="position:absolute; top:12px; right:12px;">📋 Copy</button>
+</div>
+<div class="card" style="margin-top:32px;">
+<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+<h3 style="margin:0;">Danh sách đã lưu (<span id="count">0</span>)</h3>
+<div style="display:flex; gap:10px;">
+<button class="btn btn-secondary" id="export-json-btn">⬇️ Export JSON</button>
+<button class="btn btn-secondary" id="clear-all-btn" style="background:#ff4d4d; color:#fff;">🗑️ Xóa hết</button>
+</div>
+</div>
+<div id="prompt-list"></div>
+</div>
+</main>
+</div>
+<!-- Lưu ý: bạn đang dùng file local (make_video_bieucam (1).js). Khi deploy, đổi path cho đúng nếu cần. -->
+</section>
+<script src="make_video_bieucam_v6.js"></script>
 </body>
 </html>
