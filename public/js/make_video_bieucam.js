@@ -8,7 +8,20 @@ const JSON_URLS = {
   outfits: '/adn/xomnganchuyen/XNC_outfits.json'
 };
 
-let data = { characters: {}, faces: [], states: [], camera: {}, lighting: {}, backgrounds: [], outfits: [] };
+let data = {
+  characters: [],
+  characterMap: {},
+  faces: [],
+  states: [],
+  camera: {},
+  lighting: {},
+  backgrounds: [],
+  outfits: [],
+  outfitMap: {},
+  backgroundMap: {},
+  faceMap: {},
+  stateMap: {}
+};
 let savedPrompts = JSON.parse(localStorage.getItem('xnc_saved_prompts') || '[]');
 let promptCounter = parseInt(localStorage.getItem('xnc_counter') || '1');
 let charSlotCount = 0;
@@ -39,13 +52,21 @@ async function init() {
   ]);
 
   // Gán dữ liệu (dùng dấu ?. và || [] để nếu file lỗi trang web vẫn chạy tiếp)
-  data.characters  = charJson?.characters || {};
-  data.faces       = facesJson?.faces || [];
-  data.states      = statesJson?.states || [];
+  // Lưu ý: các JSON của bạn dùng mảng (characters/faces/states/outfits/backgrounds). Trước đó code đang hiểu sai dạng object.
+  data.characters  = Array.isArray(charJson?.characters) ? charJson.characters : [];
+  data.faces       = Array.isArray(facesJson?.faces) ? facesJson.faces : [];
+  data.states      = Array.isArray(statesJson?.states) ? statesJson.states : [];
   data.camera      = styleJson?.style?.camera || {};
   data.lighting    = styleJson?.style?.lighting || {};
-  data.backgrounds = bgJson?.backgrounds || [];
-  data.outfits     = outfitJson?.outfits || [];
+  data.backgrounds = Array.isArray(bgJson?.backgrounds) ? bgJson.backgrounds : [];
+  data.outfits     = Array.isArray(outfitJson?.outfits) ? outfitJson.outfits : [];
+
+  // Build quick lookup maps
+  data.characterMap = Object.fromEntries(data.characters.map(c => [c.id, c]));
+  data.outfitMap = Object.fromEntries(data.outfits.map(o => [o.id, o]));
+  data.backgroundMap = Object.fromEntries(data.backgrounds.map(b => [b.id, b]));
+  data.faceMap = Object.fromEntries(data.faces.map(f => [f.id, f]));
+  data.stateMap = Object.fromEntries(data.states.map(s => [s.id, s]));
 
   // Điền dữ liệu vào các menu chung (Camera, Ánh sáng, Nền)
   populateSelect('lighting', Object.keys(data.lighting));
@@ -66,6 +87,12 @@ async function init() {
   
   const clearBtn = document.getElementById('clear-all-btn');
   if (clearBtn) clearBtn.onclick = clearAllPrompts;
+
+  const exportBtn = document.getElementById('export-json-btn');
+  if (exportBtn) exportBtn.onclick = exportSavedAsJSON;
+
+  const copyBtn = document.getElementById('copy-btn');
+  if (copyBtn) copyBtn.onclick = copyCurrentPrompt;
 
   renderSavedList();
 }
@@ -102,7 +129,7 @@ function addCharacterSlot() {
           <label>Chọn NV:</label>
           <select class="char-sel" onchange="updateSigs('${slotId}')" style="width:100%;">
             <option value="">-- Chọn --</option>
-            ${Object.keys(data.characters).map(k => `<option value="${k}">${data.characters[k].name}</option>`).join('')}
+            ${data.characters.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
           </select>
         </div>
         <div style="flex: 1; min-width: 150px;">
@@ -144,67 +171,344 @@ window.removeSlot = (id) => {
 window.updateSigs = (slotId) => {
   const slot = document.getElementById(slotId);
   if (!slot) return;
-  const charKey = slot.querySelector('.char-sel').value;
-  const sigSel = slot.querySelector('.sig-sel');
-  sigSel.innerHTML = '<option value="">-- Chọn --</option>';
+  const charId = slot.querySelector('.char-sel').value;
+  const actionSel = slot.querySelector('.sig-sel');
+  const outfitSel = slot.querySelector('.out-sel');
+  const faceSel = slot.querySelector('.face-sel');
 
-  if (charKey && data.characters[charKey]) {
-    const char = data.characters[charKey];
-    const actions = char.signature_items || char.signatures || [];
-    actions.forEach(a => {
+  actionSel.innerHTML = '<option value="">-- Select --</option>';
+
+  const char = charId ? data.characterMap[charId] : null;
+  if (!char) return;
+
+  // Preferred actions (per character) are the correct source for “Hành động”
+  const actions = Array.isArray(char.preferred_actions) ? char.preferred_actions : [];
+  actions.forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a;
+    opt.textContent = toHumanText(a);
+    actionSel.appendChild(opt);
+  });
+
+  // If the character has a default outfit, preselect it when user hasn't chosen any outfit yet.
+  if (outfitSel && !outfitSel.value && char.default_outfit_id) {
+    outfitSel.value = char.default_outfit_id;
+  }
+
+  // If character has preferred faces, put them on top (but keep full list).
+  if (faceSel && Array.isArray(char.preferred_faces) && char.preferred_faces.length > 0) {
+    const existing = new Set(Array.from(faceSel.options).map(o => o.value));
+    // Rebuild: preferred first, then the rest.
+    const allFaces = data.faces.map(f => ({ id: f.id, label: f.label }));
+    const preferred = char.preferred_faces.filter(id => data.faceMap[id]);
+    const rest = allFaces.filter(f => !preferred.includes(f.id));
+    faceSel.innerHTML = '';
+    [...preferred.map(id => ({ id, label: data.faceMap[id].label })), ...rest].forEach(f => {
       const opt = document.createElement('option');
-      opt.value = a; 
-      opt.textContent = a.replace(/_/g,' ').replace(/([A-Z])/g, ' $1').trim();
-      sigSel.appendChild(opt);
+      opt.value = f.id;
+      opt.textContent = f.label;
+      faceSel.appendChild(opt);
     });
+    // Keep previous selection if still exists.
+    if (!existing.has(faceSel.value)) faceSel.value = preferred[0] || faceSel.options[0]?.value || '';
   }
 };
 
-function generatePrompt() {
-  const slots = document.querySelectorAll('.character-slot');
-  let charPrompts = [];
-
-  slots.forEach((slot, index) => {
-    const charKey = slot.querySelector('.char-sel').value;
-    if (!charKey) return;
-
-    const char = data.characters[charKey];
-    const face = data.faces.find(f => f.id === slot.querySelector('.face-sel').value);
-    const outfit = data.outfits.find(o => o.id === slot.querySelector('.out-sel').value);
-    const action = slot.querySelector('.sig-sel').value;
-
-    let desc = `- Nhân vật ${index+1} (${char.name}): ${outfit ? 'mặc ' + outfit.name : 'trang phục gốc'}, `;
-    desc += `hành động "${action || 'đứng tự nhiên'}", biểu cảm: ${face ? face.desc_en : 'cute'}`;
-    charPrompts.push(desc);
-  });
-
-  const bg = data.backgrounds.find(b => b.id === document.getElementById('background').value);
-  const light = document.getElementById('lighting').value;
-  const aspect = document.getElementById('aspect').value;
-  const camEl = document.getElementById('camera');
-  const camValue = (camEl && camEl.options[camEl.selectedIndex]) ? camEl.options[camEl.selectedIndex].text : 'MEDIUM';
-
-  const final = `Create a chibi anime video for XNC series.
-character:
-${charPrompts.length > 0 ? charPrompts.join('\n') : 'Chưa chọn nhân vật'}
-
-background: ${bg ? bg.desc_en : 'Sân trường hoặc xóm dừa'}
-camera: ${camValue}
-Lighting: ${light ? light.replace(/_/g,' ') : 'tự nhiên'}
-Aspect Ratio: ${aspect}
-style: Vibrant colors, funny atmosphere, smooth animation. No text.`;
-
-  document.getElementById('final-prompt').textContent = final;
+function toHumanText(s) {
+  if (!s) return '';
+  return String(s)
+    .replace(/_/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^\w/, c => c.toUpperCase());
 }
 
-// Hàm lưu và hiển thị danh sách (Giữ cơ bản để trang không lỗi)
+function generatePrompt() {
+  const promptObj = buildCurrentPromptObject();
+  const promptText = buildRenderFriendlyPrompt(promptObj);
+  document.getElementById('final-prompt').textContent = promptText;
+  return promptObj;
+}
+
+function getBackgroundDescEn(bg) {
+  if (!bg) return '';
+  return bg.desc_en || bg.prompt || bg.description || bg.label || '';
+}
+
+function getOutfitDescEn(outfit, gender) {
+  if (!outfit) return '';
+  const g = (gender || 'unknown').toLowerCase();
+  const variants = outfit.variants || {};
+  const variant = variants[g] || variants.male || variants.female || null;
+  return (
+    variant?.base_desc_en ||
+    outfit.base_desc_en ||
+    outfit.desc_en ||
+    outfit.name ||
+    ''
+  );
+}
+
+function buildCurrentPromptObject() {
+  const slots = document.querySelectorAll('.character-slot');
+  const videoId = (document.getElementById('video-id')?.value || '').trim();
+  const videoTitle = (document.getElementById('video-title')?.value || '').trim();
+
+  const bgId = document.getElementById('background')?.value || '';
+  const lightingKey = document.getElementById('lighting')?.value || '';
+  const aspect = document.getElementById('aspect')?.value || '16:9';
+  const camEl = document.getElementById('camera');
+  const cameraKey = camEl?.value || 'MEDIUM_SHOT';
+  const cameraLabel = camEl?.options?.[camEl.selectedIndex]?.text || cameraKey;
+
+  const bg = bgId ? data.backgroundMap[bgId] : null;
+  const lightingDesc = lightingKey ? (data.lighting[lightingKey] || toHumanText(lightingKey)) : '';
+
+  const characters = [];
+  slots.forEach((slot, index) => {
+    const charId = slot.querySelector('.char-sel')?.value;
+    if (!charId) return;
+    const char = data.characterMap[charId];
+    if (!char) return;
+
+    const faceId = slot.querySelector('.face-sel')?.value || '';
+    const stateId = slot.querySelector('.state-sel')?.value || '';
+    const actionId = slot.querySelector('.sig-sel')?.value || '';
+
+    const outfitId = slot.querySelector('.out-sel')?.value || char.default_outfit_id || '';
+    const outfit = outfitId ? data.outfitMap[outfitId] : null;
+
+    const face = faceId ? data.faceMap[faceId] : null;
+    const state = stateId ? data.stateMap[stateId] : null;
+
+    characters.push({
+      index: index + 1,
+      id: char.id,
+      name: char.name,
+      type: char.type,
+      gender: char.gender,
+      role: char.role,
+      age_role_vi: char.age_role_vi,
+      base_desc_en: char.base_desc_en || '',
+      prompt_en: char.prompt_en || '',
+      signature_items: Array.isArray(char.signature_items) ? char.signature_items : [],
+      signature_colors: Array.isArray(char.signature_colors) ? char.signature_colors : [],
+      outfit: outfit ? {
+        id: outfit.id,
+        name: outfit.name,
+        desc_en: getOutfitDescEn(outfit, char.gender)
+      } : null,
+      action: actionId ? { id: actionId, desc_en: toHumanText(actionId) } : null,
+      face: face ? { id: face.id, label: face.label, desc_en: face.desc_en || '' } : null,
+      state: state ? { id: state.id, label: state.label, desc_en: state.desc_en || '' } : null
+    });
+  });
+
+  return {
+    schema: 'xnc_video_prompt_v1',
+    created_at: new Date().toISOString(),
+    video: { id: videoId || null, title: videoTitle || null },
+    scene: {
+      aspect_ratio: aspect,
+      camera: { id: cameraKey, label: cameraLabel },
+      lighting: { id: lightingKey || null, desc_en: lightingDesc || null },
+      background: bg ? { id: bg.id, label: bg.label || bg.name || bg.id, desc_en: getBackgroundDescEn(bg) } : null
+    },
+    characters
+  };
+}
+
+function buildRenderFriendlyPrompt(p) {
+  const cameraLine = p.scene.camera?.label ? `${p.scene.camera.label}` : 'MEDIUM SHOT';
+  const lightingLine = p.scene.lighting?.desc_en ? p.scene.lighting.desc_en : 'natural soft daylight';
+  const backgroundLine = p.scene.background?.desc_en ? p.scene.background.desc_en : 'Vietnamese countryside street, pastel 2D chibi background, no text';
+
+  const styleLines = [
+    'STYLE: pastel 2D chibi animation, Vietnamese countryside vibe, clean illustration, expressive facial acting.',
+    'QUALITY: consistent character identity across frames (same face, colors, and signature items).',
+    'RULES: no captions, no logos, no watermarks, no readable text.'
+  ];
+
+  const header = [
+    'VIDEO PROMPT (XNC)',
+    p.video?.title ? `Title: ${p.video.title}` : null,
+    p.video?.id ? `Video ID: ${p.video.id}` : null,
+    `Aspect ratio: ${p.scene.aspect_ratio}`,
+    `Camera: ${cameraLine}`,
+    `Lighting: ${lightingLine}`,
+    `Background: ${backgroundLine}`,
+    ...styleLines,
+    ''
+  ].filter(Boolean);
+
+  const charLines = (p.characters || []).length
+    ? p.characters.flatMap((c) => {
+        const base = (c.prompt_en || c.base_desc_en || '').trim();
+        const sigItems = (c.signature_items || []).length ? c.signature_items.join(', ') : 'none';
+        const sigColors = (c.signature_colors || []).length ? c.signature_colors.join(', ') : 'none';
+        const outfit = c.outfit?.desc_en ? c.outfit.desc_en : (c.outfit?.name || 'default outfit');
+        const action = c.action?.desc_en ? c.action.desc_en : 'idle / natural standing';
+        const face = c.face?.desc_en ? c.face.desc_en : 'neutral expression';
+        const state = c.state?.desc_en ? c.state.desc_en : 'neutral posture';
+
+        return [
+          `CHARACTER ${c.index}: ${c.name} (${c.id})`,
+          `- Base description: ${base || 'N/A'}`,
+          `- Signature items (keep visible): ${sigItems}`,
+          `- Signature colors (keep consistent): ${sigColors}`,
+          `- Outfit: ${outfit}`,
+          `- Action: ${action}`,
+          `- Face (facial expression): ${face}`,
+          `- State (body posture / behavior): ${state}`,
+          ''
+        ];
+      })
+    : ['CHARACTERS: (none selected)'];
+
+  return [...header, ...charLines].join('\n');
+}
+
+function persistSavedList() {
+  localStorage.setItem('xnc_saved_prompts', JSON.stringify(savedPrompts));
+  localStorage.setItem('xnc_counter', String(promptCounter));
+}
+
 function addCurrentPrompt() {
-  alert("Tính năng lưu đang được khởi tạo!");
+  const obj = generatePrompt();
+  const promptText = document.getElementById('final-prompt')?.textContent || '';
+  const videoId = obj.video?.id || `xnc_${promptCounter}`;
+  const videoTitle = obj.video?.title || `XNC Prompt #${promptCounter}`;
+
+  const entry = {
+    saved_at: new Date().toISOString(),
+    seq: promptCounter,
+    video_id: videoId,
+    video_title: videoTitle,
+    prompt_text: promptText,
+    data: obj
+  };
+
+  savedPrompts.unshift(entry);
+  promptCounter += 1;
+  persistSavedList();
+  renderSavedList();
 }
 
 function renderSavedList() {
   const countEl = document.getElementById('count');
   if (countEl) countEl.textContent = savedPrompts.length;
+
+  const listEl = document.getElementById('prompt-list');
+  if (!listEl) return;
+
+  if (!savedPrompts.length) {
+    listEl.innerHTML = '<p class="muted">No saved prompts yet.</p>';
+    return;
+  }
+
+  listEl.innerHTML = savedPrompts
+    .map((p, idx) => {
+      const title = escapeHtml(p.video_title || 'Untitled');
+      const vid = escapeHtml(p.video_id || '');
+      const dt = escapeHtml(new Date(p.saved_at).toLocaleString());
+      return `
+        <div class="card" style="margin: 12px 0;">
+          <div style="display:flex; gap:10px; justify-content:space-between; align-items:flex-start; flex-wrap:wrap;">
+            <div style="min-width:240px;">
+              <div style="font-weight:700;">${title}</div>
+              <div class="muted" style="font-size: 13px;">ID: ${vid} • Saved: ${dt}</div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-primary" onclick="copySavedPrompt(${idx})">Copy</button>
+              <button class="btn btn-secondary" onclick="exportOneAsJSON(${idx})">Export JSON</button>
+              <button class="btn btn-secondary" onclick="removeSavedPrompt(${idx})" style="background:#ff4d4d; color:#fff;">Delete</button>
+            </div>
+          </div>
+          <div style="margin-top:10px; background:#1e1e1e; color:#e0e0e0; padding:12px; border-radius:10px; font-family:monospace; white-space:pre-wrap; max-height: 220px; overflow:auto;">${escapeHtml(p.prompt_text || '')}</div>
+        </div>
+      `;
+    })
+    .join('');
+}
+
+function downloadJSON(filename, obj) {
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportSavedAsJSON() {
+  const payload = {
+    schema: 'xnc_saved_prompts_v1',
+    exported_at: new Date().toISOString(),
+    count: savedPrompts.length,
+    saved_prompts: savedPrompts
+  };
+  downloadJSON('xnc_saved_prompts.json', payload);
+}
+
+function exportOneAsJSON(index) {
+  const item = savedPrompts[index];
+  if (!item) return;
+  const safeId = (item.video_id || `xnc_${item.seq || index + 1}`)
+    .toString()
+    .replace(/[^a-zA-Z0-9_-]/g, '_');
+  downloadJSON(`xnc_prompt_${safeId}.json`, item);
+}
+
+function copyToClipboard(text) {
+  if (!text) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text);
+    return;
+  }
+  // Fallback
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  ta.remove();
+}
+
+function copyCurrentPrompt() {
+  const text = document.getElementById('final-prompt')?.textContent || '';
+  copyToClipboard(text);
+}
+
+function copySavedPrompt(index) {
+  const item = savedPrompts[index];
+  if (!item) return;
+  copyToClipboard(item.prompt_text || '');
+}
+
+function removeSavedPrompt(index) {
+  if (!Number.isInteger(index)) return;
+  savedPrompts.splice(index, 1);
+  persistSavedList();
+  renderSavedList();
+}
+
+// Expose to inline onclick handlers
+window.copySavedPrompt = copySavedPrompt;
+window.exportOneAsJSON = exportOneAsJSON;
+window.removeSavedPrompt = removeSavedPrompt;
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 function clearAllPrompts() {
