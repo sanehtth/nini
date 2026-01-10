@@ -71,13 +71,13 @@
 </div>
 <div style="margin-top:10px">
 <label><b>Nhân vật tham gia</b> <span class="muted">(chọn để map thoại tốt hơn)</span></label>
-<input id="story-search" placeholder="Tìm nhân vật..."/>
+<input id="char-search" placeholder="Tìm nhân vật..."/>
 <div class="row" style="margin-top:8px">
-<button class="btn secondary" id="select-all-btn" type="button">Chọn tất cả</button>
-<button class="btn secondary" id="clear-all-btn" type="button">Bỏ chọn</button>
-<div class="muted" style="margin-left:auto">Đã chọn: <span id="count">0</span></div>
+<button class="btn secondary" id="btn-select-all" type="button">Chọn tất cả</button>
+<button class="btn secondary" id="btn-clear" type="button">Bỏ chọn</button>
+<div class="muted" style="margin-left:auto">Đã chọn: <span id="selected-count">0</span></div>
 </div>
-<div id="characters-container" style="margin-top:10px"></div>
+<div id="participants-grid" style="margin-top:10px"></div>
 </div>
 <div class="row" style="margin-top:12px">
 <button class="btn" id="create-story-btn" type="button">Lưu story (local)</button>
@@ -133,7 +133,7 @@
 <h1 style="margin:0; font-size:32px; color:var(--secondary);">🎬 XNC Prompt Generator</h1>
 <p class="muted">Tạo prompt video đa nhân vật (Sane, Mira, Na, Bắp, Mít...)</p>
 </div>
-<div id="characters-container"></div>
+<div id="prompt-characters-container"></div>
 <div style="text-align: center; margin-bottom: 20px;">
 <button class="btn btn-secondary" id="add-char-btn">➕ Thêm nhân vật khác</button>
 </div>
@@ -201,6 +201,6 @@
 </div>
 <!-- Lưu ý: bạn đang dùng file local (make_video_bieucam (1).js). Khi deploy, đổi path cho đúng nếu cần. -->
 </section>
-<script src="/js/make_video_bieucam.js"></script>
+<script src="make_video_bieucam_v10.js"></script>
 </body>
 </html>
