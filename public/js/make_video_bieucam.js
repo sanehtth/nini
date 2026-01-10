@@ -911,3 +911,80 @@ function downloadTextFile(filename, content) {
   a.remove();
   URL.revokeObjectURL(url);
 }
+const selectedCharacterIds = new Set();
+let allCharacters = [];
+
+function renderCharacterCards(list){
+  const wrap = document.getElementById("story-characters-cards");
+  wrap.innerHTML = "";
+
+  list.forEach(c => {
+    const card = document.createElement("div");
+    card.className = "char-card" + (selectedCharacterIds.has(c.id) ? " selected" : "");
+    card.dataset.id = c.id;
+
+    // nếu bạn có signature_colors[0] thì dùng làm badge (fallback xám)
+    const badgeColor = signatureColorToHex(c.signature_colors?.[0]); // bạn có thể map sau
+    const badge = document.createElement("div");
+    badge.className = "char-badge";
+    badge.style.background = badgeColor || "#999";
+
+    const name = document.createElement("div");
+    name.className = "char-name";
+    name.textContent = c.name || c.id;
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = selectedCharacterIds.has(c.id);
+    cb.onclick = (e) => { e.stopPropagation(); toggleCharacter(c.id); };
+
+    card.onclick = () => toggleCharacter(c.id);
+
+    card.appendChild(cb);
+    card.appendChild(badge);
+    card.appendChild(name);
+    wrap.appendChild(card);
+  });
+
+  updateCharCount();
+}
+
+function toggleCharacter(id){
+  if(selectedCharacterIds.has(id)) selectedCharacterIds.delete(id);
+  else selectedCharacterIds.add(id);
+
+  filterCharacterCards(true); // rerender theo search hiện tại
+}
+
+function updateCharCount(){
+  const el = document.getElementById("char-count");
+  if(el) el.textContent = `Đã chọn: ${selectedCharacterIds.size}`;
+}
+
+function filterCharacterCards(skipInputRead=false){
+  const q = (document.getElementById("char-search")?.value || "").trim().toLowerCase();
+  const filtered = q
+    ? allCharacters.filter(c => (c.name || "").toLowerCase().includes(q) || (c.id || "").toLowerCase().includes(q))
+    : allCharacters;
+  renderCharacterCards(filtered);
+}
+
+function selectAllCharacters(){
+  allCharacters.forEach(c => selectedCharacterIds.add(c.id));
+  filterCharacterCards(true);
+}
+function clearAllCharacters(){
+  selectedCharacterIds.clear();
+  filterCharacterCards(true);
+}
+
+// map màu signature -> hex (tạm thời; bạn có palette thì map chuẩn theo palette)
+function signatureColorToHex(token){
+  const map = {
+    xnc_warm_yellow:"#F7D774",
+    xnc_soft_blue:"#8FB7E8",
+    xnc_mint_green:"#87D8C6",
+    xnc_soft_orange:"#F4B184"
+  };
+  return map[token] || "#999";
+}
