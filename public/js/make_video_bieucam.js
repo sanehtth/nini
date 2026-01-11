@@ -1,406 +1,542 @@
-/* =========================================================
- * make_video_bieucam.js  (SAFE PATH VERSION)
- * Web root = /public in repo, so URLs MUST NOT include /public
- * ========================================================= */
+/* ============================================================================
+  make_video_bieucam.js  (SYNC / STABLE PATHS)
+  - Manifest:   /substance/manifest.json
+  - Story file: /substance/<filename>.json
+  - Characters: /adn/xomnganchuyen/XNC_characters.json
+============================================================================ */
 
-"use strict";
+(() => {
+  "use strict";
 
-/* =========================
-   FIX MANIFEST + LOAD STORY
-   Paths chuẩn theo bạn:
-   js: /public/js/make_video_bieucam.js
-   manifest: /public/substance/manifest.json  -> URL chạy là /substance/manifest.json
-   story: /public/substance/<file>.json       -> URL chạy là /substance/<file>.json
-========================= */
-
-const PATHS = {
-  manifest: "/substance/manifest.json",
-  // giữ nguyên characters theo dự án bạn đang dùng:
-  characters: "/adn/xomnganchuyen/XNC_characters.json",
-};
-
-// Helper: lấy element theo nhiều id (để không bị lệch id HTML)
-function $id(...ids) {
-  for (const id of ids) {
-    const el = document.getElementById(id);
-    if (el) return el;
-  }
-  return null;
-}
-
-// Helper: fetch JSON (có báo lỗi rõ)
-async function fetchJSON(url) {
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Fetch failed: ${url} -> ${res.status}`);
-  return await res.json();
-}
-
-// Chuẩn hoá đường dẫn public/substance -> /substance
-function normalizeSubstancePath(input) {
-  if (!input) return "";
-
-  let p = String(input).trim();
-
-  // bỏ origin nếu có (https://domain/xxx)
-  p = p.replace(/^https?:\/\/[^/]+/i, "");
-
-  // nếu manifest ghi "public/substance/..." hoặc "/public/substance/..."
-  p = p.replace(/^\/?public\//i, "/");
-
-  // nếu chỉ ghi "XNC-....json" hoặc "/XNC-....json"
-  p = p.replace(/^\//, "");
-  if (!p.includes("/")) {
-    return `/substance/${p}`;
-  }
-
-  // nếu đã có substance nhưng thiếu dấu /
-  if (p.startsWith("substance/")) return `/${p}`;
-
-  // nếu đang là "/substance/..."
-  if (p.startsWith("/substance/")) return p;
-
-  // nếu là "substance/..." hoặc "XNC/..." lạ thì cứ trả về có dấu /
-  return `/${p}`;
-}
-/* =========================
-   LOAD MANIFEST -> render dropdown
-========================= */
-async function loadManifest() {
-  const statusEl = $id("manifestStatus", "manifest-status");
-  const selectEl = $id("storySelect", "story-select", "storySelector", "story-select-el");
-
-  try {
-    if (statusEl) statusEl.textContent = "Manifest: đang load...";
-    const json = await fetchJSON(PATHS.manifest);
-
-    // hỗ trợ cả 2 kiểu: {items:[...]} hoặc [...]
-    const items = Array.isArray(json) ? json : (Array.isArray(json.items) ? json.items : []);
-    renderManifestSelect(items);
-
-    if (statusEl) statusEl.textContent = `Manifest: OK (${items.length} truyện) • ${PATHS.manifest}`;
-  } catch (err) {
-    console.error("[XNC] loadManifest error:", err);
-    if (statusEl) statusEl.textContent = `Manifest lỗi: ${String(err.message || err)}`;
-    // vẫn để dropdown rỗng
-    if (selectEl) selectEl.innerHTML = `<option value="">-- Chọn truyện --</option>`;
-  }
-}
-
-function renderManifestSelect(items) {
-  const selectEl = $id("storySelect", "story-select", "storySelector", "story-select-el");
-  if (!selectEl) return;
-
-  const opts = [];
-  opts.push(`<option value="">-- Chọn truyện --</option>`);
-
-  items.forEach((it) => {
-    // ưu tiên file/path trong manifest; fallback từ id
-    const rawFile = it.file || it.path || it.filename || (it.id ? `${it.id}.json` : "");
-    const filePath = normalizeSubstancePath(rawFile);
-
-    // label dropdown
-    const labelId = it.id || "";
-    const labelTitle = it.title || it.name || "";
-    const label = `${labelId}${labelTitle ? " • " + labelTitle : ""}`.trim();
-
-    // IMPORTANT: value phải là FILE PATH, không phải id
-    opts.push(`<option value="${filePath}">${label}</option>`);
-  });
-
-  selectEl.innerHTML = opts.join("");
-}
-
-
-
-/** -----------------------------
- *  Characters (participants list)
- *  You said file is: public/adn/xomnganchuyen/XNC_characters.json
- *  Web URL MUST be: /adn/xomnganchuyen/XNC_characters.json
- *  ----------------------------- */
-async function loadCharacters() {
-  try {
-    const json = await fetchJSON(PATHS.characters);
-
-    // Allow flexible formats:
-    // - array: [{id,label,gender,desc}]
-    // - object: {characters:[...]}
-    const arr = Array.isArray(json)
-      ? json
-      : Array.isArray(json?.characters)
-      ? json.characters
-      : [];
-
-    AppState.charactersAll = arr
-      .map((c) => ({
-        id: (c.id || c.char_id || c.key || "").trim(),
-        label: (c.label || c.name || c.title || c.id || "").trim(),
-        gender: (c.gender || "").trim(),
-        desc: (c.desc || c.bio || "").trim(),
-      }))
-      .filter((c) => c.id && c.label);
-
-    renderParticipantsList();
-    console.log("[XNC] Loaded characters:", AppState.charactersAll.length, "from", PATHS.characters);
-  } catch (e) {
-    console.error("[XNC] loadCharacters error:", e);
-    AppState.charactersAll = [];
-    renderParticipantsList();
-  }
-}
-
-function renderParticipantsList() {
-  const wrap = $("participantsList");
-  if (!wrap) return;
-
-  const q = ($("participantSearch")?.value || "").trim().toLowerCase();
-
-  const list = AppState.charactersAll.filter((c) => {
-    if (!q) return true;
-    return (
-      c.label.toLowerCase().includes(q) ||
-      c.id.toLowerCase().includes(q) ||
-      (c.desc || "").toLowerCase().includes(q)
-    );
-  });
-
-  wrap.innerHTML = list
-    .map((c) => {
-      const checked = AppState.selectedParticipants.has(c.id) ? "checked" : "";
-      const sub = [c.gender, c.desc, c.id].filter(Boolean).join(" • ");
-      return `
-        <label class="xnc-char-row">
-          <input type="checkbox" class="xnc-char-check" data-char-id="${escapeHtmlAttr(c.id)}" ${checked}/>
-          <div class="xnc-char-meta">
-            <div class="xnc-char-name">${escapeHtmlText(c.label)}</div>
-            <div class="xnc-char-sub">${escapeHtmlText(sub)}</div>
-          </div>
-        </label>
-      `;
-    })
-    .join("");
-
-  // bind checkbox events
-  wrap.querySelectorAll(".xnc-char-check").forEach((cb) => {
-    cb.addEventListener("change", (ev) => {
-      const id = ev.target.getAttribute("data-char-id");
-      if (!id) return;
-      if (ev.target.checked) AppState.selectedParticipants.add(id);
-      else AppState.selectedParticipants.delete(id);
-      updateSelectedCount();
-    });
-  });
-
-  updateSelectedCount();
-}
-
-function updateSelectedCount() {
-  setText("selectedCount", `Đã chọn: ${AppState.selectedParticipants.size}`);
-}
-/* =========================
-   LOAD SELECTED STORY -> đổ vào form, textarea
-========================= */
-async function loadStoryFromSelected() {
-  const selectEl = $id("storySelect", "story-select", "storySelector", "story-select-el");
-  if (!selectEl) {
-    alert("Không tìm thấy dropdown truyện (storySelect).");
-    return;
-  }
-
-  const selectedPath = selectEl.value;
-  if (!selectedPath) {
-    alert("Bạn chưa chọn truyện trong dropdown.");
-    return;
-  }
-
-  const storyPath = normalizeSubstancePath(selectedPath);
-
-  try {
-    // disable nút để tránh double click
-    const btn = $id("loadStoryBtn", "loadStoryButton", "btnLoadStory");
-    if (btn) btn.disabled = true;
-
-    console.log("[XNC] Loading story from:", storyPath);
-    const storyJson = await fetchJSON(storyPath);
-
-    // Map field: nội dung nằm ở story (đúng như bạn đã thấy)
-    const storyId = storyJson.id || storyJson.storyId || storyJson.story_id || "";
-    const storyTitle = storyJson.title || storyJson.name || "";
-    const rawText =
-      storyJson.story ||
-      storyJson.content ||
-      storyJson.text ||
-      storyJson.rawText ||
-      storyJson.raw ||
-      "";
-
-    // Đổ vào UI
-    const idEl = $id("storyId", "storyID", "story-id", "txtStoryId");
-    const titleEl = $id("storyTitle", "storyName", "story-title", "txtStoryTitle");
-    const textEl = $id("rawText", "storyText", "storyRawText", "storyContent", "story-content", "txtStoryText");
-
-    if (idEl) idEl.value = storyId;
-    if (titleEl) titleEl.value = storyTitle;
-    if (textEl) textEl.value = rawText;
-
-    // Lưu để các hàm split / export dùng lại (phòng trường hợp code cũ đọc biến khác)
-    window.__XNC_LOADED_STORY__ = {
-      loadedFrom: storyPath,
-      storyId,
-      title: storyTitle,
-      rawText,
-      json: storyJson,
-    };
-
-    // Nếu code cũ dùng một state object nào đó, cố gắng bơm vào cho tương thích
-    // (không gây lỗi nếu không tồn tại)
-    try {
-      if (window.AppState?.story) {
-        window.AppState.story.id = storyId;
-        window.AppState.story.title = storyTitle;
-        window.AppState.story.rawText = rawText;
-      }
-      if (window.appState?.story) {
-        window.appState.story.id = storyId;
-        window.appState.story.title = storyTitle;
-        window.appState.story.rawText = rawText;
-      }
-    } catch (_) {}
-
-    // Preview nhỏ để bạn nhìn nhanh
-    const previewEl = $id("jsonPreview", "preview", "previewJson", "preview-json");
-    if (previewEl) {
-      previewEl.textContent = JSON.stringify(
-        { loadedFrom: storyPath, storyId, title: storyTitle, textLen: rawText.length },
-        null,
-        2
-      );
-    }
-
-    console.log("[XNC] Story loaded OK:", { storyId, title: storyTitle, textLen: rawText.length });
-  } catch (err) {
-    console.error("[XNC] loadStoryFromSelected error:", err);
-    alert(`Load truyện lỗi: ${String(err.message || err)}`);
-  } finally {
-    const btn = $id("loadStoryBtn", "loadStoryButton", "btnLoadStory");
-    if (btn) btn.disabled = false;
-  }
-}
-
-//=========================================
-function applyParticipantsFromStory(charactersField) {
-  // charactersField can be:
-  // - ["Bô-Lô","Ba-La"...] (labels)
-  // - [{id,label}...] or [{char_id,name}...]
-  const ids = new Set();
-
-  if (typeof charactersField[0] === "string") {
-    const wantedLabels = new Set(charactersField.map((s) => String(s).trim()));
-    // map labels -> ids from charactersAll
-    AppState.charactersAll.forEach((c) => {
-      if (wantedLabels.has(c.label)) ids.add(c.id);
-    });
-  } else {
-    charactersField.forEach((x) => {
-      const id = (x.id || x.char_id || "").trim();
-      if (id) ids.add(id);
-      else {
-        const label = (x.label || x.name || "").trim();
-        if (label) {
-          const found = AppState.charactersAll.find((c) => c.label === label);
-          if (found) ids.add(found.id);
-        }
-      }
-    });
-  }
-
-  AppState.selectedParticipants = ids;
-  renderParticipantsList();
-}
-
-/* =========================
-   BIND EVENTS (gọi 1 lần khi init)
-========================= */
-function bindManifestUI() {
-  const btnReload = $id("reloadManifestBtn", "btnReloadManifest");
-  const btnLoad = $id("loadStoryBtn", "loadStoryButton", "btnLoadStory");
-
-  if (btnReload) btnReload.addEventListener("click", loadManifest);
-  if (btnLoad) btnLoad.addEventListener("click", loadStoryFromSelected);
-}
-
-// Nếu file bạn đã có DOMContentLoaded init rồi thì gọi 2 dòng này trong init của bạn.
-// Nếu chưa có, cứ để block này:
-document.addEventListener("DOMContentLoaded", () => {
-  bindManifestUI();
-  loadManifest();
-});
-
-/** -----------------------------
- *  Split scenes stub (hook)
- *  Replace this with your current splitting logic.
- *  IMPORTANT: participants check uses AppState.selectedParticipants.size
- *  ----------------------------- */
-function splitScenesFromStory() {
-  const raw = ($("storyRaw")?.value || "").trim();
-  if (!raw) {
-    alert("Bạn chưa có nội dung truyện.");
-    return;
-  }
-  if (AppState.selectedParticipants.size < 1) {
-    alert("Bạn cần chọn ít nhất 1 nhân vật tham gia.");
-    return;
-  }
-
-  // TODO: plug your scene splitting engine here.
-  // For now just show a small structure so UI doesn't feel broken.
-  const result = {
-    storyId: $("storyId")?.value || "",
-    title: $("storyTitle")?.value || "",
-    loadedFrom: AppState.loadedStoryFile || "(manual)",
-    participants: Array.from(AppState.selectedParticipants),
-    note: "TODO: gắn logic tách scene hiện tại vào splitScenesFromStory()",
-    rawPreview: raw.slice(0, 250),
+  /* =========================
+   *  CONFIG: FIXED PATHS
+   * ========================= */
+  const PATHS = {
+    manifest: "/substance/manifest.json",
+    characters: "/adn/xomnganchuyen/XNC_characters.json",
+    storyBase: "/substance/", // story file = storyBase + filename
   };
 
-  setPreviewJSON(result);
-  console.log("[XNC] splitScenesFromStory result:", result);
-}
+  /* =========================
+   *  STATE
+   * ========================= */
+  const AppState = {
+    data: {
+      charactersAll: [], // [{id,label,gender,desc, ...raw}]
+      manifestItems: [], // [{id,title,file,...}]
+    },
+    story: {
+      id: "",
+      title: "",
+      rawText: "",
+      characters: [], // selected/auto
+      loadedFrom: "",
+      json: null, // story json loaded
+    },
+    ui: {
+      selectedCharIds: new Set(),
+      // Keep a stable "current story file" value
+      currentStoryFile: "",
+    },
+  };
 
-function setPreviewJSON(obj) {
-  const pre = $("previewBox");
-  if (!pre) return;
-  try {
-    pre.textContent = JSON.stringify(obj ?? {}, null, 2);
-  } catch {
-    pre.textContent = "{}";
+  /* =========================
+   *  DOM HELPERS (tolerant IDs)
+   * ========================= */
+  const byId = (id) => document.getElementById(id);
+
+  function pickEl(...ids) {
+    for (const id of ids) {
+      const el = byId(id);
+      if (el) return el;
+    }
+    return null;
   }
-}
 
-/** -----------------------------
- *  HTML escaping helpers
- *  ----------------------------- */
-function escapeHtmlText(s) {
-  return String(s ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
-}
-function escapeHtmlAttr(s) {
-  return escapeHtmlText(s).replaceAll('"', "&quot;");
-}
+  // Buttons / selects (support old/new HTML id variants)
+  const els = () => ({
+    // manifest/story select
+    storySelect: pickEl("storySelect", "story-select", "story_select"),
+    reloadManifestBtn: pickEl("reloadManifestBtn", "reload-manifest-btn"),
+    loadStoryBtn: pickEl("loadStoryBtn", "load-story-btn"),
 
-/** -----------------------------
- *  Init
- *  ----------------------------- */
-async function init() {
-  bindManifestUI();
-  await loadCharacters();
-  await loadManifest();
-  console.log("[XNC] Init OK");
-}
+    // manifest status text
+    manifestStatus: pickEl("manifestStatus", "manifest-status"),
+    manifestPath: pickEl("manifestPath", "manifest-path"),
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", init);
-} else {
-  init();
-}
+    // story fields
+    storyId: pickEl("storyId", "story-id"),
+    storyTitle: pickEl("storyTitle", "story-title"),
+    storyContent: pickEl("storyContent", "story-content", "storyText", "storyRawText", "story-content-textarea"),
+
+    // participants UI
+    participantsWrap: pickEl("participantsWrap", "participants", "participants-grid", "participantsGrid"),
+    selectedCount: pickEl("selectedCount", "selected-count"),
+    charSearch: pickEl("charSearch", "char-search"),
+    btnSelectAll: pickEl("btnSelectAll", "btn-select-all"),
+    btnClearChars: pickEl("btnClearChars", "btn-clear"),
+
+    // actions
+    splitScenesBtn: pickEl("splitScenesBtn", "split-scenes-btn"),
+    jsonOutput: pickEl("storyJsonPreview", "story-json-output", "json-output", "preview-json"),
+  });
+
+  function setText(el, text) {
+    if (!el) return;
+    el.textContent = text;
+  }
+
+  function setValue(el, value) {
+    if (!el) return;
+    el.value = value ?? "";
+  }
+
+  function getValue(el) {
+    if (!el) return "";
+    return (el.value ?? "").toString();
+  }
+
+  function safeJsonParse(str, fallback = null) {
+    try {
+      return JSON.parse(str);
+    } catch {
+      return fallback;
+    }
+  }
+
+  function prettyJson(obj) {
+    try {
+      return JSON.stringify(obj, null, 2);
+    } catch {
+      return "{}";
+    }
+  }
+
+  /* =========================
+   *  FETCH
+   * ========================= */
+  async function fetchJSON(path) {
+    // IMPORTANT: do NOT try to "guess" base url; use absolute path
+    console.log("[XNC] fetchJSON:", path);
+    const res = await fetch(path, { cache: "no-store" });
+    if (!res.ok) {
+      throw new Error(`Fetch failed: ${path} -> ${res.status}`);
+    }
+    return await res.json();
+  }
+
+  function normalizeStoryFileToUrl(file) {
+    // Accept:
+    // - "XNC-....json"
+    // - "/substance/XNC-....json"
+    // - "substance/XNC-....json"
+    // Always return: "/substance/XNC-....json"
+    if (!file) return "";
+    const s = String(file).trim();
+
+    if (s.startsWith("http://") || s.startsWith("https://")) {
+      // not expected in your setup, but allow
+      return s;
+    }
+
+    if (s.startsWith(PATHS.storyBase)) return s; // already "/substance/..."
+    if (s.startsWith("/")) {
+      // "/XNC-...json" => treat as root file, but your standard is /substance/
+      // If user stored absolute root path, keep it.
+      return s;
+    }
+
+    if (s.startsWith("substance/")) return "/" + s; // "substance/..." => "/substance/..."
+    return PATHS.storyBase + s.replace(/^\/+/, "");
+  }
+
+  /* =========================
+   *  LOAD CHARACTERS
+   * ========================= */
+  async function loadCharacters() {
+    const json = await fetchJSON(PATHS.characters);
+
+    // Allow either array or {characters:[...]} formats
+    const arr = Array.isArray(json) ? json : (Array.isArray(json.characters) ? json.characters : []);
+    AppState.data.charactersAll = arr
+      .map((c) => ({
+        raw: c,
+        id: c.id || c.char_id || c.key || c.code || "",
+        label: c.label || c.name || c.title || "",
+        gender: c.gender || "",
+        desc: c.desc || c.description || c.role || "",
+      }))
+      .filter((c) => c.id || c.label);
+
+    console.log("[XNC] Loaded characters:", AppState.data.charactersAll.length, "from", PATHS.characters);
+  }
+
+  /* =========================
+   *  PARTICIPANTS UI
+   * ========================= */
+  function renderParticipants() {
+    const { participantsWrap, selectedCount, charSearch } = els();
+    if (!participantsWrap) {
+      console.warn("[XNC] Participants UI missing in HTML");
+      return;
+    }
+
+    const q = (getValue(charSearch) || "").trim().toLowerCase();
+    const list = AppState.data.charactersAll.filter((c) => {
+      if (!q) return true;
+      return (
+        (c.label && c.label.toLowerCase().includes(q)) ||
+        (c.id && c.id.toLowerCase().includes(q)) ||
+        (c.desc && c.desc.toLowerCase().includes(q))
+      );
+    });
+
+    participantsWrap.innerHTML = list
+      .map((c) => {
+        const checked = AppState.ui.selectedCharIds.has(c.id) ? "checked" : "";
+        const meta = [c.gender, c.desc, c.id].filter(Boolean).join(" • ");
+        return `
+          <label class="char-card ${checked ? "selected" : ""}" style="display:flex;align-items:center;gap:10px;margin:6px 0;">
+            <input type="checkbox" data-char-id="${escapeHtml(c.id)}" ${checked} />
+            <div class="meta" style="line-height:1.2;">
+              <div class="name" style="font-weight:700;">${escapeHtml(c.label || c.id)}</div>
+              <div class="desc" style="font-size:12px;opacity:.75;">${escapeHtml(meta)}</div>
+            </div>
+          </label>
+        `;
+      })
+      .join("");
+
+    participantsWrap.querySelectorAll('input[type="checkbox"][data-char-id]').forEach((cb) => {
+      cb.addEventListener("change", () => {
+        const id = cb.getAttribute("data-char-id") || "";
+        if (!id) return;
+        if (cb.checked) AppState.ui.selectedCharIds.add(id);
+        else AppState.ui.selectedCharIds.delete(id);
+
+        updateSelectedCount();
+        // re-render to update card highlight
+        renderParticipants();
+      });
+    });
+
+    updateSelectedCount();
+  }
+
+  function updateSelectedCount() {
+    const { selectedCount } = els();
+    if (selectedCount) selectedCount.textContent = String(AppState.ui.selectedCharIds.size);
+  }
+
+  function selectAllCharacters() {
+    AppState.data.charactersAll.forEach((c) => {
+      if (c.id) AppState.ui.selectedCharIds.add(c.id);
+    });
+    updateSelectedCount();
+    renderParticipants();
+  }
+
+  function clearAllCharacters() {
+    AppState.ui.selectedCharIds.clear();
+    updateSelectedCount();
+    renderParticipants();
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  /* =========================
+   *  LOAD MANIFEST
+   * ========================= */
+  function normalizeManifestItems(json) {
+    // Support:
+    // - {items:[{id,title,file}...]}
+    // - [{id,title,file}...]
+    const rawItems = Array.isArray(json) ? json : (Array.isArray(json.items) ? json.items : []);
+    const items = rawItems
+      .map((it) => ({
+        id: it.id || it.storyId || it.key || "",
+        title: it.title || it.name || "",
+        file: it.file || it.filename || it.path || "", // IMPORTANT
+        raw: it,
+      }))
+      .filter((it) => it.file || it.id);
+
+    return items;
+  }
+
+  function renderManifestSelect() {
+    const { storySelect } = els();
+    if (!storySelect) return;
+
+    const items = AppState.data.manifestItems;
+    storySelect.innerHTML =
+      `<option value="">-- Chọn truyện --</option>` +
+      items
+        .map((it) => {
+          // Store filename/path in value (NOT id)
+          // If manifest file is empty but id exists => try default "<id>.json"
+          const file = it.file || (it.id ? `${it.id}.json` : "");
+          const label = `${it.id || "(no-id)"}${it.title ? " • " + it.title : ""}`;
+          return `<option value="${escapeHtml(file)}">${escapeHtml(label)}</option>`;
+        })
+        .join("");
+
+    // Keep current selection if still exists
+    if (AppState.ui.currentStoryFile) {
+      const exists = [...storySelect.options].some((o) => o.value === AppState.ui.currentStoryFile);
+      if (exists) storySelect.value = AppState.ui.currentStoryFile;
+    }
+  }
+
+  async function loadManifest() {
+    const { manifestStatus, manifestPath } = els();
+    try {
+      const json = await fetchJSON(PATHS.manifest);
+      AppState.data.manifestItems = normalizeManifestItems(json);
+
+      setText(manifestPath, PATHS.manifest);
+      setText(
+        manifestStatus,
+        AppState.data.manifestItems.length
+          ? `Manifest: OK (${AppState.data.manifestItems.length} truyện)`
+          : "Manifest rỗng / sai format"
+      );
+
+      renderManifestSelect();
+      console.log("[XNC] Loaded manifest items:", AppState.data.manifestItems.length, "from", PATHS.manifest);
+    } catch (err) {
+      setText(manifestPath, PATHS.manifest);
+      setText(manifestStatus, `Manifest lỗi: ${String(err.message || err)}`);
+      console.error("[XNC] loadManifest error:", err);
+      alert(`Load manifest lỗi: ${String(err.message || err)}`);
+    }
+  }
+
+  /* =========================
+   *  LOAD STORY FROM SELECT
+   * ========================= */
+  function setStoryToUI({ id, title, rawText }) {
+    const { storyId, storyTitle, storyContent } = els();
+    if (storyId) storyId.value = id || "";
+    if (storyTitle) storyTitle.value = title || "";
+    if (storyContent) storyContent.value = rawText || "";
+
+    AppState.story.id = id || "";
+    AppState.story.title = title || "";
+    AppState.story.rawText = rawText || "";
+  }
+
+  function updateStoryPreview(extra = {}) {
+    const { jsonOutput } = els();
+    if (!jsonOutput) return;
+
+    const payload = {
+      loadedFrom: AppState.story.loadedFrom || "",
+      storyId: AppState.story.id || "",
+      title: AppState.story.title || "",
+      textLen: (AppState.story.rawText || "").length,
+      selectedCharacters: [...AppState.ui.selectedCharIds],
+      ...extra,
+    };
+    jsonOutput.textContent = prettyJson(payload);
+  }
+
+  function autoSelectCharactersFromStory(storyJson) {
+    // storyJson.characters may be: ["bolo", "Ba-La", ...] or [{id,label}, ...]
+    const chars = storyJson?.characters;
+    if (!chars) return;
+
+    const all = AppState.data.charactersAll;
+    const matchById = new Map(all.map((c) => [c.id, c]));
+    const matchByLabel = new Map(all.map((c) => [String(c.label || "").toLowerCase(), c]));
+
+    const picked = [];
+    if (Array.isArray(chars)) {
+      for (const x of chars) {
+        if (typeof x === "string") {
+          const key = x.trim();
+          const c1 = matchById.get(key);
+          const c2 = matchByLabel.get(key.toLowerCase());
+          const found = c1 || c2;
+          if (found?.id) picked.push(found.id);
+        } else if (x && typeof x === "object") {
+          const keyId = (x.id || x.char_id || "").trim();
+          const keyLabel = (x.label || x.name || "").trim();
+          const found =
+            (keyId && matchById.get(keyId)) ||
+            (keyLabel && matchByLabel.get(keyLabel.toLowerCase())) ||
+            null;
+          if (found?.id) picked.push(found.id);
+        }
+      }
+    }
+
+    // Only auto-select if it finds anything meaningful; do not wipe user's existing selection.
+    if (picked.length) {
+      picked.forEach((id) => AppState.ui.selectedCharIds.add(id));
+      updateSelectedCount();
+      renderParticipants();
+    }
+
+    console.log("[XNC] Auto-selected characters:", picked.length, picked);
+  }
+
+  async function loadSelectedStory() {
+    const { storySelect } = els();
+    if (!storySelect) {
+      alert("Không tìm thấy dropdown chọn truyện (storySelect).");
+      return;
+    }
+
+    const fileValue = (storySelect.value || "").trim();
+    if (!fileValue) {
+      alert("Bạn chưa chọn truyện trong dropdown.");
+      return;
+    }
+
+    // IMPORTANT: remember currently selected file
+    AppState.ui.currentStoryFile = fileValue;
+
+    const url = normalizeStoryFileToUrl(fileValue);
+    try {
+      console.log("[XNC] Loading story from:", url);
+      const storyJson = await fetchJSON(url);
+
+      // Accept many story json schemas:
+      // {id,title,story|rawText|content|text, characters}
+      const id = storyJson.id || storyJson.storyId || "";
+      const title = storyJson.title || storyJson.name || "";
+      const rawText =
+        storyJson.story ||
+        storyJson.rawText ||
+        storyJson.content ||
+        storyJson.text ||
+        storyJson.story_text ||
+        "";
+
+      AppState.story.loadedFrom = url;
+      AppState.story.json = storyJson;
+
+      setStoryToUI({ id, title, rawText });
+      autoSelectCharactersFromStory(storyJson);
+
+      updateStoryPreview({ loadedFrom: url, storyId: id, title });
+
+      console.log("[XNC] Story loaded OK:", { id, title, textLen: rawText.length });
+    } catch (err) {
+      console.error("[XNC] loadSelectedStory error:", err);
+      alert(`Load truyện lỗi: ${String(err.message || err)}`);
+    }
+  }
+
+  /* =========================
+   *  SPLIT SCENES (placeholder hook)
+   *  - This is where your existing split logic should run.
+   *  - Critical fix: always read from the correct textarea (multi-id tolerant)
+   * ========================= */
+  function getStoryTextForSplit() {
+    const { storyContent } = els();
+    const text = (storyContent && storyContent.value) ? storyContent.value : "";
+    return (text || "").trim();
+  }
+
+  function splitScenesFromStory() {
+    const text = getStoryTextForSplit();
+    if (!text) {
+      alert("Bạn chưa có nội dung truyện.");
+      return;
+    }
+
+    if (AppState.ui.selectedCharIds.size < 1) {
+      alert("Bạn cần chọn ít nhất 1 nhân vật tham gia.");
+      return;
+    }
+
+    // IMPORTANT: keep state consistent
+    AppState.story.rawText = text;
+
+    // >>> TODO: Plug your real splitter here <<<
+    // For now, just preview that it passed validations.
+    updateStoryPreview({
+      ok: true,
+      action: "splitScenesFromStory",
+      storyTextLen: text.length,
+      selectedCount: AppState.ui.selectedCharIds.size,
+    });
+
+    console.log("[XNC] splitScenesFromStory OK. textLen:", text.length);
+  }
+
+  /* =========================
+   *  EVENTS
+   * ========================= */
+  function bindEvents() {
+    const {
+      reloadManifestBtn,
+      loadStoryBtn,
+      btnSelectAll,
+      btnClearChars,
+      charSearch,
+      splitScenesBtn,
+      storySelect,
+      storyId,
+      storyTitle,
+      storyContent,
+    } = els();
+
+    if (reloadManifestBtn) reloadManifestBtn.addEventListener("click", loadManifest);
+    if (loadStoryBtn) loadStoryBtn.addEventListener("click", loadSelectedStory);
+
+    if (btnSelectAll) btnSelectAll.addEventListener("click", selectAllCharacters);
+    if (btnClearChars) btnClearChars.addEventListener("click", clearAllCharacters);
+
+    if (charSearch) charSearch.addEventListener("input", renderParticipants);
+
+    if (splitScenesBtn) splitScenesBtn.addEventListener("click", splitScenesFromStory);
+
+    // Keep preview live when user edits inputs manually
+    if (storySelect) {
+      storySelect.addEventListener("change", () => {
+        AppState.ui.currentStoryFile = (storySelect.value || "").trim();
+      });
+    }
+    if (storyId) storyId.addEventListener("input", () => updateStoryPreview({}));
+    if (storyTitle) storyTitle.addEventListener("input", () => updateStoryPreview({}));
+    if (storyContent) storyContent.addEventListener("input", () => {
+      AppState.story.rawText = storyContent.value || "";
+      updateStoryPreview({});
+    });
+  }
+
+  /* =========================
+   *  INIT
+   * ========================= */
+  async function init() {
+    try {
+      await loadCharacters();
+      renderParticipants();
+      await loadManifest();
+      bindEvents();
+
+      updateStoryPreview({ init: "OK" });
+      console.log("[XNC] Init OK");
+    } catch (err) {
+      console.error("[XNC] init error:", err);
+      alert(`Init lỗi: ${String(err.message || err)}`);
+    }
+  }
+
+  // Start after DOM ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
