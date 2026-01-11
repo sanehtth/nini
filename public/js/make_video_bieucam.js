@@ -121,16 +121,34 @@ async function loadStory(file) {
    INIT
 ========================= */
 function bindUI() {
-  document.getElementById('reloadManifestBtn').onclick = loadManifest;
+  // Reload manifest
+  const reloadBtn = document.getElementById('reloadManifestBtn');
+  if (reloadBtn) reloadBtn.onclick = loadManifest;
 
-  document.getElementById('loadStoryBtn').onclick = () => {
-    const sel = document.getElementById('storySelect');
-    if (!sel || !sel.value) {
-      alert('Chưa chọn truyện');
-      return;
-    }
-    loadStory(sel.value);
-  };
+  // Load story
+  const loadBtn = document.getElementById('loadStoryBtn');
+  if (loadBtn) {
+    loadBtn.onclick = () => {
+      const sel = document.getElementById('storySelect');
+      if (!sel || !sel.value) {
+        alert('Chưa chọn truyện');
+        return;
+      }
+      loadStory(sel.value);
+    };
+  }
+
+  // 👉 TÁCH SCENE & THOẠI
+  const splitBtn = document.getElementById('splitBtn');
+  if (splitBtn) {
+    splitBtn.onclick = () => {
+      if (!appState.currentStory) {
+        alert('Chưa load truyện để tách scene');
+        return;
+      }
+      splitScenesFromStory(); // gọi hàm tách
+    };
+  }
 }
 
 
