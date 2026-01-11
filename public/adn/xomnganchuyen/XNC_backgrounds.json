@@ -91,6 +91,28 @@
       ]
     },
     {
+      "id": "xnc_bactu_mango_garden",
+      "label": "Vườn xoài chín vàng (Nhà Bác Tư)",
+      "desc_en": "Vietnamese fruit orchard, mango trees laden with large ripe yellow mangoes hanging from branches, long dark green leaves, sturdy wooden trunks, bright sunlight filtering through the canopy, dominant green and brown palette with vibrant golden yellow accents (#FFD700), pastel 2D chibi background, no text",
+      "tags": [
+        "garden",
+        "fruit",
+        "nature",
+        "day"
+      ]
+    },
+    {
+      "id": "xnc_bactu_mango_garden_night",
+      "label": "Vườn xoài chín vàng ban đêm (Nhà Bác Tư)",
+      "desc_en": "A Vietnamese fruit orchard at night, mango trees full of ripe golden yellow mangoes, lush green foliage under soft moonlight, silhouettes of wooden trunks, cool blue and deep purple night sky, glowing yellow accents from the fruits (#FFD700), pastel 2D chibi background, no text.",
+      "tags": [
+        "garden",
+        "fruit",
+        "nature",
+        "night"
+      ]
+    }
+    {
       "id": "xnc_village_day",
       "label": "Xóm quê ban ngày",
       "desc_en": "Vietnamese rural neighborhood, small houses, palm trees, dirt road, warm soft daylight, pastel green-brown tones, 2D chibi background, no text",
