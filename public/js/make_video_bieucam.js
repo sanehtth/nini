@@ -5,101 +5,111 @@
 
 "use strict";
 
-/** -----------------------------
- *  Fixed paths (NO "/public")
- *  ----------------------------- */
+/* =========================
+   FIX MANIFEST + LOAD STORY
+   Paths chuẩn theo bạn:
+   js: /public/js/make_video_bieucam.js
+   manifest: /public/substance/manifest.json  -> URL chạy là /substance/manifest.json
+   story: /public/substance/<file>.json       -> URL chạy là /substance/<file>.json
+========================= */
+
 const PATHS = {
   manifest: "/substance/manifest.json",
+  // giữ nguyên characters theo dự án bạn đang dùng:
   characters: "/adn/xomnganchuyen/XNC_characters.json",
 };
 
-/** -----------------------------
- *  DOM helpers
- *  ----------------------------- */
-const $ = (id) => document.getElementById(id);
-
-function setText(id, text) {
-  const el = $(id);
-  if (el) el.textContent = text ?? "";
+// Helper: lấy element theo nhiều id (để không bị lệch id HTML)
+function $id(...ids) {
+  for (const id of ids) {
+    const el = document.getElementById(id);
+    if (el) return el;
+  }
+  return null;
 }
 
-function setValue(id, val) {
-  const el = $(id);
-  if (el) el.value = val ?? "";
+// Helper: fetch JSON (có báo lỗi rõ)
+async function fetchJSON(url) {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Fetch failed: ${url} -> ${res.status}`);
+  return await res.json();
 }
 
-/** -----------------------------
- *  Fetch helper (logs the exact path)
- *  ----------------------------- */
-async function fetchJSON(path) {
-  console.log("[XNC] fetchJSON:", path);
-  const res = await fetch(path, { cache: "no-store" });
-  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
-  return res.json();
+// Chuẩn hoá đường dẫn public/substance -> /substance
+function normalizeSubstancePath(input) {
+  if (!input) return "";
+
+  let p = String(input).trim();
+
+  // bỏ origin nếu có (https://domain/xxx)
+  p = p.replace(/^https?:\/\/[^/]+/i, "");
+
+  // nếu manifest ghi "public/substance/..." hoặc "/public/substance/..."
+  p = p.replace(/^\/?public\//i, "/");
+
+  // nếu chỉ ghi "XNC-....json" hoặc "/XNC-....json"
+  p = p.replace(/^\//, "");
+  if (!p.includes("/")) {
+    return `/substance/${p}`;
+  }
+
+  // nếu đã có substance nhưng thiếu dấu /
+  if (p.startsWith("substance/")) return `/${p}`;
+
+  // nếu đang là "/substance/..."
+  if (p.startsWith("/substance/")) return p;
+
+  // nếu là "substance/..." hoặc "XNC/..." lạ thì cứ trả về có dấu /
+  return `/${p}`;
 }
-
-/** -----------------------------
- *  App state
- *  ----------------------------- */
-const AppState = {
-  manifestItems: [],
-  charactersAll: [],     // [{id,label,gender,desc}]
-  selectedParticipants: new Set(), // store character ids
-  loadedStoryFile: "",   // currently loaded file path from manifest
-  loadedStoryJson: null,
-};
-
-/** -----------------------------
- *  Manifest
- *  Expected format:
- *  {
- *    "version": 1,
- *    "items": [{ "id": "...", "title":"...", "file":"/substance/XXX.json" }]
- *  }
- *  ----------------------------- */
+/* =========================
+   LOAD MANIFEST -> render dropdown
+========================= */
 async function loadManifest() {
+  const statusEl = $id("manifestStatus", "manifest-status");
+  const selectEl = $id("storySelect", "story-select", "storySelector", "story-select-el");
+
   try {
+    if (statusEl) statusEl.textContent = "Manifest: đang load...";
     const json = await fetchJSON(PATHS.manifest);
-    const items = Array.isArray(json?.items) ? json.items : [];
 
-    // Normalize items but DO NOT "fix" path by string concat.
-    AppState.manifestItems = items
-      .map((it) => ({
-        id: (it.id || "").trim(),
-        title: (it.title || "").trim(),
-        file: (it.file || "").trim(), // must be absolute like "/substance/....json"
-      }))
-      .filter((it) => it.file && it.file.startsWith("/"));
+    // hỗ trợ cả 2 kiểu: {items:[...]} hoặc [...]
+    const items = Array.isArray(json) ? json : (Array.isArray(json.items) ? json.items : []);
+    renderManifestSelect(items);
 
-    renderManifestSelect(AppState.manifestItems);
-    setText(
-      "manifestStatus",
-      AppState.manifestItems.length
-        ? `Manifest: OK (${AppState.manifestItems.length} truyện) • ${PATHS.manifest}`
-        : "Manifest rỗng / sai format"
-    );
-    console.log("[XNC] Loaded manifest items:", AppState.manifestItems.length);
-  } catch (e) {
-    console.error("[XNC] loadManifest error:", e);
-    AppState.manifestItems = [];
-    renderManifestSelect([]);
-    setText("manifestStatus", `Manifest lỗi: ${String(e.message || e)}`);
+    if (statusEl) statusEl.textContent = `Manifest: OK (${items.length} truyện) • ${PATHS.manifest}`;
+  } catch (err) {
+    console.error("[XNC] loadManifest error:", err);
+    if (statusEl) statusEl.textContent = `Manifest lỗi: ${String(err.message || err)}`;
+    // vẫn để dropdown rỗng
+    if (selectEl) selectEl.innerHTML = `<option value="">-- Chọn truyện --</option>`;
   }
 }
 
 function renderManifestSelect(items) {
-  const sel = document.getElementById("storySelect");
-  if (!sel) return;
+  const selectEl = $id("storySelect", "story-select", "storySelector", "story-select-el");
+  if (!selectEl) return;
 
-  sel.innerHTML =
-    `<option value="">-- Chọn truyện --</option>` +
-    items.map(it => {
-      // BẮT BUỘC: value hoặc data-file phải là "XNC-....json"
-      const file = (it.file || `${it.id}.json`).replace(/^\/+/, "").split("/").pop();
-      const label = `${it.id} • ${it.title || ""}`.trim();
-      return `<option value="${file}" data-file="${file}">${label}</option>`;
-    }).join("");
+  const opts = [];
+  opts.push(`<option value="">-- Chọn truyện --</option>`);
+
+  items.forEach((it) => {
+    // ưu tiên file/path trong manifest; fallback từ id
+    const rawFile = it.file || it.path || it.filename || (it.id ? `${it.id}.json` : "");
+    const filePath = normalizeSubstancePath(rawFile);
+
+    // label dropdown
+    const labelId = it.id || "";
+    const labelTitle = it.title || it.name || "";
+    const label = `${labelId}${labelTitle ? " • " + labelTitle : ""}`.trim();
+
+    // IMPORTANT: value phải là FILE PATH, không phải id
+    opts.push(`<option value="${filePath}">${label}</option>`);
+  });
+
+  selectEl.innerHTML = opts.join("");
 }
+
 
 
 /** -----------------------------
@@ -186,127 +196,92 @@ function renderParticipantsList() {
 function updateSelectedCount() {
   setText("selectedCount", `Đã chọn: ${AppState.selectedParticipants.size}`);
 }
-
-/** -----------------------------
- *  Load story from manifest selection
- *  Key rule: fetch EXACTLY sel.value (which is item.file)
- *  ----------------------------- */
-async function loadSelectedStory() {
-  // ===== helpers: find element by multiple possible ids =====
-  const pickEl = (...ids) => {
-    for (const id of ids) {
-      const el = document.getElementById(id);
-      if (el) return el;
-    }
-    return null;
-  };
-
-  // ===== UI refs (tự bắt theo nhiều tên id để khỏi lệch) =====
-  const sel = pickEl("storySelect", "storySelectEl", "storyDropdown");
-  const btn = pickEl("loadStoryBtn", "btnLoadStory", "loadStoryButton");
-  const storyIdEl = pickEl("storyId", "storyIdInput", "story_id");
-  const storyTitleEl = pickEl("storyTitle", "storyTitleInput", "story_title");
-  const storyTextEl = pickEl("storyRawText", "storyText", "storyContent", "storyTextarea");
-
-  if (!sel) {
-    alert("Không tìm thấy dropdown #storySelect");
+/* =========================
+   LOAD SELECTED STORY -> đổ vào form, textarea
+========================= */
+async function loadStoryFromSelected() {
+  const selectEl = $id("storySelect", "story-select", "storySelector", "story-select-el");
+  if (!selectEl) {
+    alert("Không tìm thấy dropdown truyện (storySelect).");
     return;
   }
 
-  // ===== lấy file từ option (ưu tiên data-file) =====
-  const opt = sel.options[sel.selectedIndex];
-  const rawFile = (opt && (opt.dataset.file || opt.getAttribute("data-file") || opt.value)) || "";
-
-  if (!rawFile || rawFile === "--" || rawFile.includes("Chọn truyện")) {
+  const selectedPath = selectEl.value;
+  if (!selectedPath) {
     alert("Bạn chưa chọn truyện trong dropdown.");
     return;
   }
 
-  // ===== chuẩn hoá file name: chỉ lấy tên file, không cho phép path lạ =====
-  // Ví dụ hợp lệ: "XNC-20260110-0005.json"
-  const fileName = rawFile.split("/").pop().trim();
-
-  if (!fileName.toLowerCase().endsWith(".json")) {
-    alert(`File truyện không hợp lệ (phải .json): ${fileName}`);
-    return;
-  }
-
-  // ===== đường dẫn cố định theo yêu cầu của bạn =====
-  const url = `/substance/${fileName}`;
-
-  // ===== disable nút khi load =====
-  if (btn) btn.disabled = true;
+  const storyPath = normalizeSubstancePath(selectedPath);
 
   try {
-    console.log("[XNC] Loading story from:", url);
+    // disable nút để tránh double click
+    const btn = $id("loadStoryBtn", "loadStoryButton", "btnLoadStory");
+    if (btn) btn.disabled = true;
 
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Fetch failed: ${url} -> ${res.status}`);
+    console.log("[XNC] Loading story from:", storyPath);
+    const storyJson = await fetchJSON(storyPath);
 
-    const j = await res.json();
+    // Map field: nội dung nằm ở story (đúng như bạn đã thấy)
+    const storyId = storyJson.id || storyJson.storyId || storyJson.story_id || "";
+    const storyTitle = storyJson.title || storyJson.name || "";
+    const rawText =
+      storyJson.story ||
+      storyJson.content ||
+      storyJson.text ||
+      storyJson.rawText ||
+      storyJson.raw ||
+      "";
 
-    // ===== map đúng structure bạn đang có =====
-    const sid = j.storyId || j.id || "";
-    const stitle = j.title || j.name || "";
-    const stext = j.story || j.content || j.rawText || j.text || "";
+    // Đổ vào UI
+    const idEl = $id("storyId", "storyID", "story-id", "txtStoryId");
+    const titleEl = $id("storyTitle", "storyName", "story-title", "txtStoryTitle");
+    const textEl = $id("rawText", "storyText", "storyRawText", "storyContent", "story-content", "txtStoryText");
 
-    if (storyIdEl) storyIdEl.value = sid;
-    if (storyTitleEl) storyTitleEl.value = stitle;
+    if (idEl) idEl.value = storyId;
+    if (titleEl) titleEl.value = storyTitle;
+    if (textEl) textEl.value = rawText;
 
-    if (storyTextEl) {
-      storyTextEl.value = stext;
-      storyTextEl.dispatchEvent(new Event("input", { bubbles: true }));
-      storyTextEl.dispatchEvent(new Event("change", { bubbles: true }));
-    } else {
-      console.warn("[XNC] Không tìm thấy textarea nội dung. Hãy kiểm tra id của ô 'Nội dung'.");
-    }
+    // Lưu để các hàm split / export dùng lại (phòng trường hợp code cũ đọc biến khác)
+    window.__XNC_LOADED_STORY__ = {
+      loadedFrom: storyPath,
+      storyId,
+      title: storyTitle,
+      rawText,
+      json: storyJson,
+    };
 
-    // ===== auto tick nhân vật nếu file truyện có characters =====
-    // characters có thể: ["bolo","bala"] hoặc [{id:"bolo"}...]
-    const chars = Array.isArray(j.characters) ? j.characters : [];
-    if (chars.length) {
-      const selectedIds = new Set(
-        chars.map(c => (typeof c === "string" ? c : (c.id || c.char_id || c.charId || ""))).filter(Boolean)
+    // Nếu code cũ dùng một state object nào đó, cố gắng bơm vào cho tương thích
+    // (không gây lỗi nếu không tồn tại)
+    try {
+      if (window.AppState?.story) {
+        window.AppState.story.id = storyId;
+        window.AppState.story.title = storyTitle;
+        window.AppState.story.rawText = rawText;
+      }
+      if (window.appState?.story) {
+        window.appState.story.id = storyId;
+        window.appState.story.title = storyTitle;
+        window.appState.story.rawText = rawText;
+      }
+    } catch (_) {}
+
+    // Preview nhỏ để bạn nhìn nhanh
+    const previewEl = $id("jsonPreview", "preview", "previewJson", "preview-json");
+    if (previewEl) {
+      previewEl.textContent = JSON.stringify(
+        { loadedFrom: storyPath, storyId, title: storyTitle, textLen: rawText.length },
+        null,
+        2
       );
-
-      // checkbox phải có data-char-id="bolo" (hoặc value="bolo")
-      const checkboxes = document.querySelectorAll('input[type="checkbox"][data-char-id], input[type="checkbox"][name="participant"], input[type="checkbox"].participant');
-      let hit = 0;
-
-      checkboxes.forEach(cb => {
-        const cid = cb.dataset.charId || cb.getAttribute("data-char-id") || cb.value || "";
-        if (!cid) return;
-        const on = selectedIds.has(cid);
-        cb.checked = on;
-        if (on) hit++;
-      });
-
-      // nếu bạn có hàm update counter, gọi thử
-      if (typeof updateSelectedCount === "function") updateSelectedCount();
-
-      console.log("[XNC] Auto-selected characters:", hit, Array.from(selectedIds));
     }
 
-    // ===== debug preview =====
-    if (typeof setStoryJSONPreview === "function") {
-      setStoryJSONPreview({
-        loadedFrom: url,
-        storyId: sid,
-        title: stitle,
-        hasText: !!stext,
-        characters: j.characters || []
-      });
-    } else {
-      // fallback: nếu bạn có vùng preview <pre id="previewBox">
-      const pre = document.getElementById("previewBox") || document.getElementById("jsonPreview");
-      if (pre) pre.textContent = JSON.stringify({ loadedFrom: url, storyId: sid, title: stitle }, null, 2);
-    }
-
-    console.log("[XNC] Story loaded OK:", { sid, stitle, textLen: (stext || "").length });
+    console.log("[XNC] Story loaded OK:", { storyId, title: storyTitle, textLen: rawText.length });
   } catch (err) {
-    console.error("[XNC] loadSelectedStory error:", err);
-    alert(`Load truyện lỗi: ${err.message}`);
+    console.error("[XNC] loadStoryFromSelected error:", err);
+    alert(`Load truyện lỗi: ${String(err.message || err)}`);
   } finally {
+    const btn = $id("loadStoryBtn", "loadStoryButton", "btnLoadStory");
     if (btn) btn.disabled = false;
   }
 }
@@ -342,34 +317,23 @@ function applyParticipantsFromStory(charactersField) {
   renderParticipantsList();
 }
 
-/** -----------------------------
- *  Buttons
- *  ----------------------------- */
-function bindEvents() {
-  $("reloadManifestBtn")?.addEventListener("click", loadManifest);
-  $("loadStoryBtn")?.addEventListener("click", loadSelectedStory);
+/* =========================
+   BIND EVENTS (gọi 1 lần khi init)
+========================= */
+function bindManifestUI() {
+  const btnReload = $id("reloadManifestBtn", "btnReloadManifest");
+  const btnLoad = $id("loadStoryBtn", "loadStoryButton", "btnLoadStory");
 
-  $("participantSearch")?.addEventListener("input", renderParticipantsList);
-
-  $("btnSelectAll")?.addEventListener("click", () => {
-    AppState.charactersAll.forEach((c) => AppState.selectedParticipants.add(c.id));
-    renderParticipantsList();
-  });
-
-  $("btnClearAll")?.addEventListener("click", () => {
-    AppState.selectedParticipants.clear();
-    renderParticipantsList();
-  });
-
-  // Your existing buttons (if present)
-  $("splitBtn")?.addEventListener("click", () => {
-    splitScenesFromStory();
-  });
-
-  $("clearPreviewBtn")?.addEventListener("click", () => {
-    setPreviewJSON({});
-  });
+  if (btnReload) btnReload.addEventListener("click", loadManifest);
+  if (btnLoad) btnLoad.addEventListener("click", loadStoryFromSelected);
 }
+
+// Nếu file bạn đã có DOMContentLoaded init rồi thì gọi 2 dòng này trong init của bạn.
+// Nếu chưa có, cứ để block này:
+document.addEventListener("DOMContentLoaded", () => {
+  bindManifestUI();
+  loadManifest();
+});
 
 /** -----------------------------
  *  Split scenes stub (hook)
