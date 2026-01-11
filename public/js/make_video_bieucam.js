@@ -1,48 +1,50 @@
-/* =========================
-   XNC VIDEO BUILDER – CORE
-   Single-file stable version
-========================= */
+/* =====================================================
+   XNC – MAKE VIDEO BIỂU CẢM (FINAL – STABLE)
+   Khớp HTML: make_video_bieucam.html
+===================================================== */
 
-/* ---------- GLOBAL STATE ---------- */
+/* =========================
+   GLOBAL STATE
+========================= */
 const appState = {
   characters: [],
   selectedCharacters: [],
-  storyLocal: null,
-  sceneManifest: {
-    scenes: []
-  },
-  currentSceneIndex: 0
+  storyDraft: null,
+  scenes: [],
+  dialogues: [],
+  sfx: [],
+  currentSceneIndex: 0,
+  mode: 'dialogue' // dialogue | scene | hybrid
 };
 
-/* ---------- HELPERS ---------- */
-const $ = id => document.getElementById(id);
-
-function fetchJSON(url) {
-  return fetch(url).then(r => {
-    if (!r.ok) throw new Error(url);
-    return r.json();
-  });
+/* =========================
+   HELPERS
+========================= */
+async function fetchJSON(url) {
+  console.log('[XNC] fetchJSON:', url);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Fetch failed: ${url}`);
+  return res.json();
 }
 
-function downloadJSON(data, filename) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+function qs(id) {
+  return document.getElementById(id);
 }
 
-/* ---------- CHARACTERS ---------- */
+/* =========================
+   CHARACTERS
+========================= */
 async function loadCharacters() {
   const data = await fetchJSON('/adn/xomnganchuyen/XNC_characters.json');
-  appState.characters = data.characters || data;
+  appState.characters = data.characters || [];
   renderCharacters();
+  console.log('[XNC] Loaded characters:', appState.characters.length);
 }
 
 function renderCharacters() {
-  const box = $('participantsList');
+  const box = qs('participantsList');
+  if (!box) return;
+
   box.innerHTML = '';
   appState.characters.forEach(c => {
     const div = document.createElement('div');
@@ -52,139 +54,214 @@ function renderCharacters() {
       <div>
         <div class="pname">${c.name}</div>
         <div class="ptag">${c.gender || ''}</div>
-      </div>`;
-    div.querySelector('input').onchange = updateSelectedCharacters;
+      </div>
+    `;
     box.appendChild(div);
+  });
+
+  bindCharacterEvents();
+}
+
+function bindCharacterEvents() {
+  const countBox = qs('participantsSelectedCount');
+
+  document.querySelectorAll('#participantsList input[type=checkbox]')
+    .forEach(cb => {
+      cb.onchange = () => {
+        appState.selectedCharacters =
+          Array.from(document.querySelectorAll('#participantsList input:checked'))
+            .map(i => i.value);
+
+        if (countBox) countBox.textContent = appState.selectedCharacters.length;
+      };
+    });
+
+  qs('participantsSelectAll')?.addEventListener('click', () => {
+    document.querySelectorAll('#participantsList input').forEach(i => i.checked = true);
+    bindCharacterEvents();
+  });
+
+  qs('participantsClear')?.addEventListener('click', () => {
+    document.querySelectorAll('#participantsList input').forEach(i => i.checked = false);
+    bindCharacterEvents();
   });
 }
 
-function updateSelectedCharacters() {
-  appState.selectedCharacters = Array.from(
-    document.querySelectorAll('#participantsList input:checked')
-  ).map(cb => cb.value);
-
-  const label = $('selectedCountLabel');
-  if (label) label.textContent = `Đã chọn: ${appState.selectedCharacters.length}`;
-}
-
-/* ---------- STORY LOCAL ---------- */
+/* =========================
+   STORY SAVE / EXPORT
+========================= */
 function saveStoryLocal() {
   const story = {
-    id: $('storyId')?.value || '',
-    title: $('storyTitle')?.value || '',
-    text: $('storyText')?.value || '',
-    characters: appState.selectedCharacters,
-    updatedAt: new Date().toISOString()
+    id: qs('storyId')?.value || '',
+    title: qs('storyTitle')?.value || '',
+    story: qs('storyText')?.value || '',
+    characters: appState.selectedCharacters
   };
-  localStorage.setItem('xnc_story_local', JSON.stringify(story));
-  appState.storyLocal = story;
+
+  localStorage.setItem('xnc_story_draft', JSON.stringify(story, null, 2));
+  appState.storyDraft = story;
+
+  console.log('[XNC] Story saved local', story);
   alert('Đã lưu story (local)');
 }
 
 function exportStoryJSON() {
-  const raw = localStorage.getItem('xnc_story_local');
-  if (!raw) return alert('Chưa lưu story');
-  downloadJSON(JSON.parse(raw), 'xnc_story.json');
+  if (!appState.storyDraft) {
+    alert('Chưa có story để xuất');
+    return;
+  }
+  downloadJSON(appState.storyDraft, 'story.json');
 }
 
-/* ---------- SPLIT SCENE ---------- */
-function splitScenesFromLocal() {
-  const raw = localStorage.getItem('xnc_story_local');
-  if (!raw) return alert('Chưa lưu story');
-  const story = JSON.parse(raw);
+/* =========================
+   SPLIT STORY → SCENES + DIALOGUES
+========================= */
+function splitScenesFromStory() {
+  if (!appState.storyDraft) {
+    alert('Chưa lưu story');
+    return;
+  }
 
-  const scenes = [];
-  let idx = 1;
+  console.log('[XNC] splitScenesFromStory START');
 
-  const lines = story.text.split('\n').map(l => l.trim()).filter(Boolean);
+  const text = appState.storyDraft.story;
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
 
-  const scene = {
-    scene_id: `S${idx.toString().padStart(2, '0')}`,
-    mode: 'dialogue',
-    summary: '',
-    characters: story.characters.map(id =>
-      appState.characters.find(c => c.id === id)
-    ),
-    frames: [{ frame_id: 'F01', note: '' }],
-    dialogues: [],
-    sfx: []
+  let sceneId = 1;
+  let currentScene = {
+    id: `S${sceneId}`,
+    prompt: '',
+    characters: [...appState.selectedCharacters],
+    frames: []
   };
 
+  appState.scenes = [];
+  appState.dialogues = [];
+  appState.sfx = [];
+
   lines.forEach(line => {
-    if (line.startsWith('[SFX')) {
-      scene.sfx.push(line);
-    } else if (line.includes(':')) {
+    if (line.startsWith('**Title') || line.startsWith('**Setting')) {
+      currentScene.prompt += line + '\n';
+    }
+    else if (line.includes('[SFX')) {
+      appState.sfx.push({
+        scene_id: currentScene.id,
+        text: line
+      });
+    }
+    else if (line.includes(':')) {
       const [char, ...rest] = line.split(':');
-      scene.dialogues.push({
-        character: char.trim(),
+      appState.dialogues.push({
+        scene_id: currentScene.id,
+        character: char.replace(/\*/g, '').trim(),
         text: rest.join(':').trim()
       });
-    } else {
-      scene.summary += ' ' + line;
     }
   });
 
-  scenes.push(scene);
-  appState.sceneManifest.scenes = scenes;
+  appState.scenes.push(currentScene);
   appState.currentSceneIndex = 0;
-  renderCurrentScene();
+
+  renderSceneManifest();
+
+  console.log('[XNC] splitScenesFromStory DONE', {
+    scenes: appState.scenes.length,
+    dialogues: appState.dialogues.length,
+    sfx: appState.sfx.length
+  });
 }
 
-/* ---------- SCENE EDITOR ---------- */
-function renderCurrentScene() {
-  const box = $('jsonPreview');
-  const scene = appState.sceneManifest.scenes[appState.currentSceneIndex];
+/* =========================
+   SCENE UI
+========================= */
+function renderSceneManifest() {
+  const sel = qs('sceneSelect');
+  if (!sel) return;
+
+  sel.innerHTML = '<option value="">--</option>';
+  appState.scenes.forEach((s, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${s.id}`;
+    sel.appendChild(opt);
+  });
+
+  sel.onchange = () => {
+    appState.currentSceneIndex = Number(sel.value);
+    renderSceneDetail();
+  };
+
+  renderSceneDetail();
+}
+
+function renderSceneDetail() {
+  const scene = appState.scenes[appState.currentSceneIndex];
   if (!scene) return;
 
-  box.textContent = JSON.stringify(scene, null, 2);
+  qs('sceneNote') && (qs('sceneNote').value = scene.prompt || '');
 }
 
-function nextScene() {
-  if (appState.currentSceneIndex < appState.sceneManifest.scenes.length - 1) {
-    appState.currentSceneIndex++;
-    renderCurrentScene();
-  }
-}
-
-function prevScene() {
-  if (appState.currentSceneIndex > 0) {
-    appState.currentSceneIndex--;
-    renderCurrentScene();
-  }
-}
-
-/* ---------- EXPORT FINAL ---------- */
+/* =========================
+   DIALOGUE EXPORT
+========================= */
 function exportDialogueJSON() {
-  const out = [];
-  appState.sceneManifest.scenes.forEach(s =>
-    s.dialogues.forEach(d => out.push({ scene: s.scene_id, ...d }))
-  );
-  downloadJSON(out, 'xnc_dialogue.json');
+  downloadJSON({
+    dialogues: appState.dialogues,
+    sfx: appState.sfx
+  }, 'dialogue.json');
 }
 
-function exportVideoPromptJSON() {
-  downloadJSON(
-    {
-      schema: 'xnc_video_prompt_v1',
-      scenes: appState.sceneManifest.scenes
-    },
-    'xnc_video_prompt.json'
-  );
+function copyDialogueJSON() {
+  const txt = JSON.stringify({
+    dialogues: appState.dialogues,
+    sfx: appState.sfx
+  }, null, 2);
+  navigator.clipboard.writeText(txt);
+  alert('Đã copy JSON thoại');
 }
 
-/* ---------- INIT ---------- */
+/* =========================
+   UTILS
+========================= */
+function clearPreview() {
+  appState.scenes = [];
+  appState.dialogues = [];
+  appState.sfx = [];
+  qs('sceneSelect') && (qs('sceneSelect').innerHTML = '');
+  console.log('[XNC] Preview cleared');
+}
+
+function downloadJSON(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+/* =========================
+   BIND UI
+========================= */
 function bindUI() {
-  $('saveStoryBtn')?.addEventListener('click', saveStoryLocal);
-  $('exportStoryBtn')?.addEventListener('click', exportStoryJSON);
-  $('splitBtn')?.addEventListener('click', splitScenesFromLocal);
-  $('sceneNextBtn')?.addEventListener('click', nextScene);
-  $('scenePrevBtn')?.addEventListener('click', prevScene);
-  $('exportDialogueBtn')?.addEventListener('click', exportDialogueJSON);
-  $('exportPromptBtn')?.addEventListener('click', exportVideoPromptJSON);
+  qs('saveLocalBtn')?.addEventListener('click', saveStoryLocal);
+  qs('exportStoryBtn')?.addEventListener('click', exportStoryJSON);
+  qs('splitBtn')?.addEventListener('click', splitScenesFromStory);
+  qs('exportDialogueBtn')?.addEventListener('click', exportDialogueJSON);
+  qs('copyDialogueBtn')?.addEventListener('click', copyDialogueJSON);
+  qs('clearPreviewBtn')?.addEventListener('click', clearPreview);
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadCharacters();
-  bindUI();
-  console.log('[XNC] CORE READY');
-});
+/* =========================
+   INIT
+========================= */
+async function init() {
+  try {
+    await loadCharacters();
+    bindUI();
+    console.log('[XNC] CORE READY');
+  } catch (e) {
+    console.error('[XNC] INIT ERROR', e);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
