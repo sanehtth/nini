@@ -5,162 +5,157 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>XNC - Tách scene & thoại</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 16px; background:#d9efb9; }
-    .topbar { display:flex; gap:8px; margin-bottom:12px; }
-    .btn { padding:8px 10px; border:1px solid #333; border-radius:6px; background:#fff; cursor:pointer; }
-    .btn.primary { background:#0b1320; color:#fff; border-color:#0b1320; }
-    .btn.danger { background:#b30000; color:#fff; border-color:#b30000; }
-    .grid { display:grid; grid-template-columns: 420px 1fr; gap: 12px; align-items:start; }
-    .card { background:#fff; border:1px solid #b5caa2; border-radius:10px; padding:12px; }
-    .row { display:flex; gap:8px; align-items:center; margin:8px 0; flex-wrap:wrap; }
-    label { font-size: 13px; color:#222; }
-    input[type="text"], textarea, select { width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; }
-    textarea { min-height: 150px; }
-    .muted { color:#666; font-size:12px; }
-    .participants { margin-top:8px; }
-    .participants .char-row { display:flex; gap:10px; align-items:center; padding:10px; border:1px solid #e6e6e6; border-radius:10px; margin:8px 0; }
-    .participants .char-row.checked { outline:2px solid #22c55e; }
-    .participants b { min-width: 120px; }
-    .split { margin-top:12px; }
-    pre { background:#0b1320; color:#fff; padding:12px; border-radius:10px; overflow:auto; }
-    details { background:#f6f6f6; border:1px solid #e6e6e6; border-radius:10px; padding:8px; margin-top:8px; }
-    summary { cursor:pointer; }
-    .scene-list .scene-item { border:1px solid #e6e6e6; border-radius:10px; padding:10px; margin:10px 0; }
-    .scene-item .head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-    .scene-item .title { font-weight:700; }
-    .pill { display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid #ddd; font-size:12px; background:#fafafa; }
-    .editor { border:2px solid #c6d9f5; border-radius:12px; padding:10px; margin-top:10px; background:#f9fbff; }
-    .editor .head { display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
-    .editor textarea { min-height: 60px; }
+    body { font-family: Arial, sans-serif; background:#dff0c8; margin:0; }
+    .topbar { background:#1f2b3a; padding:10px; position:sticky; top:0; z-index:9; }
+    .btn { padding:7px 10px; border-radius:6px; border:1px solid #999; cursor:pointer; background:#fff; }
+    .btn.primary { background:#0b3a67; color:#fff; border-color:#0b3a67; }
+    .btn.danger { background:#b1001a; color:#fff; border-color:#b1001a; }
+    .wrap { max-width:1200px; margin:16px auto; padding:0 12px; }
+    .card { background:#fff; border-radius:10px; padding:14px; margin-bottom:14px; border:1px solid #cfe6a9; }
+    .row { display:flex; gap:14px; align-items:flex-start; }
+    .col { flex:1; min-width:0; }
+    .label { font-weight:700; margin:8px 0 6px; }
+    input[type="text"], textarea, select { width:100%; padding:8px; border-radius:8px; border:1px solid #ccc; box-sizing:border-box; }
+    textarea { min-height:140px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; white-space:pre; overflow:auto; background:#0f172a; color:#e5e7eb; padding:12px; border-radius:10px; min-height:260px; }
+    .muted { color:#556; font-size:13px; }
+    .pill { display:inline-block; padding:4px 10px; border-radius:999px; background:#eef6ff; border:1px solid #b7d7ff; font-size:12px; }
+    .participants { border:1px solid #e4efd0; border-radius:10px; padding:10px; background:#f8fff1; }
+    .pitem { display:flex; gap:10px; align-items:center; border-bottom:1px solid #e9f3d8; padding:8px 6px; }
+    .pitem:last-child { border-bottom:none; }
+    .pname { font-weight:700; }
+    .ptag { font-size:12px; color:#556; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+    .sceneBox { border:1px solid #cfe6a9; border-radius:10px; padding:10px; background:#fbfff6; }
+    .sceneHeader { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; }
+    .sceneHeader .right { display:flex; gap:8px; align-items:center; }
+    .small { font-size:12px; }
   </style>
 </head>
-
 <body>
   <div class="topbar">
-    <button class="btn primary" id="btnTab1">Tách scene & thoại</button>
-    <button class="btn" id="btnTab2">Tạo prompt video</button>
+    <button class="btn" id="tabSplitBtn">Tách scene & thoại</button>
+    <button class="btn" id="tabPromptBtn">Tạo prompt video</button>
   </div>
 
-  <!-- TAB 1 -->
-  <section id="tab1" class="card">
-    <h2 style="margin:0 0 8px 0;">Tách scene & thoại (Tab 1)</h2>
+  <div class="wrap">
 
-    <div class="row">
-      <div style="flex:1; min-width:260px;">
-        <label><b>Chọn truyện từ JSON (substance manifest)</b></label>
-        <select id="storySelect">
-          <option value="">-- Chọn truyện --</option>
-        </select>
-        <div class="muted" id="manifestStatus">Manifest: chưa load</div>
-      </div>
-
-      <div class="row" style="margin-top:18px;">
-        <button class="btn" id="btnReloadManifest">Reload manifest</button>
-        <button class="btn primary" id="btnLoadStory">Load truyện</button>
+    <div class="card">
+      <div class="label">Chọn truyện từ JSON (substance manifest)</div>
+      <div class="row">
+        <div class="col">
+          <select id="storySelect">
+            <option value="">-- Chọn truyện --</option>
+          </select>
+          <div class="muted" style="margin-top:6px">
+            <span id="manifestStatus">Manifest: chưa load</span>
+            &nbsp;•&nbsp;<span id="manifestPath" class="pill">/substance/manifest.json</span>
+          </div>
+        </div>
+        <div style="width:280px">
+          <div class="actions">
+            <button class="btn" id="reloadManifestBtn">Reload manifest</button>
+            <button class="btn primary" id="loadStoryBtn">Load truyện</button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="grid" style="margin-top:12px;">
-      <div class="card">
-        <label><b>ID câu chuyện</b></label>
-        <input id="storyId" type="text" placeholder="VD: XNC-20250110-112841" />
-
-        <div style="height:8px"></div>
-
-        <label><b>Tên câu chuyện</b></label>
-        <input id="storyTitle" type="text" placeholder="VD: Bài kiểm tra cuối kỳ" />
-
-        <div style="height:8px"></div>
-
-        <label><b>Nội dung</b></label>
-        <textarea id="storyText" placeholder="Dán story text hoặc load từ manifest..."></textarea>
-
-        <div class="split">
-          <label><b>Nhân vật tham gia</b> <span class="muted">(chọn để map thoại tốt hơn)</span></label>
-          <input id="participantsSearch" type="text" placeholder="Tìm nhân vật..." />
-          <div class="row">
-            <button class="btn" id="btnPickAll">Chọn tất cả</button>
-            <button class="btn" id="btnPickNone">Bỏ chọn</button>
-            <span class="muted" id="participantsCount">Đã chọn: 0</span>
-          </div>
-          <div id="participantsBox" class="participants"></div>
-        </div>
-
-        <div class="row" style="margin-top:10px;">
-          <button class="btn" id="btnSaveLocal">Lưu story (local)</button>
-          <button class="btn" id="btnExportStory">Xuất JSON story</button>
-          <button class="btn primary" id="btnSplit">Tách Scene & Thoại</button>
-          <button class="btn" id="btnExportDialogue">Export JSON thoại</button>
-          <button class="btn danger" id="btnClearPreview">Xóa preview</button>
-        </div>
+    <div class="card">
+      <h2 style="margin:0 0 10px;">Tách scene & thoại (Tab 1)</h2>
+      <div class="muted">
+        Bạn có thể dán story text hoặc load từ manifest. Sau đó bấm “Tách Scene & Thoại”.
       </div>
 
-      <div class="card">
-        <label><b>Preview / JSON output</b></label>
-        <pre id="preview">{}</pre>
+      <div class="row" style="margin-top:12px">
+        <div class="col">
+          <div class="label">ID câu chuyện</div>
+          <input type="text" id="storyId" placeholder="VD: XNC-20250110-112841" />
 
-        <div style="height:10px"></div>
+          <div class="label">Tên câu chuyện</div>
+          <input type="text" id="storyTitle" placeholder="VD: Bài kiểm tra cuối kỳ" />
 
-        <h3 style="margin:10px 0 8px 0;">Scene manifest (sau khi tách)</h3>
+          <div class="label">Nội dung</div>
+          <textarea id="storyText" placeholder="Dán story text hoặc load từ manifest..."></textarea>
 
-        <!-- Editor header -->
-        <div class="editor">
-          <div class="head">
-            <div>
-              <span class="pill" id="activeLabel">Chưa có Scene</span>
-            </div>
-            <div class="row" style="margin:0;">
-              <button class="btn" id="btnPrevScene">← Scene trước</button>
-              <button class="btn" id="btnNextScene">Scene sau →</button>
-            </div>
+          <div class="label">Nhân vật tham gia <span class="muted">(chọn để map thoại tốt hơn)</span></div>
+          <input type="text" id="participantsSearch" placeholder="Tìm nhân vật..." />
+          <div class="actions">
+            <button class="btn" id="participantsSelectAll">Chọn tất cả</button>
+            <button class="btn" id="participantsClear">Bỏ chọn</button>
+            <span class="muted">Đã chọn: <b id="participantsSelectedCount">0</b></span>
           </div>
+          <div class="participants" id="participantsList"></div>
 
-          <div class="row">
-            <div style="flex:1; min-width:240px;">
-              <label>Chọn Scene</label>
-              <select id="sceneSelect">
-                <option value="">--</option>
-              </select>
-            </div>
-            <div style="flex:1; min-width:240px;">
-              <label>Chọn Frame</label>
-              <select id="frameSelect">
-                <option value="">--</option>
-              </select>
-            </div>
-            <div style="flex:1; min-width:240px;">
-              <label>Mode</label>
-              <select id="modeSelect">
-                <option value="dialogue">Dialogue (2 người/1 khung)</option>
-                <option value="closeup">Close-up (1 người/khung)</option>
-                <option value="hybrid">Hybrid</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="row">
-            <div style="flex:1;">
-              <label>Ghi chú Scene (để bạn nhớ đang làm gì)</label>
-              <textarea id="sceneNote" placeholder="VD: Mục tiêu cảnh, cảm xúc chính, nhịp kể, điểm nhấn..."></textarea>
-            </div>
-            <div style="flex:1;">
-              <label>Ghi chú Frame (shot hiện tại trong Scene)</label>
-              <textarea id="frameNote" placeholder="VD: Shot cận/xa, ai là focus, hành động nhỏ, biểu cảm, ý đồ..."></textarea>
-            </div>
+          <div class="actions">
+            <button class="btn" id="saveLocalBtn">Lưu story (local)</button>
+            <button class="btn" id="exportStoryBtn">Xuất JSON story</button>
+            <button class="btn primary" id="splitBtn">Tách Scene & Thoại</button>
+            <button class="btn" id="exportDialogueBtn">Export JSON thoại</button>
+            <button class="btn" id="copyDialogueBtn">Copy JSON thoại</button>
+            <button class="btn danger" id="clearPreviewBtn">Xóa preview</button>
           </div>
         </div>
 
-        <div id="sceneList" class="scene-list"></div>
+        <div class="col">
+          <div class="label">Preview / JSON output</div>
+          <div class="mono" id="previewBox">{}</div>
+        </div>
       </div>
     </div>
-  </section>
 
-  <!-- TAB 2 placeholder -->
-  <section id="tab2" class="card" style="display:none;">
-    <h2 style="margin:0 0 8px 0;">Tạo prompt video (Tab 2)</h2>
-    <div class="muted">Tab 2 bạn đang dùng bản khác rồi; v14 tập trung làm sạch Tab 1 trước (tách scene + thoại + manifest).</div>
-  </section>
+    <div class="card sceneBox">
+      <div class="sceneHeader">
+        <div>
+          <div class="label" style="margin:0">Scene manifest (sau khi tách)</div>
+          <div class="muted small" id="sceneNow">Chưa tách scene. Bấm “Tách Scene & Thoại”.</div>
+        </div>
+        <div class="right">
+          <button class="btn" id="prevSceneBtn">← Scene trước</button>
+          <button class="btn" id="nextSceneBtn">Scene sau →</button>
+        </div>
+      </div>
 
-  <script src="/js/make_video_bieucam.js"></script>
+      <div class="grid2">
+        <div>
+          <div class="label">Chọn Scene</div>
+          <select id="sceneSelect">
+            <option value="">--</option>
+          </select>
+        </div>
+        <div>
+          <div class="label">Chọn Frame</div>
+          <select id="frameSelect">
+            <option value="">--</option>
+          </select>
+        </div>
+
+        <div>
+          <div class="label">Mode</div>
+          <select id="modeSelect">
+            <option value="dialogue">Dialogue (2 người/1 khung)</option>
+            <option value="split">Split (mỗi người 1 khung)</option>
+            <option value="hybrid">Hybrid</option>
+          </select>
+        </div>
+        <div></div>
+
+        <div>
+          <div class="label">Ghi chú Scene (để bạn nhớ đang làm gì)</div>
+          <textarea id="sceneNote" placeholder="VD: mục tiêu cảnh, cảm xúc chính, nhịp kể, điểm nhấn..."></textarea>
+        </div>
+        <div>
+          <div class="label">Ghi chú Frame (shot hiện tại trong Scene)</div>
+          <textarea id="frameNote" placeholder="VD: shot cận/xa, ai là focus, hành động nhỏ, biểu cảm, ý đồ..."></textarea>
+        </div>
+      </div>
+
+      <div class="muted" style="margin-top:10px" id="sceneHint"></div>
+    </div>
+
+  </div>
+
+  <script src="/js/make_video_bieucam.js?v=13"></script>
 </body>
 </html>
