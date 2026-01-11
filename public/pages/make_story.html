@@ -75,7 +75,12 @@
         .story-content {
             flex-grow: 1; white-space: pre-wrap; font-family: 'Segoe UI', sans-serif; line-height: 1.6; font-size: 15px; color: #3E2723; overflow-y: auto; max-height: 600px; padding-right: 10px;
         }
-        
+        .story-content.editing{
+    border:2px solid #4CAF50;
+    background:#ffffff;
+    outline:none;
+}
+
         .loading-spinner { display: none; text-align: center; margin-top: 50px; }
         .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #8CCB7A; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -169,7 +174,13 @@
                 <div class="spinner"></div>
                 <div id="loadingText" style="color:#8CCB7A; font-weight:bold;">Đang gọi AI...</div>
             </div>
-            
+       <!-- EDIT TOOLBAR -->
+<div style="display:flex;gap:8px;margin-bottom:10px;">
+    <button type="button" onclick="enableEdit()">✏️ Sửa</button>
+    <button type="button" onclick="saveEdit()" id="btnSaveEdit" disabled>💾 Lưu</button>
+    <button type="button" onclick="cancelEdit()" id="btnCancelEdit" disabled>❌ Hủy</button>
+</div>
+     
             <div id="finalStory" class="story-content">
                 <div style="text-align:center; color:#999; margin-top:100px; font-style:italic;">
                     (Chọn phiên bản AI trên menu -> Bấm nút để viết truyện)
@@ -645,6 +656,51 @@ async function generateStory() {
             alert("Đã copy kịch bản!");
         }
     }
+    let __storyBackupText = "";
+
+function enableEdit(){
+    const el = document.getElementById("finalStory");
+    if(!el) return;
+
+    __storyBackupText = el.innerText;
+    el.contentEditable = "true";
+    el.classList.add("editing");
+    el.focus();
+
+    document.getElementById("btnSaveEdit").disabled = false;
+    document.getElementById("btnCancelEdit").disabled = false;
+}
+
+function saveEdit(){
+    const el = document.getElementById("finalStory");
+    if(!el) return;
+
+    el.contentEditable = "false";
+    el.classList.remove("editing");
+
+    document.getElementById("btnSaveEdit").disabled = true;
+    document.getElementById("btnCancelEdit").disabled = true;
+
+    // dùng lại hệ thống lưu nháp của bạn
+    if(typeof saveDraft === "function"){
+        saveDraft(false);
+    }
+
+    alert("✅ Đã lưu nội dung chỉnh sửa");
+}
+
+function cancelEdit(){
+    const el = document.getElementById("finalStory");
+    if(!el) return;
+
+    el.innerText = __storyBackupText;
+    el.contentEditable = "false";
+    el.classList.remove("editing");
+
+    document.getElementById("btnSaveEdit").disabled = true;
+    document.getElementById("btnCancelEdit").disabled = true;
+}
+
 </script>
 
 </body>
