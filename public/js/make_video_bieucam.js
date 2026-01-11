@@ -393,7 +393,7 @@ function escapeHtmlAttr(s) {
  *  Init
  *  ----------------------------- */
 async function init() {
-  bindEvents();
+  bindManifestUI();
   await loadCharacters();
   await loadManifest();
   console.log("[XNC] Init OK");
