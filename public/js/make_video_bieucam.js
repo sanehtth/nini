@@ -1,10 +1,9 @@
 /* =========================================================
    XNC – Tab 1: Load truyện từ Substance Manifest + Chọn nhân vật
-   FIX:
-   - manifest path cố định: /substance/manifest.json
-   - characters path cố định: /adn/xomnganchuyen/XNC_characters.json
-   - option.value = file path thật => không còn load nhầm truyện (005 -> 004)
-   - chọn nhân vật bằng checkbox list => đã chọn thì lưu không còn báo lỗi
+   FIX trọng điểm:
+   - Bắt click cho cả 2 kiểu id nút: btnLoadStory / loadStoryBtn, btnReloadManifest / reloadManifestBtn
+   - event.preventDefault() để không bị submit form gây "treo"
+   - option.value = file path thật => chọn 005 load đúng 005
    ========================================================= */
 
 (function () {
@@ -23,6 +22,8 @@
 
   // ---------- DOM helpers ----------
   const $ = (id) => document.getElementById(id);
+  const $any = (...ids) => ids.map((x) => $(x)).find(Boolean) || null;
+
   function escHtml(s) {
     return String(s ?? "")
       .replaceAll("&", "&amp;")
@@ -40,7 +41,6 @@
 
   // ---------- Characters ----------
   function normalizeCharacter(c) {
-    // support various keys
     const id = (c.id || c.char_id || c.code || "").trim();
     const label = (c.label || c.name || c.title || id).trim();
     const gender = (c.gender || "").trim();
@@ -49,7 +49,7 @@
   }
 
   function renderParticipantsList(chars) {
-    const container = $("participantsList");
+    const container = $any("participantsList");
     if (!container) {
       console.warn("[XNC] Missing #participantsList in HTML");
       return;
@@ -83,7 +83,6 @@
       container.appendChild(row);
     });
 
-    // highlight on change
     container.addEventListener(
       "change",
       (e) => {
@@ -110,21 +109,19 @@
   }
 
   function updateSelectedCount() {
-    const el = $("participantsCount");
+    const el = $any("participantsCount");
     if (!el) return;
     el.textContent = `Đã chọn: ${getSelectedParticipants().length}`;
   }
 
   function applyParticipantsFromStory(participants) {
-    // participants can be ["Bò-Lô", ...] OR [{id,label}, ...]
     const wantIds = new Set();
     const wantLabels = new Set();
 
     (participants || []).forEach((p) => {
       if (!p) return;
-      if (typeof p === "string") {
-        wantLabels.add(p.trim());
-      } else {
+      if (typeof p === "string") wantLabels.add(p.trim());
+      else {
         if (p.id) wantIds.add(String(p.id).trim());
         if (p.label) wantLabels.add(String(p.label).trim());
         if (p.name) wantLabels.add(String(p.name).trim());
@@ -145,12 +142,13 @@
   }
 
   function bindParticipantSearch() {
-    const input = $("participantsSearch");
+    const input = $any("participantsSearch");
     if (!input) return;
 
     input.addEventListener("input", () => {
       const q = input.value.trim().toLowerCase();
-      const rows = Array.from(($("participantsList")?.querySelectorAll("label") || []));
+      const list = $any("participantsList");
+      const rows = Array.from(list?.querySelectorAll("label") || []);
       rows.forEach((row) => {
         const text = row.textContent.toLowerCase();
         row.style.display = !q || text.includes(q) ? "block" : "none";
@@ -160,10 +158,6 @@
 
   // ---------- Manifest + Load story ----------
   function normalizeManifestItems(raw) {
-    // Accept formats:
-    // A) {items:[{id,title,file}, ...]}
-    // B) [{id,title,file}, ...]
-    // C) {stories:[...]} (optional)
     const arr = Array.isArray(raw)
       ? raw
       : Array.isArray(raw?.items)
@@ -179,7 +173,6 @@
         const file = (it.file || it.path || it.url || "").trim();
         if (!id) return null;
 
-        // IMPORTANT: file path must be absolute; fallback is stable
         const resolvedFile = file
           ? file.startsWith("/")
             ? file
@@ -192,7 +185,7 @@
   }
 
   function renderManifestSelect(items) {
-    const sel = $("storySelect");
+    const sel = $any("storySelect");
     if (!sel) {
       console.warn("[XNC] Missing #storySelect in HTML");
       return;
@@ -206,21 +199,18 @@
 
     items.forEach((it) => {
       const opt = document.createElement("option");
-
-      // KEY FIX: option.value = file path thật
+      // FIX: value là path thật
       opt.value = it.file;
       opt.textContent = it.title ? `${it.id} • ${it.title}` : it.id;
-
       opt.dataset.id = it.id;
       opt.dataset.title = it.title || "";
-
       sel.appendChild(opt);
     });
   }
 
   async function loadManifest() {
-    const statusEl = $("manifestStatus");
-    const pathEl = $("manifestPath");
+    const statusEl = $any("manifestStatus");
+    const pathEl = $any("manifestPath");
 
     try {
       const raw = await fetchJSON(PATHS.manifest);
@@ -246,10 +236,15 @@
   }
 
   async function loadSelectedStory() {
-    const sel = $("storySelect");
-    if (!sel) return;
+    const sel = $any("storySelect");
+    if (!sel) {
+      alert("Thiếu dropdown storySelect trong HTML.");
+      return;
+    }
 
     const file = (sel.value || "").trim();
+    console.log("[XNC] loadSelectedStory() sel.value =", file);
+
     if (!file) {
       alert("Bạn chưa chọn truyện trong dropdown.");
       return;
@@ -262,7 +257,6 @@
     try {
       const storyJson = await fetchJSON(file);
 
-      // Support multiple story formats:
       const id = storyJson.id || storyJson.storyId || storyJson.story_id || idFromOpt || "";
       const title = storyJson.title || storyJson.name || storyJson.story_title || titleFromOpt || "";
       const rawText =
@@ -272,7 +266,6 @@
         storyJson.content ||
         "";
 
-      // participants
       let participants = [];
       if (Array.isArray(storyJson.characters)) participants = storyJson.characters;
       else if (Array.isArray(storyJson.participants)) participants = storyJson.participants;
@@ -283,10 +276,9 @@
         }));
       }
 
-      // Fill UI
-      const idEl = $("storyId");
-      const titleEl = $("storyTitle");
-      const rawEl = $("storyRawText");
+      const idEl = $any("storyId");
+      const titleEl = $any("storyTitle");
+      const rawEl = $any("storyRawText");
 
       if (idEl) idEl.value = id;
       if (titleEl) titleEl.value = title;
@@ -301,12 +293,32 @@
     }
   }
 
-  // ---------- Button bindings ----------
+  // ---------- Button bindings (FIX ID) ----------
   function bindButtons() {
-    $("btnReloadManifest")?.addEventListener("click", loadManifest);
-    $("btnLoadStory")?.addEventListener("click", loadSelectedStory);
+    // Bắt cả 2 kiểu id
+    const btnReload = $any("btnReloadManifest", "reloadManifestBtn");
+    const btnLoad = $any("btnLoadStory", "loadStoryBtn");
 
-    $("btnSelectAllParticipants")?.addEventListener("click", () => {
+    if (!btnReload) console.warn("[XNC] Missing reload manifest button id: btnReloadManifest/reloadManifestBtn");
+    if (!btnLoad) console.warn("[XNC] Missing load story button id: btnLoadStory/loadStoryBtn");
+
+    btnReload?.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      loadManifest();
+    });
+
+    btnLoad?.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      loadSelectedStory();
+    });
+
+    const btnAll = $any("btnSelectAllParticipants");
+    const btnClear = $any("btnClearParticipants");
+
+    btnAll?.addEventListener("click", (e) => {
+      e.preventDefault();
       document.querySelectorAll(".xnc-participant").forEach((b) => {
         b.checked = true;
         const row = b.closest("label");
@@ -315,7 +327,8 @@
       updateSelectedCount();
     });
 
-    $("btnClearParticipants")?.addEventListener("click", () => {
+    btnClear?.addEventListener("click", (e) => {
+      e.preventDefault();
       document.querySelectorAll(".xnc-participant").forEach((b) => {
         b.checked = false;
         const row = b.closest("label");
@@ -323,14 +336,24 @@
       });
       updateSelectedCount();
     });
+
+    // Optional: chọn dropdown xong tự load luôn (đỡ phải bấm)
+    const sel = $any("storySelect");
+    sel?.addEventListener("change", () => {
+      // Không auto-load nếu bạn không muốn, comment dòng dưới:
+      // loadSelectedStory();
+    });
   }
 
   // ---------- Init ----------
   async function init() {
     try {
-      // Load characters first (for participant mapping)
       const rawChars = await fetchJSON(PATHS.characters);
-      const chars = (Array.isArray(rawChars) ? rawChars : rawChars?.characters || rawChars?.items || [])
+      const charsRaw = Array.isArray(rawChars)
+        ? rawChars
+        : rawChars?.characters || rawChars?.items || [];
+
+      const chars = charsRaw
         .map(normalizeCharacter)
         .filter((c) => c.id);
 
@@ -348,8 +371,6 @@
     }
 
     bindButtons();
-
-    // Load manifest last
     await loadManifest();
 
     console.log("[XNC] Init OK");
