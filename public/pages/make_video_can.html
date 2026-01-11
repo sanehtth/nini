@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>XNC Prompt Generator</title>
+  <link rel="stylesheet" href="/css/make_video.css" />
+  <link rel="stylesheet" href="/green-theme.css" />
+  <style>
+    body.green-theme { background-color: #e8f5e9; } /* Nền xanh lá nhạt theo ý bạn */
+    .character-slot { border-left: 5px solid var(--secondary); padding: 15px; margin-bottom: 20px; background: #f7fff7; border-radius: 8px; position: relative; }
+    .btn-remove { background: #ff4d4d; color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; float: right; }
+  </style>
+</head>
+<body class="green-theme">
+  <div class="container">
+    <main>
+      <div class="card" style="text-align: center; margin-bottom: 32px;">
+        <h1 style="margin:0; font-size:32px; color:var(--secondary);">🎬 XNC Prompt Generator</h1>
+        <p class="muted">Tạo prompt video đa nhân vật (Sane, Mira, Na, Bắp, Mít...)</p>
+      </div>
+
+      <div id="characters-container"></div>
+      
+      <div style="text-align: center; margin-bottom: 20px;">
+        <button id="add-char-btn" class="btn btn-secondary">➕ Thêm nhân vật khác</button>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0;">⚙️ Cấu hình chung (Cảnh & Camera)</h3>
+        <div class="section">
+          <div>
+            <label>🎥 Góc máy:</label>
+               <select id="camera">
+                  <option value="EXTREME_CLOSEUP">EXTREME CLOSE-UP (Cực cận)</option>
+                  <option value="CLOSEUP">CLOSE-UP (Cận cảnh)</option>
+                  <option value="MEDIUM_CLOSEUP">MEDIUM CLOSE-UP (Trung cận)</option>
+                  <option value="MEDIUM_SHOT">MEDIUM SHOT (Trung cảnh)</option>
+                  <option value="FULL_SHOT">FULL SHOT (Toàn cảnh)</option>
+                  <option value="WIDE_SHOT">WIDE SHOT (Góc rộng)</option>
+                  <option value="POV">POV (Góc nhìn nhân vật)</option>
+              </select>
+         </div>
+          <div>
+            <label>💡 Ánh sáng:</label>
+            <select id="lighting"><option value="">-- Chọn --</option></select>
+          </div>
+          <div>
+            <label>🖼️ Nền cảnh:</label>
+            <select id="background"><option value="">-- Chọn --</option></select>
+          </div>
+        </div>
+        <div class="section">
+          <div>
+            <label>📐 Khung hình:</label>
+            <select id="aspect">
+              <option value="16:9" selected>16:9 (Ngang)</option>
+              <option value="9:16">9:16 (Dọc)</option>
+              <option value="1:1">1:1 (Vuông)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:32px; position: relative;">
+        <h3 style="margin-top:0; color:var(--primary);">Prompt hiện tại:</h3>
+        <div style="margin-bottom:12px; display: flex; gap: 10px;">
+          <input type="text" id="video-id" placeholder="ID Video" style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--border);" />
+          <input type="text" id="video-title" placeholder="Tên Video" style="flex:2; padding:10px; border-radius:8px; border:1px solid var(--border);" />
+        </div>
+        <div style="display:flex; gap:12px; margin-bottom:16px; align-items:center; flex-wrap:wrap;">
+          <label for="wardrobe-priority-mode" class="muted" style="min-width:180px;">Wardrobe priority</label>
+          <select id="wardrobe-priority-mode" style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--border);">
+            <option value="auto">AUTO (use outfit priority; tie => uniform)</option>
+            <option value="prefer_uniform">Prefer UNIFORM</option>
+            <option value="prefer_outfit">Prefer OUTFIT</option>
+          </select>
+        </div>
+        <div id="final-prompt" style="min-height:150px; background:#1e1e1e; color:#e0e0e0; padding:16px; border-radius:12px; font-family:monospace; white-space:pre-wrap; margin-bottom:16px;">
+          Đang khởi tạo...
+        </div>
+        <div style="text-align:center;">
+          <button id="generate-btn" class="btn btn-primary">🚀 Tạo Prompt</button>
+          <button id="add-btn" class="btn btn-secondary" style="margin-left:12px;">➕ Lưu vào Danh sách</button>
+        </div>
+        <button id="copy-btn" class="btn btn-primary" style="position:absolute; top:12px; right:12px;">📋 Copy</button>
+      </div>
+
+      <div class="card" style="margin-top:32px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+          <h3 style="margin:0;">Danh sách đã lưu (<span id="count">0</span>)</h3>
+          <div style="display:flex; gap:10px;">
+            <button id="export-json-btn" class="btn btn-secondary">⬇️ Export JSON</button>
+            <button id="clear-all-btn" class="btn btn-secondary" style="background:#ff4d4d; color:#fff;">🗑️ Xóa hết</button>
+          </div>
+        </div>
+        <div id="prompt-list"></div>
+      </div>
+    </main>
+  </div>
+  <!-- Lưu ý: bạn đang dùng file local (make_video_bieucam (1).js). Khi deploy, đổi path cho đúng nếu cần. -->
+  <script src="/js/make_video_bieucam.js"></script>
+</body>
+</html>
