@@ -158,7 +158,7 @@
       "variants": {
         "male": {
           "base_desc_vi": "đeo miếng che mắt màu đen có khoét lỗ, mặc áo khoác có mũ màu xanh đậm, quần rách, mang theo đèn pin và một túi đựng con vịt, lén lút đi lại.",
-          "base_desc_en": "Vietnamese countryside thief outfit: a black blindfold with a hole in it, a dark blue hooded jacket, ripped pants, carried a flashlight and a bag containing a duck, and moved around stealthily.."
+          "base_desc_en": "Vietnamese countryside thief outfit: a black blindfold with a hole in it, a dark blue hooded jacket, ripped pants, carried a flashlight and a bag containing a duck, and moved around stealthily."
         }
       }
     },
@@ -217,7 +217,7 @@
     }
   },
     {
-    "id": "xnc_outfit_ba ba",
+    "id": "xnc_outfit_baba",
     "name": "Áo ba ba",
     "category": "personal",
     "priority": 20,
@@ -225,7 +225,7 @@
     "notes": "Trang phục thanh lịch, hiện đại cho Mira; phối hợp với nét cáo thông minh.",
     "variants": {
       "female": {
-        "base_desc_vi": "Áo bà ba Việt Nam: áo ngắn, xẽ 2 tà họa tiết hoa nhỏ, quần ống rộng lửng; tóc xõa với băng đô lụa; toát lên vẻ thanh lịch, quyến rũ..",
+        "base_desc_vi": "Áo bà ba Việt Nam: áo ngắn, xẽ 2 tà họa tiết hoa nhỏ, quần ống rộng lửng; tóc xõa với băng đô lụa; toát lên vẻ thanh lịch, quyến rũ.",
         "base_desc_en": "Vietnamese "áo bà ba": a short blouse with two slits and small floral patterns, paired with wide-legged cropped trousers; hair is loose with a silk headband; exuding elegance and charm."
       }
     }
