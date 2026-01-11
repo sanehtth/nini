@@ -116,6 +116,138 @@ async function loadStory(file) {
     alert('Không load được file truyện');
   }
 }
+//==========================
+function splitScenesFromStory() {
+  console.log('[XNC] splitScenesFromStory START');
+
+  // 1. Lấy nội dung story
+  const textEl = document.getElementById('storyText');
+  if (!textEl) {
+    alert('Không tìm thấy ô nội dung story');
+    return;
+  }
+
+  const rawText = textEl.value.trim();
+  if (!rawText) {
+    alert('Chưa có nội dung story để tách');
+    return;
+  }
+
+  // 2. Chuẩn hóa text
+  const lines = rawText.split(/\r?\n/).map(l => l.trim());
+
+  // ===== OUTPUT 1: SCENE PROMPT (video) =====
+  const videoScenes = [];
+
+  // ===== OUTPUT 2: THOẠI / SFX =====
+  const dialogues = [];
+  const sfx = [];
+
+  let currentScene = null;
+  let sceneIndex = 0;
+
+  const pushScene = () => {
+    if (!currentScene) return;
+    if (currentScene.raw.length === 0) return;
+
+    videoScenes.push({
+      scene_id: currentScene.scene_id,
+      summary: currentScene.summary.trim(),
+      visual_prompt: currentScene.summary.trim(),
+      camera: '',
+      lighting: '',
+      mood: '',
+      notes: ''
+    });
+  };
+
+  // 3. Duyệt từng dòng story
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line) continue;
+
+    // --- Nhận diện Scene ---
+    const isSceneHeader =
+      /^scene\s*[:\-]/i.test(line) ||
+      /^\*\*\s*scene/i.test(line) ||
+      /^\[\s*scene/i.test(line);
+
+    if (isSceneHeader) {
+      pushScene();
+      sceneIndex += 1;
+
+      currentScene = {
+        scene_id: `S${String(sceneIndex).padStart(2, '0')}`,
+        summary: '',
+        raw: []
+      };
+      continue;
+    }
+
+    // Nếu chưa có scene nào → auto tạo scene đầu
+    if (!currentScene) {
+      sceneIndex = 1;
+      currentScene = {
+        scene_id: 'S01',
+        summary: '',
+        raw: []
+      };
+    }
+
+    // --- Nhận diện SFX ---
+    const sfxMatch = line.match(/^\[\s*sfx\s*:\s*(.+?)\s*\]$/i);
+    if (sfxMatch) {
+      sfx.push({
+        scene_id: currentScene.scene_id,
+        text: sfxMatch[1].trim()
+      });
+      continue;
+    }
+
+    // --- Nhận diện thoại ---
+    const dialogueMatch = line.match(/^([^:]{1,40})\s*:\s*(.+)$/);
+    if (dialogueMatch) {
+      dialogues.push({
+        scene_id: currentScene.scene_id,
+        character: dialogueMatch[1].trim(),
+        text: dialogueMatch[2].trim()
+      });
+      continue;
+    }
+
+    // --- Narration / mô tả ---
+    currentScene.summary += (currentScene.summary ? ' ' : '') + line;
+    currentScene.raw.push(line);
+  }
+
+  // Đẩy scene cuối
+  pushScene();
+
+  // 4. Lưu vào appState (KHÔNG phá code cũ)
+  appState.videoScenes = videoScenes;
+  appState.dialogues = dialogues;
+  appState.sfx = sfx;
+
+  // 5. Hiển thị preview JSON (nếu có)
+  const preview = document.getElementById('previewBox');
+  if (preview) {
+    preview.textContent = JSON.stringify(
+      {
+        videoScenes,
+        dialogues,
+        sfx
+      },
+      null,
+      2
+    );
+  }
+
+  console.log('[XNC] splitScenesFromStory DONE', {
+    scenes: videoScenes.length,
+    dialogues: dialogues.length,
+    sfx: sfx.length
+  });
+}
 
 /* =========================
    INIT
