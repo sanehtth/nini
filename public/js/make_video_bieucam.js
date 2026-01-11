@@ -184,25 +184,20 @@
 
   // ---------- Manifest UI ----------
   function renderManifestSelect(items) {
-    const sel = $("storySelect");
-    if (!sel) return;
+  const sel = document.getElementById("storySelect");
+  if (!sel) return;
 
-    const cur = sel.value;
-    sel.innerHTML = `<option value="">-- Chọn truyện --</option>`;
+  sel.innerHTML =
+    `<option value="">-- Chọn truyện --</option>` +
+    items
+      .map((it) => {
+        const file = it.file || "";
+        const label = `${it.id || ""} • ${it.title || ""}`;
+        return `<option value="${file}">${label}</option>`;
+      })
+      .join("");
+}
 
-    for (const it of items) {
-      const opt = document.createElement("option");
-      // IMPORTANT: value must be file path, not id (fix: chọn 005 load 004)
-      opt.value = it.file;
-      opt.textContent = `${it.id}${it.title ? " • " + it.title : ""}`;
-      opt.dataset.storyId = it.id;
-      opt.dataset.storyTitle = it.title || "";
-      sel.appendChild(opt);
-    }
-
-    // keep selection if still exists
-    if (cur && items.some(x => x.file === cur)) sel.value = cur;
-  }
 
   async function loadManifest() {
     const manifestCandidates = [
@@ -238,57 +233,19 @@
 
   // ---------- Load story from selected manifest item ----------
   async function loadStoryFromSelected() {
-    const sel = $("storySelect");
-    const file = sel.value;
-    if (!file) {
-      alert("Bạn chưa chọn truyện trong dropdown.");
-      return;
-    }
-
-    try {
-      const storyJson = await fetchJSON(file);
-
-      // Support your existing story json:
-      // { id, title, story, characters:[...] }
-      const id = storyJson.id || storyJson.storyId || storyJson.story_id || "";
-      const title = storyJson.title || storyJson.name || "";
-      const rawText = storyJson.story || storyJson.text || storyJson.content || "";
-
-      AppState.story.id = id;
-      AppState.story.title = title;
-      AppState.story.rawText = rawText;
-      AppState.story.storyFile = file;
-
-      $("storyId").value = id;
-      $("storyTitle").value = title;
-      $("storyText").value = rawText;
-
-      // Participants initial: try from storyJson.characters
-      // It might be labels or ids. Map by label if needed.
-      let participants = [];
-      if (Array.isArray(storyJson.characters)) {
-        if (typeof storyJson.characters[0] === "string") {
-          // map labels -> character id
-          const labelSet = new Set(storyJson.characters);
-          const mapped = AppState.data.charactersAll.filter(c => labelSet.has(c.label));
-          participants = mapped.map(x => x.id);
-        } else {
-          participants = storyJson.characters
-            .map(x => x.id || x.char_id || x.key || "")
-            .filter(Boolean);
-        }
-      }
-      AppState.story.characters = participants;
-
-      renderParticipantsList($("participantsSearch").value);
-
-      console.log("[XNC] Story loaded from:", file);
-      alert(`Load truyện OK: ${id || "(no id)"}${title ? " • " + title : ""}`);
-    } catch (e) {
-      console.error(e);
-      alert(`Load truyện lỗi: ${file} -> ${String(e.message || e)}`);
-    }
+  const sel = document.getElementById("storySelect");
+  const file = sel?.value || "";
+  if (!file) {
+    alert("Bạn chưa chọn truyện trong dropdown.");
+    return;
   }
+
+  console.log("[XNC] Loading story from:", file);
+
+  const storyJson = await fetchJSON(file); // file đã là '/substance/...json'
+  applyStoryJSONToUI(storyJson);           // hàm set id/title/story vào UI
+}
+
 
   // ---------- Preview ----------
   function setPreview(obj) {
