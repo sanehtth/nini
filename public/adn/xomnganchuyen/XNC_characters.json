@@ -239,9 +239,9 @@
       "gender": "male",
       "role": "Phản diện hài",
       "age_role_vi": "Thanh niên",
-      "summary_vi": "Kẻ trộm xui xẻo, chuyên đi bắt gà hàng xóm nhưng toàn gặp chuyện dở khóc dở cười.",
+      "summary_vi": "đàn em kẻ trộm xui xẻo, chuyên đi bắt vịt hàng xóm nhưng toàn gặp chuyện dở khóc dở cười.",
       "base_desc_en": "Vietnamese young man thief, sneaky posture, nervous comedic expression, carrying a burlap sack with a chicken head peeking out, wearing dark Vietnamese countryside clothes and a khăn rằn scarf",
-      "prompt_en": "Vietnamese comedic thief in countryside at night, sneaky hunched posture, nervous smile, wearing a dark ao ba ba style shirt and dark pants, wearing a khăn rằn scarf, old cap, plastic sandals, carrying a burlap sack with a chicken head peeking out; pastel chibi 2D, expressive facial acting, no text, no Western prison stripes",
+      "prompt_en": "The image depicts a young, cunning village thief in a 2D vector graphic style. He wears black eye patches with eye holes, a dark blue hooded jacket, ripped pants, and carries a flashlight and a bag of duck meat, sneaking around. His appearance is playful and youthful",
       "signature_items": [
         "burlap_sack",
         "duck_peeking"
