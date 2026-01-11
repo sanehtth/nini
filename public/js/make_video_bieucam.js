@@ -82,6 +82,43 @@ async function loadStory() {
 
   console.log('[XNC] Story loaded:', sel.value);
 }
+//========================
+function initStoryTab() {
+  const btnReload = document.getElementById('reloadManifestBtn');
+  const btnLoad = document.getElementById('loadStoryBtn');
+  const sel = document.getElementById('storySelect');
+
+  if (btnReload) btnReload.onclick = loadManifest;
+
+  if (btnLoad && sel) {
+    btnLoad.onclick = () => {
+      if (!sel.value) {
+        alert('Chưa chọn truyện');
+        return;
+      }
+      loadStory(sel.value);
+    };
+  }
+}
+//===============
+function renderCharacterList() {
+  const box = document.getElementById('participantsList');
+  if (!box) return;
+
+  box.innerHTML = '';
+  appState.characters.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'pitem';
+    div.innerHTML = `
+      <input type="checkbox" value="${c.id}">
+      <div>
+        <div class="pname">${c.name}</div>
+        <div class="ptag">${c.gender || ''}</div>
+      </div>
+    `;
+    box.appendChild(div);
+  });
+}
 
 /* =========================
    INIT
