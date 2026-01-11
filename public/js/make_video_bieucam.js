@@ -120,120 +120,131 @@ async function loadStory(file) {
 function splitScenesFromStory() {
   console.log('[XNC] splitScenesFromStory START');
 
-  // 1. Lấy nội dung story
-  const textEl = document.getElementById('storyText');
-  if (!textEl) {
-    alert('Không tìm thấy ô nội dung story');
+  const textInput = document.getElementById('storyText');
+  if (!textInput || !textInput.value.trim()) {
+    alert('Chưa có nội dung câu chuyện');
     return;
   }
 
-  const rawText = textEl.value.trim();
-  if (!rawText) {
-    alert('Chưa có nội dung story để tách');
+  // ===============================
+  // 1️⃣ LẤY NHÂN VẬT ĐÃ CHỌN
+  // ===============================
+  const checked = Array.from(
+    document.querySelectorAll('#participantsList input[type="checkbox"]:checked')
+  ).map(cb => cb.value);
+
+  if (!checked.length) {
+    alert('Chưa chọn nhân vật tham gia');
     return;
   }
 
-  // 2. Chuẩn hóa text
-  const lines = rawText.split(/\r?\n/).map(l => l.trim());
+  // map id -> full character object
+  const characterMap = {};
+  appState.characters.forEach(c => {
+    characterMap[c.id] = c;
+  });
 
-  // ===== OUTPUT 1: SCENE PROMPT (video) =====
-  const videoScenes = [];
+  const selectedCharacters = checked
+    .map(id => characterMap[id])
+    .filter(Boolean);
 
-  // ===== OUTPUT 2: THOẠI / SFX =====
+  console.log('[XNC] Selected characters:', selectedCharacters.map(c => c.id));
+
+  // ===============================
+  // 2️⃣ CHUẨN HÓA TEXT
+  // ===============================
+  const lines = textInput.value
+    .split('\n')
+    .map(l => l.trim())
+    .filter(Boolean);
+
+  // ===============================
+  // 3️⃣ KHỞI TẠO OUTPUT
+  // ===============================
+  const scenes = [];
   const dialogues = [];
   const sfx = [];
 
-  let currentScene = null;
-  let sceneIndex = 0;
+  let sceneIndex = 1;
+  let currentSceneId = `S${sceneIndex.toString().padStart(2, '0')}`;
 
-  const pushScene = () => {
-    if (!currentScene) return;
-    if (currentScene.raw.length === 0) return;
+  // ===============================
+  // 4️⃣ TẠO SCENE ĐẦU TIÊN
+  // ===============================
+  scenes.push({
+    scene_id: currentSceneId,
+    summary: '',
+    characters: selectedCharacters.map(c => ({
+      ...c,
+      // gắn default asset (để UI chỉnh sau)
+      outfit: c.default_outfit_id || null,
+      face: c.preferred_faces?.[0] || null,
+      state: null
+    })),
+    background: null,
+    raw_lines: []
+  });
 
-    videoScenes.push({
-      scene_id: currentScene.scene_id,
-      summary: currentScene.summary.trim(),
-      visual_prompt: currentScene.summary.trim(),
-      camera: '',
-      lighting: '',
-      mood: '',
-      notes: ''
-    });
-  };
-
-  // 3. Duyệt từng dòng story
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line) continue;
-
-    // --- Nhận diện Scene ---
-    const isSceneHeader =
-      /^scene\s*[:\-]/i.test(line) ||
-      /^\*\*\s*scene/i.test(line) ||
-      /^\[\s*scene/i.test(line);
-
-    if (isSceneHeader) {
-      pushScene();
-      sceneIndex += 1;
-
-      currentScene = {
-        scene_id: `S${String(sceneIndex).padStart(2, '0')}`,
-        summary: '',
-        raw: []
-      };
-      continue;
-    }
-
-    // Nếu chưa có scene nào → auto tạo scene đầu
-    if (!currentScene) {
-      sceneIndex = 1;
-      currentScene = {
-        scene_id: 'S01',
-        summary: '',
-        raw: []
-      };
-    }
-
-    // --- Nhận diện SFX ---
-    const sfxMatch = line.match(/^\[\s*sfx\s*:\s*(.+?)\s*\]$/i);
-    if (sfxMatch) {
+  // ===============================
+  // 5️⃣ PARSE TỪNG DÒNG
+  // ===============================
+  lines.forEach(line => {
+    // --- SFX ---
+    if (line.startsWith('**[SFX:') || line.startsWith('[SFX:')) {
       sfx.push({
-        scene_id: currentScene.scene_id,
-        text: sfxMatch[1].trim()
+        scene_id: currentSceneId,
+        type: 'sfx',
+        text: line
+          .replace('**', '')
+          .replace('[SFX:', '')
+          .replace(']', '')
+          .trim()
       });
-      continue;
+      return;
     }
 
-    // --- Nhận diện thoại ---
-    const dialogueMatch = line.match(/^([^:]{1,40})\s*:\s*(.+)$/);
-    if (dialogueMatch) {
+    // --- Dialogue ---
+    const match = line.match(/^\*\*(.+?):\s*(.+)\*\*$/);
+    if (match) {
+      const speakerRaw = match[1].trim();
+      const text = match[2].trim();
+
+      // tìm character theo name (fallback)
+      const char =
+        selectedCharacters.find(c => c.name === speakerRaw) ||
+        selectedCharacters.find(c =>
+          speakerRaw.toLowerCase().includes(c.name.toLowerCase())
+        );
+
       dialogues.push({
-        scene_id: currentScene.scene_id,
-        character: dialogueMatch[1].trim(),
-        text: dialogueMatch[2].trim()
+        scene_id: currentSceneId,
+        character_id: char ? char.id : null,
+        character_name: speakerRaw,
+        text
       });
-      continue;
+
+      scenes[scenes.length - 1].raw_lines.push(line);
+      return;
     }
 
-    // --- Narration / mô tả ---
-    currentScene.summary += (currentScene.summary ? ' ' : '') + line;
-    currentScene.raw.push(line);
-  }
+    // --- Narrative / description ---
+    scenes[scenes.length - 1].summary +=
+      (scenes[scenes.length - 1].summary ? ' ' : '') + line;
+    scenes[scenes.length - 1].raw_lines.push(line);
+  });
 
-  // Đẩy scene cuối
-  pushScene();
-
-  // 4. Lưu vào appState (KHÔNG phá code cũ)
-  appState.videoScenes = videoScenes;
+  // ===============================
+  // 6️⃣ LƯU VÀO STATE + PREVIEW
+  // ===============================
+  appState.videoScenes = scenes;
   appState.dialogues = dialogues;
   appState.sfx = sfx;
 
-  // 5. Hiển thị preview JSON (nếu có)
-  const preview = document.getElementById('previewBox');
+  const preview = document.getElementById('jsonPreview');
   if (preview) {
     preview.textContent = JSON.stringify(
       {
-        videoScenes,
+        scenes,
         dialogues,
         sfx
       },
@@ -243,11 +254,12 @@ function splitScenesFromStory() {
   }
 
   console.log('[XNC] splitScenesFromStory DONE', {
-    scenes: videoScenes.length,
+    scenes: scenes.length,
     dialogues: dialogues.length,
     sfx: sfx.length
   });
 }
+
 
 /* =========================
    INIT
