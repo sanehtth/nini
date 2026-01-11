@@ -95,12 +95,14 @@ function initStoryTab() {
 
   if (btnLoad && sel) {
     btnLoad.onclick = () => {
-      if (!sel.value) {
-        alert('Chưa chọn truyện');
-        return;
-      }
-      renderStorySelect(sel.value);
-    };
+  const sel = document.getElementById('storySelect');
+  if (!sel || !sel.value) {
+    alert('Chưa chọn truyện');
+    return;
+  }
+  loadStory(sel.value);
+};
+
   }
 }
 //===============
