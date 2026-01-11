@@ -1,542 +1,476 @@
-/* ============================================================================
-  make_video_bieucam.js  (SYNC / STABLE PATHS)
-  - Manifest:   /substance/manifest.json
-  - Story file: /substance/<filename>.json
-  - Characters: /adn/xomnganchuyen/XNC_characters.json
-============================================================================ */
+// /public/js/make_video_bieucam.js
+// FIXED (Jan 2026)
+// - Use absolute paths (no string-join surprises)
+// - Scope DOM queries to the current tab root to avoid duplicated IDs clobbering each other
+// - Keep participants list visible and in-sync after loading a story from manifest
 
-(() => {
-  "use strict";
+(function () {
+  'use strict';
 
-  /* =========================
-   *  CONFIG: FIXED PATHS
-   * ========================= */
+  // =========================
+  // Config
+  // =========================
   const PATHS = {
-    manifest: "/substance/manifest.json",
-    characters: "/adn/xomnganchuyen/XNC_characters.json",
-    storyBase: "/substance/", // story file = storyBase + filename
+    characters: '/adn/xomnganchuyen/XNC_characters.json',
+    manifest: '/substance/manifest.json',
+    substanceBase: '/substance/',
   };
 
-  /* =========================
-   *  STATE
-   * ========================= */
-  const AppState = {
-    data: {
-      charactersAll: [], // [{id,label,gender,desc, ...raw}]
-      manifestItems: [], // [{id,title,file,...}]
-    },
-    story: {
-      id: "",
-      title: "",
-      rawText: "",
-      characters: [], // selected/auto
-      loadedFrom: "",
-      json: null, // story json loaded
-    },
-    ui: {
-      selectedCharIds: new Set(),
-      // Keep a stable "current story file" value
-      currentStoryFile: "",
-    },
+  // =========================
+  // State (Tab 1)
+  // =========================
+  const StoryState = {
+    charactersAll: [],          // [{id,label,gender,role, ...}]
+    charactersById: new Map(),  // id -> char
+    charactersByLabel: new Map(), // normalized label -> char
+    selectedCharIds: new Set(),
+    story: null,               // loaded story json
+    storyText: '',             // story raw text
+    manifestItems: [],         // [{id,title,file,...}]
+    scenes: [],                // derived scenes
   };
 
-  /* =========================
-   *  DOM HELPERS (tolerant IDs)
-   * ========================= */
-  const byId = (id) => document.getElementById(id);
+  // =========================
+  // Utilities
+  // =========================
+  const norm = (s) =>
+    (s ?? '')
+      .toString()
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
 
-  function pickEl(...ids) {
-    for (const id of ids) {
-      const el = byId(id);
-      if (el) return el;
-    }
-    return null;
+  function $(root, sel) {
+    return root ? root.querySelector(sel) : null;
+  }
+  function $all(root, sel) {
+    return root ? Array.from(root.querySelectorAll(sel)) : [];
   }
 
-  // Buttons / selects (support old/new HTML id variants)
-  const els = () => ({
-    // manifest/story select
-    storySelect: pickEl("storySelect", "story-select", "story_select"),
-    reloadManifestBtn: pickEl("reloadManifestBtn", "reload-manifest-btn"),
-    loadStoryBtn: pickEl("loadStoryBtn", "load-story-btn"),
-
-    // manifest status text
-    manifestStatus: pickEl("manifestStatus", "manifest-status"),
-    manifestPath: pickEl("manifestPath", "manifest-path"),
-
-    // story fields
-    storyId: pickEl("storyId", "story-id"),
-    storyTitle: pickEl("storyTitle", "story-title"),
-    storyContent: pickEl("storyContent", "story-content", "storyText", "storyRawText", "story-content-textarea"),
-
-    // participants UI
-    participantsWrap: pickEl("participantsWrap", "participants", "participants-grid", "participantsGrid"),
-    selectedCount: pickEl("selectedCount", "selected-count"),
-    charSearch: pickEl("charSearch", "char-search"),
-    btnSelectAll: pickEl("btnSelectAll", "btn-select-all"),
-    btnClearChars: pickEl("btnClearChars", "btn-clear"),
-
-    // actions
-    splitScenesBtn: pickEl("splitScenesBtn", "split-scenes-btn"),
-    jsonOutput: pickEl("storyJsonPreview", "story-json-output", "json-output", "preview-json"),
-  });
-
-  function setText(el, text) {
-    if (!el) return;
-    el.textContent = text;
+  async function fetchJSON(url) {
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`Fetch failed: ${url} -> ${res.status}`);
+    return res.json();
   }
 
-  function setValue(el, value) {
-    if (!el) return;
-    el.value = value ?? "";
-  }
-
-  function getValue(el) {
-    if (!el) return "";
-    return (el.value ?? "").toString();
-  }
-
-  function safeJsonParse(str, fallback = null) {
-    try {
-      return JSON.parse(str);
-    } catch {
-      return fallback;
-    }
-  }
-
-  function prettyJson(obj) {
-    try {
-      return JSON.stringify(obj, null, 2);
-    } catch {
-      return "{}";
-    }
-  }
-
-  /* =========================
-   *  FETCH
-   * ========================= */
-  async function fetchJSON(path) {
-    // IMPORTANT: do NOT try to "guess" base url; use absolute path
-    console.log("[XNC] fetchJSON:", path);
-    const res = await fetch(path, { cache: "no-store" });
-    if (!res.ok) {
-      throw new Error(`Fetch failed: ${path} -> ${res.status}`);
-    }
-    return await res.json();
-  }
-
-  function normalizeStoryFileToUrl(file) {
+  function toSubstancePath(fileValue) {
     // Accept:
     // - "XNC-....json"
     // - "/substance/XNC-....json"
-    // - "substance/XNC-....json"
-    // Always return: "/substance/XNC-....json"
-    if (!file) return "";
-    const s = String(file).trim();
-
-    if (s.startsWith("http://") || s.startsWith("https://")) {
-      // not expected in your setup, but allow
-      return s;
-    }
-
-    if (s.startsWith(PATHS.storyBase)) return s; // already "/substance/..."
-    if (s.startsWith("/")) {
-      // "/XNC-...json" => treat as root file, but your standard is /substance/
-      // If user stored absolute root path, keep it.
-      return s;
-    }
-
-    if (s.startsWith("substance/")) return "/" + s; // "substance/..." => "/substance/..."
-    return PATHS.storyBase + s.replace(/^\/+/, "");
+    // - "/XNC-....json"   (bad legacy)
+    // Always return "/substance/<name>.json"
+    let v = (fileValue ?? '').toString().trim();
+    if (!v) return '';
+    v = v.replace(/^https?:\/\/[^/]+/i, ''); // strip origin if someone stored absolute url
+    if (v.startsWith(PATHS.substanceBase)) return v;
+    v = v.replace(/^\/+/, ''); // remove leading slashes
+    return PATHS.substanceBase + v;
   }
 
-  /* =========================
-   *  LOAD CHARACTERS
-   * ========================= */
-  async function loadCharacters() {
-    const json = await fetchJSON(PATHS.characters);
-
-    // Allow either array or {characters:[...]} formats
-    const arr = Array.isArray(json) ? json : (Array.isArray(json.characters) ? json.characters : []);
-    AppState.data.charactersAll = arr
-      .map((c) => ({
-        raw: c,
-        id: c.id || c.char_id || c.key || c.code || "",
-        label: c.label || c.name || c.title || "",
-        gender: c.gender || "",
-        desc: c.desc || c.description || c.role || "",
-      }))
-      .filter((c) => c.id || c.label);
-
-    console.log("[XNC] Loaded characters:", AppState.data.charactersAll.length, "from", PATHS.characters);
+  function safeSetText(el, text) {
+    if (!el) return;
+    el.value = text ?? '';
   }
 
-  /* =========================
-   *  PARTICIPANTS UI
-   * ========================= */
-  function renderParticipants() {
-    const { participantsWrap, selectedCount, charSearch } = els();
-    if (!participantsWrap) {
-      console.warn("[XNC] Participants UI missing in HTML");
-      return;
-    }
+  function setStatus(root, msg) {
+    const el = $(root, '#manifest-status');
+    if (el) el.textContent = msg;
+  }
 
-    const q = (getValue(charSearch) || "").trim().toLowerCase();
-    const list = AppState.data.charactersAll.filter((c) => {
+  // =========================
+  // DOM Roots (Tabs)
+  // =========================
+  const tabStory = document.getElementById('tab-story') || document.body;
+  const tabPrompt = document.getElementById('tab-prompt') || null;
+
+  // =========================
+  // Participants UI (Tab 1)
+  // =========================
+  function renderParticipantsList() {
+    const container = $(tabStory, '#characters-container');
+    const countEl = $(tabStory, '#count');
+    if (!container) return;
+
+    const q = norm(($(tabStory, '#story-search')?.value ?? ''));
+    const chars = StoryState.charactersAll.filter((c) => {
       if (!q) return true;
-      return (
-        (c.label && c.label.toLowerCase().includes(q)) ||
-        (c.id && c.id.toLowerCase().includes(q)) ||
-        (c.desc && c.desc.toLowerCase().includes(q))
-      );
+      return norm(c.label).includes(q) || norm(c.id).includes(q) || norm(c.role).includes(q);
     });
 
-    participantsWrap.innerHTML = list
+    container.innerHTML = chars
       .map((c) => {
-        const checked = AppState.ui.selectedCharIds.has(c.id) ? "checked" : "";
-        const meta = [c.gender, c.desc, c.id].filter(Boolean).join(" • ");
+        const checked = StoryState.selectedCharIds.has(c.id) ? 'checked' : '';
+        const gender = c.gender ? `${c.gender}` : '';
+        const role = c.role ? ` • ${c.role}` : '';
         return `
-          <label class="char-card ${checked ? "selected" : ""}" style="display:flex;align-items:center;gap:10px;margin:6px 0;">
-            <input type="checkbox" data-char-id="${escapeHtml(c.id)}" ${checked} />
-            <div class="meta" style="line-height:1.2;">
-              <div class="name" style="font-weight:700;">${escapeHtml(c.label || c.id)}</div>
-              <div class="desc" style="font-size:12px;opacity:.75;">${escapeHtml(meta)}</div>
+          <label class="character-row" style="display:flex;gap:8px;align-items:center;padding:6px 8px;border:1px solid #e7e7e7;border-radius:10px;margin:6px 0;background:#fff">
+            <input type="checkbox" data-char-id="${c.id}" ${checked} />
+            <div style="line-height:1.25">
+              <div style="font-weight:700">${c.label}</div>
+              <div style="font-size:12px;opacity:.75">${gender}${role} • ${c.id}</div>
             </div>
           </label>
         `;
       })
-      .join("");
+      .join('');
 
-    participantsWrap.querySelectorAll('input[type="checkbox"][data-char-id]').forEach((cb) => {
-      cb.addEventListener("change", () => {
-        const id = cb.getAttribute("data-char-id") || "";
+    // bind checkbox change (scoped)
+    $all(container, 'input[type="checkbox"][data-char-id]').forEach((cb) => {
+      cb.addEventListener('change', () => {
+        const id = cb.getAttribute('data-char-id');
         if (!id) return;
-        if (cb.checked) AppState.ui.selectedCharIds.add(id);
-        else AppState.ui.selectedCharIds.delete(id);
-
-        updateSelectedCount();
-        // re-render to update card highlight
-        renderParticipants();
+        if (cb.checked) StoryState.selectedCharIds.add(id);
+        else StoryState.selectedCharIds.delete(id);
+        if (countEl) countEl.textContent = `Đã chọn: ${StoryState.selectedCharIds.size}`;
       });
     });
 
-    updateSelectedCount();
+    if (countEl) countEl.textContent = `Đã chọn: ${StoryState.selectedCharIds.size}`;
   }
 
-  function updateSelectedCount() {
-    const { selectedCount } = els();
-    if (selectedCount) selectedCount.textContent = String(AppState.ui.selectedCharIds.size);
-  }
+  function setupParticipantsEvents() {
+    const search = $(tabStory, '#story-search');
+    const btnAll = $(tabStory, '#select-all-btn');
+    const btnClear = $(tabStory, '#clear-all-btn');
 
-  function selectAllCharacters() {
-    AppState.data.charactersAll.forEach((c) => {
-      if (c.id) AppState.ui.selectedCharIds.add(c.id);
+    search?.addEventListener('input', renderParticipantsList);
+
+    btnAll?.addEventListener('click', () => {
+      StoryState.charactersAll.forEach((c) => StoryState.selectedCharIds.add(c.id));
+      renderParticipantsList();
     });
-    updateSelectedCount();
-    renderParticipants();
+
+    btnClear?.addEventListener('click', () => {
+      StoryState.selectedCharIds.clear();
+      renderParticipantsList();
+    });
+
+    // Also: if container exists, delegate checkbox events (already bound per render)
   }
 
-  function clearAllCharacters() {
-    AppState.ui.selectedCharIds.clear();
-    updateSelectedCount();
-    renderParticipants();
-  }
-
-  function escapeHtml(s) {
-    return String(s ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  /* =========================
-   *  LOAD MANIFEST
-   * ========================= */
-  function normalizeManifestItems(json) {
-    // Support:
-    // - {items:[{id,title,file}...]}
-    // - [{id,title,file}...]
-    const rawItems = Array.isArray(json) ? json : (Array.isArray(json.items) ? json.items : []);
-    const items = rawItems
-      .map((it) => ({
-        id: it.id || it.storyId || it.key || "",
-        title: it.title || it.name || "",
-        file: it.file || it.filename || it.path || "", // IMPORTANT
-        raw: it,
+  // =========================
+  // Load characters
+  // =========================
+  async function loadCharacters() {
+    const json = await fetchJSON(PATHS.characters);
+    const arr = Array.isArray(json) ? json : (Array.isArray(json.characters) ? json.characters : []);
+    StoryState.charactersAll = arr
+      .map((c) => ({
+        id: (c.id ?? c.char_id ?? c.code ?? '').toString().trim(),
+        label: (c.label ?? c.name ?? c.title ?? '').toString().trim(),
+        gender: (c.gender ?? '').toString().trim(),
+        role: (c.role ?? c.desc ?? '').toString().trim(),
+        raw: c,
       }))
-      .filter((it) => it.file || it.id);
+      .filter((c) => c.id && c.label);
 
-    return items;
+    StoryState.charactersById.clear();
+    StoryState.charactersByLabel.clear();
+    for (const c of StoryState.charactersAll) {
+      StoryState.charactersById.set(c.id, c);
+      StoryState.charactersByLabel.set(norm(c.label), c);
+    }
+
+    renderParticipantsList();
   }
 
+  // =========================
+  // Manifest (Tab 1)
+  // =========================
   function renderManifestSelect() {
-    const { storySelect } = els();
-    if (!storySelect) return;
+    const sel = $(tabStory, '#story-select');
+    if (!sel) return;
 
-    const items = AppState.data.manifestItems;
-    storySelect.innerHTML =
-      `<option value="">-- Chọn truyện --</option>` +
-      items
-        .map((it) => {
-          // Store filename/path in value (NOT id)
-          // If manifest file is empty but id exists => try default "<id>.json"
-          const file = it.file || (it.id ? `${it.id}.json` : "");
-          const label = `${it.id || "(no-id)"}${it.title ? " • " + it.title : ""}`;
-          return `<option value="${escapeHtml(file)}">${escapeHtml(label)}</option>`;
-        })
-        .join("");
+    const options = [
+      `<option value="">-- Chọn truyện --</option>`,
+      ...StoryState.manifestItems.map((it) => {
+        // IMPORTANT: value must be FILE (not id) so Load uses correct file
+        const file = it.file || it.path || it.href || '';
+        const label = `${it.id || ''}${it.title ? ` • ${it.title}` : ''}`.trim();
+        return `<option value="${String(file).replace(/\"/g, '&quot;')}">${label || file}</option>`;
+      }),
+    ];
 
-    // Keep current selection if still exists
-    if (AppState.ui.currentStoryFile) {
-      const exists = [...storySelect.options].some((o) => o.value === AppState.ui.currentStoryFile);
-      if (exists) storySelect.value = AppState.ui.currentStoryFile;
-    }
+    sel.innerHTML = options.join('');
   }
 
   async function loadManifest() {
-    const { manifestStatus, manifestPath } = els();
     try {
+      setStatus(tabStory, 'Manifest: đang tải...');
       const json = await fetchJSON(PATHS.manifest);
-      AppState.data.manifestItems = normalizeManifestItems(json);
 
-      setText(manifestPath, PATHS.manifest);
-      setText(
-        manifestStatus,
-        AppState.data.manifestItems.length
-          ? `Manifest: OK (${AppState.data.manifestItems.length} truyện)`
-          : "Manifest rỗng / sai format"
-      );
+      const items = Array.isArray(json) ? json : (Array.isArray(json.items) ? json.items : []);
+      StoryState.manifestItems = items.map((it) => ({
+        id: it.id ?? it.storyId ?? it.code ?? '',
+        title: it.title ?? it.name ?? '',
+        file: it.file ?? it.path ?? it.href ?? it.url ?? '',
+        raw: it,
+      }));
 
       renderManifestSelect();
-      console.log("[XNC] Loaded manifest items:", AppState.data.manifestItems.length, "from", PATHS.manifest);
-    } catch (err) {
-      setText(manifestPath, PATHS.manifest);
-      setText(manifestStatus, `Manifest lỗi: ${String(err.message || err)}`);
-      console.error("[XNC] loadManifest error:", err);
-      alert(`Load manifest lỗi: ${String(err.message || err)}`);
+      setStatus(tabStory, `Manifest: OK (${StoryState.manifestItems.length} truyện)`);
+    } catch (e) {
+      console.error('[XNC] loadManifest error', e);
+      setStatus(tabStory, `Manifest: lỗi (${e.message})`);
     }
   }
 
-  /* =========================
-   *  LOAD STORY FROM SELECT
-   * ========================= */
-  function setStoryToUI({ id, title, rawText }) {
-    const { storyId, storyTitle, storyContent } = els();
-    if (storyId) storyId.value = id || "";
-    if (storyTitle) storyTitle.value = title || "";
-    if (storyContent) storyContent.value = rawText || "";
+  // =========================
+  // Load story from manifest selection
+  // =========================
+  async function loadStoryFromSelected() {
+    const sel = $(tabStory, '#story-select');
+    const fileValue = sel?.value ?? '';
+    if (!fileValue) {
+      alert('Bạn chưa chọn truyện trong dropdown.');
+      return;
+    }
 
-    AppState.story.id = id || "";
-    AppState.story.title = title || "";
-    AppState.story.rawText = rawText || "";
-  }
+    const storyPath = toSubstancePath(fileValue);
 
-  function updateStoryPreview(extra = {}) {
-    const { jsonOutput } = els();
-    if (!jsonOutput) return;
+    try {
+      const story = await fetchJSON(storyPath);
 
-    const payload = {
-      loadedFrom: AppState.story.loadedFrom || "",
-      storyId: AppState.story.id || "",
-      title: AppState.story.title || "",
-      textLen: (AppState.story.rawText || "").length,
-      selectedCharacters: [...AppState.ui.selectedCharIds],
-      ...extra,
-    };
-    jsonOutput.textContent = prettyJson(payload);
-  }
+      // Accept both formats:
+      // A) { id,title,story,characters:[...] }
+      // B) { storyId,title,content,characters:[...] }
+      const id = (story.id ?? story.storyId ?? story.code ?? '').toString().trim();
+      const title = (story.title ?? story.name ?? '').toString().trim();
+      const rawText =
+        (story.story ?? story.content ?? story.story_text ?? story.storyText ?? '').toString();
 
-  function autoSelectCharactersFromStory(storyJson) {
-    // storyJson.characters may be: ["bolo", "Ba-La", ...] or [{id,label}, ...]
-    const chars = storyJson?.characters;
-    if (!chars) return;
+      StoryState.story = story;
+      StoryState.storyText = rawText;
 
-    const all = AppState.data.charactersAll;
-    const matchById = new Map(all.map((c) => [c.id, c]));
-    const matchByLabel = new Map(all.map((c) => [String(c.label || "").toLowerCase(), c]));
+      safeSetText($(tabStory, '#story-id'), id);
+      safeSetText($(tabStory, '#story-title'), title);
+      safeSetText($(tabStory, '#story-content'), rawText);
 
-    const picked = [];
-    if (Array.isArray(chars)) {
-      for (const x of chars) {
-        if (typeof x === "string") {
-          const key = x.trim();
-          const c1 = matchById.get(key);
-          const c2 = matchByLabel.get(key.toLowerCase());
-          const found = c1 || c2;
-          if (found?.id) picked.push(found.id);
-        } else if (x && typeof x === "object") {
-          const keyId = (x.id || x.char_id || "").trim();
-          const keyLabel = (x.label || x.name || "").trim();
-          const found =
-            (keyId && matchById.get(keyId)) ||
-            (keyLabel && matchByLabel.get(keyLabel.toLowerCase())) ||
-            null;
-          if (found?.id) picked.push(found.id);
+      // Apply character selection from story.characters if present
+      StoryState.selectedCharIds.clear();
+      const chars = Array.isArray(story.characters) ? story.characters : [];
+      if (chars.length) {
+        // Support either ids or labels
+        for (const x of chars) {
+          const s = (x ?? '').toString().trim();
+          if (!s) continue;
+          if (StoryState.charactersById.has(s)) {
+            StoryState.selectedCharIds.add(s);
+            continue;
+          }
+          const byLabel = StoryState.charactersByLabel.get(norm(s));
+          if (byLabel) StoryState.selectedCharIds.add(byLabel.id);
         }
       }
-    }
 
-    // Only auto-select if it finds anything meaningful; do not wipe user's existing selection.
-    if (picked.length) {
-      picked.forEach((id) => AppState.ui.selectedCharIds.add(id));
-      updateSelectedCount();
-      renderParticipants();
-    }
+      // If story has no characters list, keep current UI selection as-is
+      renderParticipantsList();
 
-    console.log("[XNC] Auto-selected characters:", picked.length, picked);
-  }
+      // preview
+      const preview = $(tabStory, '#story-json-output');
+      if (preview) {
+        preview.textContent = JSON.stringify(
+          { loadedFrom: storyPath, storyId: id, title },
+          null,
+          2
+        );
+      }
 
-  async function loadSelectedStory() {
-    const { storySelect } = els();
-    if (!storySelect) {
-      alert("Không tìm thấy dropdown chọn truyện (storySelect).");
-      return;
-    }
-
-    const fileValue = (storySelect.value || "").trim();
-    if (!fileValue) {
-      alert("Bạn chưa chọn truyện trong dropdown.");
-      return;
-    }
-
-    // IMPORTANT: remember currently selected file
-    AppState.ui.currentStoryFile = fileValue;
-
-    const url = normalizeStoryFileToUrl(fileValue);
-    try {
-      console.log("[XNC] Loading story from:", url);
-      const storyJson = await fetchJSON(url);
-
-      // Accept many story json schemas:
-      // {id,title,story|rawText|content|text, characters}
-      const id = storyJson.id || storyJson.storyId || "";
-      const title = storyJson.title || storyJson.name || "";
-      const rawText =
-        storyJson.story ||
-        storyJson.rawText ||
-        storyJson.content ||
-        storyJson.text ||
-        storyJson.story_text ||
-        "";
-
-      AppState.story.loadedFrom = url;
-      AppState.story.json = storyJson;
-
-      setStoryToUI({ id, title, rawText });
-      autoSelectCharactersFromStory(storyJson);
-
-      updateStoryPreview({ loadedFrom: url, storyId: id, title });
-
-      console.log("[XNC] Story loaded OK:", { id, title, textLen: rawText.length });
-    } catch (err) {
-      console.error("[XNC] loadSelectedStory error:", err);
-      alert(`Load truyện lỗi: ${String(err.message || err)}`);
+      console.log('[XNC] Story loaded OK from:', storyPath, { id, title, textLen: rawText.length });
+    } catch (e) {
+      console.error('[XNC] loadStoryFromSelected error', e);
+      alert(`Load truyện lỗi: ${e.message}`);
     }
   }
 
-  /* =========================
-   *  SPLIT SCENES (placeholder hook)
-   *  - This is where your existing split logic should run.
-   *  - Critical fix: always read from the correct textarea (multi-id tolerant)
-   * ========================= */
-  function getStoryTextForSplit() {
-    const { storyContent } = els();
-    const text = (storyContent && storyContent.value) ? storyContent.value : "";
-    return (text || "").trim();
+  // =========================
+  // Scene splitting (simple, robust)
+  // =========================
+  function parseStoryToScenes(text) {
+    const lines = (text ?? '').split(/\r?\n/);
+    const scenes = [];
+    let cur = null;
+
+    const pushCur = () => {
+      if (cur && (cur.rawLines.length || cur.title)) scenes.push(cur);
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+
+      const mScene = line.match(/^\*?\*?\[Scene:\s*(.+?)\]\*?\*?$/i);
+      if (mScene) {
+        pushCur();
+        cur = {
+          id: `S${String(scenes.length + 1).padStart(2, '0')}`,
+          title: mScene[1].trim(),
+          rawLines: [],
+        };
+        continue;
+      }
+
+      if (!cur) {
+        // Anything before first scene becomes S00 Intro
+        cur = { id: 'S00', title: 'Intro', rawLines: [] };
+      }
+
+      cur.rawLines.push(line);
+    }
+
+    pushCur();
+
+    // convert each scene to frames/lines
+    return scenes.map((s) => {
+      const frames = [];
+      let order = 1;
+
+      for (const raw of s.rawLines) {
+        // SFX
+        const mSfx = raw.match(/^\*?\*?\[SFX:\s*(.+?)\]\*?\*?$/i);
+        if (mSfx) {
+          frames.push({
+            type: 'sfx',
+            order: order++,
+            text: mSfx[1].trim(),
+          });
+          continue;
+        }
+
+        // Dialogue: **Name:** text  OR  Name: text
+        const mDlg = raw.match(/^\*?\*?([^:*]+?)\*?\*?\s*:\s*(.+)$/);
+        if (mDlg) {
+          const speakerLabel = mDlg[1].trim();
+          const text = mDlg[2].trim();
+
+          // map speaker to id if possible
+          const byLabel = StoryState.charactersByLabel.get(norm(speakerLabel));
+          const charId = byLabel?.id ?? '';
+          frames.push({
+            type: 'dialogue',
+            order: order++,
+            charId,
+            charLabel: speakerLabel,
+            text,
+          });
+          continue;
+        }
+
+        // Fallback narration
+        frames.push({
+          type: 'narration',
+          order: order++,
+          text: raw,
+        });
+      }
+
+      return {
+        id: s.id,
+        title: s.title,
+        frames,
+      };
+    });
   }
 
   function splitScenesFromStory() {
-    const text = getStoryTextForSplit();
-    if (!text) {
-      alert("Bạn chưa có nội dung truyện.");
+    const content = ($(tabStory, '#story-content')?.value ?? '').toString();
+    if (!content.trim()) {
+      alert('Bạn chưa có nội dung truyện.');
       return;
     }
 
-    if (AppState.ui.selectedCharIds.size < 1) {
-      alert("Bạn cần chọn ít nhất 1 nhân vật tham gia.");
-      return;
+    const scenes = parseStoryToScenes(content);
+    StoryState.scenes = scenes;
+
+    // Show preview JSON
+    const preview = $(tabStory, '#story-json-output');
+    if (preview) {
+      preview.textContent = JSON.stringify(
+        {
+          storyId: ($(tabStory, '#story-id')?.value ?? '').toString().trim(),
+          title: ($(tabStory, '#story-title')?.value ?? '').toString().trim(),
+          charactersSelected: Array.from(StoryState.selectedCharIds),
+          scenes,
+        },
+        null,
+        2
+      );
     }
 
-    // IMPORTANT: keep state consistent
-    AppState.story.rawText = text;
-
-    // >>> TODO: Plug your real splitter here <<<
-    // For now, just preview that it passed validations.
-    updateStoryPreview({
-      ok: true,
-      action: "splitScenesFromStory",
-      storyTextLen: text.length,
-      selectedCount: AppState.ui.selectedCharIds.size,
-    });
-
-    console.log("[XNC] splitScenesFromStory OK. textLen:", text.length);
-  }
-
-  /* =========================
-   *  EVENTS
-   * ========================= */
-  function bindEvents() {
-    const {
-      reloadManifestBtn,
-      loadStoryBtn,
-      btnSelectAll,
-      btnClearChars,
-      charSearch,
-      splitScenesBtn,
-      storySelect,
-      storyId,
-      storyTitle,
-      storyContent,
-    } = els();
-
-    if (reloadManifestBtn) reloadManifestBtn.addEventListener("click", loadManifest);
-    if (loadStoryBtn) loadStoryBtn.addEventListener("click", loadSelectedStory);
-
-    if (btnSelectAll) btnSelectAll.addEventListener("click", selectAllCharacters);
-    if (btnClearChars) btnClearChars.addEventListener("click", clearAllCharacters);
-
-    if (charSearch) charSearch.addEventListener("input", renderParticipants);
-
-    if (splitScenesBtn) splitScenesBtn.addEventListener("click", splitScenesFromStory);
-
-    // Keep preview live when user edits inputs manually
-    if (storySelect) {
-      storySelect.addEventListener("change", () => {
-        AppState.ui.currentStoryFile = (storySelect.value || "").trim();
-      });
+    // Render a simple manifest UI list if present
+    const scenesOut = $(tabStory, '#scenes-output');
+    if (scenesOut) {
+      scenesOut.innerHTML = scenes
+        .map((s) => {
+          return `
+            <div style=\"border:1px solid #e7e7e7;border-radius:12px;padding:10px;margin:10px 0;background:#fff\">
+              <div style=\"display:flex;justify-content:space-between;gap:12px;align-items:flex-start\">
+                <div>
+                  <div style=\"font-weight:800\">${s.id} — ${escapeHtml(s.title)}</div>
+                  <div style=\"font-size:12px;opacity:.75\">Frames: ${s.frames.length}</div>
+                </div>
+              </div>
+              <details style=\"margin-top:8px\">\n<summary style=\"cursor:pointer\">Xem frames (${s.frames.length})</summary>\n
+                <div style=\"margin-top:8px;display:flex;flex-direction:column;gap:6px\">\n
+                  ${s.frames
+                    .map((f) => {
+                      if (f.type === 'dialogue') {
+                        return `<div style=\"font-size:13px\"><b>${escapeHtml(f.charLabel)}</b>: ${escapeHtml(f.text)}</div>`;
+                      }
+                      if (f.type === 'sfx') {
+                        return `<div style=\"font-size:13px\"><i>[SFX]</i> ${escapeHtml(f.text)}</div>`;
+                      }
+                      return `<div style=\"font-size:13px\">${escapeHtml(f.text)}</div>`;
+                    })
+                    .join('')}\n
+                </div>\n
+              </details>\n
+            </div>
+          `;
+        })
+        .join('');
     }
-    if (storyId) storyId.addEventListener("input", () => updateStoryPreview({}));
-    if (storyTitle) storyTitle.addEventListener("input", () => updateStoryPreview({}));
-    if (storyContent) storyContent.addEventListener("input", () => {
-      AppState.story.rawText = storyContent.value || "";
-      updateStoryPreview({});
-    });
+
+    console.log('[XNC] Scenes created:', scenes.length);
   }
 
-  /* =========================
-   *  INIT
-   * ========================= */
+  function escapeHtml(s) {
+    return (s ?? '').toString()
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('\"', '&quot;')
+      .replaceAll(\"'\", '&#39;');
+  }
+
+  // =========================
+  // Bind events (Tab 1 only)
+  // =========================
+  function bindStoryTabEvents() {
+    // manifest buttons
+    $(tabStory, '#reload-manifest-btn')?.addEventListener('click', loadManifest);
+    $(tabStory, '#load-story-btn')?.addEventListener('click', loadStoryFromSelected);
+
+    // local story save/load (if your HTML has them)
+    $(tabStory, '#split-scenes-btn')?.addEventListener('click', splitScenesFromStory);
+
+    setupParticipantsEvents();
+  }
+
+  // =========================
+  // Init
+  // =========================
   async function init() {
     try {
+      bindStoryTabEvents();
       await loadCharacters();
-      renderParticipants();
       await loadManifest();
-      bindEvents();
-
-      updateStoryPreview({ init: "OK" });
-      console.log("[XNC] Init OK");
-    } catch (err) {
-      console.error("[XNC] init error:", err);
-      alert(`Init lỗi: ${String(err.message || err)}`);
+      console.log('[XNC] Init OK');
+    } catch (e) {
+      console.error('[XNC] Init error', e);
     }
   }
 
-  // Start after DOM ready
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
+  document.addEventListener('DOMContentLoaded', init);
 })();
