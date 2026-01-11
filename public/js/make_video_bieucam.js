@@ -122,6 +122,33 @@ function renderCharacterList() {
     box.appendChild(div);
   });
 }
+//-------------loadstory--------------
+async function loadStory(file) {
+  try {
+    console.log('[XNC] loadStory:', file);
+
+    const data = await fetchJSON(file);
+
+    appState.currentStory = data;
+
+    // Đổ dữ liệu vào form
+    const idInput = document.getElementById('storyId');
+    const titleInput = document.getElementById('storyTitle');
+    const textInput = document.getElementById('storyText');
+
+    if (idInput) idInput.value = data.id || '';
+    if (titleInput) titleInput.value = data.title || '';
+    if (textInput) {
+      // ưu tiên field "story", fallback "idea"
+      textInput.value = data.story || data.idea || '';
+    }
+
+    console.log('[XNC] Story loaded OK:', data.id);
+  } catch (err) {
+    console.error('[XNC] loadStory ERROR', err);
+    alert('Không load được file truyện');
+  }
+}
 
 /* =========================
    INIT
