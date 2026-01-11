@@ -201,7 +201,25 @@
     "label": "Hết hồn té xỉu",
     "desc_en": "eyes rolling back, body Limp and falling backward, arms spread out, unconscious but comical expression",
     "intensity": "very_high"
+  },
+  {
+    "id": "climbing_tree_agile",
+    "label": "Leo cây thoăn thoắt",
+    "desc_en": "climbing a fruit tree with agile movements, one hand grabbing a branch, feet pushing off the trunk, looking upwards determinedly",
+    "intensity": "high"
+  },
+  {
+    "id": "sitting_on_branch",
+    "label": "Ngồi vắt vẻo trên cành",
+    "desc_en": "sitting casually on a sturdy tree branch, legs dangling in the air, looking around sneakily to check for owners, holding a small sack",
+    "intensity": "medium"
+  },
+  {
+    "id": "picking_fruit_stealthy",
+    "label": "Lén lút hái trái",
+    "desc_en": "reaching out a hand to pluck a ripe fruit from the branch, other hand holding a burlap bag open, focused and quiet expression",
+    "intensity": "medium"
   }
-  
   ]
 }
+
