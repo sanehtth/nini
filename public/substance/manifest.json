@@ -1,32 +1,15 @@
 {
   "version": 1,
-  "updatedAt": "2026-01-10T00:00:00Z",
-  "stories": [
-    {
-      "id": "XNC-20251226-0004",
-      "title": "bai kiem tra cuoi ky",
-      "file": "XNC-20251226-0004.json",
-      "dnaStyle": "funny",
-      "characters": [
-        "Bô-Lô",
-        "Ba-La",
-        "Tùm-Lum",
-        "Tùm-La"
-      ],
-      "updatedAt": "2025-12-26T10:43:32.490Z"
-    },
+  "items": [
     {
       "id": "XNC-20260110-0005",
-      "title": "Nhắm mắt..TU luôn",
-      "file": "XNC-20251226-0004.json",
-      "dnaStyle": "funny",
-      "characters": [
-        "Bô-Lô",
-        "Ba-La",
-        "Tùm-Lum",
-        "Tùm-La"
-      ],
-      "updatedAt": "2026-01-10T12:50:12.016Z"
+      "title": "Nhắm mắt.. TU luôn",
+      "file": "/substance/XNC-20260110-0005.json"
+    },
+    {
+      "id": "XNC-20251226-0004",
+      "title": "bài kiểm tra cuối kỳ",
+      "file": "/substance/XNC-20251226-0004.json"
     }
   ]
 }
