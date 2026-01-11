@@ -88,22 +88,19 @@ async function loadManifest() {
 }
 
 function renderManifestSelect(items) {
-  const sel = $("storySelect");
+  const sel = document.getElementById("storySelect");
   if (!sel) return;
 
-  // IMPORTANT: option.value = item.file (full path).
   sel.innerHTML =
     `<option value="">-- Chọn truyện --</option>` +
-    items
-      .map((it) => {
-        const label = `${it.id}${it.title ? " • " + it.title : ""}`;
-        // data-id/title useful for filling UI, but value MUST be "file"
-        return `<option value="${escapeHtmlAttr(it.file)}"
-                  data-id="${escapeHtmlAttr(it.id)}"
-                  data-title="${escapeHtmlAttr(it.title)}">${escapeHtmlText(label)}</option>`;
-      })
-      .join("");
+    items.map(it => {
+      // BẮT BUỘC: value hoặc data-file phải là "XNC-....json"
+      const file = (it.file || `${it.id}.json`).replace(/^\/+/, "").split("/").pop();
+      const label = `${it.id} • ${it.title || ""}`.trim();
+      return `<option value="${file}" data-file="${file}">${label}</option>`;
+    }).join("");
 }
+
 
 /** -----------------------------
  *  Characters (participants list)
@@ -195,52 +192,126 @@ function updateSelectedCount() {
  *  Key rule: fetch EXACTLY sel.value (which is item.file)
  *  ----------------------------- */
 async function loadSelectedStory() {
-  const sel = $("storySelect");
-  const file = (sel?.value || "").trim();
+  // ===== helpers: find element by multiple possible ids =====
+  const pickEl = (...ids) => {
+    for (const id of ids) {
+      const el = document.getElementById(id);
+      if (el) return el;
+    }
+    return null;
+  };
 
-  if (!file) {
+  // ===== UI refs (tự bắt theo nhiều tên id để khỏi lệch) =====
+  const sel = pickEl("storySelect", "storySelectEl", "storyDropdown");
+  const btn = pickEl("loadStoryBtn", "btnLoadStory", "loadStoryButton");
+  const storyIdEl = pickEl("storyId", "storyIdInput", "story_id");
+  const storyTitleEl = pickEl("storyTitle", "storyTitleInput", "story_title");
+  const storyTextEl = pickEl("storyRawText", "storyText", "storyContent", "storyTextarea");
+
+  if (!sel) {
+    alert("Không tìm thấy dropdown #storySelect");
+    return;
+  }
+
+  // ===== lấy file từ option (ưu tiên data-file) =====
+  const opt = sel.options[sel.selectedIndex];
+  const rawFile = (opt && (opt.dataset.file || opt.getAttribute("data-file") || opt.value)) || "";
+
+  if (!rawFile || rawFile === "--" || rawFile.includes("Chọn truyện")) {
     alert("Bạn chưa chọn truyện trong dropdown.");
     return;
   }
 
+  // ===== chuẩn hoá file name: chỉ lấy tên file, không cho phép path lạ =====
+  // Ví dụ hợp lệ: "XNC-20260110-0005.json"
+  const fileName = rawFile.split("/").pop().trim();
+
+  if (!fileName.toLowerCase().endsWith(".json")) {
+    alert(`File truyện không hợp lệ (phải .json): ${fileName}`);
+    return;
+  }
+
+  // ===== đường dẫn cố định theo yêu cầu của bạn =====
+  const url = `/substance/${fileName}`;
+
+  // ===== disable nút khi load =====
+  if (btn) btn.disabled = true;
+
   try {
-    const storyJson = await fetchJSON(file);
-    // 1) ID + Title
-$("storyId").value = storyJson.storyId || storyJson.id || "";
-$("storyTitle").value = storyJson.title || storyJson.name || "";
+    console.log("[XNC] Loading story from:", url);
 
-// 2) Nội dung truyện (raw story text)
-const raw =
-  storyJson.rawText ||
-  storyJson.raw_text ||
-  storyJson.story ||
-  storyJson.content ||
-  storyJson.text ||
-  "";
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Fetch failed: ${url} -> ${res.status}`);
 
-$("storyRawText").value = raw;
+    const j = await res.json();
 
-// 3) Nếu file truyện có sẵn danh sách nhân vật => auto tick luôn
-if (Array.isArray(storyJson.characters) && storyJson.characters.length) {
-  // characters có thể là ["bolo","bala"] hoặc [{id,label}]
-  const ids = new Set(
-    storyJson.characters.map((c) => (typeof c === "string" ? c : (c.id || c.char_id || ""))).filter(Boolean)
-  );
+    // ===== map đúng structure bạn đang có =====
+    const sid = j.storyId || j.id || "";
+    const stitle = j.title || j.name || "";
+    const stext = j.story || j.content || j.rawText || j.text || "";
 
-  // tick checkbox theo ids
-  document.querySelectorAll('input[type="checkbox"][data-char-id]').forEach((cb) => {
-    cb.checked = ids.has(cb.getAttribute("data-char-id"));
-  });
+    if (storyIdEl) storyIdEl.value = sid;
+    if (storyTitleEl) storyTitleEl.value = stitle;
 
-  updateSelectedCount(); // hàm update “Đã chọn: …”
-}
+    if (storyTextEl) {
+      storyTextEl.value = stext;
+      storyTextEl.dispatchEvent(new Event("input", { bubbles: true }));
+      storyTextEl.dispatchEvent(new Event("change", { bubbles: true }));
+    } else {
+      console.warn("[XNC] Không tìm thấy textarea nội dung. Hãy kiểm tra id của ô 'Nội dung'.");
+    }
 
-  } catch (e) {
-    console.error("[XNC] loadSelectedStory error:", e);
-    alert(`Load truyện lỗi: Fetch failed: ${file} -> ${String(e.message || e)}`);
+    // ===== auto tick nhân vật nếu file truyện có characters =====
+    // characters có thể: ["bolo","bala"] hoặc [{id:"bolo"}...]
+    const chars = Array.isArray(j.characters) ? j.characters : [];
+    if (chars.length) {
+      const selectedIds = new Set(
+        chars.map(c => (typeof c === "string" ? c : (c.id || c.char_id || c.charId || ""))).filter(Boolean)
+      );
+
+      // checkbox phải có data-char-id="bolo" (hoặc value="bolo")
+      const checkboxes = document.querySelectorAll('input[type="checkbox"][data-char-id], input[type="checkbox"][name="participant"], input[type="checkbox"].participant');
+      let hit = 0;
+
+      checkboxes.forEach(cb => {
+        const cid = cb.dataset.charId || cb.getAttribute("data-char-id") || cb.value || "";
+        if (!cid) return;
+        const on = selectedIds.has(cid);
+        cb.checked = on;
+        if (on) hit++;
+      });
+
+      // nếu bạn có hàm update counter, gọi thử
+      if (typeof updateSelectedCount === "function") updateSelectedCount();
+
+      console.log("[XNC] Auto-selected characters:", hit, Array.from(selectedIds));
+    }
+
+    // ===== debug preview =====
+    if (typeof setStoryJSONPreview === "function") {
+      setStoryJSONPreview({
+        loadedFrom: url,
+        storyId: sid,
+        title: stitle,
+        hasText: !!stext,
+        characters: j.characters || []
+      });
+    } else {
+      // fallback: nếu bạn có vùng preview <pre id="previewBox">
+      const pre = document.getElementById("previewBox") || document.getElementById("jsonPreview");
+      if (pre) pre.textContent = JSON.stringify({ loadedFrom: url, storyId: sid, title: stitle }, null, 2);
+    }
+
+    console.log("[XNC] Story loaded OK:", { sid, stitle, textLen: (stext || "").length });
+  } catch (err) {
+    console.error("[XNC] loadSelectedStory error:", err);
+    alert(`Load truyện lỗi: ${err.message}`);
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
 
+//=========================================
 function applyParticipantsFromStory(charactersField) {
   // charactersField can be:
   // - ["Bô-Lô","Ba-La"...] (labels)
