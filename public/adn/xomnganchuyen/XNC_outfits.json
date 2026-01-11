@@ -144,8 +144,8 @@
       "allow_signature_color": true,
       "variants": {
         "male": {
-          "base_desc_vi": "Áo bà ba tối màu, quần tối màu, quấn khăn rằn, đội nón cũ; vác bao tải có gà lòi đầu; tuyệt đối không đồ sọc tù kiểu Tây.",
-          "base_desc_en": "Vietnamese countryside thief outfit: dark ao ba ba style shirt, dark pants, khăn rằn scarf, old cap; carries a burlap sack with a chicken head peeking out; no Western prison stripes."
+          "base_desc_vi": "Áo bà ba tối màu, quần tối màu, đeo dãi lụa màu đen khoét 2 lỗ ở mắt, đội nón cũ; vác bao tải có gà lòi đầu; tuyệt đối không đồ sọc tù kiểu Tây.",
+          "base_desc_en": "Vietnamese countryside thief outfit: dark ao ba ba style shirt, dark pants, wears black eye patches with eye holes, old cap; carries a burlap sack with a chicken head peeking out; no Western prison stripes."
         }
       }
     },
