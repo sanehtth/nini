@@ -30,6 +30,64 @@ async function fetchJSON(url) {
 function qs(id) {
   return document.getElementById(id);
 }
+/* =========================
+   MANIFEST
+========================= */
+async function loadManifest() {
+  try {
+    const data = await fetchJSON('/substance/manifest.json');
+
+    if (!data || !Array.isArray(data.items)) {
+      alert('Manifest sai format');
+      console.error('Manifest invalid', data);
+      return;
+    }
+
+    appState.manifest = data.items;
+    renderStorySelect();
+
+    console.log('[XNC] Loaded manifest:', data.items.length);
+  } catch (e) {
+    console.error('[XNC] loadManifest ERROR', e);
+    alert('Không load được manifest');
+  }
+}
+function renderStorySelect() {
+  const sel = qs('storySelect');
+  if (!sel) return;
+
+  sel.innerHTML = '<option value="">-- Chọn truyện --</option>';
+
+  appState.manifest.forEach(st => {
+    const opt = document.createElement('option');
+    opt.value = st.file;
+    opt.textContent = `${st.id} – ${st.title}`;
+    sel.appendChild(opt);
+  });
+}
+async function loadStory(file) {
+  try {
+    console.log('[XNC] loadStory:', file);
+
+    const data = await fetchJSON(file);
+
+    qs('storyId').value = data.id || '';
+    qs('storyTitle').value = data.title || '';
+    qs('storyText').value = data.story || data.idea || '';
+
+    appState.storyDraft = {
+      id: data.id,
+      title: data.title,
+      story: data.story || data.idea || '',
+      characters: data.characters || []
+    };
+
+    console.log('[XNC] Story loaded OK:', data.id);
+  } catch (e) {
+    console.error('[XNC] loadStory ERROR', e);
+    alert('Không load được file truyện');
+  }
+}
 
 /* =========================
    CHARACTERS
@@ -242,6 +300,17 @@ function downloadJSON(data, filename) {
 /* =========================
    BIND UI
 ========================= */
+qs('reloadManifestBtn')?.addEventListener('click', loadManifest);
+
+qs('loadStoryBtn')?.addEventListener('click', () => {
+  const sel = qs('storySelect');
+  if (!sel || !sel.value) {
+    alert('Chưa chọn truyện');
+    return;
+  }
+  loadStory(sel.value);
+});
+
 function bindUI() {
   qs('saveLocalBtn')?.addEventListener('click', saveStoryLocal);
   qs('exportStoryBtn')?.addEventListener('click', exportStoryJSON);
@@ -257,11 +326,13 @@ function bindUI() {
 async function init() {
   try {
     await loadCharacters();
+    await loadManifest();   // 👈 THIẾU CÁI NÀY
     bindUI();
     console.log('[XNC] CORE READY');
   } catch (e) {
     console.error('[XNC] INIT ERROR', e);
   }
 }
+
 
 document.addEventListener('DOMContentLoaded', init);
