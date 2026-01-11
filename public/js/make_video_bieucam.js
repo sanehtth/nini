@@ -205,30 +205,36 @@ async function loadSelectedStory() {
 
   try {
     const storyJson = await fetchJSON(file);
-    AppState.loadedStoryFile = file;
-    AppState.loadedStoryJson = storyJson;
+    // 1) ID + Title
+$("storyId").value = storyJson.storyId || storyJson.id || "";
+$("storyTitle").value = storyJson.title || storyJson.name || "";
 
-    // Fill inputs
-    setValue("storyId", storyJson.id || storyJson.storyId || "");
-    setValue("storyTitle", storyJson.title || storyJson.name || "");
+// 2) Nội dung truyện (raw story text)
+const raw =
+  storyJson.rawText ||
+  storyJson.raw_text ||
+  storyJson.story ||
+  storyJson.content ||
+  storyJson.text ||
+  "";
 
-    const rawText =
-      storyJson.story ||
-      storyJson.text ||
-      storyJson.content ||
-      storyJson.rawText ||
-      "";
-    setValue("storyRaw", rawText);
+$("storyRawText").value = raw;
 
-    // Preselect participants if story has characters
-    if (Array.isArray(storyJson.characters) && storyJson.characters.length) {
-      applyParticipantsFromStory(storyJson.characters);
-    }
+// 3) Nếu file truyện có sẵn danh sách nhân vật => auto tick luôn
+if (Array.isArray(storyJson.characters) && storyJson.characters.length) {
+  // characters có thể là ["bolo","bala"] hoặc [{id,label}]
+  const ids = new Set(
+    storyJson.characters.map((c) => (typeof c === "string" ? c : (c.id || c.char_id || ""))).filter(Boolean)
+  );
 
-    // Optional: show preview
-    setPreviewJSON({ loadedFrom: file, storyId: storyJson.id || storyJson.storyId || "" });
+  // tick checkbox theo ids
+  document.querySelectorAll('input[type="checkbox"][data-char-id]').forEach((cb) => {
+    cb.checked = ids.has(cb.getAttribute("data-char-id"));
+  });
 
-    console.log("[XNC] Story loaded OK from:", file);
+  updateSelectedCount(); // hàm update “Đã chọn: …”
+}
+
   } catch (e) {
     console.error("[XNC] loadSelectedStory error:", e);
     alert(`Load truyện lỗi: Fetch failed: ${file} -> ${String(e.message || e)}`);
