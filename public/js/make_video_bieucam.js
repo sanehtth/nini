@@ -1,649 +1,358 @@
-/* ============================
-   XNC - make_video_bieucam.js
-   Clean rebuild: manifest + load story + participants + split scenes
-   ============================ */
+/* =========================================================
+   XNC – Tab 1: Load truyện từ Substance Manifest + Chọn nhân vật
+   FIX:
+   - manifest path cố định: /substance/manifest.json
+   - characters path cố định: /adn/xomnganchuyen/XNC_characters.json
+   - option.value = file path thật => không còn load nhầm truyện (005 -> 004)
+   - chọn nhân vật bằng checkbox list => đã chọn thì lưu không còn báo lỗi
+   ========================================================= */
 
-(() => {
-  // ---------- Config paths (URL when deployed) ----------
+(function () {
+  "use strict";
+
   const PATHS = {
-    // user said: public/adn/xomnganchuyen/XNC_characters.json
-    characters: "/adn/xomnganchuyen/XNC_characters.json",
-
-    // user said: public/substance/manifest.json  => URL: /substance/manifest.json
     manifest: "/substance/manifest.json",
+    characters: "/adn/xomnganchuyen/XNC_characters.json",
+  };
+
+  const App = {
+    manifestItems: [],
+    charactersAll: [],
+    characterMap: {},
   };
 
   // ---------- DOM helpers ----------
   const $ = (id) => document.getElementById(id);
-
-  // ---------- State ----------
-  const AppState = {
-    data: {
-      charactersAll: [], // [{id,label,gender,role}]
-      manifestItems: [], // normalized [{id,title,file,updatedAt}]
-    },
-    story: {
-      id: "",
-      title: "",
-      rawText: "",
-      characters: [], // selected participant IDs
-      storyFile: "",  // loaded file path
-    },
-    scene_manifest: null,  // built after split
-    ui: {
-      currentSceneIdx: 0,
-      currentFrameIdx: 0,
-    }
-  };
-
-  // ---------- Local keys ----------
-  const LOCAL_STORY_KEY = "xnc_local_story_v1";
-  const LOCAL_DIALOGUE_KEY = "xnc_dialogue_export_v1";
-  const LOCAL_SCENE_DRAFT_KEY = "xnc_scene_manifest_draft_v1";
-
-  // ---------- Safe JSON parse ----------
-  function safeJSONParse(s) {
-    try { return JSON.parse(s); } catch { return null; }
+  function escHtml(s) {
+    return String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
-  // ---------- fetch JSON (no-cache) ----------
   async function fetchJSON(url) {
     const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error(`${url} -> ${res.status}`);
-    return await res.json();
+    if (!res.ok) throw new Error(`Fetch failed: ${url} -> ${res.status}`);
+    return res.json();
   }
 
-  // Some repos might have multiple manifest names; try first OK.
-  async function loadJSONFirstOk(urls) {
-    let lastErr = null;
-    for (const u of urls) {
-      try {
-        const json = await fetchJSON(u);
-        return { url: u, json };
-      } catch (e) {
-        lastErr = e;
-      }
+  // ---------- Characters ----------
+  function normalizeCharacter(c) {
+    // support various keys
+    const id = (c.id || c.char_id || c.code || "").trim();
+    const label = (c.label || c.name || c.title || id).trim();
+    const gender = (c.gender || "").trim();
+    const role = (c.role || c.desc || "").trim();
+    return { id, label, gender, role };
+  }
+
+  function renderParticipantsList(chars) {
+    const container = $("participantsList");
+    if (!container) {
+      console.warn("[XNC] Missing #participantsList in HTML");
+      return;
     }
-    throw lastErr || new Error("No manifest found");
-  }
+    container.innerHTML = "";
 
-  // ---------- Normalize manifest ----------
-  function normalizeManifest(json) {
-    // Accept these formats:
-    // 1) [ {id,title,file,...}, ... ]
-    // 2) { items:[...] }
-    // 3) { stories:[...] }
-    // 4) { data:[...] } or { list:[...] }
-    let arr = null;
+    chars.forEach((c) => {
+      const sub = [c.gender, c.role].filter(Boolean).join(" • ");
 
-    if (Array.isArray(json)) arr = json;
-    else if (json && Array.isArray(json.items)) arr = json.items;
-    else if (json && Array.isArray(json.stories)) arr = json.stories;
-    else if (json && Array.isArray(json.data)) arr = json.data;
-    else if (json && Array.isArray(json.list)) arr = json.list;
+      const row = document.createElement("label");
+      row.className = "participant-row";
+      row.style.display = "block";
+      row.style.padding = "8px 10px";
+      row.style.border = "1px solid #dfe6d9";
+      row.style.borderRadius = "10px";
+      row.style.margin = "8px 0";
+      row.style.background = "#f6fff1";
+      row.style.cursor = "pointer";
 
-    if (!Array.isArray(arr)) return [];
+      row.innerHTML = `
+        <input class="xnc-participant" type="checkbox"
+               value="${escHtml(c.id)}"
+               data-label="${escHtml(c.label)}"
+               style="margin-right:10px; transform: translateY(1px);">
+        <b>${escHtml(c.label)}</b>
+        <div style="font-size:12px; opacity:0.75; margin-left:26px;">
+          ${escHtml(sub || "")}${sub ? " • " : ""}${escHtml(c.id)}
+        </div>
+      `;
 
-    const norm = arr
-      .map((x) => {
-        const id = x?.id || x?.storyId || x?.story_id || "";
-        const title = x?.title || x?.name || "";
-        const file = x?.file || x?.path || x?.url || "";
-        const updatedAt = x?.updatedAt || x?.updated_at || x?.time || "";
-        if (!id || !file) return null;
-        // force URL to start with '/'
-        const fileUrl = file.startsWith("/") ? file : ("/" + file.replace(/^\.?\//, ""));
-        return { id, title, file: fileUrl, updatedAt };
-      })
-      .filter(Boolean);
+      container.appendChild(row);
+    });
 
-    return norm;
-  }
-
-  // ---------- Load characters ----------
-  async function loadCharacters() {
-    const json = await fetchJSON(PATHS.characters);
-    const chars = Array.isArray(json.characters) ? json.characters : (Array.isArray(json) ? json : []);
-    // Normalize minimal fields
-    AppState.data.charactersAll = chars.map((c, i) => ({
-      id: c.id || c.char_id || c.key || c.slug || `${i}`,
-      label: c.label || c.name || c.title || c.id || `NV-${i}`,
-      gender: c.gender || "",
-      role: c.role || c.desc || "",
-    }));
-
-    console.log("[XNC] Loaded characters:", AppState.data.charactersAll.length);
-  }
-
-  // ---------- Participants UI ----------
-  function getSelectedSet() {
-    return new Set(AppState.story.characters || []);
-  }
-
-  function updateSelectedCount() {
-    $("participantsSelectedCount").textContent = String((AppState.story.characters || []).length);
-  }
-
-  function renderParticipantsList(filterText = "") {
-    const listEl = $("participantsList");
-    if (!listEl) return;
-
-    const q = (filterText || "").trim().toLowerCase();
-    const selected = getSelectedSet();
-
-    const items = AppState.data.charactersAll
-      .filter(c => !q || c.label.toLowerCase().includes(q) || c.id.toLowerCase().includes(q));
-
-    listEl.innerHTML = "";
-    for (const c of items) {
-      const row = document.createElement("div");
-      row.className = "pitem";
-
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.checked = selected.has(c.id);
-      cb.addEventListener("change", () => {
-        const cur = getSelectedSet();
-        if (cb.checked) cur.add(c.id);
-        else cur.delete(c.id);
-        AppState.story.characters = Array.from(cur);
+    // highlight on change
+    container.addEventListener(
+      "change",
+      (e) => {
+        const box = e.target?.classList?.contains("xnc-participant")
+          ? e.target
+          : null;
+        if (!box) return;
+        const row = box.closest("label");
+        if (row) row.style.outline = box.checked ? "2px solid #30a46c" : "none";
         updateSelectedCount();
-      });
-
-      const info = document.createElement("div");
-      info.style.flex = "1";
-
-      const name = document.createElement("div");
-      name.className = "pname";
-      name.textContent = c.label;
-
-      const tag = document.createElement("div");
-      tag.className = "ptag";
-      tag.textContent = `${c.gender || "?"}${c.role ? " • " + c.role : ""} • ${c.id}`;
-
-      info.appendChild(name);
-      info.appendChild(tag);
-
-      row.appendChild(cb);
-      row.appendChild(info);
-      listEl.appendChild(row);
-    }
+      },
+      { passive: true }
+    );
 
     updateSelectedCount();
   }
 
-  function selectAllParticipants() {
-    AppState.story.characters = AppState.data.charactersAll.map(c => c.id);
-    renderParticipantsList($("participantsSearch").value);
+  function getSelectedParticipants() {
+    const checked = Array.from(document.querySelectorAll(".xnc-participant:checked"));
+    return checked.map((el) => ({
+      id: el.value,
+      label: el.dataset.label || el.value,
+    }));
   }
 
-  function clearParticipants() {
-    AppState.story.characters = [];
-    renderParticipantsList($("participantsSearch").value);
+  function updateSelectedCount() {
+    const el = $("participantsCount");
+    if (!el) return;
+    el.textContent = `Đã chọn: ${getSelectedParticipants().length}`;
   }
 
-  // ---------- Manifest UI ----------
-  function renderManifestSelect(items) {
-  const sel = document.getElementById("storySelect");
-  if (!sel) return;
+  function applyParticipantsFromStory(participants) {
+    // participants can be ["Bò-Lô", ...] OR [{id,label}, ...]
+    const wantIds = new Set();
+    const wantLabels = new Set();
 
-  sel.innerHTML =
-    `<option value="">-- Chọn truyện --</option>` +
-    items
+    (participants || []).forEach((p) => {
+      if (!p) return;
+      if (typeof p === "string") {
+        wantLabels.add(p.trim());
+      } else {
+        if (p.id) wantIds.add(String(p.id).trim());
+        if (p.label) wantLabels.add(String(p.label).trim());
+        if (p.name) wantLabels.add(String(p.name).trim());
+      }
+    });
+
+    const boxes = Array.from(document.querySelectorAll(".xnc-participant"));
+    boxes.forEach((b) => {
+      const id = b.value;
+      const label = b.dataset.label || "";
+      b.checked = wantIds.has(id) || wantLabels.has(label);
+
+      const row = b.closest("label");
+      if (row) row.style.outline = b.checked ? "2px solid #30a46c" : "none";
+    });
+
+    updateSelectedCount();
+  }
+
+  function bindParticipantSearch() {
+    const input = $("participantsSearch");
+    if (!input) return;
+
+    input.addEventListener("input", () => {
+      const q = input.value.trim().toLowerCase();
+      const rows = Array.from(($("participantsList")?.querySelectorAll("label") || []));
+      rows.forEach((row) => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = !q || text.includes(q) ? "block" : "none";
+      });
+    });
+  }
+
+  // ---------- Manifest + Load story ----------
+  function normalizeManifestItems(raw) {
+    // Accept formats:
+    // A) {items:[{id,title,file}, ...]}
+    // B) [{id,title,file}, ...]
+    // C) {stories:[...]} (optional)
+    const arr = Array.isArray(raw)
+      ? raw
+      : Array.isArray(raw?.items)
+      ? raw.items
+      : Array.isArray(raw?.stories)
+      ? raw.stories
+      : [];
+
+    return arr
       .map((it) => {
-        const file = it.file || "";
-        const label = `${it.id || ""} • ${it.title || ""}`;
-        return `<option value="${file}">${label}</option>`;
-      })
-      .join("");
-}
+        const id = (it.id || it.storyId || it.code || "").trim();
+        const title = (it.title || it.name || "").trim();
+        const file = (it.file || it.path || it.url || "").trim();
+        if (!id) return null;
 
+        // IMPORTANT: file path must be absolute; fallback is stable
+        const resolvedFile = file
+          ? file.startsWith("/")
+            ? file
+            : `/${file.replace(/^\.?\//, "")}`
+          : `/substance/${id}.json`;
+
+        return { id, title, file: resolvedFile };
+      })
+      .filter(Boolean);
+  }
+
+  function renderManifestSelect(items) {
+    const sel = $("storySelect");
+    if (!sel) {
+      console.warn("[XNC] Missing #storySelect in HTML");
+      return;
+    }
+    sel.innerHTML = "";
+
+    const opt0 = document.createElement("option");
+    opt0.value = "";
+    opt0.textContent = "-- Chọn truyện --";
+    sel.appendChild(opt0);
+
+    items.forEach((it) => {
+      const opt = document.createElement("option");
+
+      // KEY FIX: option.value = file path thật
+      opt.value = it.file;
+      opt.textContent = it.title ? `${it.id} • ${it.title}` : it.id;
+
+      opt.dataset.id = it.id;
+      opt.dataset.title = it.title || "";
+
+      sel.appendChild(opt);
+    });
+  }
 
   async function loadManifest() {
-    const manifestCandidates = [
-      PATHS.manifest,
-      "/substance/stories_manifest.json",
-      "/substance/story_manifest.json",
-      "../substance/manifest.json",
-      "./substance/manifest.json",
-    ];
+    const statusEl = $("manifestStatus");
+    const pathEl = $("manifestPath");
 
     try {
-      const out = await loadJSONFirstOk(manifestCandidates);
-      $("manifestPath").textContent = out.url;
+      const raw = await fetchJSON(PATHS.manifest);
+      const items = normalizeManifestItems(raw);
 
-      const items = normalizeManifest(out.json);
-      AppState.data.manifestItems = items;
-
+      App.manifestItems = items;
       renderManifestSelect(items);
 
-      if (items.length > 0) {
-        $("manifestStatus").textContent = `Manifest: OK (${items.length} truyện)`;
-      } else {
-        $("manifestStatus").textContent = "Manifest: rỗng / sai format";
-      }
+      if (statusEl) statusEl.textContent = `Manifest: OK (${items.length} truyện)`;
+      if (pathEl) pathEl.textContent = PATHS.manifest;
 
-      console.log("[XNC] Loaded manifest items:", items.length, "from", out.url);
+      console.log("[XNC] Loaded manifest:", items.length, "from", PATHS.manifest);
     } catch (e) {
-      $("manifestStatus").textContent = "Manifest: không load được";
-      $("manifestPath").textContent = PATHS.manifest;
-      console.error("[XNC] Manifest load error:", e);
+      console.error("[XNC] loadManifest error:", e);
+      App.manifestItems = [];
+      renderManifestSelect([]);
+
+      if (statusEl) statusEl.textContent = "Manifest rỗng / sai format";
+      if (pathEl) pathEl.textContent = PATHS.manifest;
+
+      alert("Không load được manifest: " + e.message);
     }
   }
 
-  // ---------- Load story from selected manifest item ----------
-  async function loadStoryFromSelected() {
-  const sel = document.getElementById("storySelect");
-  const file = sel?.value || "";
-  if (!file) {
-    alert("Bạn chưa chọn truyện trong dropdown.");
-    return;
-  }
+  async function loadSelectedStory() {
+    const sel = $("storySelect");
+    if (!sel) return;
 
-  console.log("[XNC] Loading story from:", file);
-
-  const storyJson = await fetchJSON(file); // file đã là '/substance/...json'
-  applyStoryJSONToUI(storyJson);           // hàm set id/title/story vào UI
-}
-
-
-  // ---------- Preview ----------
-  function setPreview(obj) {
-    const box = $("previewBox");
-    if (!box) return;
-    box.textContent = JSON.stringify(obj ?? {}, null, 2);
-  }
-
-  // ---------- Validate participants ----------
-  function requireAtLeastOneParticipant() {
-    const n = (AppState.story.characters || []).length;
-    if (n < 1) {
-      alert("Bạn cần chọn ít nhất 1 nhân vật tham gia.");
-      return false;
+    const file = (sel.value || "").trim();
+    if (!file) {
+      alert("Bạn chưa chọn truyện trong dropdown.");
+      return;
     }
-    return true;
+
+    const opt = sel.options[sel.selectedIndex];
+    const idFromOpt = opt?.dataset?.id || "";
+    const titleFromOpt = opt?.dataset?.title || "";
+
+    try {
+      const storyJson = await fetchJSON(file);
+
+      // Support multiple story formats:
+      const id = storyJson.id || storyJson.storyId || storyJson.story_id || idFromOpt || "";
+      const title = storyJson.title || storyJson.name || storyJson.story_title || titleFromOpt || "";
+      const rawText =
+        storyJson.story ||
+        storyJson.rawText ||
+        storyJson.text ||
+        storyJson.content ||
+        "";
+
+      // participants
+      let participants = [];
+      if (Array.isArray(storyJson.characters)) participants = storyJson.characters;
+      else if (Array.isArray(storyJson.participants)) participants = storyJson.participants;
+      else if (Array.isArray(storyJson.character_ids)) {
+        participants = storyJson.character_ids.map((cid) => ({
+          id: cid,
+          label: App.characterMap?.[cid]?.label || cid,
+        }));
+      }
+
+      // Fill UI
+      const idEl = $("storyId");
+      const titleEl = $("storyTitle");
+      const rawEl = $("storyRawText");
+
+      if (idEl) idEl.value = id;
+      if (titleEl) titleEl.value = title;
+      if (rawEl) rawEl.value = rawText;
+
+      applyParticipantsFromStory(participants);
+
+      console.log("[XNC] Story loaded:", { id, title, file });
+    } catch (e) {
+      console.error("[XNC] loadSelectedStory error:", e);
+      alert("Load truyện lỗi: " + e.message);
+    }
   }
 
-  // ---------- Simple split: scenes by [Scene: ...] blocks ----------
-  // Your story already has [Scene: ...] lines. We split into scenes and then frames by dialogue lines.
-  function parseStoryToScenes(rawText) {
-    const text = (rawText || "").replace(/\r\n/g, "\n");
-    const lines = text.split("\n");
+  // ---------- Button bindings ----------
+  function bindButtons() {
+    $("btnReloadManifest")?.addEventListener("click", loadManifest);
+    $("btnLoadStory")?.addEventListener("click", loadSelectedStory);
 
-    const scenes = [];
-    let current = { title: "Intro", rawLines: [] };
-
-    function pushCurrent() {
-      const rawBlock = current.rawLines.join("\n").trim();
-      if (!rawBlock) return;
-      scenes.push({
-        title: current.title || `Scene ${scenes.length + 1}`,
-        rawBlock,
+    $("btnSelectAllParticipants")?.addEventListener("click", () => {
+      document.querySelectorAll(".xnc-participant").forEach((b) => {
+        b.checked = true;
+        const row = b.closest("label");
+        if (row) row.style.outline = "2px solid #30a46c";
       });
-    }
-
-    for (const ln of lines) {
-      const m = ln.match(/^\s*\*\*\[Scene:\s*(.+?)\]\*\*\s*$/i) || ln.match(/^\s*\[Scene:\s*(.+?)\]\s*$/i);
-      if (m) {
-        // new scene starts
-        pushCurrent();
-        current = { title: m[1].trim(), rawLines: [ln] };
-      } else {
-        current.rawLines.push(ln);
-      }
-    }
-    pushCurrent();
-    return scenes;
-  }
-
-  function extractDialogueLines(sceneRawBlock) {
-    // Detect:
-    // **Bô-Lô:** text
-    // **Tùm-Lum:** (aside) text
-    // **[SFX: ...]**
-    const out = [];
-    const lines = (sceneRawBlock || "").split("\n").map(s => s.trim()).filter(Boolean);
-
-    let order = 0;
-    for (const ln of lines) {
-      // SFX
-      const sfx = ln.match(/^\*\*\[SFX:\s*(.+?)\]\*\*$/i) || ln.match(/^\[SFX:\s*(.+?)\]$/i);
-      if (sfx) {
-        out.push({ order: ++order, type: "sfx", char_id: "", char_label: "", text: sfx[1].trim() });
-        continue;
-      }
-
-      // Dialogue: **Name:** text
-      const dlg = ln.match(/^\*\*([^*]+?)\:\*\*\s*(.+)$/);
-      if (dlg) {
-        const label = dlg[1].trim();
-        const text = dlg[2].trim();
-
-        // map label -> char_id if possible
-        const found = AppState.data.charactersAll.find(c => c.label === label);
-        const char_id = found ? found.id : "";
-        out.push({ order: ++order, type: "dialogue", char_id, char_label: label, text });
-        continue;
-      }
-
-      // Otherwise treat as narration/title
-      out.push({ order: ++order, type: "narration", char_id: "", char_label: "", text: ln });
-    }
-
-    return out;
-  }
-
-  function buildSceneManifest() {
-    if (!requireAtLeastOneParticipant()) return;
-
-    const id = $("storyId").value.trim();
-    const title = $("storyTitle").value.trim();
-    const rawText = $("storyText").value || "";
-
-    AppState.story.id = id;
-    AppState.story.title = title;
-    AppState.story.rawText = rawText;
-
-    const scenesParsed = parseStoryToScenes(rawText);
-
-    const scenes = scenesParsed.map((sc, idx) => {
-      const sid = `S${String(idx + 1).padStart(2, "0")}`;
-      const lines = extractDialogueLines(sc.rawBlock);
-
-      // default: each scene has frames; for now create 1 frame per line (simple + controllable)
-      // You can later merge frames depending on mode.
-      const frames = lines.map((ln, j) => ({
-        id: `${sid}_F${String(j + 1).padStart(2, "0")}`,
-        note: "",
-        backgroundId: "",
-        cameraAngle: "",
-        cameraMove: "",
-        duration: 1.5,
-        actors: [],
-        lines: [ln],
-      }));
-
-      return {
-        id: sid,
-        title: sc.title || sid,
-        raw_text: sc.rawBlock,
-        note: "",
-        // default mode; user can choose per scene later
-        mode: "dialogue",
-        frames,
-      };
+      updateSelectedCount();
     });
 
-    AppState.scene_manifest = {
-      storyId: id || "",
-      storyTitle: title || "",
-      storyFile: AppState.story.storyFile || "",
-      participants: (AppState.story.characters || []),
-      scenes,
-    };
-
-    // Save draft
-    localStorage.setItem(LOCAL_SCENE_DRAFT_KEY, JSON.stringify(AppState.scene_manifest));
-
-    // Update preview
-    setPreview(AppState.scene_manifest);
-
-    // Init scene/frame UI
-    AppState.ui.currentSceneIdx = 0;
-    AppState.ui.currentFrameIdx = 0;
-    renderSceneSelectors();
-    renderSceneNow();
-
-    $("sceneHint").textContent = `Đã tách ${scenes.length} scene. Chọn Scene/Frame để ghi chú và chọn mode.`;
-  }
-
-  // ---------- Scene/Frame UI ----------
-  function renderSceneSelectors() {
-    const sceneSel = $("sceneSelect");
-    const frameSel = $("frameSelect");
-    if (!sceneSel || !frameSel) return;
-
-    sceneSel.innerHTML = `<option value="">--</option>`;
-    frameSel.innerHTML = `<option value="">--</option>`;
-
-    const manifest = AppState.scene_manifest;
-    const scenes = manifest?.scenes || [];
-    scenes.forEach((s, i) => {
-      const opt = document.createElement("option");
-      opt.value = String(i);
-      opt.textContent = `${s.id} • ${s.title || ""}`;
-      sceneSel.appendChild(opt);
+    $("btnClearParticipants")?.addEventListener("click", () => {
+      document.querySelectorAll(".xnc-participant").forEach((b) => {
+        b.checked = false;
+        const row = b.closest("label");
+        if (row) row.style.outline = "none";
+      });
+      updateSelectedCount();
     });
-
-    // set current selected
-    if (scenes.length > 0) {
-      sceneSel.value = String(AppState.ui.currentSceneIdx);
-      renderFrameSelect();
-    }
-  }
-
-  function renderFrameSelect() {
-    const frameSel = $("frameSelect");
-    const sceneSel = $("sceneSelect");
-    if (!frameSel || !sceneSel) return;
-
-    frameSel.innerHTML = `<option value="">--</option>`;
-
-    const sIdx = Number(sceneSel.value);
-    const sc = AppState.scene_manifest?.scenes?.[sIdx];
-    if (!sc) return;
-
-    sc.frames.forEach((f, j) => {
-      const opt = document.createElement("option");
-      opt.value = String(j);
-      opt.textContent = f.id;
-      frameSel.appendChild(opt);
-    });
-
-    AppState.ui.currentSceneIdx = sIdx;
-    AppState.ui.currentFrameIdx = 0;
-    frameSel.value = "0";
-
-    // sync mode + notes to UI
-    $("modeSelect").value = sc.mode || "dialogue";
-    $("sceneNote").value = sc.note || "";
-    $("frameNote").value = sc.frames?.[0]?.note || "";
-
-    renderSceneNow();
-  }
-
-  function renderSceneNow() {
-    const el = $("sceneNow");
-    const sc = AppState.scene_manifest?.scenes?.[AppState.ui.currentSceneIdx];
-    if (!el) return;
-
-    if (!sc) {
-      el.textContent = "Chưa tách scene.";
-      return;
-    }
-    const fr = sc.frames?.[AppState.ui.currentFrameIdx];
-    el.textContent = `${sc.id} • ${sc.title || ""}  |  Frame: ${fr?.id || "-" }  |  Mode: ${sc.mode || "dialogue"}`;
-  }
-
-  function gotoScene(delta) {
-    const scenes = AppState.scene_manifest?.scenes || [];
-    if (scenes.length < 1) return;
-
-    let i = AppState.ui.currentSceneIdx + delta;
-    if (i < 0) i = 0;
-    if (i >= scenes.length) i = scenes.length - 1;
-
-    AppState.ui.currentSceneIdx = i;
-    AppState.ui.currentFrameIdx = 0;
-
-    $("sceneSelect").value = String(i);
-    renderFrameSelect();
-  }
-
-  function bindSceneEditor() {
-    $("sceneSelect").addEventListener("change", () => {
-      renderFrameSelect();
-    });
-
-    $("frameSelect").addEventListener("change", () => {
-      const j = Number($("frameSelect").value);
-      AppState.ui.currentFrameIdx = isFinite(j) ? j : 0;
-
-      const sc = AppState.scene_manifest?.scenes?.[AppState.ui.currentSceneIdx];
-      if (sc) {
-        $("modeSelect").value = sc.mode || "dialogue";
-        $("sceneNote").value = sc.note || "";
-        $("frameNote").value = sc.frames?.[AppState.ui.currentFrameIdx]?.note || "";
-      }
-      renderSceneNow();
-    });
-
-    $("modeSelect").addEventListener("change", () => {
-      const sc = AppState.scene_manifest?.scenes?.[AppState.ui.currentSceneIdx];
-      if (!sc) return;
-      sc.mode = $("modeSelect").value;
-      setPreview(AppState.scene_manifest);
-      localStorage.setItem(LOCAL_SCENE_DRAFT_KEY, JSON.stringify(AppState.scene_manifest));
-      renderSceneNow();
-    });
-
-    $("sceneNote").addEventListener("input", () => {
-      const sc = AppState.scene_manifest?.scenes?.[AppState.ui.currentSceneIdx];
-      if (!sc) return;
-      sc.note = $("sceneNote").value;
-      setPreview(AppState.scene_manifest);
-      localStorage.setItem(LOCAL_SCENE_DRAFT_KEY, JSON.stringify(AppState.scene_manifest));
-    });
-
-    $("frameNote").addEventListener("input", () => {
-      const sc = AppState.scene_manifest?.scenes?.[AppState.ui.currentSceneIdx];
-      if (!sc) return;
-      const fr = sc.frames?.[AppState.ui.currentFrameIdx];
-      if (!fr) return;
-      fr.note = $("frameNote").value;
-      setPreview(AppState.scene_manifest);
-      localStorage.setItem(LOCAL_SCENE_DRAFT_KEY, JSON.stringify(AppState.scene_manifest));
-    });
-
-    $("prevSceneBtn").addEventListener("click", () => gotoScene(-1));
-    $("nextSceneBtn").addEventListener("click", () => gotoScene(+1));
-  }
-
-  // ---------- Local save/load ----------
-  function saveLocalStory() {
-    if (!requireAtLeastOneParticipant()) return;
-
-    const obj = {
-      id: $("storyId").value.trim(),
-      title: $("storyTitle").value.trim(),
-      story: $("storyText").value || "",
-      characters: AppState.story.characters || [],
-      updatedAt: new Date().toISOString(),
-      storyFile: AppState.story.storyFile || "",
-    };
-    localStorage.setItem(LOCAL_STORY_KEY, JSON.stringify(obj));
-    alert("Đã lưu story vào local.");
-  }
-
-  function exportJSONStory() {
-    if (!requireAtLeastOneParticipant()) return;
-
-    const obj = {
-      id: $("storyId").value.trim(),
-      title: $("storyTitle").value.trim(),
-      story: $("storyText").value || "",
-      characters: AppState.story.characters || [],
-      updatedAt: new Date().toISOString(),
-      storyFile: AppState.story.storyFile || "",
-    };
-    setPreview(obj);
-  }
-
-  function exportDialogueJSON() {
-    if (!AppState.scene_manifest) {
-      alert("Chưa có scene manifest. Bấm “Tách Scene & Thoại” trước.");
-      return;
-    }
-    // Flatten lines for Studio V19 TTS
-    const out = [];
-    for (const sc of AppState.scene_manifest.scenes || []) {
-      for (const fr of sc.frames || []) {
-        for (const ln of fr.lines || []) {
-          out.push({
-            scene_id: sc.id,
-            frame_id: fr.id,
-            order: ln.order,
-            type: ln.type,
-            char_id: ln.char_id || "",
-            char_label: ln.char_label || "",
-            text: ln.text || "",
-          });
-        }
-      }
-    }
-    localStorage.setItem(LOCAL_DIALOGUE_KEY, JSON.stringify(out));
-    setPreview(out);
-    alert("Đã export JSON thoại (đang hiển thị trong preview và lưu local).");
-  }
-
-  async function copyDialogueJSON() {
-    const raw = localStorage.getItem(LOCAL_DIALOGUE_KEY);
-    if (!raw) {
-      alert("Chưa có JSON thoại. Bấm “Export JSON thoại” trước.");
-      return;
-    }
-    await navigator.clipboard.writeText(raw);
-    alert("Đã copy JSON thoại.");
-  }
-
-  function clearPreview() {
-    setPreview({});
-    $("sceneHint").textContent = "";
-  }
-
-  // ---------- Events ----------
-  function bindEvents() {
-    $("reloadManifestBtn").addEventListener("click", loadManifest);
-    $("loadStoryBtn").addEventListener("click", loadStoryFromSelected);
-
-    $("participantsSearch").addEventListener("input", (e) => {
-      renderParticipantsList(e.target.value);
-    });
-    $("participantsSelectAll").addEventListener("click", selectAllParticipants);
-    $("participantsClear").addEventListener("click", clearParticipants);
-
-    $("saveLocalBtn").addEventListener("click", saveLocalStory);
-    $("exportStoryBtn").addEventListener("click", exportJSONStory);
-    $("splitBtn").addEventListener("click", buildSceneManifest);
-    $("exportDialogueBtn").addEventListener("click", exportDialogueJSON);
-    $("copyDialogueBtn").addEventListener("click", copyDialogueJSON);
-    $("clearPreviewBtn").addEventListener("click", clearPreview);
-
-    bindSceneEditor();
   }
 
   // ---------- Init ----------
   async function init() {
     try {
-      await loadCharacters();
-      renderParticipantsList("");
+      // Load characters first (for participant mapping)
+      const rawChars = await fetchJSON(PATHS.characters);
+      const chars = (Array.isArray(rawChars) ? rawChars : rawChars?.characters || rawChars?.items || [])
+        .map(normalizeCharacter)
+        .filter((c) => c.id);
 
-      await loadManifest();
+      App.charactersAll = chars;
+      App.characterMap = {};
+      chars.forEach((c) => (App.characterMap[c.id] = c));
 
-      // restore draft if exists
-      const draft = safeJSONParse(localStorage.getItem(LOCAL_SCENE_DRAFT_KEY) || "");
-      if (draft && draft.scenes) {
-        AppState.scene_manifest = draft;
-        setPreview(draft);
-        renderSceneSelectors();
-        renderSceneNow();
-        $("sceneHint").textContent = "Đã khôi phục scene manifest draft từ local.";
-      }
+      renderParticipantsList(chars);
+      bindParticipantSearch();
 
-      console.log("[XNC] Init OK");
+      console.log("[XNC] Loaded characters:", chars.length, "from", PATHS.characters);
     } catch (e) {
-      console.error("[XNC] init error:", e);
+      console.error("[XNC] Load characters failed:", e);
+      alert("Không load được danh sách nhân vật: " + e.message);
     }
+
+    bindButtons();
+
+    // Load manifest last
+    await loadManifest();
+
+    console.log("[XNC] Init OK");
   }
 
   document.addEventListener("DOMContentLoaded", init);
