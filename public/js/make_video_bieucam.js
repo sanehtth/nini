@@ -220,7 +220,9 @@ function splitScenesFromStory() {
   appState.scenes.push(currentScene);
   appState.currentSceneIndex = 0;
 
-  renderSceneManifest();
+ renderSceneManifest();
+ renderAfterSplit();
+
 
   console.log('[XNC] splitScenesFromStory DONE', {
     scenes: appState.scenes.length,
@@ -295,6 +297,54 @@ function downloadJSON(data, filename) {
   a.href = URL.createObjectURL(blob);
   a.download = filename;
   a.click();
+}
+//-------------------------
+function renderPreviewJSON() {
+  const box = document.getElementById('previewBox');
+  if (!box) return;
+
+  box.textContent = JSON.stringify({
+    scenes: appState.scenes,
+    dialogues: appState.dialogues,
+    sfx: appState.sfx
+  }, null, 2);
+}
+
+//--------------------------
+function renderSceneSelect() {
+  const sel = document.getElementById('sceneSelect');
+  if (!sel) return;
+
+  sel.innerHTML = '<option value="">-- Chọn Scene --</option>';
+
+  appState.scenes.forEach((sc, i) => {
+    const opt = document.createElement('option');
+    opt.value = sc.id;
+    opt.textContent = `${sc.id} (${sc.frames.length} frame)`;
+    sel.appendChild(opt);
+  });
+}
+
+function renderFrameSelect(sceneId) {
+  const frameSel = document.getElementById('frameSelect');
+  if (!frameSel || !appState.sceneManifest) return;
+
+  frameSel.innerHTML = '<option value="">-- Chọn Frame --</option>';
+
+  const scene = appState.sceneManifest.scenes.find(s => s.id === sceneId);
+  if (!scene || !scene.frames) return;
+
+  scene.frames.forEach((fr, idx) => {
+    const opt = document.createElement('option');
+    opt.value = idx;
+    opt.textContent = `Frame ${idx+1}`;
+    frameSel.appendChild(opt);
+  });
+}
+//--------------------------
+function renderAfterSplit() {
+  renderPreviewJSON();
+  renderSceneSelect();
 }
 
 /* =========================
