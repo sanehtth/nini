@@ -4,10 +4,7 @@
 const appState = {
   characters: [],
   manifest: null,
-  currentStory: null,
-  scenes: [],
-  currentSceneIndex: 0,
-  currentFrameIndex: 0
+  currentStory: null
 };
 
 /* =========================
@@ -17,7 +14,7 @@ async function fetchJSON(url) {
   console.log('[XNC] fetchJSON:', url);
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Fetch failed: ${url}`);
-  return await res.json();
+  return res.json();
 }
 
 /* =========================
@@ -26,86 +23,79 @@ async function fetchJSON(url) {
 async function loadCharacters() {
   const data = await fetchJSON('/adn/xomnganchuyen/XNC_characters.json');
   appState.characters = data.characters || data;
-  renderCharacterList();
+  renderParticipants();
   console.log('[XNC] Loaded characters:', appState.characters.length);
 }
 
-function renderCharacterList() {
-  const box = document.getElementById('characters-container'); // <<< FIX Ở ĐÂY
+function renderParticipants() {
+  const box = document.getElementById('participantsList');
   if (!box) {
-    console.warn('[XNC] characters-container not found');
+    console.warn('[XNC] participantsList not found');
     return;
   }
 
   box.innerHTML = '';
   appState.characters.forEach(c => {
     const div = document.createElement('div');
+    div.className = 'pitem';
     div.innerHTML = `
-      <label>
-        <input type="checkbox" value="${c.id}">
-        <b>${c.name}</b> <i>${c.gender || ''}</i> – ${c.desc || ''}
-      </label>
+      <input type="checkbox" value="${c.id}">
+      <div>
+        <div class="pname">${c.name}</div>
+        <div class="ptag">${c.gender || ''} • ${c.desc || ''}</div>
+      </div>
     `;
     box.appendChild(div);
   });
 }
-
 
 /* =========================
    MANIFEST & STORY
 ========================= */
 async function loadManifest() {
   appState.manifest = await fetchJSON('/substance/manifest.json');
-  renderStorySelect();
-  console.log('[XNC] Loaded manifest');
-}
 
-function renderStorySelect() {
-  const sel = document.getElementById('story-select');
-  if (!sel) return;
-
+  const sel = document.getElementById('storySelect');
   sel.innerHTML = '<option value="">-- Chọn truyện --</option>';
+
   appState.manifest.stories.forEach(st => {
     const opt = document.createElement('option');
     opt.value = st.file;
     opt.textContent = `${st.id} – ${st.title}`;
     sel.appendChild(opt);
   });
+
+  document.getElementById('manifestStatus').textContent = 'Manifest: đã load';
+  console.log('[XNC] Manifest loaded');
 }
 
-async function loadStory(file) {
-  appState.currentStory = await fetchJSON(`/substance/${file}`);
-  document.getElementById('story-id').value = appState.currentStory.id || '';
-  document.getElementById('story-title').value = appState.currentStory.title || '';
-  document.getElementById('story-content').value = appState.currentStory.text || '';
-  console.log('[XNC] Story loaded:', file);
-}
+async function loadStory() {
+  const sel = document.getElementById('storySelect');
+  if (!sel.value) return alert('Chưa chọn truyện');
 
-/* =========================
-   STORY TAB (FIX LỖI CHÍNH)
-========================= */
-function initStoryTab() {
-  const btnReload = document.getElementById('reload-manifest');
-  const btnLoad = document.getElementById('load-story');
-  const sel = document.getElementById('story-select');
+  const story = await fetchJSON(`/substance/${sel.value}`);
+  appState.currentStory = story;
 
-  if (btnReload) btnReload.onclick = loadManifest;
-  if (btnLoad && sel) {
-    btnLoad.onclick = () => {
-      if (!sel.value) return alert('Chưa chọn truyện');
-      loadStory(sel.value);
-    };
-  }
+  document.getElementById('storyId').value = story.id || '';
+  document.getElementById('storyTitle').value = story.title || '';
+  document.getElementById('storyText').value = story.text || '';
+
+  console.log('[XNC] Story loaded:', sel.value);
 }
 
 /* =========================
    INIT
 ========================= */
+function bindUI() {
+  document.getElementById('reloadManifestBtn').onclick = loadManifest;
+  document.getElementById('loadStoryBtn').onclick = loadStory;
+}
+
 async function init() {
   try {
     await loadCharacters();
     await loadManifest();
-    initStoryTab(); // <<< LỖI CŨ ĐÃ ĐƯỢC FIX Ở ĐÂY
+    bindUI();
     console.log('[XNC] INIT OK');
   } catch (e) {
     console.error('[XNC] INIT ERROR', e);
