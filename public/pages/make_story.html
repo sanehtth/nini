@@ -1,180 +1,650 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8" />
-<title>AI Story Editor Demo</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XNC Story Engine V16 (Model Selector)</title>
+    <link rel="stylesheet" href="/public/style.css">
+    <link rel="stylesheet" href="/public/green-theme.css">
+    
+    <style>
+        /* THEME DNA */
+        body {
+            background: linear-gradient(135deg, #CDECC1 0%, #F4E8A2 100%);
+            font-family: 'Segoe UI', sans-serif;
+            color: #5D4037;
+            padding: 20px;
+        }
 
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #f4f6f8;
-        margin: 0;
-        padding: 20px;
-    }
+        .studio-card {
+            background: rgba(255, 255, 255, 0.98);
+            max-width: 1300px;
+            margin: 0 auto;
+            border-radius: 25px;
+            box-shadow: 0 20px 50px rgba(139, 94, 60, 0.15);
+            border: 4px solid #fff;
+            overflow: hidden;
+            display: flex; flex-direction: column; min-height: 85vh;
+        }
 
-    .container {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        max-width: 1200px;
-        margin: auto;
-    }
+        .studio-header {
+            background: #8CCB7A; padding: 15px 30px; color: white;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 5px solid #B9885D;
+        }
 
-    .box {
-        background: #fff;
-        padding: 15px;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
+        /* TOOLBAR CẢI TIẾN */
+        .toolbar {
+            background: #FFF8E1; padding: 15px 30px; border-bottom: 1px solid #FFE0B2;
+            display: flex; align-items: center; gap: 15px; flex-wrap: wrap;
+        }
 
-    h2 {
-        margin-top: 0;
-    }
+        .control-group { display: flex; flex-direction: column; gap: 5px; }
+        .control-label { font-size: 11px; font-weight: bold; color: #E65100; text-transform: uppercase; }
 
-    textarea {
-        width: 100%;
-        height: 150px;
-        padding: 10px;
-        border-radius: 8px;
-        border: 1px solid #ccc;
-        resize: vertical;
-    }
+        .select-box {
+            padding: 8px 12px; border-radius: 8px; border: 1px solid #FFB74D; 
+            background: white; color: #E65100; font-weight: bold; cursor: pointer; outline: none; min-width: 180px; font-size: 13px;
+        }
 
-    button {
-        padding: 8px 14px;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
-        font-weight: bold;
-    }
+        .studio-body { padding: 25px; display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; flex-grow: 1; }
 
-    .btn-main {
-        background: #4CAF50;
-        color: white;
-    }
+        .label-dna { color: #8CCB7A; font-weight: 800; margin-bottom: 8px; display: block; text-transform: uppercase; font-size: 13px; }
+        .input-dna {
+            width: 100%; padding: 12px; border: 2px solid #E0E0E0; border-radius: 12px; background: #FAFAFA; margin-bottom: 15px; box-sizing: border-box;
+        }
+        .input-dna:focus { border-color: #8CCB7A; outline: none; background: white; }
 
-    .toolbar button {
-        background: #eee;
-    }
+        .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; max-height: 300px; overflow-y: auto; padding: 10px; background: #F1F8E9; border-radius: 12px; border: 1px dashed #8CCB7A; }
+        .char-item { font-size: 13px; background: white; padding: 8px; border-radius: 8px; border: 1px solid #ddd; display: flex; gap: 8px; align-items: center; cursor: pointer; }
 
-    .toolbar {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 10px;
-    }
+        .dna-info-box {
+            background: #E1F5FE; border: 1px solid #81D4FA; color: #0277BD; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; line-height: 1.5;
+        }
 
-    .story-content {
-        min-height: 300px;
-        white-space: pre-wrap;
-        line-height: 1.6;
-        padding: 10px;
-        border-radius: 8px;
-        background: #fafafa;
-    }
+        .btn-generate {
+            background: linear-gradient(135deg, #B9885D, #8D6E63); color: white; width: 100%; padding: 15px; border: none; border-radius: 50px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 15px; transition: 0.2s; box-shadow: 0 6px 0 #5D4037;
+        }
+        .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 0 #5D4037; }
+        .btn-generate:disabled { background: #ccc; cursor: not-allowed; }
 
-    .story-content.editing {
-        border: 2px solid #4CAF50;
-        background: #ffffff;
-    }
-</style>
+        .result-container {
+            background: #FFFDE7; border: 2px dashed #FBC02D; border-radius: 20px; padding: 25px; display: flex; flex-direction: column; position: relative;
+        }
+        .story-content {
+            flex-grow: 1; white-space: pre-wrap; font-family: 'Segoe UI', sans-serif; line-height: 1.6; font-size: 15px; color: #3E2723; overflow-y: auto; max-height: 600px; padding-right: 10px;
+        }
+        
+        .loading-spinner { display: none; text-align: center; margin-top: 50px; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #8CCB7A; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
-
 <body>
 
-<div class="container">
-
-    <!-- CỘT TRÁI -->
-    <div class="box">
-        <h2>✍️ Ý tưởng câu chuyện</h2>
-        <textarea id="storyInput">
-Hai thằng ăn trộm lén vào vườn trái cây trong xóm...
-        </textarea>
-
-        <br><br>
-        <button class="btn-main" onclick="generateStory()">🤖 Gọi AI viết truyện</button>
+<div class="studio-card">
+    <div class="studio-header">
+        <div class="header-left">
+            <h2 style="margin:0">🧬 XNC Story Engine V16</h2>
+            <p style="margin:0; font-size:13px; opacity:0.9">Kịch bản tự động theo DNA (Multi-Model Selector)</p>
+        </div>
+        <div style="background:#ffffff33; padding:5px 15px; border-radius:20px; font-size:12px;">Admin Mode</div>
     </div>
 
-    <!-- CỘT PHẢI -->
-    <div class="box">
-        <h2>📜 Kết quả AI</h2>
+    <div class="toolbar">
+        <div class="control-group">
+            <span class="control-label">1. Nhà Cung Cấp</span>
+            <select id="aiProvider" class="select-box" onchange="checkKeyStatus()">
+                <option value="gemini">Google AI (Gemini)</option>
+                <option value="openai">OpenAI (GPT-4)</option>
+                <option value="grok">Grok (xAI)</option>
+            </select>
+            <select id="apiSource" class="select-box" style="margin-left:10px; min-width:180px;" onchange="onApiSourceChange()">
+                <option value="local">Local key</option>
+                <option value="firebase">Firebase key</option>
+            </select>
+            <span id="apiSourceHint" style="margin-left:10px; font-size:12px; opacity:0.85;"></span>
 
-        <!-- TOOLBAR -->
-        <div class="toolbar">
-            <button onclick="enableEdit()">✏️ Sửa</button>
-            <button onclick="saveEdit()" id="btnSave" disabled>💾 Lưu</button>
-            <button onclick="cancelEdit()" id="btnCancel" disabled>❌ Hủy</button>
         </div>
 
-        <!-- NỘI DUNG -->
-        <div id="finalStory" class="story-content">
-Chưa có nội dung.
+        <div class="control-group" id="googleModelBox">
+            <span class="control-label">🔍 Chọn Phiên Bản (Fix Lỗi)</span>
+            <select id="geminiModel" class="select-box">
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash (Mới nhất)</option>
+                <option value="gemini-1.5-flash-001">Gemini 1.5 Flash (Bản 001)</option>
+                <option value="gemini-1.5-pro">Gemini 1.5 Pro (Mạnh)</option>
+                <option value="gemini-1.0-pro">Gemini 1.0 Pro (Ổn định)</option>
+            </select>
         </div>
+
+        <div class="control-group">
+            <span class="control-label">2. Chọn DNA Style</span>
+            <select id="dnaSelector" class="select-box" onchange="updateDNAInfo()">
+                <option value="">⏳ Đang tải Styles...</option>
+            </select>
+        </div>
+        
+        <div id="keyStatus" style="font-size:13px; margin-top:auto; margin-bottom:5px; margin-left:auto;"></div>
     </div>
 
+    <div class="studio-body">
+        <div>
+            <div id="dnaInfo" class="dna-info-box">Loading info...</div>
+
+            <label class="label-dna">3. Ý Tưởng (Story Idea)</label>
+            
+            <div class="mp-row" style="display:flex; gap:12px; margin:10px 0 8px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:200px;">
+                    <label class="label-dna" style="margin:0 0 6px;">ID truyện (tự sinh)</label>
+                    <input id="storyId" class="input-dna" type="text" readonly />
+                </div>
+                <div style="flex:2; min-width:260px;">
+                    <label class="label-dna" style="margin:0 0 6px;">Tên truyện</label>
+                    <input id="storyTitle" class="input-dna" type="text" placeholder="Ví dụ: Quà Noel giao nhầm nhà" />
+                </div>
+            </div>
+<textarea id="storyIdea" class="input-dna" rows="4" placeholder="Nhập ý tưởng ngắn gọn (Vd: TùmLa đi thi hoa hậu xóm dừa...)"></textarea>
+
+            <label class="label-dna">4. Diễn Viên (Load từ JSON)</label>
+            <div id="charList" class="char-grid">Loading characters...</div>
+
+            <button id="btnGen" class="btn-generate" onclick="generateStory()">✨ VIẾT KỊCH BẢN</button>
+        
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+                <button type="button" onclick="saveDraft(true)" class="btn-generate" style="padding:10px 14px; width:auto; background:#4b7bec;">
+                    💾 Lưu nháp
+                </button>
+                <button type="button" onclick="exportStoryJSON()" class="btn-generate" style="padding:10px 14px; width:auto; background:#20bf6b;">
+                    ⬇️ Xuất JSON
+                </button>
+                <button type="button" onclick="clearDraft()" class="btn-generate" style="padding:10px 14px; width:auto; background:#eb3b5a;">
+                    🗑️ Xóa nháp
+                </button>
+            </div>
+</div>
+
+        <div class="result-container">
+            <div id="loading" class="loading-spinner">
+                <div class="spinner"></div>
+                <div id="loadingText" style="color:#8CCB7A; font-weight:bold;">Đang gọi AI...</div>
+            </div>
+            
+            <div id="finalStory" class="story-content">
+                <div style="text-align:center; color:#999; margin-top:100px; font-style:italic;">
+                    (Chọn phiên bản AI trên menu -> Bấm nút để viết truyện)
+                </div>
+            </div>
+            <button onclick="copyStory()" style="position:absolute; top:10px; right:10px; background:white; border:1px solid #ccc; padding:6px 12px; border-radius:8px; cursor:pointer;">📋 Copy</button>
+        </div>
+    </div>
 </div>
 
 <script>
-let backupText = "";
+    // === CẤU HÌNH PATH ===
+    const DATA_PATH = "/public/adn/xomnganchuyen/"; 
+    const CHAR_URL = DATA_PATH + "XNC_characters.json";
+    
+    // === LƯU NHÁP & XUẤT JSON (chống mất khi refresh) ===
+    const PROFILE_ID = "default";
+    const DRAFT_KEY = "xnc_story_draft_v1";
+    const COUNTER_KEY = "xnc_story_counter_v1";
+    const API_SOURCE_KEY = "nini_api_source"; // "local" | "firebase"
 
-/* GIẢ LẬP AI (thay bằng API sau) */
-function generateStory() {
-    const idea = document.getElementById("storyInput").value;
+    function pad4(n){ return String(n).padStart(4,"0"); }
 
-    const fakeAIResult = `
-[SCENE]
-Hai thằng trộm rón rén bước vào vườn.
+    function generateStoryId(){
+        const d = new Date();
+        const ymd = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+        let c = parseInt(localStorage.getItem(COUNTER_KEY) || "0", 10) + 1;
+        localStorage.setItem(COUNTER_KEY, String(c));
+        return `XNC-${ymd}-${pad4(c)}`;
+    }
 
-Trộm Gà: Ê mày, xoài chín kìa!
-Trộm Vịt: Nhớ coi chừng chủ nhà đó!
+    function getSelectedChars(){
+        const boxes = document.querySelectorAll('#charList input[type="checkbox"]:checked');
+        return Array.from(boxes).map(b => b.value || b.getAttribute("data-name") || b.id).filter(Boolean);
+    }
 
-[SFX] Tiếng chó sủa xa xa...
+    function setSelectedChars(names){
+        const set = new Set(names || []);
+        const boxes = document.querySelectorAll('#charList input[type="checkbox"]');
+        boxes.forEach(b=>{
+            const v = b.value || b.getAttribute("data-name") || b.id;
+            b.checked = set.has(v);
+        });
+    }
 
-(Câu chuyện dựa trên ý tưởng: ${idea})
-    `;
+    function getStoryText(){
+        const el = document.getElementById("finalStory");
+        return (el && el.innerText) ? el.innerText.trim() : "";
+    }
 
-    const el = document.getElementById("finalStory");
-    el.innerText = fakeAIResult;
-    el.contentEditable = "false";
-    el.classList.remove("editing");
-}
+    function setStoryText(text){
+        const el = document.getElementById("finalStory");
+        if (!el) return;
+        el.textContent = text || "";
+    }
 
-/* BẬT CHẾ ĐỘ SỬA */
-function enableEdit() {
-    const el = document.getElementById("finalStory");
-    backupText = el.innerText;
+    function buildStoryJSON(){
+        const provider = document.getElementById("aiProvider")?.value || "";
+        const apiSource = document.getElementById("apiSource")?.value || (localStorage.getItem(API_SOURCE_KEY)||"local");
+        const dnaKey = document.getElementById("dnaSelector")?.value || "";
+        const idea = document.getElementById("storyIdea")?.value || "";
+        const title = document.getElementById("storyTitle")?.value || "";
+        const id = document.getElementById("storyId")?.value || generateStoryId();
+        const chars = getSelectedChars();
+        const story = getStoryText();
 
-    el.contentEditable = "true";
-    el.classList.add("editing");
-    el.focus();
+        return {
+            id,
+            title,
+            provider,
+            apiSource,
+            dnaStyle: dnaKey,
+            idea,
+            characters: chars,
+            story,
+            updatedAt: new Date().toISOString()
+        };
+    }
 
-    document.getElementById("btnSave").disabled = false;
-    document.getElementById("btnCancel").disabled = false;
-}
+    function saveDraft(showToast=false){
+        try{
+            // đảm bảo có ID
+            const idEl = document.getElementById("storyId");
+            if (idEl && !idEl.value) idEl.value = generateStoryId();
 
-/* LƯU */
-function saveEdit() {
-    const el = document.getElementById("finalStory");
+            const data = buildStoryJSON();
+            // thêm createdAt nếu lần đầu
+            const prev = localStorage.getItem(DRAFT_KEY);
+            if (prev){
+                const p = JSON.parse(prev);
+                if (p && p.createdAt) data.createdAt = p.createdAt;
+            }
+            if (!data.createdAt) data.createdAt = new Date().toISOString();
 
-    el.contentEditable = "false";
-    el.classList.remove("editing");
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+            if (showToast) alert("Đã lưu nháp trên trình duyệt máy này.");
+        }catch(e){
+            console.warn("saveDraft error", e);
+        }
+    }
 
-    document.getElementById("btnSave").disabled = true;
-    document.getElementById("btnCancel").disabled = true;
+    function loadDraft(){
+        try{
+            const raw = localStorage.getItem(DRAFT_KEY);
+            const idEl = document.getElementById("storyId");
+            if (!raw){
+                if (idEl) idEl.value = generateStoryId();
+                return;
+            }
+            const d = JSON.parse(raw);
+                        window.__draftChars = d.characters || [];
+if (idEl) idEl.value = d.id || generateStoryId();
 
-    alert("✅ Đã lưu nội dung chỉnh sửa!");
-}
+            const titleEl = document.getElementById("storyTitle");
+            if (titleEl) titleEl.value = d.title || "";
 
-/* HỦY */
-function cancelEdit() {
-    const el = document.getElementById("finalStory");
+            const ideaEl = document.getElementById("storyIdea");
+            if (ideaEl) ideaEl.value = d.idea || "";
 
-    el.innerText = backupText;
-    el.contentEditable = "false";
-    el.classList.remove("editing");
+            const provEl = document.getElementById("aiProvider");
+            if (provEl && d.provider) provEl.value = d.provider;
 
-    document.getElementById("btnSave").disabled = true;
-    document.getElementById("btnCancel").disabled = true;
-}
+            const srcEl = document.getElementById("apiSource");
+            if (srcEl && d.apiSource) {
+                srcEl.value = d.apiSource;
+                localStorage.setItem(API_SOURCE_KEY, d.apiSource);
+            }
+
+            const dnaEl = document.getElementById("dnaSelector");
+            if (dnaEl && d.dnaStyle) dnaEl.value = d.dnaStyle;
+
+            // characters sẽ set sau khi load JSON xong (gọi lại ở cuối loadCharacters)
+            setStoryText(d.story || "");
+        }catch(e){
+            console.warn("loadDraft error", e);
+            const idEl = document.getElementById("storyId");
+            if (idEl) idEl.value = generateStoryId();
+        }
+    }
+
+    function clearDraft(){
+        localStorage.removeItem(DRAFT_KEY);
+        // reset form nhưng giữ counter
+        const idEl = document.getElementById("storyId");
+        if (idEl) idEl.value = generateStoryId();
+        const titleEl = document.getElementById("storyTitle");
+        if (titleEl) titleEl.value = "";
+        const ideaEl = document.getElementById("storyIdea");
+        if (ideaEl) ideaEl.value = "";
+        setSelectedChars([]);
+        setStoryText("");
+        alert("Đã xóa nháp.");
+    }
+
+    function exportStoryJSON(){
+        const data = buildStoryJSON();
+        // nếu chưa có truyện thì vẫn xuất được (idea + config)
+        const filename = `${(data.id || "XNC-story")}.json`;
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json;charset=utf-8"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+    }
+
+    function wireAutoSave(){
+        const idea = document.getElementById("storyIdea");
+        const title = document.getElementById("storyTitle");
+        const prov = document.getElementById("aiProvider");
+        const src = document.getElementById("apiSource");
+        const dna = document.getElementById("dnaSelector");
+
+        [idea, title, prov, src, dna].filter(Boolean).forEach(el=>{
+            el.addEventListener("input", ()=>saveDraft(false));
+            el.addEventListener("change", ()=>saveDraft(false));
+        });
+
+        // autosave khi tick nhân vật
+        document.getElementById("charList")?.addEventListener("change", ()=>saveDraft(false));
+    }
+const STYLE_URL = DATA_PATH + "XNC_style.json";
+
+    const ACTIVE_PROVIDER_KEY = "nini_active_provider";
+    /* PROFILE_ID already declared above */
+
+    function getActiveProvider() { return localStorage.getItem(ACTIVE_PROVIDER_KEY) || "gemini"; }
+    function setActiveProvider(p) { localStorage.setItem(ACTIVE_PROVIDER_KEY, p); }
+    
+    function getApiKeyByProvider(provider) {
+        const k1 = `lq_api_${PROFILE_ID}_${provider}`;
+        return { key: localStorage.getItem(k1), keyName: k1 };
+    }
+
+
+    function getApiSource() {
+        const sel = document.getElementById('apiSource');
+        const v = (sel && sel.value) ? sel.value : (localStorage.getItem(API_SOURCE_KEY) || 'local');
+        return (v === 'firebase') ? 'firebase' : 'local';
+    }
+
+    function setApiSource(v) {
+        localStorage.setItem(API_SOURCE_KEY, v);
+        const sel = document.getElementById('apiSource');
+        if (sel) sel.value = v;
+        updateApiSourceHint();
+    }
+
+    function updateApiSourceHint() {
+        const hint = document.getElementById('apiSourceHint');
+        if (!hint) return;
+        const mode = getApiSource();
+        hint.textContent = (mode === 'firebase')
+            ? 'Ưu tiên key theo tài khoản Firebase (cần đăng nhập).'
+            : 'Ưu tiên key lưu trên máy này.';
+    }
+
+    function onApiSourceChange() {
+        const sel = document.getElementById('apiSource');
+        const v = sel ? sel.value : 'local';
+        setApiSource(v);
+        checkKeyStatus(); // async OK
+    }
+
+    function getLocalKey(provider) {
+        const k1 = `lq_api_${PROFILE_ID}_${provider}`;
+        const v1 = localStorage.getItem(k1);
+        if (v1) return { key: v1, keyName: k1 };
+
+        const k2 = `nq_api_${PROFILE_ID}_${provider}`;
+        const v2 = localStorage.getItem(k2);
+        if (v2) return { key: v2, keyName: k2 };
+
+        return { key: '', keyName: k1 };
+    }
+
+    async function getFirebaseKey(provider) {
+        if (!window.auth || !window.db) return { key: '', keyName: `firebase:users/{uid}/api/${provider}` };
+        const user = auth.currentUser;
+        if (!user) return { key: '', keyName: `firebase:users/{uid}/api/${provider}` };
+
+        const ref = db.ref(`users/${user.uid}/api`);
+        const snap = await ref.once('value');
+        const val = snap.val() || {};
+        const k = (val[provider] || '').trim();
+        return { key: k, keyName: `firebase:users/${user.uid}/api/${provider}` };
+    }
+
+    async function resolveApiKey(provider) {
+        const mode = getApiSource();
+        if (mode === 'firebase') {
+            const fb = await getFirebaseKey(provider);
+            if (fb.key) return { apiKey: fb.key, from: 'firebase', keyName: fb.keyName };
+
+            const local = getLocalKey(provider);
+            if (local.key) return { apiKey: local.key, from: 'local(fallback)', keyName: local.keyName };
+
+            return { apiKey: '', from: 'none', keyName: fb.keyName };
+        } else {
+            const local = getLocalKey(provider);
+            if (local.key) return { apiKey: local.key, from: 'local', keyName: local.keyName };
+
+            const fb = await getFirebaseKey(provider);
+            if (fb.key) return { apiKey: fb.key, from: 'firebase(fallback)', keyName: fb.keyName };
+
+            return { apiKey: '', from: 'none', keyName: local.keyName };
+        }
+    }
+
+    let charData = [];
+    let stylesData = {};
+
+    window.onload = async () => {
+        
+        loadDraft();
+        wireAutoSave();
+const sel = document.getElementById('aiProvider');
+        if (sel && !sel.value) sel.value = getActiveProvider();
+
+        // init API source (local/firebase)
+        const srcSel = document.getElementById('apiSource');
+        const savedSrc = localStorage.getItem(API_SOURCE_KEY) || 'local';
+        if (srcSel) srcSel.value = (savedSrc === 'firebase') ? 'firebase' : 'local';
+        updateApiSourceHint();
+
+        await checkKeyStatus();
+try {
+            const [charRes, styleRes] = await Promise.all([fetch(CHAR_URL), fetch(STYLE_URL)]);
+            
+            if(charRes.ok) charData = (await charRes.json()).characters || [];
+            if(styleRes.ok) {
+                const sData = await styleRes.json();
+                stylesData = sData.style?.narrative_modes || {};
+            }
+
+            renderChars();
+            renderDNASelector();
+
+        } catch (e) {
+            console.error("Lỗi load data:", e);
+            document.getElementById('dnaInfo').innerText = "⚠️ Lỗi tải dữ liệu JSON.";
+        }
+    };
+
+    function renderChars() {
+        const container = document.getElementById('charList');
+        container.innerHTML = '';
+        charData.forEach(c => {
+            container.innerHTML += `
+                <label class="char-item">
+                    <input type="checkbox" value="${c.name}" data-desc="${c.personality || c.base_desc_en}">
+                    <span style="font-weight:bold;">${c.name}</span>
+                </label>`;
+        });
+        // restore draft-selected characters once after loading
+        if (window.__draftChars && window.__draftChars.length) {
+            setSelectedChars(window.__draftChars);
+            window.__draftChars = null;
+        }
+
+    }
+
+    function renderDNASelector() {
+        const sel = document.getElementById('dnaSelector');
+        sel.innerHTML = "";
+        for (const [key, val] of Object.entries(stylesData)) {
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.text = val.label;
+            sel.appendChild(opt);
+        }
+        if(Object.keys(stylesData).length > 0) updateDNAInfo();
+        else sel.innerHTML = "<option>⚠️ Không tìm thấy Style</option>";
+    }
+
+    function updateDNAInfo() {
+        const key = document.getElementById('dnaSelector').value;
+        const dna = stylesData[key];
+        if (dna) {
+            document.getElementById('dnaInfo').innerHTML = `
+                <strong>📖 Style:</strong> ${dna.label}<br>
+                <strong>🎯 Tone:</strong> ${dna.script_instruction.substring(0, 100)}...
+            `;
+        }
+    }
+
+    async function checkKeyStatus() {
+        const provider = document.getElementById('aiProvider').value;
+        setActiveProvider(provider);
+
+        // Ẩn hiện menu Model Gemini
+        document.getElementById('googleModelBox').style.display = (provider === 'gemini') ? 'flex' : 'none';
+
+        updateApiSourceHint();
+
+        const { apiKey, from, keyName } = await resolveApiKey(provider);
+        const statusDiv = document.getElementById('keyStatus');
+
+        if (apiKey) {
+            statusDiv.innerHTML = `✅ Ready (${from}): <b>${keyName}</b>`;
+            statusDiv.style.color = "#33691E";
+        } else {
+            statusDiv.innerHTML = `⚠️ Missing Key (${from}): <b>${keyName}</b>`;
+            statusDiv.style.color = "#C62828";
+        }
+    }
+
+
+async function generateStory() {
+        const provider = document.getElementById('aiProvider').value;
+        const { apiKey, from: apiFrom } = await resolveApiKey(provider);
+        const storyIdea = document.getElementById('storyIdea').value;
+        const dnaKey = document.getElementById('dnaSelector').value;
+        
+        if(!apiKey) { alert("Chưa có API Key! Vào Admin Panel lưu nhé."); return; }
+        if(!storyIdea) { alert("Cho xin cái ý tưởng cốt truyện đi bạn!"); return; }
+
+        let selectedChars = [];
+        document.querySelectorAll('#charList input:checked').forEach(cb => {
+            selectedChars.push(`- ${cb.value}: ${cb.dataset.desc}`);
+        });
+        if(selectedChars.length === 0) { alert("Chọn ít nhất 1 diễn viên!"); return; }
+
+        const selectedDNA = stylesData[dnaKey];
+        if(!selectedDNA) { alert("Lỗi đọc DNA Style từ JSON!"); return; }
+
+        const btn = document.getElementById('btnGen');
+        btn.disabled = true;
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('finalStory').style.display = 'none';
+
+        const systemPrompt = `
+        ACT AS A SCREENWRITER for "Xóm Ngàn Chuyện".
+        INPUT DATA:
+        - Idea: ${storyIdea}
+        - Characters: \n${selectedChars.join('\n')}
+        REQUIRED GENRE & STYLE (DNA):
+        ${selectedDNA.script_instruction}
+        TASK: Write a Dialogue Script (Vietnamese).
+        - Format: [Character]: Dialogue.
+        - Include [SFX] and (Emotion).
+        - Keep it natural Southern Vietnamese dialect.
+        `;
+
+        try {
+            let resultText = "";
+
+            if (provider === 'gemini') {
+                // --- LẤY TÊN MODEL TỪ MENU ---
+                const modelName = document.getElementById('geminiModel').value;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt }] }] })
+                });
+                
+                const data = await response.json();
+                
+                if(data.error) {
+                    console.error("Gemini Error:", data.error);
+                    throw new Error(data.error.message);
+                }
+                
+                resultText = data.candidates[0].content.parts[0].text;
+
+            } else if (provider === 'openai' || provider === 'grok') {
+                const endpoint = provider === 'openai' 
+                    ? 'https://api.openai.com/v1/chat/completions' 
+                    : 'https://api.x.ai/v1/chat/completions'; 
+                
+                const model = provider === 'openai' ? 'gpt-4o-mini' : 'grok-beta';
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: [{ role: "user", content: systemPrompt }],
+                        temperature: 0.7
+                    })
+                });
+                const data = await response.json();
+                if(data.error) throw new Error(data.error.message);
+                resultText = data.choices[0].message.content;
+            }
+
+            document.getElementById('finalStory').innerText = resultText;
+
+        
+            // autosave after generation
+            saveDraft(false);
+} catch (error) {
+            alert("Lỗi AI: " + error.message + "\n\n💡 Mẹo: Hãy thử chọn phiên bản Gemini khác trên thanh công cụ xem sao!");
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('finalStory').style.display = 'block';
+            btn.disabled = false;
+        }
+    }
+
+    function copyStory() {
+        const text = document.getElementById('finalStory').innerText;
+        if(text) {
+            navigator.clipboard.writeText(text);
+            alert("Đã copy kịch bản!");
+        }
+    }
 </script>
 
 </body>
