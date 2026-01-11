@@ -31,25 +31,25 @@ async function loadCharacters() {
 }
 
 function renderCharacterList() {
-  const box = document.getElementById('characters-box');
+  const box = document.getElementById('characters-container'); // <<< FIX Ở ĐÂY
   if (!box) {
-    console.warn('[XNC] characters-box not found');
+    console.warn('[XNC] characters-container not found');
     return;
   }
 
   box.innerHTML = '';
   appState.characters.forEach(c => {
-    const id = `char_${c.id}`;
     const div = document.createElement('div');
     div.innerHTML = `
       <label>
-        <input type="checkbox" value="${c.id}" />
+        <input type="checkbox" value="${c.id}">
         <b>${c.name}</b> <i>${c.gender || ''}</i> – ${c.desc || ''}
       </label>
     `;
     box.appendChild(div);
   });
 }
+
 
 /* =========================
    MANIFEST & STORY
