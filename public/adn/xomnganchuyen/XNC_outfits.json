@@ -216,6 +216,20 @@
       }
     }
   },
+    {
+    "id": "xnc_outfit_mira_modern_aodai",
+    "name": "Áo ba ba",
+    "category": "personal",
+    "priority": 20,
+    "allow_signature_color": true,
+    "notes": "Trang phục thanh lịch, hiện đại cho Mira; phối hợp với nét cáo thông minh.",
+    "variants": {
+      "female": {
+        "base_desc_vi": "Áo bà ba Việt Nam: áo ngắn, xẽ 2 tà họa tiết hoa nhỏ, quần ống rộng lửng; tóc xõa với băng đô lụa; toát lên vẻ thanh lịch, quyến rũ..",
+        "base_desc_en": "Vietnamese "áo bà ba": a short blouse with two slits and small floral patterns, paired with wide-legged cropped trousers; hair is loose with a silk headband; exuding elegance and charm."
+      }
+    }
+  },
   {
     "id": "xnc_outfit_mit_overalls",
     "name": "Đồ yếm dạo phố",
