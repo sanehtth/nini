@@ -53,9 +53,28 @@ function renderParticipants() {
    MANIFEST & STORY
 ========================= */
 async function loadManifest() {
-  appState.manifest = await fetchJSON('/substance/manifest.json');
+  const data = await fetchJSON('/substance/manifest.json');
 
+  if (!data || !Array.isArray(data.items)) {
+    console.error('[XNC] Manifest sai format', data);
+    alert('Manifest.json không đúng format');
+    return;
+  }
+
+  appState.manifest = {
+    stories: data.items
+  };
+
+  renderStorySelect();
+
+  console.log('[XNC] Loaded manifest:', data.items.length);
+}
+
+
+function renderStorySelect() {
   const sel = document.getElementById('storySelect');
+  if (!sel || !appState.manifest) return;
+
   sel.innerHTML = '<option value="">-- Chọn truyện --</option>';
 
   appState.manifest.stories.forEach(st => {
@@ -64,24 +83,8 @@ async function loadManifest() {
     opt.textContent = `${st.id} – ${st.title}`;
     sel.appendChild(opt);
   });
-
-  document.getElementById('manifestStatus').textContent = 'Manifest: đã load';
-  console.log('[XNC] Manifest loaded');
 }
 
-async function loadStory() {
-  const sel = document.getElementById('storySelect');
-  if (!sel.value) return alert('Chưa chọn truyện');
-
-  const story = await fetchJSON(`/substance/${sel.value}`);
-  appState.currentStory = story;
-
-  document.getElementById('storyId').value = story.id || '';
-  document.getElementById('storyTitle').value = story.title || '';
-  document.getElementById('storyText').value = story.text || '';
-
-  console.log('[XNC] Story loaded:', sel.value);
-}
 //========================
 function initStoryTab() {
   const btnReload = document.getElementById('reloadManifestBtn');
@@ -96,7 +99,7 @@ function initStoryTab() {
         alert('Chưa chọn truyện');
         return;
       }
-      loadStory(sel.value);
+      renderStorySelect(sel.value);
     };
   }
 }
