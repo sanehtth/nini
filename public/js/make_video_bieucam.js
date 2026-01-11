@@ -198,24 +198,54 @@ function splitScenesFromStory() {
   appState.sfx = [];
 
   lines.forEach(line => {
-    if (line.startsWith('**Title') || line.startsWith('**Setting')) {
-      currentScene.prompt += line + '\n';
+
+  // ====== GẶP MỐC SCENE MỚI ======
+  if (
+    line.startsWith('**Scene') ||
+    line.startsWith('**Setting') ||
+    line.startsWith('**Title')
+  ) {
+    // Đóng scene cũ
+    if (currentScene) {
+      appState.scenes.push(currentScene);
     }
-    else if (line.includes('[SFX')) {
-      appState.sfx.push({
-        scene_id: currentScene.id,
-        text: line
-      });
-    }
-    else if (line.includes(':')) {
-      const [char, ...rest] = line.split(':');
-      appState.dialogues.push({
-        scene_id: currentScene.id,
-        character: char.replace(/\*/g, '').trim(),
-        text: rest.join(':').trim()
-      });
-    }
-  });
+
+    sceneId++;
+
+    currentScene = {
+      id: `S${sceneId}`,
+      prompt: line + '\n',
+      characters: [...appState.selectedCharacters],
+      frames: []
+    };
+
+    return;
+  }
+
+  // ====== SFX ======
+  if (line.includes('[SFX]')) {
+    appState.sfx.push({
+      scene_id: currentScene.id,
+      text: line
+    });
+    return;
+  }
+
+  // ====== DIALOGUE ======
+  if (line.includes(':')) {
+    const [char, ...rest] = line.split(':');
+    appState.dialogues.push({
+      scene_id: currentScene.id,
+      character: char.replace(/\*/g, '').trim(),
+      text: rest.join(':').trim()
+    });
+    return;
+  }
+
+  // ====== PROMPT THƯỜNG ======
+  currentScene.prompt += line + '\n';
+});
+
 
   appState.scenes.push(currentScene);
   appState.currentSceneIndex = 0;
