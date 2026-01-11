@@ -157,7 +157,15 @@ async function loadStory(file) {
 ========================= */
 function bindUI() {
   document.getElementById('reloadManifestBtn').onclick = loadManifest;
-  document.getElementById('loadStoryBtn').onclick = loadStory;
+
+  document.getElementById('loadStoryBtn').onclick = () => {
+    const sel = document.getElementById('storySelect');
+    if (!sel || !sel.value) {
+      alert('Chưa chọn truyện');
+      return;
+    }
+    loadStory(sel.value);
+  };
 }
 
 async function init() {
