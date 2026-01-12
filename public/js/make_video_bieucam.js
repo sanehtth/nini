@@ -356,7 +356,22 @@ function renderPreviewJSON() {
 }
 
 //--------------------------
-renderSceneSelect
+function renderSceneSelect() {
+  const sel = document.getElementById('sceneSelect');
+  if (!sel) return;
+
+  sel.innerHTML = '<option value="">-- Chọn Scene --</option>';
+
+  appState.scenes.forEach((sc, i) => {
+    if (!sc) return;
+
+    const opt = document.createElement('option');
+    opt.value = i; // dùng INDEX
+    opt.textContent = `${sc.id} (${sc.frames.length} frame)`;
+    sel.appendChild(opt);
+  });
+}
+
 
 function renderFrameSelect(sceneIndex) {
   const frameSel = document.getElementById('frameSelect');
