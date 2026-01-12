@@ -1,102 +1,159 @@
+// ================= TAB 2 – FRAME EDITOR =================
 console.log("[TAB2] init");
 
-let storyA = null;
-let storyB = null;
+window.storyB = null;
+let frames = [];
 let currentFrameIndex = 0;
 
-// ===== DOM (TAB 2 – đặt tên RIÊNG) =====
-const elFrameInfo = document.getElementById("frameInfo");
-const elFrameChar = document.getElementById("frameCharacter");
-const elFrameExpr = document.getElementById("frameExpression");
-const elFrameAction = document.getElementById("frameAction");
-const elFrameBg = document.getElementById("frameBackground");
-const elFrameCam = document.getElementById("frameCamera");
-const elFrameStyle = document.getElementById("frameStyle");
-const elPreviewB = document.getElementById("previewStoryB");
+// ---------- ELEMENTS ----------
+const elLoadStoryA = document.getElementById("btnLoadStoryA");
+const elSaveStoryB = document.getElementById("btnSaveStoryB");
 
-// ===== LOAD STORY A =====
-document.getElementById("btnLoadStoryA").onclick = () => {
+const elChar = document.getElementById("frameCharacter");
+const elFace = document.getElementById("frameExpression");
+const elAction = document.getElementById("frameAction");
+const elBg = document.getElementById("frameBackground");
+const elCamera = document.getElementById("frameCamera");
+const elStyle = document.getElementById("frameStyle");
+
+const elFrameInfo = document.getElementById("frameInfo");
+const elFrameJson = document.getElementById("frameJson");
+
+// ---------- LOAD JSON UTILS ----------
+async function loadJSON(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Load fail: " + url);
+  return res.json();
+}
+
+// ---------- LOAD STORY A ----------
+function loadStoryAFromLocal() {
   const keys = Object.keys(localStorage).filter(k => k.startsWith("storyA_"));
   if (!keys.length) {
     alert("Chưa có Story A trong local");
     return;
   }
+  const storyA = JSON.parse(localStorage.getItem(keys[0]));
+  buildFramesFromStoryA(storyA);
+}
 
-  storyA = JSON.parse(localStorage.getItem(keys[keys.length - 1]));
-  buildStoryB();
-  loadFrame(0);
+// ---------- BUILD FRAMES ----------
+function buildFramesFromStoryA(storyA) {
+  frames = [];
+  let index = 0;
 
-  console.log("[TAB2] Loaded storyA", storyA);
-};
-
-// ===== BUILD STORY B =====
-function buildStoryB() {
-  storyB = {
-    id: storyA.id,
-    from: "storyA",
-    frames: storyA.dialogues.map((d, i) => ({
-      index: i,
+  storyA.dialogues.forEach(d => {
+    frames.push({
+      index: index++,
       scene_id: d.scene_id,
       character: d.character || "",
       dialogue: d.text || "",
-      expression: "",
+      face: "",
+      state: "",
       action: "",
+      outfit: "",
       background: "",
       camera: "",
-      style: ""
-    }))
+      style: "",
+      lighting: ""
+    });
+  });
+
+  currentFrameIndex = 0;
+  window.storyB = {
+    id: storyA.id,
+    title: storyA.title,
+    frames
   };
+
+  console.log("[TAB2] Loaded storyA → frames", frames.length);
+  renderFrame();
 }
 
-// ===== LOAD FRAME =====
-function loadFrame(i) {
-  if (!storyB || !storyB.frames[i]) return;
+// ---------- LOAD LIBRARIES ----------
+async function loadLibraries() {
+  const base = "/adn/xomnganchuyen/";
+  const [
+    chars,
+    faces,
+    actions,
+    states,
+    outfits,
+    bgs,
+    style
+  ] = await Promise.all([
+    loadJSON(base + "XNC_characters.json"),
+    loadJSON(base + "XNC_faces.json"),
+    loadJSON(base + "XNC_actions.json"),
+    loadJSON(base + "XNC_states.json"),
+    loadJSON(base + "XNC_outfits.json"),
+    loadJSON(base + "XNC_backgrounds.json"),
+    loadJSON(base + "XNC_style.json")
+  ]);
 
-  currentFrameIndex = i;
-  const f = storyB.frames[i];
-
-  elFrameInfo.textContent = `Frame ${i + 1} / ${storyB.frames.length}`;
-  elFrameChar.value = f.character;
-  elFrameExpr.value = f.expression;
-  elFrameAction.value = f.action;
-  elFrameBg.value = f.background;
-  elFrameCam.value = f.camera;
-  elFrameStyle.value = f.style;
-
-  elPreviewB.textContent = JSON.stringify(f, null, 2);
+  fillSelect(elChar, chars.characters, "id", "name");
+  fillSelect(elFace, faces.faces, "id", "label");
+  fillSelect(elAction, actions.actions, "id", "label");
+  fillSelect(elBg, bgs.backgrounds, "id", "label");
+  fillSelect(elCamera, Object.keys(style.camera));
+  fillSelect(elStyle, Object.keys(style.emotion_tone_map));
 }
 
-// ===== SAVE CURRENT FRAME =====
-function saveFrame() {
-  const f = storyB.frames[currentFrameIndex];
-  f.character = elFrameChar.value;
-  f.expression = elFrameExpr.value;
-  f.action = elFrameAction.value;
-  f.background = elFrameBg.value;
-  f.camera = elFrameCam.value;
-  f.style = elFrameStyle.value;
+// ---------- UI HELPERS ----------
+function fillSelect(el, list, idKey, labelKey) {
+  el.innerHTML = "";
+  list.forEach(i => {
+    const opt = document.createElement("option");
+    opt.value = idKey ? i[idKey] : i;
+    opt.textContent = labelKey ? i[labelKey] : i;
+    el.appendChild(opt);
+  });
 }
 
-// ===== NAVIGATION =====
-document.getElementById("btnPrevFrame").onclick = () => {
-  saveFrame();
-  if (currentFrameIndex > 0) loadFrame(currentFrameIndex - 1);
-};
+// ---------- RENDER FRAME ----------
+function renderFrame() {
+  const f = frames[currentFrameIndex];
+  if (!f) return;
 
-document.getElementById("btnNextFrame").onclick = () => {
-  saveFrame();
-  if (currentFrameIndex < storyB.frames.length - 1) {
-    loadFrame(currentFrameIndex + 1);
-  }
-};
+  elFrameInfo.textContent = `Frame ${currentFrameIndex + 1}/${frames.length}`;
 
-// ===== SAVE LOCAL STORY B =====
-document.getElementById("btnSaveStoryB").onclick = () => {
-  if (!storyB) {
-    alert("Chưa có Story B");
-    return;
-  }
-  localStorage.setItem(`storyB_${storyB.id}`, JSON.stringify(storyB));
-  alert("Đã lưu Story B vào local");
-  console.log("[TAB2] Saved storyB", storyB);
-};
+  elChar.value = f.character;
+  elFace.value = f.face;
+  elAction.value = f.action;
+  elBg.value = f.background;
+  elCamera.value = f.camera;
+  elStyle.value = f.style;
+
+  elFrameJson.textContent = JSON.stringify(f, null, 2);
+}
+
+// ---------- SAVE FRAME ----------
+function bindField(el, key) {
+  el.addEventListener("change", () => {
+    frames[currentFrameIndex][key] = el.value;
+    renderFrame();
+  });
+}
+
+// ---------- SAVE STORY B ----------
+function saveStoryBLocal() {
+  if (!window.storyB) return;
+  localStorage.setItem(
+    "storyB_" + window.storyB.id,
+    JSON.stringify(window.storyB, null, 2)
+  );
+  alert("Đã lưu Story B (local)");
+}
+
+// ---------- INIT ----------
+bindField(elChar, "character");
+bindField(elFace, "face");
+bindField(elAction, "action");
+bindField(elBg, "background");
+bindField(elCamera, "camera");
+bindField(elStyle, "style");
+
+elLoadStoryA.onclick = loadStoryAFromLocal;
+elSaveStoryB.onclick = saveStoryBLocal;
+
+loadLibraries();
