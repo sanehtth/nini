@@ -1,27 +1,26 @@
-/* =====================================================
-   XNC – MAKE VIDEO BIỂU CẢM (FINAL – STABLE)
-   Khớp HTML: make_video_bieucam.html
-===================================================== */
-let sceneId = 0;
-let currentScene = null;
-
 /* =========================
    GLOBAL STATE
 ========================= */
 const appState = {
   characters: [],
-  selectedCharacters: [],
+  manifest: null,
+  currentStory: null,
+
   storyDraft: null,
+  selectedCharacters: [],
+
   scenes: [],
   dialogues: [],
   sfx: [],
-  currentSceneIndex: 0,
-  mode: 'dialogue' // dialogue | scene | hybrid
+
+  currentSceneIndex: 0
 };
 
 /* =========================
    HELPERS
 ========================= */
+const qs = (id) => document.getElementById(id);
+
 async function fetchJSON(url) {
   console.log('[XNC] fetchJSON:', url);
   const res = await fetch(url);
@@ -29,79 +28,17 @@ async function fetchJSON(url) {
   return res.json();
 }
 
-function qs(id) {
-  return document.getElementById(id);
-}
 /* =========================
-   MANIFEST
-========================= */
-async function loadManifest() {
-  try {
-    const data = await fetchJSON('/substance/manifest.json');
-
-    if (!data || !Array.isArray(data.items)) {
-      alert('Manifest sai format');
-      console.error('Manifest invalid', data);
-      return;
-    }
-
-    appState.manifest = data.items;
-    renderStorySelect();
-
-    console.log('[XNC] Loaded manifest:', data.items.length);
-  } catch (e) {
-    console.error('[XNC] loadManifest ERROR', e);
-    alert('Không load được manifest');
-  }
-}
-function renderStorySelect() {
-  const sel = qs('storySelect');
-  if (!sel) return;
-
-  sel.innerHTML = '<option value="">-- Chọn truyện --</option>';
-
-  appState.manifest.forEach(st => {
-    const opt = document.createElement('option');
-    opt.value = st.file;
-    opt.textContent = `${st.id} – ${st.title}`;
-    sel.appendChild(opt);
-  });
-}
-async function loadStory(file) {
-  try {
-    console.log('[XNC] loadStory:', file);
-
-    const data = await fetchJSON(file);
-
-    qs('storyId').value = data.id || '';
-    qs('storyTitle').value = data.title || '';
-    qs('storyText').value = data.story || data.idea || '';
-
-    appState.storyDraft = {
-      id: data.id,
-      title: data.title,
-      story: data.story || data.idea || '',
-      characters: data.characters || []
-    };
-
-    console.log('[XNC] Story loaded OK:', data.id);
-  } catch (e) {
-    console.error('[XNC] loadStory ERROR', e);
-    alert('Không load được file truyện');
-  }
-}
-
-/* =========================
-   CHARACTERS
+   LOAD CHARACTERS
 ========================= */
 async function loadCharacters() {
   const data = await fetchJSON('/adn/xomnganchuyen/XNC_characters.json');
-  appState.characters = data.characters || [];
-  renderCharacters();
+  appState.characters = data.characters || data;
+  renderParticipants();
   console.log('[XNC] Loaded characters:', appState.characters.length);
 }
 
-function renderCharacters() {
+function renderParticipants() {
   const box = qs('participantsList');
   if (!box) return;
 
@@ -110,11 +47,10 @@ function renderCharacters() {
     const div = document.createElement('div');
     div.className = 'pitem';
     div.innerHTML = `
-      <input type="checkbox" value="${c.id}">
-      <div>
-        <div class="pname">${c.name}</div>
-        <div class="ptag">${c.gender || ''}</div>
-      </div>
+      <label>
+        <input type="checkbox" value="${c.id}">
+        <b>${c.name}</b> <span class="muted">${c.gender || ''}</span>
+      </label>
     `;
     box.appendChild(div);
   });
@@ -123,58 +59,96 @@ function renderCharacters() {
 }
 
 function bindCharacterEvents() {
-  const countBox = qs('participantsSelectedCount');
+  qs('participantsList').querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.onchange = () => {
+      appState.selectedCharacters = [...qs('participantsList')
+        .querySelectorAll('input:checked')]
+        .map(i => i.value);
 
-  document.querySelectorAll('#participantsList input[type=checkbox]')
-    .forEach(cb => {
-      cb.onchange = () => {
-        appState.selectedCharacters =
-          Array.from(document.querySelectorAll('#participantsList input:checked'))
-            .map(i => i.value);
-
-        if (countBox) countBox.textContent = appState.selectedCharacters.length;
-      };
-    });
-
-  qs('participantsSelectAll')?.addEventListener('click', () => {
-    document.querySelectorAll('#participantsList input').forEach(i => i.checked = true);
-    bindCharacterEvents();
+      qs('participantsSelectedCount').textContent =
+        appState.selectedCharacters.length;
+    };
   });
 
-  qs('participantsClear')?.addEventListener('click', () => {
-    document.querySelectorAll('#participantsList input').forEach(i => i.checked = false);
+  qs('participantsSelectAll').onclick = () => {
+    qs('participantsList').querySelectorAll('input').forEach(i => i.checked = true);
     bindCharacterEvents();
-  });
+  };
+
+  qs('participantsClear').onclick = () => {
+    qs('participantsList').querySelectorAll('input').forEach(i => i.checked = false);
+    appState.selectedCharacters = [];
+    qs('participantsSelectedCount').textContent = 0;
+  };
 }
 
 /* =========================
-   STORY SAVE / EXPORT
+   MANIFEST + STORY
+========================= */
+async function loadManifest() {
+  const data = await fetchJSON('/substance/manifest.json');
+  appState.manifest = data.items || [];
+  renderStorySelect();
+  console.log('[XNC] Loaded manifest:', appState.manifest.length);
+}
+
+function renderStorySelect() {
+  const sel = qs('storySelect');
+  sel.innerHTML = '<option value="">-- Chọn truyện --</option>';
+  appState.manifest.forEach(st => {
+    const opt = document.createElement('option');
+    opt.value = st.file;
+    opt.textContent = `${st.id} – ${st.title}`;
+    sel.appendChild(opt);
+  });
+}
+
+async function loadStory(file) {
+  const data = await fetchJSON(file);
+  appState.currentStory = data;
+
+  qs('storyId').value = data.id || '';
+  qs('storyTitle').value = data.title || '';
+  qs('storyText').value = data.story || data.idea || '';
+
+  console.log('[XNC] Story loaded OK:', data.id);
+}
+
+/* =========================
+   SAVE / EXPORT
 ========================= */
 function saveStoryLocal() {
-  const story = {
-    id: qs('storyId')?.value || '',
-    title: qs('storyTitle')?.value || '',
-    story: qs('storyText')?.value || '',
-    characters: appState.selectedCharacters
+  appState.storyDraft = {
+    id: qs('storyId').value,
+    title: qs('storyTitle').value,
+    story: qs('storyText').value,
+    characters: [...appState.selectedCharacters]
   };
-
-  localStorage.setItem('xnc_story_draft', JSON.stringify(story, null, 2));
-  appState.storyDraft = story;
-
-  console.log('[XNC] Story saved local', story);
-  alert('Đã lưu story (local)');
+  console.log('[XNC] Story saved local', appState.storyDraft);
 }
 
 function exportStoryJSON() {
-  if (!appState.storyDraft) {
-    alert('Chưa có story để xuất');
-    return;
-  }
-  downloadJSON(appState.storyDraft, 'story.json');
+  downloadJSON(appState.storyDraft, `${appState.storyDraft.id}_story.json`);
+}
+
+function exportDialogueJSON() {
+  downloadJSON(appState.dialogues, `${appState.storyDraft.id}_dialogue.json`);
+}
+
+function copyDialogueJSON() {
+  navigator.clipboard.writeText(JSON.stringify(appState.dialogues, null, 2));
+}
+
+function downloadJSON(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
 }
 
 /* =========================
-   SPLIT STORY → SCENES + DIALOGUES
+   SPLIT SCENES (CORE)
 ========================= */
 function splitScenesFromStory() {
   if (!appState.storyDraft) {
@@ -184,8 +158,10 @@ function splitScenesFromStory() {
 
   console.log('[XNC] splitScenesFromStory START');
 
-  const text = appState.storyDraft.story;
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const lines = appState.storyDraft.story
+    .split('\n')
+    .map(l => l.trim())
+    .filter(Boolean);
 
   appState.scenes = [];
   appState.dialogues = [];
@@ -196,39 +172,36 @@ function splitScenesFromStory() {
 
   lines.forEach(line => {
 
-    // ===== START SCENE =====
-    if (
-      line.startsWith('**Title') ||
-      line.startsWith('**Setting') ||
-      line.startsWith('**Scene')
-    ) {
-      // push scene cũ
-      if (currentScene) {
-        appState.scenes.push(currentScene);
-      }
+    // ❌ TITLE = metadata → bỏ
+    if (line.startsWith('**Title')) return;
+
+    // 🟢 START SCENE
+    if (line.startsWith('**Setting') || line.startsWith('**Scene')) {
+      if (currentScene) appState.scenes.push(currentScene);
 
       sceneIndex++;
       currentScene = {
         id: `S${sceneIndex}`,
         prompt: line + '\n',
-        characters: [...appState.selectedCharacters],
+        characters: [...appState.storyDraft.characters],
         frames: []
       };
       return;
     }
 
-    // ===== BỎ QUA nếu chưa có scene =====
-    if (!currentScene) return;
-
-    // ===== END SCENE =====
+    // 🔴 END SCENE
     if (line.includes('[END SCENE]')) {
-      appState.scenes.push(currentScene);
-      currentScene = null;
+      if (currentScene) {
+        currentScene.prompt += line + '\n';
+        appState.scenes.push(currentScene);
+        currentScene = null;
+      }
       return;
     }
 
-    // ===== SFX =====
+    // 🔊 SFX
     if (line.includes('[SFX]')) {
+      if (!currentScene) return;
       appState.sfx.push({
         scene_id: currentScene.id,
         text: line
@@ -236,8 +209,9 @@ function splitScenesFromStory() {
       return;
     }
 
-    // ===== DIALOGUE =====
+    // 💬 DIALOGUE
     if (line.includes(':')) {
+      if (!currentScene) return;
       const [char, ...rest] = line.split(':');
       appState.dialogues.push({
         scene_id: currentScene.id,
@@ -247,18 +221,16 @@ function splitScenesFromStory() {
       return;
     }
 
-    // ===== PROMPT =====
-    currentScene.prompt += line + '\n';
+    // 📌 SCENE PROMPT
+    if (currentScene) {
+      currentScene.prompt += line + '\n';
+    }
   });
 
-  // push scene cuối nếu còn
-  if (currentScene) {
-    appState.scenes.push(currentScene);
-  }
+  if (currentScene) appState.scenes.push(currentScene);
 
-  appState.currentSceneIndex = 0;
-
-  renderAfterSplit();
+  renderPreviewJSON();
+  renderSceneSelect();
 
   console.log('[XNC] splitScenesFromStory DONE', {
     scenes: appState.scenes.length,
@@ -267,167 +239,55 @@ function splitScenesFromStory() {
   });
 }
 
-
 /* =========================
    SCENE UI
 ========================= */
-function renderSceneManifest() {
-  const sel = qs('sceneSelect');
-  if (!sel) return;
-
-  sel.innerHTML = '<option value="">-- Chọn Scene --</option>';
-
-  appState.scenes.forEach((scene, index) => {
-    if (!scene) return;
-
-    const opt = document.createElement('option');
-    opt.value = index; // dùng INDEX
-    opt.textContent = scene.id;
-    sel.appendChild(opt);
-  });
-
-  sel.onchange = () => {
-    appState.currentSceneIndex = Number(sel.value);
-    renderSceneDetail();
-  };
-
-  renderSceneDetail();
-}
-
-
-function renderSceneDetail() {
-  const scene = appState.scenes[appState.currentSceneIndex];
-  if (!scene) return;
-
-  qs('sceneNote') && (qs('sceneNote').value = scene.prompt || '');
-}
-
-/* =========================
-   DIALOGUE EXPORT
-========================= */
-function exportDialogueJSON() {
-  downloadJSON({
-    dialogues: appState.dialogues,
-    sfx: appState.sfx
-  }, 'dialogue.json');
-}
-
-function copyDialogueJSON() {
-  const txt = JSON.stringify({
-    dialogues: appState.dialogues,
-    sfx: appState.sfx
-  }, null, 2);
-  navigator.clipboard.writeText(txt);
-  alert('Đã copy JSON thoại');
-}
-
-/* =========================
-   UTILS
-========================= */
-function clearPreview() {
-  appState.scenes = [];
-  appState.dialogues = [];
-  appState.sfx = [];
-  qs('sceneSelect') && (qs('sceneSelect').innerHTML = '');
-  console.log('[XNC] Preview cleared');
-}
-
-function downloadJSON(data, filename) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-}
-//-------------------------
 function renderPreviewJSON() {
-  const box = document.getElementById('previewBox');
-  if (!box) return;
-
-  box.textContent = JSON.stringify({
+  qs('previewBox').textContent = JSON.stringify({
     scenes: appState.scenes,
     dialogues: appState.dialogues,
     sfx: appState.sfx
   }, null, 2);
 }
 
-//--------------------------
 function renderSceneSelect() {
-  const sel = document.getElementById('sceneSelect');
+  const sel = qs('sceneSelect');
   if (!sel) return;
 
   sel.innerHTML = '<option value="">-- Chọn Scene --</option>';
-
-  appState.scenes.forEach((sc, i) => {
-    if (!sc) return;
-
+  appState.scenes.forEach(sc => {
     const opt = document.createElement('option');
-    opt.value = i; // dùng INDEX
-    opt.textContent = `${sc.id} (${sc.frames.length} frame)`;
+    opt.value = sc.id;
+    opt.textContent = sc.id;
     sel.appendChild(opt);
   });
-}
-
-
-function renderFrameSelect(sceneIndex) {
-  const frameSel = document.getElementById('frameSelect');
-  if (!frameSel) return;
-
-  frameSel.innerHTML = '<option value="">-- Chọn Frame --</option>';
-
-  const scene = appState.scenes[sceneIndex];
-  if (!scene || !scene.frames) return;
-
-  scene.frames.forEach((fr, idx) => {
-    const opt = document.createElement('option');
-    opt.value = idx;
-    opt.textContent = `Frame ${idx + 1}`;
-    frameSel.appendChild(opt);
-  });
-}
-
-//--------------------------
-function renderAfterSplit() {
-  renderPreviewJSON();
-  renderSceneSelect();
 }
 
 /* =========================
    BIND UI
 ========================= */
-qs('reloadManifestBtn')?.addEventListener('click', loadManifest);
-
-qs('loadStoryBtn')?.addEventListener('click', () => {
-  const sel = qs('storySelect');
-  if (!sel || !sel.value) {
-    alert('Chưa chọn truyện');
-    return;
-  }
-  loadStory(sel.value);
-});
-
 function bindUI() {
-  qs('saveLocalBtn')?.addEventListener('click', saveStoryLocal);
-  qs('exportStoryBtn')?.addEventListener('click', exportStoryJSON);
-  qs('splitBtn')?.addEventListener('click', splitScenesFromStory);
-  qs('exportDialogueBtn')?.addEventListener('click', exportDialogueJSON);
-  qs('copyDialogueBtn')?.addEventListener('click', copyDialogueJSON);
-  qs('clearPreviewBtn')?.addEventListener('click', clearPreview);
+  qs('reloadManifestBtn').onclick = loadManifest;
+  qs('loadStoryBtn').onclick = () => {
+    const sel = qs('storySelect');
+    if (sel.value) loadStory(sel.value);
+  };
+
+  qs('saveLocalBtn').onclick = saveStoryLocal;
+  qs('exportStoryBtn').onclick = exportStoryJSON;
+  qs('splitBtn').onclick = splitScenesFromStory;
+  qs('exportDialogueBtn').onclick = exportDialogueJSON;
+  qs('copyDialogueBtn').onclick = copyDialogueJSON;
 }
 
 /* =========================
    INIT
 ========================= */
 async function init() {
-  try {
-    await loadCharacters();
-    await loadManifest();   // 👈 THIẾU CÁI NÀY
-    bindUI();
-    console.log('[XNC] CORE READY');
-  } catch (e) {
-    console.error('[XNC] INIT ERROR', e);
-  }
+  await loadCharacters();
+  await loadManifest();
+  bindUI();
+  console.log('[XNC] CORE READY');
 }
-
 
 document.addEventListener('DOMContentLoaded', init);
