@@ -1,0 +1,154 @@
+{
+  "id": "XNC-20251226-0004",
+  "title": "bai kiem tra cuoi ky",
+  "scenes": [
+    {
+      "id": "S1",
+      "title": "bai kiem tra cuoi ky",
+      "frames": []
+    }
+  ],
+  "dialogues": [
+    {
+      "scene_id": "S1",
+      "character": "Title",
+      "text": "Xóm Ngàn Chuyện"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng chuông báo giờ học, tiếng ghế kéo ra.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[Scene",
+      "text": "Một lớp học tiểu học, các học sinh đang ngồi bàn. Bô-Lô, Ba-La, Tùm-Lum và Tùm-La đang làm bài tập.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Bô-Lô",
+      "text": "(đeo kính, nhìn vào bài) Nè, hai đứa, tụi mày có chắc là đáp án đúng không vậy?"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Ba-La",
+      "text": "(vung tay) Hèn chi, tao với mày giống nhau hết rồi! Tao làm từ 1 đến 4 là 1a, 2b, 3c, 4d..."
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tùm-Lum",
+      "text": "(cười khúc khích) Ê! Tụi mày có chắc không vậy?"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng ghế ngồi lại.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Bô-Lô",
+      "text": "(nhìn hai đứa) Hai tụi bây khắc nhau sao mà giống hoài vậy?"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Ba-La",
+      "text": "(hơi lo lắng) Trời đất, chắc chắn là đúng rồi!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tùm-La",
+      "text": "(nháy mắt) Thì tao làm đề 1. Còn mày thì đề 2 hả?"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Ba-La",
+      "text": "(cười lớn) Chết rồi! Tao làm đề 2!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tùm-Lum",
+      "text": "(mỉm cười) Vậy tao giống mày nè, tao cũng làm đề 1."
+    },
+    {
+      "scene_id": "S1",
+      "character": "Bô-Lô",
+      "text": "(đọc bài) Tao đọc văn thấy mày làm sai sai cái gì đó!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tùm-La",
+      "text": "(nghi ngờ) Sao mày biết tao sai?"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Bô-Lô",
+      "text": "(khoe khoang) Vì tao chép trộm bài của Tùm-Lum!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tùm-Lum",
+      "text": "(hét lên) Vậy là tao sai cái gì?"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Bô-Lô",
+      "text": "(chỉ vào bài) Thì môn toán sao lại hỏi diện tích Việt Nam nhi?"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tùm-La",
+      "text": "(mặt nghiêm túc) Cái gì vậy trời? Môn này là môn toán hay địa lý vậy?"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Ba-La",
+      "text": "(nhướng mày) Chắc chắn là môn toán, nhưng mà có cái gì lạ lạ vậy trời?"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng cười lớn từ các bạn học.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tùm-Lum",
+      "text": "(nhún vai) Thôi kệ, miễn có điểm là được!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Bô-Lô",
+      "text": "(cười) Thì hèn chi tụi mày giống nhau, làm bài mà không thèm xem lại!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Ba-La",
+      "text": "(nháy mắt) Vậy tụi mình làm lại đi!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tùm-La",
+      "text": "(đứng lên) Đúng rồi! Làm lại cho chắc!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng ghế kéo lại, bọn trẻ hối hả làm bài.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Bô-Lô",
+      "text": "(cười khúc khích) Lần sau nhớ xem lại nha, không thôi lại thiệt thòi!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tùm-Lum",
+      "text": "(vẫy tay) Đi học mà, có gì đâu, chỉ cần vui là đủ rồi!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng cười và tiếng bàn ghế xôn xao, fade out.]"
+    }
+  ],
+  "sfx": []
+}
