@@ -1,168 +1,169 @@
-/* =========================
-   TAB 1 – STORY / PARSER
-========================= */
+/* ============================
+   TAB 1 – STORY PARSER (JSON A)
+   ============================ */
 
-const Tab1State = {
-  manifest: null,
-  currentStory: null,
-  storyA: null
+console.log('[TAB1] init');
+
+/* -------- STATE -------- */
+window.appState = window.appState || {};
+appState.storyA = {
+  id: '',
+  title: '',
+  rawText: '',
+  scenes: []
 };
 
-/* ===== Helpers ===== */
+/* -------- DOM -------- */
+const elManifestSelect = document.getElementById('manifestSelect');
+const elLoadStoryBtn   = document.getElementById('loadStoryBtn');
+const elReloadManifest = document.getElementById('reloadManifestBtn');
+
+const elStoryId    = document.getElementById('storyId');
+const elStoryTitle = document.getElementById('storyTitle');
+const elStoryText  = document.getElementById('storyText');
+
+const elParseBtn   = document.getElementById('parseStoryBtn');
+const elExportBtn  = document.getElementById('exportStoryStructBtn');
+
+/* -------- FETCH HELPERS -------- */
 async function fetchJSON(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error('Fetch failed: ' + url);
-  return res.json();
+  return await res.json();
 }
 
-/* ===== Load manifest ===== */
+/* -------- LOAD MANIFEST -------- */
 async function loadManifest() {
-  const data = await fetchJSON('/substance/manifest.json');
+  console.log('[TAB1] load manifest');
+  const manifest = await fetchJSON('/substance/manifest.json');
 
-  if (!data || !Array.isArray(data.items)) {
-    alert('Manifest sai format');
-    return;
-  }
-
-  Tab1State.manifest = data.items;
-  renderStorySelect();
-  console.log('[TAB1] Manifest loaded', data.items.length);
-}
-
-function renderStorySelect() {
-  const sel = document.getElementById('storySelect');
-  sel.innerHTML = '<option value="">-- Chọn truyện --</option>';
-
-  Tab1State.manifest.forEach(item => {
+  elManifestSelect.innerHTML = '';
+  manifest.items.forEach(item => {
     const opt = document.createElement('option');
     opt.value = item.file;
     opt.textContent = `${item.id} – ${item.title}`;
-    sel.appendChild(opt);
+    elManifestSelect.appendChild(opt);
   });
+
+  console.log('[TAB1] Manifest loaded', manifest.items.length);
 }
 
-/* ===== Load story ===== */
-async function loadStoryFromFile(file) {
+/* -------- LOAD STORY -------- */
+async function loadStory() {
+  const file = elManifestSelect.value;
+  if (!file) return;
+
   const data = await fetchJSON(file);
-  Tab1State.currentStory = data;
 
-  document.getElementById('storyId').value = data.id || '';
-  document.getElementById('storyTitle').value = data.title || '';
-  document.getElementById('storyText').value =
-    data.story || data.idea || '';
+  elStoryId.value    = data.id || '';
+  elStoryTitle.value = data.title || '';
+  elStoryText.value  = data.story || '';
 
-  console.log('[TAB1] Story loaded', data.id);
+  appState.storyA.id       = data.id || '';
+  appState.storyA.title    = data.title || '';
+  appState.storyA.rawText  = data.story || '';
+
+  console.log('[TAB1] Story loaded OK:', data.id);
 }
 
-/* ===== Parse story → JSON A ===== */
-function splitStoryToA() {
-  const id = document.getElementById('storyId').value.trim();
-  const title = document.getElementById('storyTitle').value.trim();
-  const text = document.getElementById('storyText').value.trim();
+/* -------- CORE PARSER -------- */
+function parseStory() {
+  console.log('[TAB1] Parse start');
 
-  if (!id || !text) {
-    alert('Thiếu ID hoặc nội dung');
+  const raw = elStoryText.value;
+  if (!raw) {
+    alert('Story text trống');
     return;
   }
 
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  appState.storyA.scenes = [];
+
+  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
 
   let sceneIndex = 1;
-  const scenes = [];
-  const dialogues = [];
-  const sfx = [];
-
-  let currentScene = {
-    id: `S${sceneIndex}`,
-    prompt: '',
-    characters: Tab1State.currentStory?.characters || [],
-    frames: []
-  };
+  let currentScene = createScene(sceneIndex);
 
   lines.forEach(line => {
-    if (line.startsWith('**Title') || line.startsWith('**Setting')) {
-      currentScene.prompt += line + '\n';
-    }
-    else if (line.startsWith('**Scene')) {
-      scenes.push(currentScene);
+    const clean = line.replace(/\*\*/g, '').trim();
+
+    /* --- SCENE SPLIT --- */
+    if (/^\[END SCENE\]/i.test(clean)) {
+      appState.storyA.scenes.push(currentScene);
       sceneIndex++;
-      currentScene = {
-        id: `S${sceneIndex}`,
-        prompt: line + '\n',
-        characters: currentScene.characters,
-        frames: []
-      };
+      currentScene = createScene(sceneIndex);
+      return;
     }
-    else if (line.startsWith('**[SFX')) {
-      sfx.push({
-        scene_id: currentScene.id,
-        text: line
+
+    /* --- SFX --- */
+    if (clean.startsWith('[SFX:')) {
+      currentScene.sfx.push(
+        clean.replace('[SFX:', '').replace(']', '').trim()
+      );
+      return;
+    }
+
+    /* --- DIALOGUE (Character: text) --- */
+    const m = clean.match(/^(.+?):\s*(.+)$/);
+    if (m) {
+      currentScene.dialogues.push({
+        character: m[1].trim(),
+        text: m[2].trim()
       });
+      return;
     }
-    else if (line.includes(':')) {
-      const [char, ...rest] = line.split(':');
-      dialogues.push({
-        scene_id: currentScene.id,
-        character: char.replace(/\*\*/g, '').trim(),
-        text: rest.join(':').trim()
-      });
-    }
+
+    /* --- NARRATION --- */
+    currentScene.narration.push(clean);
   });
 
-  scenes.push(currentScene);
+  /* push last scene */
+  if (
+    currentScene.dialogues.length ||
+    currentScene.narration.length ||
+    currentScene.sfx.length
+  ) {
+    appState.storyA.scenes.push(currentScene);
+  }
 
-  Tab1State.storyA = {
-    id,
-    title,
-    source: 'TAB1',
-    scenes,
-    dialogues,
-    sfx
+  console.log('[TAB1] Parse DONE:', appState.storyA.scenes);
+  alert('Tách story xong ✅');
+}
+
+/* -------- SCENE FACTORY -------- */
+function createScene(index) {
+  return {
+    id: `S${index}`,
+    dialogues: [],
+    narration: [],
+    sfx: []
+  };
+}
+
+/* -------- EXPORT -------- */
+function exportStoryStruct() {
+  const data = {
+    id: elStoryId.value,
+    title: elStoryTitle.value,
+    type: 'STORY_A',
+    scenes: appState.storyA.scenes
   };
 
-  renderPreviewA();
-  console.log('[TAB1] Story A ready', scenes.length);
-}
-
-/* ===== Preview & Export ===== */
-function renderPreviewA() {
-  document.getElementById('previewA').textContent =
-    JSON.stringify(Tab1State.storyA, null, 2);
-}
-
-function exportStoryA() {
-  if (!Tab1State.storyA) return alert('Chưa có JSON A');
-
   const blob = new Blob(
-    [JSON.stringify(Tab1State.storyA, null, 2)],
+    [JSON.stringify(data, null, 2)],
     { type: 'application/json' }
   );
 
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `${Tab1State.storyA.id}_A.json`;
+  a.download = `${data.id}_A.json`;
   a.click();
 }
 
-/* ===== Bind UI ===== */
-function initTab1() {
-  document.getElementById('reloadManifestBtn')
-    .onclick = loadManifest;
+/* -------- BIND EVENTS -------- */
+elReloadManifest.onclick = loadManifest;
+elLoadStoryBtn.onclick   = loadStory;
+elParseBtn.onclick       = parseStory;
+elExportBtn.onclick      = exportStoryStruct;
 
-  document.getElementById('loadStoryBtn')
-    .onclick = () => {
-      const sel = document.getElementById('storySelect');
-      if (!sel.value) return alert('Chưa chọn truyện');
-      loadStoryFromFile(sel.value);
-    };
-
-  document.getElementById('splitStoryBtn')
-    .onclick = splitStoryToA;
-
-  document.getElementById('exportStoryABtn')
-    .onclick = exportStoryA;
-
-  loadManifest();
-}
-
-document.addEventListener('DOMContentLoaded', initTab1);
+/* -------- INIT -------- */
+loadManifest();
