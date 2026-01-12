@@ -202,13 +202,13 @@ function splitScenesFromStory() {
   lines.forEach(line => {
 
   // ===== END SCENE =====
-  if (line.includes('[END SCENE]')) {
-    if (currentScene) {
-      appState.scenes.push(currentScene);
-      currentScene = null;
-    }
-    return;
+ if (line.includes('[END SCENE]')) {
+  if (currentScene && currentScene.id) {
+    appState.scenes.push(currentScene);
   }
+  currentScene = null;
+  return;
+}
 
   // ===== START SCENE =====
   if (
@@ -216,9 +216,10 @@ function splitScenesFromStory() {
     line.startsWith('**Setting') ||
     line.startsWith('**Scene')
   ) {
-    if (currentScene) {
-      appState.scenes.push(currentScene);
-    }
+    if (currentScene && currentScene.id) {
+  appState.scenes.push(currentScene);
+}
+
 
     sceneId++;
 
@@ -281,7 +282,9 @@ function renderSceneManifest() {
   if (!sel) return;
 
   sel.innerHTML = '<option value="">--</option>';
-  appState.scenes.forEach((s, i) => {
+  appState.scenes
+  .filter(s => s && s.id)
+  .forEach(scene => {
     const opt = document.createElement('option');
     opt.value = i;
     opt.textContent = `${s.id}`;
