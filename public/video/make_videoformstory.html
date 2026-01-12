@@ -242,6 +242,19 @@
   buttons.tabBtnFrame.onclick = () => showTab('tabFrame');
   buttons.tabBtnExport.onclick = () => showTab('tabExport');
 </script>
+<script>
+  // GLOBAL STATE – DÙNG CHUNG TOÀN APP
+  window.appState = {
+    storyA: null,   // JSON A – Story / Parser
+    frameB: null,   // JSON B – Frame Editor
+    exportC: null,  // JSON C – Export cho AI render
+
+    meta: {
+      version: 1,
+      lastUpdated: null
+    }
+  };
+</script>
 <!-- TAB 1: Tách story / scene / thoại -->
 <script src="tab1.js"></script>
 
@@ -253,6 +266,7 @@
 
 </body>
 </html>
+
 
 
 
