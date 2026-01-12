@@ -77,12 +77,53 @@
   <label>Preview JSON A (Story Struct)</label>
   <textarea id="previewJsonA" readonly></textarea>
 </div>
+<!-- ========================= -->
+<!-- TAB 2 – FRAME EDITOR -->
+<!-- ========================= -->
+<div id="tabFrame" class="tab" style="display:none">
 
+  <h2>🧩 TAB 2 – Frame Editor</h2>
+
+  <div class="box">
+    <button id="btnLoadStoryA">Load Story A từ local</button>
+    <span id="frameInfo"></span>
+  </div>
+
+  <div class="box">
+    <label>Nhân vật</label>
+    <input id="frameCharacter">
+
+    <label>Biểu cảm</label>
+    <input id="frameExpression" placeholder="vui, sợ, tức giận...">
+
+    <label>Hành động</label>
+    <input id="frameAction" placeholder="đứng, chạy, thì thầm...">
+
+    <label>Background</label>
+    <input id="frameBackground" placeholder="vườn cây, lớp học...">
+
+    <label>Camera</label>
+    <input id="frameCamera" placeholder="close-up, medium shot...">
+
+    <label>Style</label>
+    <input id="frameStyle" placeholder="cinematic, cartoon, anime...">
+  </div>
+
+  <div class="box">
+    <button id="btnPrevFrame">⬅ Frame trước</button>
+    <button id="btnNextFrame">Frame sau ➡</button>
+    <button id="btnSaveStoryB">💾 Lưu local (Story B)</button>
+  </div>
+
+  <pre id="previewStoryB"></pre>
+</div>
+<!-- ========================= -->
 <!-- CHỈ LOAD TAB 1 -->
 <script src="./tab1.js"></script>
-
+<script src="./tab2.js"></script>
 </body>
 </html>
+
 
 
 
