@@ -4,17 +4,17 @@ let storyA = null;
 let storyB = null;
 let currentFrameIndex = 0;
 
-// DOM
-const elInfo = document.getElementById("frameInfo");
-const elChar = document.getElementById("frameCharacter");
-const elExpr = document.getElementById("frameExpression");
-const elAction = document.getElementById("frameAction");
-const elBg = document.getElementById("frameBackground");
-const elCam = document.getElementById("frameCamera");
-const elStyle = document.getElementById("frameStyle");
-const elPreview = document.getElementById("previewStoryB");
+// ===== DOM (TAB 2 – đặt tên RIÊNG) =====
+const elFrameInfo = document.getElementById("frameInfo");
+const elFrameChar = document.getElementById("frameCharacter");
+const elFrameExpr = document.getElementById("frameExpression");
+const elFrameAction = document.getElementById("frameAction");
+const elFrameBg = document.getElementById("frameBackground");
+const elFrameCam = document.getElementById("frameCamera");
+const elFrameStyle = document.getElementById("frameStyle");
+const elPreviewB = document.getElementById("previewStoryB");
 
-// -------- LOAD STORY A --------
+// ===== LOAD STORY A =====
 document.getElementById("btnLoadStoryA").onclick = () => {
   const keys = Object.keys(localStorage).filter(k => k.startsWith("storyA_"));
   if (!keys.length) {
@@ -29,7 +29,7 @@ document.getElementById("btnLoadStoryA").onclick = () => {
   console.log("[TAB2] Loaded storyA", storyA);
 };
 
-// -------- BUILD STORY B --------
+// ===== BUILD STORY B =====
 function buildStoryB() {
   storyB = {
     id: storyA.id,
@@ -48,36 +48,36 @@ function buildStoryB() {
   };
 }
 
-// -------- LOAD FRAME --------
+// ===== LOAD FRAME =====
 function loadFrame(i) {
   if (!storyB || !storyB.frames[i]) return;
 
   currentFrameIndex = i;
   const f = storyB.frames[i];
 
-  elInfo.textContent = `Frame ${i + 1} / ${storyB.frames.length}`;
-  elChar.value = f.character;
-  elExpr.value = f.expression;
-  elAction.value = f.action;
-  elBg.value = f.background;
-  elCam.value = f.camera;
-  elStyle.value = f.style;
+  elFrameInfo.textContent = `Frame ${i + 1} / ${storyB.frames.length}`;
+  elFrameChar.value = f.character;
+  elFrameExpr.value = f.expression;
+  elFrameAction.value = f.action;
+  elFrameBg.value = f.background;
+  elFrameCam.value = f.camera;
+  elFrameStyle.value = f.style;
 
-  elPreview.textContent = JSON.stringify(f, null, 2);
+  elPreviewB.textContent = JSON.stringify(f, null, 2);
 }
 
-// -------- SAVE CURRENT FRAME --------
+// ===== SAVE CURRENT FRAME =====
 function saveFrame() {
   const f = storyB.frames[currentFrameIndex];
-  f.character = elChar.value;
-  f.expression = elExpr.value;
-  f.action = elAction.value;
-  f.background = elBg.value;
-  f.camera = elCam.value;
-  f.style = elStyle.value;
+  f.character = elFrameChar.value;
+  f.expression = elFrameExpr.value;
+  f.action = elFrameAction.value;
+  f.background = elFrameBg.value;
+  f.camera = elFrameCam.value;
+  f.style = elFrameStyle.value;
 }
 
-// -------- NAVIGATION --------
+// ===== NAVIGATION =====
 document.getElementById("btnPrevFrame").onclick = () => {
   saveFrame();
   if (currentFrameIndex > 0) loadFrame(currentFrameIndex - 1);
@@ -90,7 +90,7 @@ document.getElementById("btnNextFrame").onclick = () => {
   }
 };
 
-// -------- SAVE LOCAL --------
+// ===== SAVE LOCAL STORY B =====
 document.getElementById("btnSaveStoryB").onclick = () => {
   if (!storyB) {
     alert("Chưa có Story B");
