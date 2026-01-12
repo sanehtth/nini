@@ -116,6 +116,24 @@ window.appState = {
     };
   });
 </script>
+<script>
+function loadTabScript(tab) {
+  if (tab === 'frame' && !window.__tab2Loaded) {
+    const s = document.createElement('script');
+    s.src = 'tab2.js';
+    document.body.appendChild(s);
+    window.__tab2Loaded = true;
+  }
+
+  if (tab === 'export' && !window.__tab3Loaded) {
+    const s = document.createElement('script');
+    s.src = 'tab3.js';
+    document.body.appendChild(s);
+    window.__tab3Loaded = true;
+  }
+}
+</script>
 
 </body>
 </html>
+
