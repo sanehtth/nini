@@ -1,0 +1,204 @@
+{
+  "id": "XNC-20260110-0005",
+  "title": "Nhắm mắt... TU luôn!",
+  "scenes": [
+    {
+      "id": "S1",
+      "title": "Nhắm mắt... TU luôn!",
+      "frames": []
+    }
+  ],
+  "dialogues": [
+    {
+      "scene_id": "S1",
+      "character": "Title",
+      "text": "Xóm Ngàn Chuyện"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Setting",
+      "text": "Một vườn trái cây trong xóm, cây cối um tùm, tiếng chim hót líu lo. Hai thằng trộm đang lén lút."
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng lá xào xạc, tiếng chim hót.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tên Trộm Vịt",
+      "text": "(thì thào) Đại ca ơi, bên kia có đống đồ ngon hơn trái cây nhiều! Lấy không?"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng bước chân nhẹ nhàng.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tên Trộm Gà",
+      "text": "(vui vẻ) Kệ! Nhắm mắt chơi luôn!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng nhảy xuống đất.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tên Trộm Vịt",
+      "text": "(hưng phấn) Được rồi! Tao qua đó gom đồ nha!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng chạy rào rào.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng Gà kêu.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tên Trộm Gà",
+      "text": "(gọi lớn) Mày ơi, tao thấy đằng kia có cây xoài ngon quá! Lấy không?"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng cành cây rung rinh.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Giọng nói trầm trầm",
+      "text": "(vang vọng) Kệ! Nhắm mắt quất luôn!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tên Trộm Gà",
+      "text": "(gật gù) Được, mày gom rải trái cây theo tao, tao trèo qua đó!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng bước chân trở lại.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng bao đồ sột soạt.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tên Trộm Vịt",
+      "text": "(vui vẻ) Ê, tao ôm bao đồ quay lại nè! Mày sao rồi?"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng Gà trèo lên cây xoài.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tên Trộm Gà",
+      "text": "(trong khi hái) Tao đang trèo lên cây xoài nè, tay vẫn thoăn thoắt hái!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tên Trộm Vịt",
+      "text": "(ngạc nhiên) Sao mày qua đây rồi?"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng cành cây rung động mạnh.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Giọng nói trầm trầm",
+      "text": "(vang vọng) Kệ! Nhắm mắt xơi luôn!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng ngạc nhiên.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tên Trộm Gà",
+      "text": "(hoang mang) Hả? Là sao?"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tên Trộm Vịt",
+      "text": "(bối rối) Đợi chút đã, bên dưới có chuyện gì vậy?"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng trẻ con cười giòn tan.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tùm-La",
+      "text": "(hăng hái) Chôm chôm ngon quá đi!Tên Trộm Gà: (hét lên) Lũ nhóc...!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng cây gậy đập mạnh xuống đất.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Chú Tư",
+      "text": "(gầm lên) KỆ... NHẮM MẮT GOM LUÔN!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng chân chạy ầm ầm.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tên Trộm Vịt",
+      "text": "(hoảng hốt) Chạy đi, chạy đi!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tên Trộm Gà",
+      "text": "(vội vàng) Trời đất ơi, rượt rồi kìa!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng chạy, tiếng thở dốc.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tùm-Lum",
+      "text": "(vẫn ăn chôm chôm) Kệ! Nhắm mắt tiếp tục ăn đi!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng cười giòn giã của trẻ con.]"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tùm-La",
+      "text": "(nháy mắt) Mấy chú ăn trộm chạy đi kìa, vui ghê!Tay nhanh thoăn thoắt lấy 4 lon nước ngọt trong bao đồ của tên trộm!"
+    },
+    {
+      "scene_id": "S1",
+      "character": "Tùm Lum",
+      "text": "\"KỆ! NHẮM MẮT .. TU LUÔN!\""
+    },
+    {
+      "scene_id": "S1",
+      "character": "[SFX",
+      "text": "Tiếng gậy đập đất, tiếng cười của bọn trẻ.]"
+    }
+  ],
+  "sfx": []
+}
