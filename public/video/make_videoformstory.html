@@ -23,8 +23,13 @@
 <!-- ================= TAB HEADER ================= -->
 <header>
   <button id="tabBtnStory" class="active">TAB 1 – Story</button>
-  <button id="tabBtnFrame">TAB 2 – Frame</button>
-  <button id="tabBtnExport">TAB 3 – Export</button>
+  <button onclick="showTab('frame'); loadTabScript('frame')">
+  TAB 2 – Frame
+</button>
+
+  <button onclick="showTab('export'); loadTabScript('export')">
+  TAB 3 – Export
+</button>
 </header>
 
 <!-- ================= TAB 1 ================= -->
@@ -136,4 +141,5 @@ function loadTabScript(tab) {
 
 </body>
 </html>
+
 
