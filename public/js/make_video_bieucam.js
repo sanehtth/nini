@@ -187,85 +187,78 @@ function splitScenesFromStory() {
   const text = appState.storyDraft.story;
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
 
-  let sceneId = 1;
-  let currentScene = {
-    id: `S${sceneId}`,
-    prompt: '',
-    characters: [...appState.selectedCharacters],
-    frames: []
-  };
-
   appState.scenes = [];
   appState.dialogues = [];
   appState.sfx = [];
 
+  let sceneIndex = 0;
+  let currentScene = null;
+
   lines.forEach(line => {
 
-  // ===== END SCENE =====
- if (line.includes('[END SCENE]')) {
-  if (currentScene && currentScene.id) {
+    // ===== START SCENE =====
+    if (
+      line.startsWith('**Title') ||
+      line.startsWith('**Setting') ||
+      line.startsWith('**Scene')
+    ) {
+      // push scene cũ
+      if (currentScene) {
+        appState.scenes.push(currentScene);
+      }
+
+      sceneIndex++;
+      currentScene = {
+        id: `S${sceneIndex}`,
+        prompt: line + '\n',
+        characters: [...appState.selectedCharacters],
+        frames: []
+      };
+      return;
+    }
+
+    // ===== BỎ QUA nếu chưa có scene =====
+    if (!currentScene) return;
+
+    // ===== END SCENE =====
+    if (line.includes('[END SCENE]')) {
+      appState.scenes.push(currentScene);
+      currentScene = null;
+      return;
+    }
+
+    // ===== SFX =====
+    if (line.includes('[SFX]')) {
+      appState.sfx.push({
+        scene_id: currentScene.id,
+        text: line
+      });
+      return;
+    }
+
+    // ===== DIALOGUE =====
+    if (line.includes(':')) {
+      const [char, ...rest] = line.split(':');
+      appState.dialogues.push({
+        scene_id: currentScene.id,
+        character: char.replace(/\*/g, '').trim(),
+        text: rest.join(':').trim()
+      });
+      return;
+    }
+
+    // ===== PROMPT =====
+    currentScene.prompt += line + '\n';
+  });
+
+  // push scene cuối nếu còn
+  if (currentScene) {
     appState.scenes.push(currentScene);
   }
-  currentScene = null;
-  return;
-}
 
-  // ===== START SCENE =====
-  if (
-    line.startsWith('**Title') ||
-    line.startsWith('**Setting') ||
-    line.startsWith('**Scene')
-  ) {
-    if (currentScene && currentScene.id) {
-  appState.scenes.push(currentScene);
-}
-
-
-    sceneId++;
-
-    currentScene = {
-      id: `S${sceneId}`,
-      prompt: line + '\n',
-      characters: [...appState.selectedCharacters],
-      frames: []
-    };
-    return;
-  }
-
-  // ===== BỎ QUA nếu chưa có scene =====
-  if (!currentScene) return;
-
-  // ===== SFX =====
-  if (line.includes('[SFX]')) {
-    appState.sfx.push({
-      scene_id: currentScene.id,
-      text: line
-    });
-    return;
-  }
-
-  // ===== DIALOGUE =====
-  if (line.includes(':')) {
-    const [char, ...rest] = line.split(':');
-    appState.dialogues.push({
-      scene_id: currentScene.id,
-      character: char.replace(/\*/g, '').trim(),
-      text: rest.join(':').trim()
-    });
-    return;
-  }
-
-  // ===== PROMPT =====
-  currentScene.prompt += line + '\n';
-});
-
-
-  appState.scenes.push(currentScene);
   appState.currentSceneIndex = 0;
 
- renderSceneManifest();
- renderAfterSplit();
-
+  renderAfterSplit();
 
   console.log('[XNC] splitScenesFromStory DONE', {
     scenes: appState.scenes.length,
@@ -273,6 +266,7 @@ function splitScenesFromStory() {
     sfx: appState.sfx.length
   });
 }
+
 
 /* =========================
    SCENE UI
