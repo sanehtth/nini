@@ -1,169 +1,139 @@
-/* ============================
-   TAB 1 – STORY PARSER (JSON A)
-   ============================ */
+// ===============================
+// TAB 1 – Story Parser (JSON A)
+// ===============================
 
-console.log('[TAB1] init');
+console.log("[TAB1] init");
 
-/* -------- STATE -------- */
-window.appState = window.appState || {};
-appState.storyA = {
-  id: '',
-  title: '',
-  rawText: '',
-  scenes: []
+// STATE DUY NHẤT – KHÔNG KHAI LẠI Ở FILE KHÁC
+window.appState = {
+  manifest: null,
+  storyA: null
 };
 
-/* -------- DOM -------- */
-const elManifestSelect = document.getElementById('manifestSelect');
-const elLoadStoryBtn   = document.getElementById('loadStoryBtn');
-const elReloadManifest = document.getElementById('reloadManifestBtn');
-
-const elStoryId    = document.getElementById('storyId');
-const elStoryTitle = document.getElementById('storyTitle');
-const elStoryText  = document.getElementById('storyText');
-
-const elParseBtn   = document.getElementById('parseStoryBtn');
-const elExportBtn  = document.getElementById('exportStoryStructBtn');
-
-/* -------- FETCH HELPERS -------- */
+// -------------------------------
+// Utils
+// -------------------------------
 async function fetchJSON(url) {
   const res = await fetch(url);
-  if (!res.ok) throw new Error('Fetch failed: ' + url);
-  return await res.json();
+  if (!res.ok) throw new Error("Fetch failed: " + url);
+  return res.json();
 }
 
-/* -------- LOAD MANIFEST -------- */
-async function loadManifest() {
-  console.log('[TAB1] load manifest');
-  const manifest = await fetchJSON('/substance/manifest.json');
+function downloadJSON(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
 
-  elManifestSelect.innerHTML = '';
+// -------------------------------
+// DOM
+// -------------------------------
+const elStorySelect = document.getElementById("storySelect");
+const elStoryId     = document.getElementById("storyId");
+const elStoryTitle  = document.getElementById("storyTitle");
+const elStoryText   = document.getElementById("storyText");
+
+const btnReloadManifest = document.getElementById("reloadManifestBtn");
+const btnLoadStory      = document.getElementById("loadStoryBtn");
+const btnParseStory     = document.getElementById("parseStoryBtn");
+const btnExportStory    = document.getElementById("exportStoryBtn");
+
+// -------------------------------
+// Manifest
+// -------------------------------
+async function loadManifest() {
+  const manifest = await fetchJSON("/substance/manifest.json");
+  appState.manifest = manifest;
+
+  elStorySelect.innerHTML = "";
   manifest.items.forEach(item => {
-    const opt = document.createElement('option');
+    const opt = document.createElement("option");
     opt.value = item.file;
     opt.textContent = `${item.id} – ${item.title}`;
-    elManifestSelect.appendChild(opt);
+    elStorySelect.appendChild(opt);
   });
 
-  console.log('[TAB1] Manifest loaded', manifest.items.length);
+  console.log("[TAB1] Manifest loaded:", manifest.items.length);
 }
 
-/* -------- LOAD STORY -------- */
+// -------------------------------
+// Load story JSON gốc
+// -------------------------------
 async function loadStory() {
-  const file = elManifestSelect.value;
+  const file = elStorySelect.value;
   if (!file) return;
 
   const data = await fetchJSON(file);
 
-  elStoryId.value    = data.id || '';
-  elStoryTitle.value = data.title || '';
-  elStoryText.value  = data.story || '';
+  elStoryId.value    = data.id || "";
+  elStoryTitle.value = data.title || "";
+  elStoryText.value  = data.story || "";
 
-  appState.storyA.id       = data.id || '';
-  appState.storyA.title    = data.title || '';
-  appState.storyA.rawText  = data.story || '';
-
-  console.log('[TAB1] Story loaded OK:', data.id);
+  console.log("[TAB1] Story loaded:", data.id);
 }
 
-/* -------- CORE PARSER -------- */
+// -------------------------------
+// PARSER: Text → JSON A
+// -------------------------------
 function parseStory() {
-  console.log('[TAB1] Parse start');
+  const text = elStoryText.value;
+  if (!text.trim()) return;
 
-  const raw = elStoryText.value;
-  if (!raw) {
-    alert('Story text trống');
-    return;
-  }
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
 
-  appState.storyA.scenes = [];
+  const scenes = [];
+  const dialogues = [];
+  const sfx = [];
 
-  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  let currentSceneId = "S1";
 
-  let sceneIndex = 1;
-  let currentScene = createScene(sceneIndex);
-
-  lines.forEach(line => {
-    const clean = line.replace(/\*\*/g, '').trim();
-
-    /* --- SCENE SPLIT --- */
-    if (/^\[END SCENE\]/i.test(clean)) {
-      appState.storyA.scenes.push(currentScene);
-      sceneIndex++;
-      currentScene = createScene(sceneIndex);
-      return;
-    }
-
-    /* --- SFX --- */
-    if (clean.startsWith('[SFX:')) {
-      currentScene.sfx.push(
-        clean.replace('[SFX:', '').replace(']', '').trim()
-      );
-      return;
-    }
-
-    /* --- DIALOGUE (Character: text) --- */
-    const m = clean.match(/^(.+?):\s*(.+)$/);
-    if (m) {
-      currentScene.dialogues.push({
-        character: m[1].trim(),
-        text: m[2].trim()
-      });
-      return;
-    }
-
-    /* --- NARRATION --- */
-    currentScene.narration.push(clean);
+  scenes.push({
+    id: currentSceneId,
+    title: elStoryTitle.value || "",
+    frames: []
   });
 
-  /* push last scene */
-  if (
-    currentScene.dialogues.length ||
-    currentScene.narration.length ||
-    currentScene.sfx.length
-  ) {
-    appState.storyA.scenes.push(currentScene);
-  }
+  lines.forEach(line => {
+    if (line.startsWith("**SFX")) {
+      sfx.push({ scene_id: currentSceneId, text: line });
+    } else if (line.startsWith("**") && line.includes(":")) {
+      const idx = line.indexOf(":");
+      const character = line.slice(2, idx).trim();
+      const content = line.slice(idx + 1).replace(/\*\*/g, "").trim();
 
-  console.log('[TAB1] Parse DONE:', appState.storyA.scenes);
-  alert('Tách story xong ✅');
-}
+      dialogues.push({
+        scene_id: currentSceneId,
+        character,
+        text: content
+      });
+    }
+  });
 
-/* -------- SCENE FACTORY -------- */
-function createScene(index) {
-  return {
-    id: `S${index}`,
-    dialogues: [],
-    narration: [],
-    sfx: []
-  };
-}
-
-/* -------- EXPORT -------- */
-function exportStoryStruct() {
-  const data = {
+  appState.storyA = {
     id: elStoryId.value,
     title: elStoryTitle.value,
-    type: 'STORY_A',
-    scenes: appState.storyA.scenes
+    scenes,
+    dialogues,
+    sfx
   };
 
-  const blob = new Blob(
-    [JSON.stringify(data, null, 2)],
-    { type: 'application/json' }
-  );
-
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `${data.id}_A.json`;
-  a.click();
+  console.log("[TAB1] Parse OK", appState.storyA);
 }
 
-/* -------- BIND EVENTS -------- */
-elReloadManifest.onclick = loadManifest;
-elLoadStoryBtn.onclick   = loadStory;
-elParseBtn.onclick       = parseStory;
-elExportBtn.onclick      = exportStoryStruct;
+// -------------------------------
+// Events
+// -------------------------------
+btnReloadManifest.onclick = loadManifest;
+btnLoadStory.onclick = loadStory;
+btnParseStory.onclick = parseStory;
+btnExportStory.onclick = () => {
+  if (!appState.storyA) return;
+  downloadJSON(appState.storyA, `${appState.storyA.id}_A.json`);
+};
 
-/* -------- INIT -------- */
+// -------------------------------
+// Init
+// -------------------------------
 loadManifest();
