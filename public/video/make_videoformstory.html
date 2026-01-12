@@ -4,98 +4,94 @@
   <meta charset="UTF-8" />
   <title>XNC – Video From Story</title>
 
-  <!-- CSS (nếu 404 cũng không sao, không ảnh hưởng JS) -->
   <link rel="stylesheet" href="/css/dark.css">
 
   <style>
     body {
-      background: #0f0f0f;
-      color: #eee;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 16px;
+      background:#0f0f0f;
+      color:#eee;
+      font-family:Arial;
+      padding:16px;
     }
-    button {
-      margin-right: 8px;
-      padding: 6px 10px;
-      cursor: pointer;
+    button { padding:6px 10px; margin-right:6px; }
+    input, textarea, select {
+      width:100%;
+      background:#1a1a1a;
+      color:#eee;
+      border:1px solid #333;
+      padding:6px;
     }
-    textarea {
-      width: 100%;
-      min-height: 220px;
-      background: #1a1a1a;
-      color: #eee;
-      border: 1px solid #333;
-      padding: 8px;
-    }
-    input, select {
-      width: 100%;
-      background: #1a1a1a;
-      color: #eee;
-      border: 1px solid #333;
-      padding: 6px;
-    }
-    .box {
-      margin-bottom: 12px;
-    }
-    .tab { display: none; }
-.tab.active { display: block; }
-button.active { background:#444; color:#fff; }
+    textarea { min-height:200px; }
+    .box { margin-bottom:12px; }
 
+    .tab { display:none; }
+    .tab.active { display:block; }
+
+    .tab-header button.active {
+      background:#444;
+      color:#fff;
+    }
   </style>
 </head>
 
 <body>
 
-<h2>🧩 TAB 1 – Story / Parser</h2>
-
-<div class="box">
-  <label>Chọn truyện từ manifest</label>
-  <select id="storySelect"></select>
-  <br><br>
-  <button id="reloadManifestBtn">Reload manifest</button>
-  <button id="loadStoryBtn">Load story</button>
+<!-- ================= TAB HEADER ================= -->
+<div class="tab-header">
+  <button id="tabBtnStory" class="active">TAB 1 – Story</button>
+  <button id="tabBtnFrame">TAB 2 – Frame</button>
 </div>
 
-<div class="box">
-  <label>Story ID</label>
-  <input id="storyId">
+<!-- ================= TAB 1 ================= -->
+<div id="tabStory" class="tab active">
+  <h2>🧩 TAB 1 – Story / Parser</h2>
+
+  <div class="box">
+    <label>Chọn truyện từ manifest</label>
+    <select id="storySelect"></select><br><br>
+    <button id="reloadManifestBtn">Reload manifest</button>
+    <button id="loadStoryBtn">Load story</button>
+  </div>
+
+  <div class="box">
+    <label>Story ID</label>
+    <input id="storyId">
+  </div>
+
+  <div class="box">
+    <label>Story Title</label>
+    <input id="storyTitle">
+  </div>
+
+  <div class="box">
+    <label>Story Text</label>
+    <textarea id="storyText"></textarea>
+  </div>
+
+  <div class="box">
+    <button id="parseStoryBtn">✂️ Tách Story</button>
+    <button id="exportStoryBtn">⬇️ Xuất JSON A</button>
+    <button id="saveStoryABtn">💾 Lưu local (Story A)</button>
+  </div>
+
+  <div class="box">
+    <label>Preview JSON A</label>
+    <textarea id="previewJsonA" readonly></textarea>
+  </div>
 </div>
 
-<div class="box">
-  <label>Story Title</label>
-  <input id="storyTitle">
-</div>
-
-<div class="box">
-  <label>Story Text</label>
-  <textarea id="storyText"></textarea>
-</div>
-
-<div class="box">
-  <button id="parseStoryBtn">✂️ Tách Story</button>
-  <button id="exportStoryBtn">⬇️ Xuất JSON A (Story Struct)</button>
-  <button id="saveStoryABtn">💾 Lưu local (Story A)</button>
-</div>
-<div class="box">
-  <label>Preview JSON A (Story Struct)</label>
-  <textarea id="previewJsonA" readonly></textarea>
-</div>
-<!-- ========================= -->
-<!-- TAB 2 – FRAME EDITOR -->
-<!-- ========================= -->
+<!-- ================= TAB 2 ================= -->
 <div id="tabFrame" class="tab">
-
-  <h2>🧩 TAB 2 – Frame Editor</h2>
+  <h2>🎞 TAB 2 – Frame Editor</h2>
 
   <div class="box">
     <button id="btnLoadStoryA">📥 Load Story A (local)</button>
     <button id="btnSaveStoryB">💾 Lưu Story B (local)</button>
   </div>
 
-  <div class="box">
-    <div id="frameInfo">Frame -</div>
+  <div class="box" id="frameInfo">Frame: -</div>
 
+  <div class="box">
     <label>Character</label>
     <input id="frameCharacter">
 
@@ -120,13 +116,13 @@ button.active { background:#444; color:#fff; }
     <button id="btnNextFrame">Frame sau ➡</button>
   </div>
 
-  <pre id="previewStoryB" class="preview"></pre>
+  <pre id="previewStoryB"></pre>
 </div>
 
-<!-- ========================= -->
-<!-- CHỈ LOAD TAB 1 -->
+<!-- ================= JS ================= -->
 <script src="./tab1.js"></script>
 <script src="./tab2.js"></script>
+
 <script>
   const tabBtnStory = document.getElementById("tabBtnStory");
   const tabBtnFrame = document.getElementById("tabBtnFrame");
@@ -147,12 +143,6 @@ button.active { background:#444; color:#fff; }
     tabBtnStory.classList.remove("active");
   };
 </script>
-  
+
 </body>
 </html>
-
-
-
-
-
-
