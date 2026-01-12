@@ -135,7 +135,7 @@ function parseStory() {
 // ---------- SAVE LOCAL ----------
 function saveStoryALocal() {
   if (!window.storyA) {
-    alert("Chưa có Story A để lưu");
+    alert("Chưa có Story A để lưu. Hãy bấm Tách Story trước.");
     return;
   }
 
@@ -145,6 +145,7 @@ function saveStoryALocal() {
   alert(`Đã lưu local: ${key}`);
   console.log("[TAB1] Saved local", key);
 }
+
 
 // ---------- EVENTS ----------
 elReloadManifest.onclick = loadManifest;
