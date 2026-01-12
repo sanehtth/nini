@@ -356,36 +356,25 @@ function renderPreviewJSON() {
 }
 
 //--------------------------
-function renderSceneSelect() {
-  const sel = document.getElementById('sceneSelect');
-  if (!sel) return;
+renderSceneSelect
 
-  sel.innerHTML = '<option value="">-- Chọn Scene --</option>';
-
-  appState.scenes.forEach((sc, i) => {
-    const opt = document.createElement('option');
-    opt.value = sc.id;
-    opt.textContent = `${sc.id} (${sc.frames.length} frame)`;
-    sel.appendChild(opt);
-  });
-}
-
-function renderFrameSelect(sceneId) {
+function renderFrameSelect(sceneIndex) {
   const frameSel = document.getElementById('frameSelect');
-  if (!frameSel || !appState.sceneManifest) return;
+  if (!frameSel) return;
 
   frameSel.innerHTML = '<option value="">-- Chọn Frame --</option>';
 
-  const scene = appState.sceneManifest.scenes.find(s => s.id === sceneId);
+  const scene = appState.scenes[sceneIndex];
   if (!scene || !scene.frames) return;
 
   scene.frames.forEach((fr, idx) => {
     const opt = document.createElement('option');
     opt.value = idx;
-    opt.textContent = `Frame ${idx+1}`;
+    opt.textContent = `Frame ${idx + 1}`;
     frameSel.appendChild(opt);
   });
 }
+
 //--------------------------
 function renderAfterSplit() {
   renderPreviewJSON();
