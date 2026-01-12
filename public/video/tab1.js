@@ -136,6 +136,20 @@ btnExportStory.onclick = () => {
   if (!appState.storyA) return;
   downloadJSON(appState.storyA, `${appState.storyA.id}_A.json`);
 };
+document.getElementById("saveLocalStoryBtn").onclick = () => {
+  if (!window.storyA) {
+    alert("Chưa có Story A để lưu. Hãy bấm Tách Story trước.");
+    return;
+  }
+
+  const storyId = window.storyA.id;
+  const key = `XNC_STORY_A_${storyId}`;
+
+  localStorage.setItem(key, JSON.stringify(window.storyA));
+
+  console.log("[TAB1] Saved Story A to localStorage:", key);
+  alert(`Đã lưu Story A vào local:\n${key}`);
+};
 
 // -------------------------------
 // Init
