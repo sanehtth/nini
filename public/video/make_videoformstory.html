@@ -80,49 +80,73 @@
 <!-- ========================= -->
 <!-- TAB 2 – FRAME EDITOR -->
 <!-- ========================= -->
-<div id="tabFrame" class="tab" style="display:none">
+<div id="tabFrame" class="tab">
 
   <h2>🧩 TAB 2 – Frame Editor</h2>
 
   <div class="box">
-    <button id="btnLoadStoryA">Load Story A từ local</button>
-    <span id="frameInfo"></span>
+    <button id="btnLoadStoryA">📥 Load Story A (local)</button>
+    <button id="btnSaveStoryB">💾 Lưu Story B (local)</button>
   </div>
 
   <div class="box">
-    <label>Nhân vật</label>
+    <div id="frameInfo">Frame -</div>
+
+    <label>Character</label>
     <input id="frameCharacter">
 
-    <label>Biểu cảm</label>
-    <input id="frameExpression" placeholder="vui, sợ, tức giận...">
+    <label>Expression</label>
+    <input id="frameExpression">
 
-    <label>Hành động</label>
-    <input id="frameAction" placeholder="đứng, chạy, thì thầm...">
+    <label>Action</label>
+    <input id="frameAction">
 
     <label>Background</label>
-    <input id="frameBackground" placeholder="vườn cây, lớp học...">
+    <input id="frameBackground">
 
     <label>Camera</label>
-    <input id="frameCamera" placeholder="close-up, medium shot...">
+    <input id="frameCamera">
 
     <label>Style</label>
-    <input id="frameStyle" placeholder="cinematic, cartoon, anime...">
+    <input id="frameStyle">
   </div>
 
   <div class="box">
     <button id="btnPrevFrame">⬅ Frame trước</button>
     <button id="btnNextFrame">Frame sau ➡</button>
-    <button id="btnSaveStoryB">💾 Lưu local (Story B)</button>
   </div>
 
-  <pre id="previewStoryB"></pre>
+  <pre id="previewStoryB" class="preview"></pre>
 </div>
+
 <!-- ========================= -->
 <!-- CHỈ LOAD TAB 1 -->
 <script src="./tab1.js"></script>
 <script src="./tab2.js"></script>
+<script>
+  const tabBtnStory = document.getElementById("tabBtnStory");
+  const tabBtnFrame = document.getElementById("tabBtnFrame");
+  const tabStory = document.getElementById("tabStory");
+  const tabFrame = document.getElementById("tabFrame");
+
+  tabBtnStory.onclick = () => {
+    tabStory.classList.add("active");
+    tabFrame.classList.remove("active");
+    tabBtnStory.classList.add("active");
+    tabBtnFrame.classList.remove("active");
+  };
+
+  tabBtnFrame.onclick = () => {
+    tabFrame.classList.add("active");
+    tabStory.classList.remove("active");
+    tabBtnFrame.classList.add("active");
+    tabBtnStory.classList.remove("active");
+  };
+</script>
+  
 </body>
 </html>
+
 
 
 
