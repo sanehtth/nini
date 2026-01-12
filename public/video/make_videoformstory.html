@@ -3,143 +3,78 @@
 <head>
   <meta charset="UTF-8" />
   <title>XNC – Video From Story</title>
-  <link rel="stylesheet" href="/css/dark.css" />
+
+  <!-- CSS (nếu 404 cũng không sao, không ảnh hưởng JS) -->
+  <link rel="stylesheet" href="/css/dark.css">
+
   <style>
-    body { background:#111; color:#eee; font-family: monospace; }
-    header button { margin-right:8px; }
-    .tab { display:none; }
-    .tab.active { display:block; }
-    .box { margin-bottom:12px; }
-    label { display:block; margin:6px 0 2px; }
-    textarea { width:100%; height:200px; }
-    input, select, textarea, button {
-      background:#222; color:#eee; border:1px solid #444;
-      padding:6px;
+    body {
+      background: #0f0f0f;
+      color: #eee;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 16px;
+    }
+    button {
+      margin-right: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    textarea {
+      width: 100%;
+      min-height: 220px;
+      background: #1a1a1a;
+      color: #eee;
+      border: 1px solid #333;
+      padding: 8px;
+    }
+    input, select {
+      width: 100%;
+      background: #1a1a1a;
+      color: #eee;
+      border: 1px solid #333;
+      padding: 6px;
+    }
+    .box {
+      margin-bottom: 12px;
     }
   </style>
 </head>
+
 <body>
 
-<!-- ================= TAB HEADER ================= -->
-<header>
-  <button id="tabBtnStory" class="active">TAB 1 – Story</button>
-  <button onclick="showTab('frame'); loadTabScript('frame')">
-  TAB 2 – Frame
-</button>
+<h2>🧩 TAB 1 – Story / Parser</h2>
 
-  <button onclick="showTab('export'); loadTabScript('export')">
-  TAB 3 – Export
-</button>
-</header>
-
-<!-- ================= TAB 1 ================= -->
-<div id="tabStory" class="tab active">
-
-  <h2>📖 TAB 1 – Story / Parser</h2>
-
-  <!-- Manifest -->
-  <div class="box">
-    <label>Chọn truyện từ manifest</label>
-    <select id="manifestSelect"></select>
-    <br/><br/>
-    <button id="reloadManifestBtn">Reload manifest</button>
-    <button id="loadStoryBtn">Load story</button>
-  </div>
-
-  <!-- Story Info -->
-  <div class="box">
-    <label>Story ID</label>
-    <input id="storyId" placeholder="XNC001abc"/>
-
-    <label>Story Title</label>
-    <input id="storyTitle"/>
-
-    <label>Story Text</label>
-    <textarea id="storyText"></textarea>
-  </div>
-
-  <!-- Actions -->
-  <div class="box">
-    <button id="parseStoryBtn">✂️ Tách Story</button>
-    <button id="exportStoryStructBtn">⬇ Xuất JSON A (Story Struct)</button>
-  </div>
-
+<div class="box">
+  <label>Chọn truyện từ manifest</label>
+  <select id="storySelect"></select>
+  <br><br>
+  <button id="reloadManifestBtn">Reload manifest</button>
+  <button id="loadStoryBtn">Load story</button>
 </div>
 
-<!-- ================= TAB 2 (CHƯA DÙNG) ================= -->
-<div id="tabFrame" class="tab">
-  <h2>🎞 TAB 2 – Frame (chưa làm)</h2>
+<div class="box">
+  <label>Story ID</label>
+  <input id="storyId">
 </div>
 
-<!-- ================= TAB 3 (CHƯA DÙNG) ================= -->
-<div id="tabExport" class="tab">
-  <h2>📦 TAB 3 – Export (chưa làm)</h2>
+<div class="box">
+  <label>Story Title</label>
+  <input id="storyTitle">
 </div>
 
-<!-- ================= JS ================= -->
-<script>
-/**
- * GLOBAL APP STATE
- * Dùng chung cho TAB 1 – TAB 2 – TAB 3
- */
-window.appState = {
-  // ===== TAB 1 =====
-  manifest: null,
-  stories: [],
-  currentStory: null,
-  storyStruct: null,   // JSON A
+<div class="box">
+  <label>Story Text</label>
+  <textarea id="storyText"></textarea>
+</div>
 
-  // ===== TAB 2 =====
-  frames: [],          // JSON B
-  currentFrameIndex: 0,
+<div class="box">
+  <button id="parseStoryBtn">✂️ Tách Story</button>
+  <button id="exportStoryBtn">⬇️ Xuất JSON A (Story Struct)</button>
+</div>
 
-  // ===== TAB 3 =====
-  exportConfig: {
-    provider: null,    // flow | meta | sora
-  }
-};
-</script>
- 
-<script src="/public/video/tab1.js"></script>
-<script src="/public/video/tab2.js"></script>
-<script src="/public/video/tab3.js"></script>
-
-<script>
-  // TAB SWITCH (đơn giản)
-  const tabs = {
-    tabBtnStory: 'tabStory',
-    tabBtnFrame: 'tabFrame',
-    tabBtnExport: 'tabExport'
-  };
-
-  Object.keys(tabs).forEach(btnId => {
-    document.getElementById(btnId).onclick = () => {
-      Object.values(tabs).forEach(t => document.getElementById(t).classList.remove('active'));
-      Object.keys(tabs).forEach(b => document.getElementById(b).classList.remove('active'));
-      document.getElementById(tabs[btnId]).classList.add('active');
-      document.getElementById(btnId).classList.add('active');
-    };
-  });
-</script>
-<script>
-function loadTabScript(tab) {
-  if (tab === 'frame' && !window.__tab2Loaded) {
-    const s = document.createElement('script');
-    s.src = 'tab2.js';
-    document.body.appendChild(s);
-    window.__tab2Loaded = true;
-  }
-
-  if (tab === 'export' && !window.__tab3Loaded) {
-    const s = document.createElement('script');
-    s.src = 'tab3.js';
-    document.body.appendChild(s);
-    window.__tab3Loaded = true;
-  }
-}
-</script>
+<!-- CHỈ LOAD TAB 1 -->
+<script src="./tab1.js"></script>
 
 </body>
 </html>
-
-
