@@ -2,6 +2,8 @@
    XNC – MAKE VIDEO BIỂU CẢM (FINAL – STABLE)
    Khớp HTML: make_video_bieucam.html
 ===================================================== */
+let sceneId = 0;
+let currentScene = null;
 
 /* =========================
    GLOBAL STATE
@@ -199,13 +201,21 @@ function splitScenesFromStory() {
 
   lines.forEach(line => {
 
-  // ====== GẶP MỐC SCENE MỚI ======
+  // ===== END SCENE =====
+  if (line.includes('[END SCENE]')) {
+    if (currentScene) {
+      appState.scenes.push(currentScene);
+      currentScene = null;
+    }
+    return;
+  }
+
+  // ===== START SCENE =====
   if (
-    line.startsWith('**Scene') ||
+    line.startsWith('**Title') ||
     line.startsWith('**Setting') ||
-    line.startsWith('**Title')
+    line.startsWith('**Scene')
   ) {
-    // Đóng scene cũ
     if (currentScene) {
       appState.scenes.push(currentScene);
     }
@@ -218,11 +228,13 @@ function splitScenesFromStory() {
       characters: [...appState.selectedCharacters],
       frames: []
     };
-
     return;
   }
 
-  // ====== SFX ======
+  // ===== BỎ QUA nếu chưa có scene =====
+  if (!currentScene) return;
+
+  // ===== SFX =====
   if (line.includes('[SFX]')) {
     appState.sfx.push({
       scene_id: currentScene.id,
@@ -231,7 +243,7 @@ function splitScenesFromStory() {
     return;
   }
 
-  // ====== DIALOGUE ======
+  // ===== DIALOGUE =====
   if (line.includes(':')) {
     const [char, ...rest] = line.split(':');
     appState.dialogues.push({
@@ -242,7 +254,7 @@ function splitScenesFromStory() {
     return;
   }
 
-  // ====== PROMPT THƯỜNG ======
+  // ===== PROMPT =====
   currentScene.prompt += line + '\n';
 });
 
