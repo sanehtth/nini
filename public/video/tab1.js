@@ -1,157 +1,165 @@
-// ===============================
-// TAB 1 – Story Parser (JSON A)
-// ===============================
+// ==============================
+// TAB 1 – STORY / PARSER
+// JSON A
+// ==============================
 
 console.log("[TAB1] init");
-const elPreviewJsonA = document.getElementById("previewJsonA");
 
-// STATE DUY NHẤT – KHÔNG KHAI LẠI Ở FILE KHÁC
-window.appState = {
-  manifest: null,
-  storyA: null
-};
+window.storyA = null;
 
-// -------------------------------
-// Utils
-// -------------------------------
-async function fetchJSON(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Fetch failed: " + url);
-  return res.json();
-}
+// ---------- CONFIG ----------
+const MANIFEST_URL = "/substance/manifest.json";
 
+// ---------- DOM ----------
+const elManifestSelect = document.getElementById("manifestSelect");
+const elReloadManifest = document.getElementById("reloadManifestBtn");
+const elLoadStory = document.getElementById("loadStoryBtn");
+
+const elStoryId = document.getElementById("storyId");
+const elStoryTitle = document.getElementById("storyTitle");
+const elStoryText = document.getElementById("storyText");
+
+const elParseBtn = document.getElementById("parseStoryBtn");
+const elExportBtn = document.getElementById("exportStoryStructBtn");
+const elSaveLocalBtn = document.getElementById("saveStoryLocalBtn");
+
+const elPreview = document.getElementById("previewStoryA");
+
+// ---------- UTIL ----------
 function downloadJSON(data, filename) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const blob = new Blob(
+    [JSON.stringify(data, null, 2)],
+    { type: "application/json" }
+  );
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = filename;
   a.click();
 }
 
-// -------------------------------
-// DOM
-// -------------------------------
-const elStorySelect = document.getElementById("storySelect");
-const elStoryId     = document.getElementById("storyId");
-const elStoryTitle  = document.getElementById("storyTitle");
-const elStoryText   = document.getElementById("storyText");
-
-const btnReloadManifest = document.getElementById("reloadManifestBtn");
-const btnLoadStory      = document.getElementById("loadStoryBtn");
-const btnParseStory     = document.getElementById("parseStoryBtn");
-const btnExportStory    = document.getElementById("exportStoryBtn");
-
-// -------------------------------
-// Manifest
-// -------------------------------
+// ---------- LOAD MANIFEST ----------
 async function loadManifest() {
-  const manifest = await fetchJSON("/substance/manifest.json");
-  appState.manifest = manifest;
+  const res = await fetch(MANIFEST_URL);
+  const manifest = await res.json();
 
-  elStorySelect.innerHTML = "";
+  elManifestSelect.innerHTML = "";
   manifest.items.forEach(item => {
     const opt = document.createElement("option");
     opt.value = item.file;
     opt.textContent = `${item.id} – ${item.title}`;
-    elStorySelect.appendChild(opt);
+    elManifestSelect.appendChild(opt);
   });
 
-  console.log("[TAB1] Manifest loaded:", manifest.items.length);
+  console.log("[TAB1] Manifest loaded", manifest.items.length);
 }
 
-// -------------------------------
-// Load story JSON gốc
-// -------------------------------
-async function loadStory() {
-  const file = elStorySelect.value;
+// ---------- LOAD STORY ----------
+async function loadStoryFromManifest() {
+  const file = elManifestSelect.value;
   if (!file) return;
 
-  const data = await fetchJSON(file);
+  const res = await fetch(file);
+  const data = await res.json();
 
-  elStoryId.value    = data.id || "";
+  elStoryId.value = data.id || "";
   elStoryTitle.value = data.title || "";
-  elStoryText.value  = data.story || "";
+  elStoryText.value = data.story || "";
 
-  console.log("[TAB1] Story loaded:", data.id);
+  console.log("[TAB1] Story loaded", data.id);
 }
 
-// -------------------------------
-// PARSER: Text → JSON A
-// -------------------------------
+// ---------- PARSER CORE ----------
 function parseStory() {
-  const text = elStoryText.value;
-  if (!text.trim()) return;
+  const raw = elStoryText.value;
+  if (!raw.trim()) {
+    alert("Story text trống");
+    return;
+  }
 
-  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
 
-  const scenes = [];
+  let sceneIndex = 1;
+  let currentScene = `S${sceneIndex}`;
+
+  const scenes = [
+    { id: currentScene, frames: [] }
+  ];
+
   const dialogues = [];
   const sfx = [];
 
-  let currentSceneId = "S1";
-
-  scenes.push({
-    id: currentSceneId,
-    title: elStoryTitle.value || "",
-    frames: []
-  });
-
   lines.forEach(line => {
-    if (line.startsWith("**SFX")) {
-      sfx.push({ scene_id: currentSceneId, text: line });
-    } else if (line.startsWith("**") && line.includes(":")) {
-      const idx = line.indexOf(":");
-      const character = line.slice(2, idx).trim();
-      const content = line.slice(idx + 1).replace(/\*\*/g, "").trim();
+    // Scene marker
+    if (line.startsWith("**[Scene")) {
+      sceneIndex++;
+      currentScene = `S${sceneIndex}`;
+      scenes.push({ id: currentScene, frames: [] });
+      return;
+    }
 
+    // SFX
+    if (line.startsWith("**[SFX")) {
+      sfx.push({
+        scene_id: currentScene,
+        text: line.replace(/\*\*/g, "")
+      });
+      return;
+    }
+
+    // Dialogue
+    const m = line.match(/^\*\*(.+?):\*\*(.*)$/);
+    if (m) {
       dialogues.push({
-        scene_id: currentSceneId,
-        character,
-        text: content
+        scene_id: currentScene,
+        character: m[1].trim(),
+        text: m[2].trim()
       });
     }
   });
 
-  appState.storyA = {
-    id: elStoryId.value,
-    title: elStoryTitle.value,
+  window.storyA = {
+    id: elStoryId.value.trim(),
+    title: elStoryTitle.value.trim(),
     scenes,
     dialogues,
     sfx
   };
 
-  console.log("[TAB1] Parse OK", appState.storyA);
- if (elPreviewJsonA) {
-  elPreviewJsonA.value = JSON.stringify(appState.storyA, null, 2);
-} 
+  if (elPreview) {
+    elPreview.textContent = JSON.stringify(window.storyA, null, 2);
+  }
+
+  console.log("[TAB1] Parse OK", window.storyA);
 }
 
-// -------------------------------
-// Events
-// -------------------------------
-btnReloadManifest.onclick = loadManifest;
-btnLoadStory.onclick = loadStory;
-btnParseStory.onclick = parseStory;
-btnExportStory.onclick = () => {
-  if (!appState.storyA) return;
-  downloadJSON(appState.storyA, `${appState.storyA.id}_A.json`);
-};
-document.getElementById("saveLocalStoryBtn").onclick = () => {
+// ---------- SAVE LOCAL ----------
+function saveStoryALocal() {
   if (!window.storyA) {
-    alert("Chưa có Story A để lưu. Hãy bấm Tách Story trước.");
+    alert("Chưa có Story A để lưu");
     return;
   }
 
-  const storyId = window.storyA.id;
-  const key = `XNC_STORY_A_${storyId}`;
-
+  const key = `storyA_${window.storyA.id}`;
   localStorage.setItem(key, JSON.stringify(window.storyA));
 
-  console.log("[TAB1] Saved Story A to localStorage:", key);
-  alert(`Đã lưu Story A vào local:\n${key}`);
+  alert(`Đã lưu local: ${key}`);
+  console.log("[TAB1] Saved local", key);
+}
+
+// ---------- EVENTS ----------
+elReloadManifest.onclick = loadManifest;
+elLoadStory.onclick = loadStoryFromManifest;
+elParseBtn.onclick = parseStory;
+
+elExportBtn.onclick = () => {
+  if (!window.storyA) {
+    alert("Chưa có Story A");
+    return;
+  }
+  downloadJSON(window.storyA, `${window.storyA.id}_A.json`);
 };
 
-// -------------------------------
-// Init
-// -------------------------------
+elSaveLocalBtn.onclick = saveStoryALocal;
+
+// ---------- INIT ----------
 loadManifest();
