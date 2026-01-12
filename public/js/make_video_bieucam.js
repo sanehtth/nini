@@ -275,13 +275,14 @@ function renderSceneManifest() {
   const sel = qs('sceneSelect');
   if (!sel) return;
 
-  sel.innerHTML = '<option value="">--</option>';
-  appState.scenes
-  .filter(s => s && s.id)
-  .forEach(scene => {
+  sel.innerHTML = '<option value="">-- Chọn Scene --</option>';
+
+  appState.scenes.forEach((scene, index) => {
+    if (!scene) return;
+
     const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = `${s.id}`;
+    opt.value = index; // dùng INDEX
+    opt.textContent = scene.id;
     sel.appendChild(opt);
   });
 
@@ -292,6 +293,7 @@ function renderSceneManifest() {
 
   renderSceneDetail();
 }
+
 
 function renderSceneDetail() {
   const scene = appState.scenes[appState.currentSceneIndex];
