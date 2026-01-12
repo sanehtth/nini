@@ -1,273 +1,121 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Xóm Ngắn Chuyện – Pipeline Editor</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
+  <meta charset="UTF-8" />
+  <title>XNC – Video From Story</title>
+  <link rel="stylesheet" href="/css/dark.css" />
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #eee;
-      margin: 0;
-    }
-
-    header {
-      background: #000;
-      padding: 10px;
-      display: flex;
-      gap: 10px;
-      border-bottom: 1px solid #333;
-    }
-
-    header button {
-      padding: 8px 14px;
-      background: #222;
-      color: #eee;
-      border: 1px solid #444;
-      cursor: pointer;
-    }
-
-    header button.active {
-      background: #444;
-    }
-
-    .tab {
-      display: none;
-      padding: 16px;
-    }
-
-    .tab.active {
-      display: block;
-    }
-
-    h2 {
-      margin-top: 0;
-    }
-
-    .box {
-      border: 1px solid #333;
-      padding: 12px;
-      margin-bottom: 12px;
-    }
-
-    label {
-      display: block;
-      margin-top: 8px;
-    }
-
-    input, textarea, select {
-      width: 100%;
-      margin-top: 4px;
-      background: #000;
-      color: #eee;
-      border: 1px solid #444;
-      padding: 6px;
-    }
-
-    textarea {
-      min-height: 80px;
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .row button {
-      margin-top: 8px;
+    body { background:#111; color:#eee; font-family: monospace; }
+    header button { margin-right:8px; }
+    .tab { display:none; }
+    .tab.active { display:block; }
+    .box { margin-bottom:12px; }
+    label { display:block; margin:6px 0 2px; }
+    textarea { width:100%; height:200px; }
+    input, select, textarea, button {
+      background:#222; color:#eee; border:1px solid #444;
+      padding:6px;
     }
   </style>
 </head>
-
 <body>
 
-<!-- =========================
-     TAB HEADER
-========================= -->
+<!-- ================= TAB HEADER ================= -->
 <header>
   <button id="tabBtnStory" class="active">TAB 1 – Story</button>
   <button id="tabBtnFrame">TAB 2 – Frame</button>
   <button id="tabBtnExport">TAB 3 – Export</button>
 </header>
 
-<!-- =========================
-     TAB 1 – STORY PARSER (JSON A)
-========================= -->
+<!-- ================= TAB 1 ================= -->
 <div id="tabStory" class="tab active">
 
-  <h2>📘 TAB 1 – Story / Parser</h2>
-  
-<div class="box">
-  <label>Chọn truyện từ manifest</label>
-  <select id="storySelect"></select>
-  <button id="reloadManifestBtn">Reload manifest</button>
-  <button id="loadStoryBtn">Load story</button>
-</div>
+  <h2>📖 TAB 1 – Story / Parser</h2>
 
+  <!-- Manifest -->
+  <div class="box">
+    <label>Chọn truyện từ manifest</label>
+    <select id="manifestSelect"></select>
+    <br/><br/>
+    <button id="reloadManifestBtn">Reload manifest</button>
+    <button id="loadStoryBtn">Load story</button>
+  </div>
+
+  <!-- Story Info -->
   <div class="box">
     <label>Story ID</label>
-    <input id="storyId" placeholder="XNC001abc">
+    <input id="storyId" placeholder="XNC001abc"/>
 
     <label>Story Title</label>
-    <input id="storyTitle">
+    <input id="storyTitle"/>
 
     <label>Story Text</label>
     <textarea id="storyText"></textarea>
   </div>
 
+  <!-- Actions -->
   <div class="box">
-    <button id="splitStoryBtn">🔧 Tách Story</button>
-    <button id="exportStoryABtn">📤 Xuất JSON A (Story Struct)</button>
+    <button id="parseStoryBtn">✂️ Tách Story</button>
+    <button id="exportStoryStructBtn">⬇ Xuất JSON A (Story Struct)</button>
   </div>
-<pre id="previewA"></pre>
+
 </div>
 
-
-<!-- =========================
-     TAB 2 – FRAME EDITOR (JSON B)
-========================= -->
+<!-- ================= TAB 2 (CHƯA DÙNG) ================= -->
 <div id="tabFrame" class="tab">
-
-  <h2>🎬 TAB 2 – Frame Editor</h2>
-
-  <!-- Project actions -->
-  <div class="box row">
-    <button id="saveLocalBtn">💾 Lưu (local)</button>
-    <button id="exportJsonBtn">📤 Xuất JSON B</button>
-
-    <button id="importJsonBtn">📥 Import JSON B</button>
-    <input type="file" id="importJsonInput" accept=".json" hidden>
-  </div>
-
-  <!-- Frame navigation -->
-  <div class="box row">
-    <button id="prevFrameBtn">⬅ Frame trước</button>
-    <strong id="frameIndexLabel">Frame 1</strong>
-    <button id="nextFrameBtn">Frame sau ➡</button>
-    <button id="addFrameBtn">➕ Thêm Frame</button>
-  </div>
-
-  <!-- Frame editor -->
-  <div class="box">
-
-    <label>Thời lượng (giây)</label>
-    <input type="number" id="frameDuration" min="1">
-
-    <label>Background</label>
-    <input id="frameBackground">
-
-    <label>Camera</label>
-    <input id="frameCamera">
-
-    <label>Biểu cảm</label>
-    <input id="frameEmotion">
-
-    <label>Hành động</label>
-    <input id="frameAction">
-
-    <label>Style riêng frame</label>
-    <input id="frameStyle">
-
-    <label>Ghi chú</label>
-    <textarea id="frameNotes"></textarea>
-
-  </div>
-
+  <h2>🎞 TAB 2 – Frame (chưa làm)</h2>
 </div>
 
-<!-- =========================
-     TAB 3 – EXPORT / RENDER (JSON C)
-========================= -->
+<!-- ================= TAB 3 (CHƯA DÙNG) ================= -->
 <div id="tabExport" class="tab">
-
-  <h2>🚀 TAB 3 – Export / Render</h2>
-
-  <div class="box">
-    <button id="importRenderSourceBtn">📥 Import JSON B</button>
-    <input type="file" id="importRenderSourceInput" accept=".json" hidden>
-  </div>
-
-  <div class="box">
-    <label>
-      <input type="checkbox" id="engineFlow">
-      Google Flow
-    </label>
-
-    <label>
-      <input type="checkbox" id="engineMeta">
-      Meta (Facebook)
-    </label>
-
-    <label>
-      <input type="checkbox" id="engineSora">
-      Sora
-    </label>
-  </div>
-
-  <div class="box">
-    <button id="exportRenderBtn">🚀 Xuất JSON Render (C)</button>
-  </div>
-
+  <h2>📦 TAB 3 – Export (chưa làm)</h2>
 </div>
 
-<!-- =========================
-     TAB SWITCH SCRIPT (NHẸ)
-========================= -->
+<!-- ================= JS ================= -->
 <script>
-  const tabs = {
-    tabStory: document.getElementById('tabStory'),
-    tabFrame: document.getElementById('tabFrame'),
-    tabExport: document.getElementById('tabExport')
-  };
+/**
+ * GLOBAL APP STATE
+ * Dùng chung cho TAB 1 – TAB 2 – TAB 3
+ */
+window.appState = {
+  // ===== TAB 1 =====
+  manifest: null,
+  stories: [],
+  currentStory: null,
+  storyStruct: null,   // JSON A
 
-  const buttons = {
-    tabBtnStory: document.getElementById('tabBtnStory'),
-    tabBtnFrame: document.getElementById('tabBtnFrame'),
-    tabBtnExport: document.getElementById('tabBtnExport')
-  };
+  // ===== TAB 2 =====
+  frames: [],          // JSON B
+  currentFrameIndex: 0,
 
-  function showTab(tabId) {
-    Object.values(tabs).forEach(t => t.classList.remove('active'));
-    Object.values(buttons).forEach(b => b.classList.remove('active'));
-
-    tabs[tabId].classList.add('active');
-    buttons['tabBtn' + tabId.replace('tab','')].classList.add('active');
+  // ===== TAB 3 =====
+  exportConfig: {
+    provider: null,    // flow | meta | sora
   }
-
-  buttons.tabBtnStory.onclick = () => showTab('tabStory');
-  buttons.tabBtnFrame.onclick = () => showTab('tabFrame');
-  buttons.tabBtnExport.onclick = () => showTab('tabExport');
+};
 </script>
+ 
+<script src="/public/video/tab1.js"></script>
+<script src="/public/video/tab2.js"></script>
+<script src="/public/video/tab3.js"></script>
+
 <script>
-  // GLOBAL STATE – DÙNG CHUNG TOÀN APP
-  window.appState = {
-    storyA: null,   // JSON A – Story / Parser
-    frameB: null,   // JSON B – Frame Editor
-    exportC: null,  // JSON C – Export cho AI render
-
-    meta: {
-      version: 1,
-      lastUpdated: null
-    }
+  // TAB SWITCH (đơn giản)
+  const tabs = {
+    tabBtnStory: 'tabStory',
+    tabBtnFrame: 'tabFrame',
+    tabBtnExport: 'tabExport'
   };
+
+  Object.keys(tabs).forEach(btnId => {
+    document.getElementById(btnId).onclick = () => {
+      Object.values(tabs).forEach(t => document.getElementById(t).classList.remove('active'));
+      Object.keys(tabs).forEach(b => document.getElementById(b).classList.remove('active'));
+      document.getElementById(tabs[btnId]).classList.add('active');
+      document.getElementById(btnId).classList.add('active');
+    };
+  });
 </script>
-<!-- TAB 1: Tách story / scene / thoại -->
-<script src="tab1.js"></script>
-
-<!-- TAB 2: Chỉnh frame / scene detail -->
-<script src="tab2.js"></script>
-
-<!-- TAB 3: Export render (sau này) -->
-<!-- <script src="tab3.js"></script> -->
 
 </body>
 </html>
-
-
-
-
-
