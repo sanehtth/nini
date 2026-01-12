@@ -3,6 +3,7 @@
 // ===============================
 
 console.log("[TAB1] init");
+const elPreviewJsonA = document.getElementById("previewJsonA");
 
 // STATE DUY NHẤT – KHÔNG KHAI LẠI Ở FILE KHÁC
 window.appState = {
@@ -118,8 +119,11 @@ function parseStory() {
     dialogues,
     sfx
   };
-
+if (elPreviewJsonA) {
+  elPreviewJsonA.value = JSON.stringify(appState.storyA, null, 2);
+}
   console.log("[TAB1] Parse OK", appState.storyA);
+  
 }
 
 // -------------------------------
