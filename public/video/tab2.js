@@ -17,9 +17,17 @@ const elCamera = document.getElementById("frameCamera");
 const elStyle = document.getElementById("frameStyle");
 
 const elFrameInfo = document.getElementById("frameInfo");
-const elFrameJson = document.getElementById("frameJson");
+const elFrameJson = document.getElementById("frameJson"); // phải tồn tại trong HTML
 
-// ---------- LOAD JSON UTILS ----------
+// ---------- SAFE GUARD ----------
+function must(el, id) {
+  if (!el) {
+    console.error("[TAB2] Missing element:", id);
+  }
+  return el;
+}
+
+// ---------- LOAD JSON ----------
 async function loadJSON(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error("Load fail: " + url);
@@ -33,6 +41,7 @@ function loadStoryAFromLocal() {
     alert("Chưa có Story A trong local");
     return;
   }
+
   const storyA = JSON.parse(localStorage.getItem(keys[0]));
   buildFramesFromStoryA(storyA);
 }
@@ -49,13 +58,10 @@ function buildFramesFromStoryA(storyA) {
       character: d.character || "",
       dialogue: d.text || "",
       face: "",
-      state: "",
       action: "",
-      outfit: "",
       background: "",
       camera: "",
-      style: "",
-      lighting: ""
+      style: ""
     });
   });
 
@@ -73,14 +79,15 @@ function buildFramesFromStoryA(storyA) {
 // ---------- LOAD LIBRARIES ----------
 async function loadLibraries() {
   const base = "/adn/xomnganchuyen/";
+
   const [
-    chars,
+    characters,
     faces,
     actions,
     states,
     outfits,
-    bgs,
-    style
+    backgrounds,
+    styleJson
   ] = await Promise.all([
     loadJSON(base + "XNC_characters.json"),
     loadJSON(base + "XNC_faces.json"),
@@ -91,16 +98,31 @@ async function loadLibraries() {
     loadJSON(base + "XNC_style.json")
   ]);
 
-  fillSelect(elChar, chars.characters, "id", "name");
+  // character
+  fillSelect(elChar, characters.characters, "id", "name");
+
+  // face
   fillSelect(elFace, faces.faces, "id", "label");
+
+  // action
   fillSelect(elAction, actions.actions, "id", "label");
-  fillSelect(elBg, bgs.backgrounds, "id", "label");
-  fillSelect(elCamera, Object.keys(style.camera));
-  fillSelect(elStyle, Object.keys(style.emotion_tone_map));
+
+  // background
+  fillSelect(elBg, backgrounds.backgrounds, "id", "label");
+
+  // camera (LẤY ĐÚNG STRUCT)
+  fillSelect(elCamera, Object.keys(styleJson.style.camera));
+
+  // style / emotion tone
+  fillSelect(elStyle, Object.keys(styleJson.style.emotion_tone_map));
+
+  console.log("[TAB2] Libraries loaded");
 }
 
 // ---------- UI HELPERS ----------
 function fillSelect(el, list, idKey, labelKey) {
+  if (!el || !list) return;
+
   el.innerHTML = "";
   list.forEach(i => {
     const opt = document.createElement("option");
@@ -115,20 +137,25 @@ function renderFrame() {
   const f = frames[currentFrameIndex];
   if (!f) return;
 
-  elFrameInfo.textContent = `Frame ${currentFrameIndex + 1}/${frames.length}`;
+  if (elFrameInfo) {
+    elFrameInfo.textContent = `Frame ${currentFrameIndex + 1}/${frames.length}`;
+  }
 
-  elChar.value = f.character;
-  elFace.value = f.face;
-  elAction.value = f.action;
-  elBg.value = f.background;
-  elCamera.value = f.camera;
-  elStyle.value = f.style;
+  if (elChar) elChar.value = f.character;
+  if (elFace) elFace.value = f.face;
+  if (elAction) elAction.value = f.action;
+  if (elBg) elBg.value = f.background;
+  if (elCamera) elCamera.value = f.camera;
+  if (elStyle) elStyle.value = f.style;
 
-  elFrameJson.textContent = JSON.stringify(f, null, 2);
+  if (elFrameJson) {
+    elFrameJson.textContent = JSON.stringify(f, null, 2);
+  }
 }
 
-// ---------- SAVE FRAME ----------
+// ---------- BIND INPUT ----------
 function bindField(el, key) {
+  if (!el) return;
   el.addEventListener("change", () => {
     frames[currentFrameIndex][key] = el.value;
     renderFrame();
@@ -153,7 +180,7 @@ bindField(elBg, "background");
 bindField(elCamera, "camera");
 bindField(elStyle, "style");
 
-elLoadStoryA.onclick = loadStoryAFromLocal;
-elSaveStoryB.onclick = saveStoryBLocal;
+if (elLoadStoryA) elLoadStoryA.onclick = loadStoryAFromLocal;
+if (elSaveStoryB) elSaveStoryB.onclick = saveStoryBLocal;
 
 loadLibraries();
