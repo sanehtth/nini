@@ -77,38 +77,35 @@
     <select id="tab2_sceneSelect"></select>
   </div>
 
-  <div class="box">
-    <label>Frame (1 thoại = 1 frame)</label>
-    <select id="tab2_frameSelect"></select>
+ <!-- ===== FRAME DETAIL EDITOR ===== -->
 
-    <button id="tab2_mergeFrames">Gộp frame</button>
-  </div>
+<label>Nhân vật</label>
+<input id="tab2_actor" disabled>
 
-  <div class="box">
-    <label>Nhân vật</label>
-    <input id="tab2_actor">
+<label>Thoại / Nội dung</label>
+<textarea id="tab2_text"></textarea>
 
-    <label>Thoại / Nội dung</label>
-    <textarea id="tab2_text"></textarea>
+<label>Camera</label>
+<select id="tab2_camera"></select>
 
-    <label>Camera</label>
-    <select id="tab2_camera">
-      <option value="closeup">Close-up</option>
-      <option value="medium">Medium shot</option>
-      <option value="wide">Wide shot</option>
-    </select>
+<label>Facial Expression</label>
+<select id="tab2_face"></select>
 
-    <label>Emotion</label>
-    <input id="tab2_emotion">
+<label>State / Action</label>
+<select id="tab2_state"></select>
 
-    <label>Outfit</label>
-    <input id="tab2_outfit">
+<label>Outfit</label>
+<select id="tab2_outfit"></select>
 
-    <label>Note</label>
-    <textarea id="tab2_note"></textarea>
+<label>Background</label>
+<select id="tab2_background"></select>
 
-    <button id="tab2_saveFrame">Lưu frame</button>
-  </div>
+<label>Note</label>
+<textarea id="tab2_note"></textarea>
+
+<button id="tab2_saveFrame">Lưu frame</button>
+
+ 
 
   <div class="box">
     <pre id="tab2_debug"></pre>
@@ -152,5 +149,6 @@
 
 </body>
 </html>
+
 
 
