@@ -1,169 +1,126 @@
-/* =========================================================
-   TAB 2 – SCENE / FRAME EDITOR (FINAL – SAFE VERSION)
-   ========================================================= */
+// ================= TAB 2 – FRAME EDITOR =================
 
-console.log("[TAB2] LOADED – FINAL SAFE");
+const qs = (id) => document.getElementById(id);
 
-/* ===================== STATE ===================== */
-
-window.tab2State = {
-  scenes: {},
-  masters: {
-    characters: [],
-    faces: [],
-    states: [],
-    outfits: [],
-    backgrounds: []
-  },
-  currentScene: null,
-  currentFrame: null
+// ---------- STATE ----------
+let TAB2 = {
+  master: null,
+  sceneId: null,
+  frameId: null,
+  frameData: {}
 };
 
-/* ===================== SAFE DOM ===================== */
-
-function $(id) {
-  return document.getElementById(id);
-}
-
-function getVal(id) {
-  const el = $(id);
-  return el ? el.value : "";
-}
-
-function setVal(id, v) {
-  const el = $(id);
-  if (!el) return;
-  el.value = v ?? "";
-}
-
-/* ===================== MASTER LOAD ===================== */
-
-async function tab2_loadMasters() {
-  const base = "/adn/xomnganchuyen/";
-
-  async function load(file) {
-    const r = await fetch(base + file);
-    return r.json();
+// ---------- LOAD FROM TAB1 ----------
+window.tab2_loadFromTab1 = function () {
+  if (!window.TAB1_MASTER_JSON) {
+    alert('Chưa có dữ liệu từ Tab 1');
+    return;
   }
+  TAB2.master = window.TAB1_MASTER_JSON;
+  buildSceneSelect();
+  console.log('[TAB2] Loaded from Tab1');
+};
 
-  const [c, f, s, o, b] = await Promise.all([
-    load("XNC_characters.json"),
-    load("XNC_faces.json"),
-    load("XNC_states.json"),
-    load("XNC_outfits.json"),
-    load("XNC_backgrounds.json")
-  ]);
-
-  tab2State.masters.characters = c.characters || [];
-  tab2State.masters.faces = f.faces || [];
-  tab2State.masters.states = s.states || [];
-  tab2State.masters.outfits = o.outfits || [];
-  tab2State.masters.backgrounds = b.backgrounds || [];
-
-  renderSelect("tab2_character", tab2State.masters.characters, "id", "name");
-  renderSelect("tab2_face", tab2State.masters.faces);
-  renderSelect("tab2_state", tab2State.masters.states);
-  renderSelect("tab2_outfit", tab2State.masters.outfits, "id", "name");
-  renderSelect("tab2_background", tab2State.masters.backgrounds);
-
-  console.log("[TAB2] Masters loaded OK");
-}
-
-/* ===================== SELECT RENDER ===================== */
-
-function renderSelect(id, arr, valKey = "id", labelKey = "name") {
-  const el = $(id);
-  if (!el) return;
-
-  el.innerHTML = `<option value="">--</option>`;
-  arr.forEach(x => {
-    const o = document.createElement("option");
-    o.value = x[valKey];
-    o.textContent = x[labelKey] || x[valKey];
-    el.appendChild(o);
+// ---------- BUILD SCENE / FRAME ----------
+function buildSceneSelect() {
+  const sel = qs('tab2_scene');
+  sel.innerHTML = '';
+  Object.keys(TAB2.master.scenes).forEach(id => {
+    sel.append(new Option(id, id));
   });
+  sel.onchange = selectScene;
+  sel.value = Object.keys(TAB2.master.scenes)[0];
+  selectScene();
 }
 
-/* ===================== FRAME ===================== */
-
-function selectFrame(sceneId, frameId) {
-  const frame = tab2State.scenes?.[sceneId]?.frames?.[frameId];
-  if (!frame) return;
-
-  tab2State.currentScene = sceneId;
-  tab2State.currentFrame = frameId;
-
-  setVal("tab2_character", frame.character);
-  setVal("tab2_dialogue", frame.dialogue);
-  setVal("tab2_camera", frame.camera);
-  setVal("tab2_face", frame.face);
-  setVal("tab2_state", frame.state);
-  setVal("tab2_outfit", frame.outfit);
-  setVal("tab2_background", frame.background);
-  setVal("tab2_note", frame.note);
-
-  renderPreview(frame);
+function selectScene() {
+  TAB2.sceneId = qs('tab2_scene').value;
+  const frames = TAB2.master.scenes[TAB2.sceneId].frames;
+  const sel = qs('tab2_frame');
+  sel.innerHTML = '';
+  Object.keys(frames).forEach(fid => {
+    sel.append(new Option(fid, fid));
+  });
+  sel.onchange = selectFrame;
+  sel.value = Object.keys(frames)[0];
+  selectFrame();
 }
 
-/* ===================== SAVE ===================== */
-
-function tab2_saveFrame() {
-  if (!tab2State.currentScene || !tab2State.currentFrame) return;
-
-  const f = tab2State.scenes[tab2State.currentScene].frames[tab2State.currentFrame];
-
-  f.character = getVal("tab2_character");
-  f.dialogue = getVal("tab2_dialogue");
-  f.camera = getVal("tab2_camera");
-  f.face = getVal("tab2_face");
-  f.state = getVal("tab2_state");
-  f.outfit = getVal("tab2_outfit");
-  f.background = getVal("tab2_background");
-  f.note = getVal("tab2_note");
-
-  renderPreview(f);
+function selectFrame() {
+  TAB2.frameId = qs('tab2_frame').value;
+  TAB2.frameData = TAB2.master.scenes[TAB2.sceneId].frames[TAB2.frameId] || {};
+  fillForm();
+  renderPreview();
 }
 
-/* ===================== PREVIEW ===================== */
+// ---------- FILL FORM ----------
+function fillForm() {
+  const f = TAB2.frameData;
 
-function findById(arr, id) {
-  return arr.find(x => x.id === id);
+  qs('tab2_character').value = f.character_id || '';
+  qs('tab2_dialog').value = f.dialog || '';
+  qs('tab2_camera').value = f.camera || '';
+  qs('tab2_face').value = f.face || '';
+  qs('tab2_state').value = f.state || '';
+  qs('tab2_outfit').value = f.outfit || '';
+  qs('tab2_background').value = f.background || '';
+  qs('tab2_note').value = f.note || '';
 }
 
-function renderPreview(frame) {
-  const out = [];
+// ---------- SAVE ----------
+qs('tab2_saveFrameBtn').onclick = () => {
+  const f = TAB2.frameData;
 
-  const c = findById(tab2State.masters.characters, frame.character);
-  const face = findById(tab2State.masters.faces, frame.face);
-  const act = findById(tab2State.masters.states, frame.state);
-  const outfit = findById(tab2State.masters.outfits, frame.outfit);
-  const bg = findById(tab2State.masters.backgrounds, frame.background);
+  f.character_id = qs('tab2_character').value;
+  f.dialog = qs('tab2_dialog').value;
+  f.camera = qs('tab2_camera').value;
+  f.face = qs('tab2_face').value;
+  f.state = qs('tab2_state').value;
+  f.outfit = qs('tab2_outfit').value;
+  f.background = qs('tab2_background').value;
+  f.note = qs('tab2_note').value;
 
-  if (c) {
-    out.push(`CHARACTER: ${c.name}`);
-    out.push(c.base_desc_en || "");
+  renderPreview();
+  console.log('[TAB2] Frame saved', f);
+};
+
+// ---------- PROMPT BUILD ----------
+function renderPreview() {
+  const pre = qs('tab2_preview');
+  if (!pre) return;
+
+  const f = TAB2.frameData;
+  const char = TAB2.master.maps.characters[f.character_id];
+  const face = TAB2.master.maps.faces[f.face];
+  const state = TAB2.master.maps.states[f.state];
+  const bg = TAB2.master.maps.backgrounds[f.background];
+  const outfit = TAB2.master.maps.outfits[f.outfit];
+
+  let lines = [];
+
+  if (char) {
+    lines.push(`CHARACTER: ${char.name}`);
+    lines.push(char.base_desc_en || char.prompt_en || '');
   }
-  if (face) out.push(`Face: ${face.base_desc_en || face.name}`);
-  if (act) out.push(`Action: ${act.base_desc_en || act.name}`);
+
+  if (face) lines.push(`Face: ${face.desc_en}`);
+  if (state) lines.push(`Action: ${state.desc_en}`);
+
   if (outfit) {
-    const v = outfit.variants?.male || outfit.variants?.female;
-    out.push(`Outfit: ${v?.base_desc_en || outfit.name}`);
+    const variant =
+      outfit.variants?.[char.gender] ||
+      outfit.variants?.male ||
+      outfit.variants?.female;
+    if (variant?.base_desc_en) {
+      lines.push(`Outfit: ${variant.base_desc_en}`);
+    }
   }
-  if (bg) out.push(`Background: ${bg.base_desc_en || bg.name}`);
-  if (frame.dialogue) out.push(`Dialogue: "${frame.dialogue}"`);
 
-  const box = $("tab2_preview");
-  if (box) box.textContent = out.join("\n\n");
+  if (bg) lines.push(`Background: ${bg.desc_en}`);
+  if (f.dialog) lines.push(`Dialogue: "${f.dialog}"`);
+
+  pre.textContent = lines.filter(Boolean).join('\n\n');
 }
 
-/* ===================== INIT ===================== */
-
-function tab2_init() {
-  tab2_loadMasters();
-
-  $("tab2_saveFrameBtn")?.addEventListener("click", tab2_saveFrame);
-
-  console.log("[TAB2] READY – FINAL");
-}
-
-document.addEventListener("DOMContentLoaded", tab2_init);
+// ---------- INIT ----------
+console.log('[TAB2] READY');
