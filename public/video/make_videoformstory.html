@@ -61,60 +61,62 @@
 
 </div>
 
-<!-- ================= TAB 2 – SCENE → FRAME EDITOR ================= -->
-<div id="tab2" class="tab">
+<!-- ================= TAB 2 ================= -->
+<div id="tabFrame" class="tab">
 
-  <h2>🎬 TAB 2 – Scene → Frame Editor</h2>
+<h2>🎬 TAB 2 – Scene → Frame Editor</h2>
 
-  <!-- ===== LOAD / EXPORT ===== -->
-  <div class="box">
-    <button id="tab2_load_local">Load từ Tab 1 (Local)</button>
-    <button id="tab2_load_remote">Load từ JSON A (GitHub)</button>
-    <button id="tab2_export">Xuất JSON cho Tab 3</button>
-  </div>
+<div class="box">
+  <button id="tab2_load_local">Load từ Tab 1 (Local)</button>
+  <button id="tab2_load_remote">Load từ JSON A (GitHub)</button>
+  <button id="tab2_export">Xuất JSON cho Tab 3</button>
+</div>
 
-  <!-- ===== SCENE SELECT ===== -->
-  <div class="box">
-    <label>Scene</label>
-    <select id="tab2_sceneSelect"></select>
- a
-  </div>
+<div class="box">
+  <label>Scene</label>
+  <select id="tab2_sceneSelect"></select>
+</div>
 
-  <!-- ===== FRAME SELECT ===== -->
-  <div class="box">
-    <label>Frame (1 thoại = 1 frame)</label>
-    <select id="tab2_frameSelect"></select>
-    <button id="tab2_mergeFrames">Gộp frame</button>
-  </div>
+<div class="box">
+  <label>Frame (1 thoại = 1 frame)</label>
+  <select id="tab2_frameSelect"></select>
+  <button id="tab2_mergeFrames">Gộp frame</button>
+</div>
 
-  <!-- ===== FRAME DETAIL EDITOR ===== -->
-  <div class="box">
-    <label>Nhân vật</label>
-    <input id="tab2_actor" disabled>
+<div class="box">
+  <label>Nhân vật</label>
+  <select id="tab2_actor"></select>
 
-    <label>Thoại / Nội dung</label>
-    <textarea id="tab2_text"></textarea>
+  <label>Thoại / Nội dung</label>
+  <textarea id="tab2_text"></textarea>
 
-    <label>Camera</label>
-    <select id="tab2_camera"></select>
+  <label>Camera</label>
+  <select id="tab2_camera">
+    <option>Close-up</option>
+    <option>Medium shot</option>
+    <option>Wide shot</option>
+  </select>
 
-    <label>Facial Expression</label>
-    <select id="tab2_face"></select>
+  <label>Facial Expression</label>
+  <select id="tab2_face"></select>
 
-    <label>State / Action</label>
-    <select id="tab2_state"></select>
+  <label>State / Action</label>
+  <select id="tab2_state"></select>
 
-    <label>Outfit</label>
-    <select id="tab2_outfit"></select>
+  <label>Outfit</label>
+  <select id="tab2_outfit"></select>
 
-    <label>Background</label>
-    <select id="tab2_background"></select>
+  <label>Background</label>
+  <select id="tab2_background"></select>
 
-    <label>Note</label>
-    <textarea id="tab2_note"></textarea>
+  <label>Note</label>
+  <textarea id="tab2_note"></textarea>
 
-    <button id="tab2_saveFrame">Lưu frame</button>
-  </div>
+  <button id="tab2_saveFrame">Lưu frame</button>
+</div>
+
+</div>
+
 
   <!-- ===== DEBUG ===== -->
   <div class="box">
@@ -160,6 +162,7 @@
 
 </body>
 </html>
+
 
 
 
