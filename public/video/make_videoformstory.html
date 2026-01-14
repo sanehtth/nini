@@ -43,6 +43,46 @@
     border:1px solid #333;
     white-space:pre-wrap;
   }
+   body {
+    background:#111;
+    color:#eee;
+    font-family: Arial, sans-serif;
+  }
+
+  .tab-buttons {
+    display:flex;
+    gap:8px;
+    margin-bottom:10px;
+  }
+
+  .tab-buttons button {
+    flex:1;
+    padding:10px;
+    background:#222;
+    color:#ccc;
+    border:1px solid #333;
+    cursor:pointer;
+  }
+
+  .tab-buttons button.active {
+    background:#000;
+    color:#fff;
+    border-bottom:2px solid #4caf50;
+  }
+
+  section {
+    border:1px solid #333;
+    padding:10px;
+    margin-top:10px;
+  }
+
+  textarea {
+    width:100%;
+    min-height:200px;
+    background:#000;
+    color:#0f0;
+    border:1px solid #333;
+  }
 </style>
 </head>
 
@@ -64,12 +104,38 @@
   <button id="btnSaveLocalB">Lưu tạm Story B</button>
   <button id="btnExportB">Export JSON B</button>
 </section>
+  <!-- click chon tab -->
+<script>
+  function showTab(n) {
+    const tab1 = document.getElementById('tab1');
+    const tab2 = document.getElementById('tab2');
+    const btn1 = document.getElementById('btnTab1');
+    const btn2 = document.getElementById('btnTab2');
 
+    if (n === 1) {
+      tab1.style.display = 'block';
+      tab2.style.display = 'none';
+      btn1.classList.add('active');
+      btn2.classList.remove('active');
+    } else {
+      tab1.style.display = 'none';
+      tab2.style.display = 'block';
+      btn1.classList.remove('active');
+      btn2.classList.add('active');
+    }
+  }
+
+  // mặc định mở Tab 1
+  window.addEventListener('DOMContentLoaded', () => {
+    showTab(1);
+  });
+</script>
 <script src="tab1.js"></script>
 <script src="tab2.js"></script>
  
 </body>
 </html>
+
 
 
 
