@@ -145,11 +145,12 @@ function tab2_selectFrame(index) {
 
 function tab2_saveFrame() {
   const f = tab2Data.currentFrame;
-  f.actor = qs('tab2_actor').value;
-  f.text = qs('tab2_text').value;
+
   f.camera = qs('tab2_camera').value;
-  f.emotion = qs('tab2_emotion').value;
+  f.face = qs('tab2_face').value;
+  f.state = qs('tab2_state').value;
   f.outfit = qs('tab2_outfit').value;
+  f.background = qs('tab2_background').value;
   f.note = qs('tab2_note').value;
 
   qs('tab2_debug').textContent =
@@ -181,31 +182,42 @@ function tab2_mergeFrames() {
 // ---------- EXPORT TAB 3 ----------
 
 function tab2_export() {
+  const lookup = (list, id) =>
+    list.find(x => x.id === id);
+
   const payload = {
-    type: 'VIDEO_PROMPT_V1',
+    type: 'VIDEO_PROMPT_V2',
     scenes: tab2Data.scenes.map(s => ({
       sceneId: s.sceneId,
-      frames: s.frames.map(f => ({
-        frameId: f.frameId,
-        prompt: `Close-up of ${f.actor}, emotion ${f.emotion}, wearing ${f.outfit}, ${f.text}`
-      }))
+      frames: s.frames.map(f => {
+        const face = lookup(TAB2_MASTER.faces, f.face);
+        const state = lookup(TAB2_MASTER.states, f.state);
+        const outfit = lookup(TAB2_MASTER.outfits, f.outfit);
+        const bg = lookup(TAB2_MASTER.backgrounds, f.background);
+
+        return {
+          frameId: f.frameId,
+          prompt: `
+Close-up of ${f.actor},
+${face?.desc_en || ''},
+${state?.desc_en || ''},
+wearing ${outfit?.desc_en || ''},
+background: ${bg?.desc_en || ''}
+`.trim()
+        };
+      })
     }))
   };
 
-  const blob = new Blob(
-    [JSON.stringify(payload, null, 2)],
-    { type: 'application/json' }
-  );
-
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'video_prompt.json';
-  a.click();
+  downloadJSON(payload, 'video_prompt_v2.json');
 }
+
 
 // ---------- INIT ----------
 
 function initTab2() {
+  tab2_loadMasters();
+
   qs('tab2_load_local').onclick = tab2_loadFromLocal;
   qs('tab2_load_remote').onclick = tab2_loadFromRemote;
   qs('tab2_saveFrame').onclick = tab2_saveFrame;
@@ -214,4 +226,5 @@ function initTab2() {
 
   console.log('[TAB2] READY');
 }
+
 
