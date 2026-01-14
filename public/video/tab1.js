@@ -123,6 +123,32 @@ function tab1_split() {
   console.log('[TAB1] Split OK', scenes.length);
 }
 
+function tab1_exportJsonA() {
+  if (!appState.scenes || !appState.scenes.length) {
+    alert('Chưa có scene để export');
+    return;
+  }
+
+  const data = {
+    type: 'STORY_STRUCT',
+    storyId: appState.storyDraft?.id || '',
+    title: appState.storyDraft?.title || '',
+    scenes: appState.scenes
+  };
+
+  const blob = new Blob(
+    [JSON.stringify(data, null, 2)],
+    { type: 'application/json' }
+  );
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${data.storyId || 'story'}_story_struct.json`;
+  a.click();
+
+  URL.revokeObjectURL(a.href);
+}
+
 
 
 function initTab1() {
