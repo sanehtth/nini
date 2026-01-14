@@ -164,7 +164,23 @@ async function loadManifest() {
 
   console.log('[TAB1] Manifest OK', manifest.stories.length);
 }
+async function loadStory() {
+  const file = document.getElementById('storySelect').value;
+  if (!file) return;
 
+  const res = await fetch(`/public/substance/${file}`);
+  const story = await res.json();
+
+  document.getElementById('storyId').value = story.id || '';
+  document.getElementById('storyTitle').value = story.title || '';
+  document.getElementById('storyText').value = story.raw_text || '';
+
+  window.storyA = story;
+  document.getElementById('previewA').textContent =
+    JSON.stringify(story, null, 2);
+
+  console.log('[TAB1] Story loaded', story.id);
+}
 async function loadStoryFromSelect(){
   const id = document.getElementById("storySelect").value;
   const res = await fetch(`/public/substance/${story.file}`);
@@ -257,6 +273,7 @@ function exportStoryB(){
 </script> 
 </body>
 </html>
+
 
 
 
