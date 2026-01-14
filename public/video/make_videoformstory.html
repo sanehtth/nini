@@ -47,219 +47,30 @@
 </head>
 
 <body>
-  <!-- (B) TAB BUTTONS -->
-<div class="tabs">
-  <button onclick="showTab('tab1')">TAB 1 – Story</button>
-  <button onclick="showTab('tab2')">TAB 2 – Frame</button>
-</div>
-  <!-- (C) TAB 1 – STORY / PARSER -->
-<div id="tab1" class="tab active">
+  <!-- TAB BUTTONS -->
+<button onclick="showTab(1)">TAB 1 – Story</button>
+<button onclick="showTab(2)">TAB 2 – Frame</button>
 
-  <h2>TAB 1 – Story / Parser</h2>
-
-  <!-- LOAD JSON TRUYỆN -->
-  <label>Chọn truyện (manifest)</label>
-  <select id="storySelect"></select>
-
-  <button onclick="loadStoryFromSelect()">Load story</button>
-
-  <label>Story ID</label>
-  <input id="storyId">
-
-  <label>Story Title</label>
-  <input id="storyTitle">
-
-  <label>Story Text</label>
+<!-- TAB 1 -->
+<section id="tab1">
+  <select id="manifestSelect"></select>
+  <button id="btnLoadStory">Load story</button>
   <textarea id="storyText"></textarea>
+</section>
 
-  <button onclick="parseStory()">Tách Story</button>
-  <button onclick="saveStoryALocal()">Lưu local (Story A)</button>
+<!-- TAB 2 -->
+<section id="tab2" style="display:none">
+  <button id="btnLoadLocalA">Load Story A (local)</button>
+  <button id="btnSaveLocalB">Lưu tạm Story B</button>
+  <button id="btnExportB">Export JSON B</button>
+</section>
 
-  <h3>Preview JSON A</h3>
-  <pre id="previewA"></pre>
-
-</div>
-  <!-- (D) TAB 2 – FRAME EDITOR -->
-<div id="tab2" class="tab">
-
-  <h2>TAB 2 – Frame Editor</h2>
-
-  <button onclick="loadStoryAFromLocal()">Load Story A (local)</button>
-  <button onclick="saveStoryBLocal()">Lưu tạm Story B</button>
-  <button onclick="exportStoryB()">Export JSON B</button>
-
-  <div class="row">
-    <div>
-      <label>Character</label>
-      <input id="f_character">
-    </div>
-    <div>
-      <label>Expression</label>
-      <input id="f_expression">
-    </div>
-  </div>
-
-  <div class="row">
-    <div>
-      <label>State</label>
-      <input id="f_state">
-    </div>
-    <div>
-      <label>Outfit</label>
-      <input id="f_outfit">
-    </div>
-  </div>
-
-  <label>Background</label>
-  <input id="f_background">
-
-  <label>Camera</label>
-  <input id="f_camera">
-
-  <label>Style</label>
-  <input id="f_style">
-
-  <div class="row">
-    <button onclick="prevFrame()">← Frame trước</button>
-    <button onclick="nextFrame()">Frame sau →</button>
-  </div>
-
-  <h3>Frame JSON</h3>
-  <pre id="framePreview"></pre>
-
-</div>
-  <!-- (E) SCRIPT: CORE + TAB1 + TAB2 -->
-  <script>
-function showTab(id){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-let storyA = null;
-let storyB = null;
-let currentFrame = 0;
-</script>
-  <!-- --- PHẦN LOAD JSON TAB 1 --- -->
-  <script>
-let manifest = [];
-
-async function loadManifest() {
-  const storySelect = document.getElementById('storySelect');
-  storySelect.innerHTML = '<option value="">-- chọn truyện --</option>';
-
-  const res = await fetch('/public/substance/manifest.json');
-  const manifest = await res.json();
-
-  if (!manifest.stories || !Array.isArray(manifest.stories)) {
-    alert('Manifest sai cấu trúc: thiếu stories[]');
-    return;
-  }
-
-  manifest.stories.forEach(story => {
-    const opt = document.createElement('option');
-    opt.value = story.file;
-    opt.textContent = `${story.id} – ${story.title}`;
-    storySelect.appendChild(opt);
-  });
-
-  console.log('[TAB1] Manifest OK', manifest.stories.length);
-}
-  async function loadStory() {
-  const file = document.getElementById('storySelect').value;
-  if (!file) return;
-
-  const res = await fetch(`/public/substance/${file}`);
-  const story = await res.json();
-
-  document.getElementById('storyId').value = story.id || '';
-  document.getElementById('storyTitle').value = story.title || '';
-  document.getElementById('storyText').value = story.raw_text || '';
-
-  window.storyA = story;
-  document.getElementById('previewA').textContent =
-    JSON.stringify(story, null, 2);
-
-  console.log('[TAB1] Story loaded', story.id);
-}
-
-
-window.addEventListener("DOMContentLoaded", loadManifest);
-</script>
-  <!-- --- PHẦN LOAD JSON TAB 2 --- -->
- <script>
-function loadStoryAFromLocal(){
-  const raw = localStorage.getItem("storyA");
-  if(!raw){ alert("Chưa có Story A"); return; }
-
-  storyA = JSON.parse(raw);
-  storyB = storyA.dialogues.map((d,i)=>({
-    index:i,
-    scene_id:d.scene_id,
-    character:d.character,
-    dialogue:d.text,
-    expression:"",
-    state:"",
-    outfit:"",
-    background:"",
-    camera:"",
-    style:""
-  }));
-  currentFrame = 0;
-  renderFrame();
-}
-
-function renderFrame(){
-  const f = storyB[currentFrame];
-  f_character.value = f.character;
-  f_expression.value = f.expression;
-  f_state.value = f.state;
-  f_outfit.value = f.outfit;
-  f_background.value = f.background;
-  f_camera.value = f.camera;
-  f_style.value = f.style;
-  framePreview.textContent = JSON.stringify(f, null, 2);
-}
-
-function syncFrame(){
-  const f = storyB[currentFrame];
-  f.expression = f_expression.value;
-  f.state = f_state.value;
-  f.outfit = f_outfit.value;
-  f.background = f_background.value;
-  f.camera = f_camera.value;
-  f.style = f_style.value;
-}
-
-function nextFrame(){
-  syncFrame();
-  if(currentFrame < storyB.length-1){
-    currentFrame++;
-    renderFrame();
-  }
-}
-function prevFrame(){
-  syncFrame();
-  if(currentFrame>0){
-    currentFrame--;
-    renderFrame();
-  }
-}
-
-function saveStoryBLocal(){
-  localStorage.setItem("storyB", JSON.stringify(storyB));
-  alert("✅ Đã lưu Story B (local)");
-}
-
-function exportStoryB(){
-  const blob = new Blob([JSON.stringify(storyB,null,2)],{type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "storyB.json";
-  a.click();
-}
-</script> 
+<script src="tab1.js"></script>
+<script src="tab2.js"></script>
+ 
 </body>
 </html>
+
 
 
 
