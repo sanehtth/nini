@@ -50,6 +50,17 @@ async function loadLibraries() {
       ([id]) => ({ id, label: id })
     )
   );
+// STATES
+fillSelect(
+  "frameState",
+  LIB.states.states
+);
+
+// OUTFITS
+fillSelect(
+  "frameOutfit",
+  LIB.outfits.outfits
+);
 
   console.log("[TAB2] Libraries loaded");
 }
@@ -87,13 +98,18 @@ function buildFrames(story) {
     scene_id: d.scene_id,
     character: d.character,
     dialogue: d.text,
+
     expression: "",
     action: "",
     background: "",
     camera: "",
-    style: ""
+    style: "",
+
+    state: "",     // ✅ mới
+    outfit: ""     // ✅ mới
   }));
 }
+
 
 /* ===== RENDER ===== */
 function renderFrame() {
@@ -106,6 +122,8 @@ function renderFrame() {
   frameBackground.value = f.background || "";
   frameCamera.value     = f.camera || "";
   frameStyle.value      = f.style || "";
+frameState.value  = f.state || "";
+frameOutfit.value = f.outfit || "";
 
   frameJson.textContent = JSON.stringify(f, null, 2);
 }
@@ -127,8 +145,9 @@ btnNextFrame.onclick = () => {
 };
 
 /* ===== BIND ===== */
-["Expression","Action","Background","Camera","Style"].forEach(k => {
+["Expression","Action","Background","Camera","Style","State","Outfit"].forEach(k => {
   const el = document.getElementById("frame" + k);
+  if (!el) return;
   el.onchange = () => {
     const f = frames[frameIndex];
     if (!f) return;
@@ -136,6 +155,7 @@ btnNextFrame.onclick = () => {
     renderFrame();
   };
 });
+
 
 /* ===== EXPORT ===== */
 btnExportStoryB.onclick = () => {
@@ -159,3 +179,4 @@ inputImportStoryA.onchange = e => {
   };
   r.readAsText(file);
 };
+
