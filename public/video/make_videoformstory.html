@@ -3,162 +3,105 @@
 <head>
   <meta charset="UTF-8" />
   <title>XNC – Video From Story</title>
-
-  <link rel="stylesheet" href="/green-theme.css">
-
+  <link rel="stylesheet" href="/dark.css">
   <style>
-    body {
-      background:#0f0f0f;
-      color:#eee;
-      font-family:Arial;
-      padding:16px;
-    }
-    button { padding:6px 10px; margin-right:6px; }
-    input, textarea, select {
-      width:100%;
-      background:#1a1a1a;
-      color:#eee;
-      border:1px solid #333;
-      padding:6px;
-    }
-    textarea { min-height:200px; }
-    .box { margin-bottom:12px; }
-
-    .tab { display:none; }
-    .tab.active { display:block; }
-
-    .tab-header button.active {
-      background:#444;
-      color:#fff;
-    }
-     .tab-btn { cursor:pointer; padding:6px 12px; }
-    .tab-btn.active { background:#444; }
-    .tab-panel { display:none; }
-    .tab-panel.active { display:block; }
-    label { display:block; margin-top:8px; }
-    select, input { width:100%; }
+    .tab-btn { margin-right: 8px; }
+    .tab { display: none; }
+    .tab.active { display: block; }
+    textarea { width: 100%; min-height: 140px; }
+    select, input, button { width: 100%; margin: 4px 0; }
+    pre { background:#111; padding:10px; }
   </style>
 </head>
-
 <body>
 
-<!-- ================= TAB HEADER ================= -->
+<!-- TAB SWITCH -->
 <div>
-  <button class="tab-btn active" data-tab="tab1">TAB 1 – Story</button>
-  <button class="tab-btn" data-tab="tab2">TAB 2 – Frame</button>
+  <button id="btnTab1" class="tab-btn">TAB 1 – Story</button>
+  <button id="btnTab2" class="tab-btn">TAB 2 – Frame</button>
 </div>
 
 <!-- ================= TAB 1 ================= -->
-<div id="tab1" class="tab-panel active">
-  <h2>🧩 TAB 1 – Story / Parser</h2>
+<div id="tab1" class="tab active">
+  <h2>TAB 1 – Story / Parser</h2>
 
-  <div class="box">
-    <label>Chọn truyện từ manifest</label>
-    <select id="storySelect"></select><br><br>
-    <button id="reloadManifestBtn">Reload manifest</button>
-    <button id="loadStoryBtn">Load story</button>
-  </div>
+  <label>Chọn truyện từ manifest</label>
+  <select id="selManifest"></select>
 
-  <div class="box">
-    <label>Story ID</label>
-    <input id="storyId">
-  </div>
+  <button id="btnReloadManifest">Reload manifest</button>
+  <button id="btnLoadStory">Load story</button>
 
-  <div class="box">
-    <label>Story Title</label>
-    <input id="storyTitle">
-  </div>
+  <label>Story ID</label>
+  <input id="storyId">
 
-  <div class="box">
-    <label>Story Text</label>
-    <textarea id="storyText"></textarea>
-  </div>
+  <label>Story Title</label>
+  <input id="storyTitle">
 
-  <div class="box">
-    <button id="parseStoryBtn">✂️ Tách Story</button>
-    <button id="exportStoryBtn">⬇️ Xuất JSON A</button>
-    <button id="saveStoryABtn">💾 Lưu local (Story A)</button>
-  </div>
+  <label>Story Text</label>
+  <textarea id="storyText"></textarea>
 
-  <div class="box">
-    <label>Preview JSON A</label>
-    <textarea id="previewJsonA" readonly></textarea>
-  </div>
+  <button id="btnParseStory">Tách Story</button>
+  <button id="btnExportA">Xuất JSON A</button>
+  <button id="btnSaveLocalA">Lưu local (Story A)</button>
+
+  <h3>Preview JSON A</h3>
+  <pre id="previewA"></pre>
 </div>
 
 <!-- ================= TAB 2 ================= -->
-<!-- TAB 2 -->
-<div id="tab2" class="tab-panel">
+<div id="tab2" class="tab">
   <h2>TAB 2 – Frame Editor</h2>
 
-  <div style="margin-bottom:10px">
-    <button id="btnLoadStoryA">Load Story A (local)</button>
-    <button id="btnExportStoryB">Export JSON B</button>
-    <input type="file" id="inputImportStoryA" accept=".json" />
-  </div>
+  <button id="btnLoadLocalA">Load Story A (local)</button>
+  <button id="btnSaveLocalB">Lưu tạm Story B (local)</button>
+  <button id="btnExportB">Export JSON B</button>
 
-  <div id="frameEditor">
-    <label>Character</label>
-    <input id="frameCharacter" />
+  <hr>
 
-    <label>Expression</label>
-    <select id="frameExpression"></select>
-    
-    <label>State</label>
-<select id="frameState"></select>
+  <label>Character</label>
+  <select id="fCharacter"></select>
 
-<label>Outfit</label>
-<select id="frameOutfit"></select>
+  <label>Expression</label>
+  <select id="fExpression"></select>
 
+  <label>State</label>
+  <select id="fState"></select>
 
-    <label>Action</label>
-    <select id="frameAction"></select>
+  <label>Outfit</label>
+  <select id="fOutfit"></select>
 
-    <label>Background</label>
-    <select id="frameBackground"></select>
+  <label>Action</label>
+  <select id="fAction"></select>
 
-    <label>Camera</label>
-    <select id="frameCamera"></select>
+  <label>Background</label>
+  <select id="fBackground"></select>
 
-    <label>Style</label>
-    <select id="frameStyle"></select>
-  </div>
+  <label>Camera</label>
+  <select id="fCamera"></select>
 
-  <div style="margin-top:12px">
-    <button id="btnPrevFrame">← Frame trước</button>
-    <button id="btnNextFrame">Frame sau →</button>
-  </div>
-<button id="btnSaveLocalB">Lưu tạm Story B (local)</button>
-  <pre id="frameJson" style="margin-top:12px"></pre>
+  <label>Style</label>
+  <select id="fStyle"></select>
+
+  <button id="btnPrevFrame">← Frame trước</button>
+  <button id="btnNextFrame">Frame sau →</button>
+
+  <pre id="previewFrame"></pre>
 </div>
-<button id="btnExportB">Export JSON B</button>
 
-
-
-
-<!-- ================= JS ================= -->
-<!-- JS -->
-<script src="/public/video/tab1.js"></script>
-<script src="/public/video/tab2.js"></script>
+<script src="/video/tab1.js"></script>
+<script src="/video/tab2.js"></script>
 
 <script>
-/* TAB SWITCH – an toàn, không phụ thuộc id cứng */
-document.querySelectorAll(".tab-btn").forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById(btn.dataset.tab).classList.add("active");
+  // TAB SWITCH – KHÔNG ĐỤNG JS TAB
+  btnTab1.onclick = () => {
+    tab1.classList.add("active");
+    tab2.classList.remove("active");
   };
-});
+  btnTab2.onclick = () => {
+    tab2.classList.add("active");
+    tab1.classList.remove("active");
+  };
 </script>
 
 </body>
 </html>
-
-
-
-
-
-
-
