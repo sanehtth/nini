@@ -156,12 +156,11 @@ async function loadManifest() {
   }
 
   manifest.stories.forEach(story => {
-    const opt = document.createElement('option');
-    opt.value = story.file;
-    opt.textContent = `${story.id} – ${story.title}`;
-    storySelect.appendChild(opt);
-  });
-
+  const opt = document.createElement('option');
+  opt.value = story.file;
+  opt.textContent = `${story.id} – ${story.title}`;
+  storySelect.appendChild(opt);
+});
   console.log('[TAB1] Manifest OK', manifest.stories.length);
 }
 async function loadStory() {
@@ -260,6 +259,7 @@ function exportStoryB(){
 </script> 
 </body>
 </html>
+
 
 
 
