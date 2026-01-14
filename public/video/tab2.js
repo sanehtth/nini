@@ -208,30 +208,65 @@ function tab2_saveFrame() {
   renderPreview(f);
 }
 
-function renderPreview(f) {
-  const out = [];
+function renderPreview() {
+  const f = tab2State.currentFrame;
+  if (!f) return;
 
-  const char = tab2State.map.characters[f.character];
-  if (char)
-    out.push(`CHARACTER: ${char.name}\n${char.base_desc_en || char.prompt_en || ""}`);
+  const char = tab2State.masters.characters.find(c => c.id === f.character_id);
+  const outfit = tab2State.masters.outfits.find(o => o.id === f.outfit_id);
+  const face = tab2State.masters.faces.find(x => x.id === f.face_id);
+  const action = tab2State.masters.states.find(x => x.id === f.state_id);
+  const bg = tab2State.masters.backgrounds.find(x => x.id === f.background_id);
 
-  const face = tab2State.map.faces[f.face];
-  if (face) out.push(`Face: ${face.desc_en}`);
+  let lines = [];
 
-  const state = tab2State.map.states[f.state];
-  if (state) out.push(`Action: ${state.desc_en}`);
+  // ===== CHARACTER =====
+  if (char?.base_desc_en) {
+    lines.push(`CHARACTER: ${char.base_desc_en}`);
+  }
 
-  const outfit = tab2State.map.outfits[f.outfit];
-  if (outfit) out.push(`Outfit: ${outfit.desc_en}`);
+  // ===== FACE =====
+  if (face?.base_desc_en) {
+    lines.push(`Face: ${face.base_desc_en}`);
+  }
 
-  const bg = tab2State.map.backgrounds[f.background];
-  if (bg) out.push(`Background: ${bg.desc_en}`);
+  // ===== ACTION =====
+  if (action?.base_desc_en) {
+    lines.push(`Action: ${action.base_desc_en}`);
+  }
 
-  if (f.text) out.push(`Dialogue: "${f.text}"`);
-  if (f.note) out.push(`Note: ${f.note}`);
+  // ===== OUTFIT (QUAN TRỌNG NHẤT) =====
+  if (outfit) {
+    const gender = char?.gender || 'male';
+    const variant = outfit.variants?.[gender];
 
-  $2("tab2_preview").textContent = out.join("\n\n");
+    if (variant?.base_desc_en) {
+      if (outfit.category === 'uniform' || outfit.allow_signature_color === false) {
+        // 🔒 Uniform → KHÔNG pha màu nhân vật
+        lines.push(`Outfit: ${variant.base_desc_en}`);
+      } else {
+        // 🎨 Outfit thường → dùng màu nhân vật
+        const colors = char?.signature_colors?.join(', ');
+        lines.push(
+          `Outfit: ${variant.base_desc_en}${colors ? ', dominant colors: ' + colors : ''}`
+        );
+      }
+    }
+  }
+
+  // ===== BACKGROUND =====
+  if (bg?.base_desc_en) {
+    lines.push(`Background: ${bg.base_desc_en}`);
+  }
+
+  // ===== DIALOGUE =====
+  if (f.dialogue) {
+    lines.push(`Dialogue: "${f.dialogue}"`);
+  }
+
+  qs('tab2_preview').textContent = lines.join('\n\n');
 }
+
 
 /* =======================
    EXPORT JSON (B)
@@ -286,3 +321,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   console.log("[TAB2] READY – FIXED");
 });
+
