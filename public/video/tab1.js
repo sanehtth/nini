@@ -148,9 +148,6 @@ function tab1_exportJsonA() {
 
   URL.revokeObjectURL(a.href);
 }
-
-
-
 function initTab1() {
   qs('tab1_reloadManifestBtn').onclick = tab1_loadManifest;
   qs('tab1_loadStoryBtn').onclick = () => {
@@ -159,6 +156,7 @@ function initTab1() {
   };
   qs('tab1_saveLocalBtn').onclick = tab1_saveLocal;
   qs('tab1_splitBtn').onclick = tab1_split;
+  qs('tab1_exportJsonABtn').onclick = tab1_exportJsonA;
 
   tab1_loadManifest();
   console.log('[TAB1] READY');
