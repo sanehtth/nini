@@ -239,7 +239,8 @@ function init() {
   console.log('[XNC] Frame editor ready');
 }
 ------------------------------------------------------*/
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', initTab2);
+
 
 
 
