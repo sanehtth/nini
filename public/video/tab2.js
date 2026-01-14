@@ -274,15 +274,28 @@ function tab2_exportJSONB() {
 ================================ */
 
 function initTab2() {
-  qs('tab2_loadLocal').onclick = tab2_loadFromLocal;
-  qs('tab2_loadJsonA').onclick = tab2_loadFromJSONA;
-  qs('tab2_scene').onchange = selectScene;
-  qs('tab2_frame').onchange = selectFrame;
-  qs('tab2_saveFrame').onclick = saveFrame;
-  qs('tab2_exportB').onclick = tab2_exportJSONB;
+  const btnLocal = qs('tab2_loadLocal');
+if (btnLocal) btnLocal.onclick = tab2_loadFromLocal;
+
+const btnJsonA = qs('tab2_loadJsonA');
+if (btnJsonA) btnJsonA.onclick = tab2_loadFromJSONA;
+
+const sceneSel = qs('tab2_scene');
+if (sceneSel) sceneSel.onchange = selectScene;
+
+const frameSel = qs('tab2_frame');
+if (frameSel) frameSel.onchange = selectFrame;
+
+const btnSave = qs('tab2_saveFrame');
+if (btnSave) btnSave.onclick = saveFrame;
+
+const btnExport = qs('tab2_exportB');
+if (btnExport) btnExport.onclick = tab2_exportJSONB;
+
 
   loadMasterJSON();
   console.log('[TAB2] READY');
 }
 
 document.addEventListener('DOMContentLoaded', initTab2);
+
