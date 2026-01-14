@@ -114,11 +114,15 @@ function buildFrames(scenes) {
 
 // map tên thoại -> character id (best effort)
 function guessCharacterId(label) {
+  if (!label) return '';
+
   const found = tab2State.masters.characters.find(
-    c => c.label === label
+    c => c.label.trim() === label.trim()
   );
-  return found ? found.id : tab2State.masters.characters[0]?.id || '';
+
+  return found ? found.id : '';
 }
+
 
 /* ================= UI LOGIC ================= */
 
@@ -294,5 +298,6 @@ ${f.note || ''}
 
   qs('tab2_preview').textContent = preview;
 }
+
 
 
