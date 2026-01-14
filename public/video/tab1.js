@@ -48,68 +48,71 @@ function tab1_split() {
   let sceneIndex = 0;
   let currentScene = null;
 
-  function startNewScene(narration = '') {
+  const clean = (s) => s.replace(/\*\*/g, '').trim();
+
+  function startScene(narration = '') {
     sceneIndex++;
     currentScene = {
       id: `S${sceneIndex}`,
-      narration,
+      narration: narration,
       dialogues: [],
       sfx: []
     };
     scenes.push(currentScene);
   }
 
-  lines.forEach(line => {
+  lines.forEach(rawLine => {
+    const line = clean(rawLine);
 
     // ===== TITLE → bỏ =====
-    if (line.startsWith('**Title')) return;
+    if (line.startsWith('Title:')) return;
 
     // ===== SCENE BREAK =====
-    if (line === '---') {
+    if (line === '---' || line.includes('[END SCENE]')) {
       currentScene = null;
       return;
     }
 
     // ===== SETTING / SCENE START =====
-    if (line.startsWith('**Setting') || line.startsWith('**Scene')) {
-      startNewScene(
-        line.replace(/\*\*/g, '').replace(/^Setting:/, '').trim()
-      );
+    if (line.startsWith('Setting:') || line.startsWith('Scene:')) {
+      startScene(line.replace(/^Setting:|^Scene:/, '').trim());
       return;
     }
 
-    // Nếu chưa có scene thì tạo scene đầu
+    // Nếu chưa có scene → tạo scene đầu
     if (!currentScene) {
-      startNewScene('');
+      startScene('');
     }
 
-    // ===== SFX (PHẢI CHECK TRƯỚC dialogue) =====
-    if (line.startsWith('[SFX')) {
-      const txt = line
-        .replace('[SFX:', '')
-        .replace('[SFX', '')
-        .replace(']', '')
-        .replace(/\*\*/g, '')
+    // ===== SFX (CHECK RẤT SỚM & RẤT CHẶT) =====
+    if (/^\[SFX[\]:]/i.test(line)) {
+      const sfxText = line
+        .replace(/^\[SFX[\]:]*/i, '')
+        .replace(/[\[\]]/g, '')
         .trim();
 
-      currentScene.sfx.push(txt);
+      currentScene.sfx.push(sfxText);
       return;
     }
 
-    // ===== DIALOGUE =====
-    if (line.includes(':')) {
-      const [char, ...rest] = line.split(':');
+    // ===== DIALOGUE (CHARACTER: TEXT) =====
+    const dialogueMatch = line.match(/^([^:]{1,30}):\s*(.+)$/);
+    if (dialogueMatch) {
+      const character = dialogueMatch[1].trim();
+
+      // chặn SFX giả
+      if (character.toUpperCase() === 'SFX') return;
+
       currentScene.dialogues.push({
-        character: char.replace(/\*\*/g, '').trim(),
-        text: rest.join(':').replace(/\*\*/g, '').trim()
+        character,
+        text: dialogueMatch[2].trim()
       });
       return;
     }
 
-    // ===== NARRATION CONTINUE =====
+    // ===== NARRATION =====
     currentScene.narration +=
-      (currentScene.narration ? ' ' : '') +
-      line.replace(/\*\*/g, '');
+      (currentScene.narration ? ' ' : '') + line;
   });
 
   appState.scenes = scenes;
