@@ -1,246 +1,164 @@
-﻿/* =====================================================
-   XNC – FRAME EDITOR CORE (STABLE)
-   Mục tiêu:
-   - Chỉnh từng frame
-   - Next / Prev frame
-   - Save local
-   - Export / Import JSON nguồn
-===================================================== */
+// ================== TAB 2 – FRAME ENGINE ==================
 
-/* =========================
-   HELPERS
-========================= */
-function downloadJSON(data, filename) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: 'application/json'
+let tab2Data = {
+  scenes: [],
+  currentScene: null,
+  currentFrame: null
+};
+
+// ---------- LOAD DATA ----------
+
+function tab2_loadFromLocal() {
+  if (!appState.scenes || !appState.scenes.length) {
+    alert('Tab 1 chưa có scene');
+    return;
+  }
+  tab2_initFromScenes(appState.scenes);
+}
+
+async function tab2_loadFromRemote() {
+  const url = prompt('Nhập path JSON A:', '/substance/XNC-20260110-0005_A.json');
+  if (!url) return;
+  const json = await fetch(url).then(r => r.json());
+  tab2_initFromScenes(json.scenes || []);
+}
+
+// ---------- SCENE → FRAME ----------
+
+function tab2_initFromScenes(scenes) {
+  tab2Data.scenes = scenes.map(scene => ({
+    sceneId: scene.id,
+    narration: scene.narration,
+    frames: tab2_generateFrames(scene)
+  }));
+
+  const sel = qs('tab2_sceneSelect');
+  sel.innerHTML = '';
+  tab2Data.scenes.forEach((s, i) => {
+    const o = document.createElement('option');
+    o.value = i;
+    o.textContent = s.sceneId;
+    sel.appendChild(o);
   });
+
+  sel.onchange = () => tab2_selectScene(sel.value);
+  tab2_selectScene(0);
+}
+
+// 🔥 1 THOẠI = 1 FRAME
+function tab2_generateFrames(scene) {
+  let idx = 1;
+  return scene.dialogues.map(d => ({
+    frameId: `${scene.id}_F${String(idx++).padStart(2, '0')}`,
+    actor: d.character,
+    text: d.text,
+    camera: 'closeup',
+    emotion: '',
+    outfit: '',
+    note: ''
+  }));
+}
+
+// ---------- SELECT ----------
+
+function tab2_selectScene(index) {
+  tab2Data.currentScene = tab2Data.scenes[index];
+  const sel = qs('tab2_frameSelect');
+  sel.innerHTML = '';
+
+  tab2Data.currentScene.frames.forEach((f, i) => {
+    const o = document.createElement('option');
+    o.value = i;
+    o.textContent = f.frameId;
+    sel.appendChild(o);
+  });
+
+  sel.onchange = () => tab2_selectFrame(sel.value);
+  tab2_selectFrame(0);
+}
+
+function tab2_selectFrame(index) {
+  const f = tab2Data.currentScene.frames[index];
+  tab2Data.currentFrame = f;
+
+  qs('tab2_actor').value = f.actor;
+  qs('tab2_text').value = f.text;
+  qs('tab2_camera').value = f.camera;
+  qs('tab2_emotion').value = f.emotion;
+  qs('tab2_outfit').value = f.outfit;
+  qs('tab2_note').value = f.note;
+}
+
+// ---------- EDIT ----------
+
+function tab2_saveFrame() {
+  const f = tab2Data.currentFrame;
+  f.actor = qs('tab2_actor').value;
+  f.text = qs('tab2_text').value;
+  f.camera = qs('tab2_camera').value;
+  f.emotion = qs('tab2_emotion').value;
+  f.outfit = qs('tab2_outfit').value;
+  f.note = qs('tab2_note').value;
+
+  qs('tab2_debug').textContent =
+    JSON.stringify(tab2Data, null, 2);
+}
+
+// ---------- MERGE FRAME ----------
+
+function tab2_mergeFrames() {
+  const frames = tab2Data.currentScene.frames;
+  if (frames.length < 2) return;
+
+  const f1 = frames.shift();
+  const f2 = frames.shift();
+
+  frames.unshift({
+    frameId: `${f1.frameId}_${f2.frameId}`,
+    actor: `${f1.actor}, ${f2.actor}`,
+    text: `${f1.text} ${f2.text}`,
+    camera: 'medium',
+    emotion: '',
+    outfit: '',
+    note: 'Merged frame'
+  });
+
+  tab2_selectScene(0);
+}
+
+// ---------- EXPORT TAB 3 ----------
+
+function tab2_export() {
+  const payload = {
+    type: 'VIDEO_PROMPT_V1',
+    scenes: tab2Data.scenes.map(s => ({
+      sceneId: s.sceneId,
+      frames: s.frames.map(f => ({
+        frameId: f.frameId,
+        prompt: `Close-up of ${f.actor}, emotion ${f.emotion}, wearing ${f.outfit}, ${f.text}`
+      }))
+    }))
+  };
+
+  const blob = new Blob(
+    [JSON.stringify(payload, null, 2)],
+    { type: 'application/json' }
+  );
+
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = filename;
+  a.download = 'video_prompt.json';
   a.click();
 }
 
-/* =========================
-   PROJECT INIT (MẪU)
-========================= */
-function createEmptyProject() {
-  return {
-    id: `xnc_${Date.now()}`,
-    name: 'Untitled Project',
-    updatedAt: Date.now(),
+// ---------- INIT ----------
 
-    video: {
-      ratio: '9:16',
-      fps: 24,
-      globalStyle: 'cinematic cartoon vietnam'
-    },
-
-    scenes: [
-      {
-        id: 'S1',
-        frames: [
-          createEmptyFrame(1)
-        ]
-      }
-    ]
-  };
-}
-
-function createEmptyFrame(index) {
-  return {
-    id: `F${index}`,
-    duration: 3,
-    characters: [],
-    background: '',
-    camera: '',
-    emotion: '',
-    action: '',
-    style: '',
-    notes: ''
-  };
-}
-
-/* =========================
-   LOAD / SAVE PROJECT
-========================= */
-function saveProjectLocal() {
-  if (!appState.project) return;
-
-  appState.project.updatedAt = Date.now();
-  localStorage.setItem(
-    `xnc_project_${appState.project.id}`,
-    JSON.stringify(appState.project)
-  );
-
-  alert('Đã lưu project (local)');
-}
-
-function exportProjectJSON() {
-  if (!appState.project) return;
-
-  downloadJSON(
-    {
-      version: '1.0',
-      project: appState.project
-    },
-    `${appState.project.id}.json`
-  );
-}
-
-function importProjectJSON(file) {
-  const reader = new FileReader();
-
-  reader.onload = () => {
-    try {
-      const data = JSON.parse(reader.result);
-      if (!data.project || !data.project.scenes) {
-        alert('JSON không đúng định dạng project');
-        return;
-      }
-
-      appState.project = data.project;
-      appState.currentSceneIndex = 0;
-      appState.currentFrameIndex = 0;
-
-      renderFrame();
-      alert('Import project thành công');
-    } catch (e) {
-      alert('Không đọc được file JSON');
-    }
-  };
-
-  reader.readAsText(file);
-}
-
-/* =========================
-   FRAME NAVIGATION
-========================= */
-function getCurrentScene() {
-  return appState.project.scenes[appState.currentSceneIndex];
-}
-
-function getCurrentFrame() {
-  const scene = getCurrentScene();
-  return scene.frames[appState.currentFrameIndex];
-}
-
-function nextFrame() {
-  const scene = getCurrentScene();
-  if (appState.currentFrameIndex < scene.frames.length - 1) {
-    appState.currentFrameIndex++;
-    renderFrame();
-  }
-}
-
-function prevFrame() {
-  if (appState.currentFrameIndex > 0) {
-    appState.currentFrameIndex--;
-    renderFrame();
-  }
-}
-
-function addFrame() {
-  const scene = getCurrentScene();
-  const idx = scene.frames.length + 1;
-  scene.frames.push(createEmptyFrame(idx));
-  appState.currentFrameIndex = scene.frames.length - 1;
-  renderFrame();
-}
-
-/* =========================
-   FRAME EDITOR
-========================= */
-function renderFrame() {
-  if (!appState.project) return;
-
-  const frame = getCurrentFrame();
-
-  qs('frameIndexLabel').textContent =
-    `Frame ${appState.currentFrameIndex + 1}`;
-
-  qs('frameDuration').value = frame.duration;
-  qs('frameBackground').value = frame.background;
-  qs('frameCamera').value = frame.camera;
-  qs('frameEmotion').value = frame.emotion;
-  qs('frameAction').value = frame.action;
-  qs('frameStyle').value = frame.style;
-  qs('frameNotes').value = frame.notes;
-}
-
-function bindFrameEditor() {
-  const frame = getCurrentFrame();
-  if (!frame) return;
-
-  frame.duration = Number(qs('frameDuration').value);
-  frame.background = qs('frameBackground').value;
-  frame.camera = qs('frameCamera').value;
-  frame.emotion = qs('frameEmotion').value;
-  frame.action = qs('frameAction').value;
-  frame.style = qs('frameStyle').value;
-  frame.notes = qs('frameNotes').value;
-}
-
-/* =========================
-   UI BINDING
-========================= */
-function bindUI() {
-  qs('saveLocalBtn').onclick = saveProjectLocal;
-  qs('exportJsonBtn').onclick = exportProjectJSON;
-
-  qs('importJsonBtn').onclick = () => {
-    qs('importJsonInput').click();
-  };
-
-  qs('importJsonInput').onchange = (e) => {
-    if (e.target.files[0]) {
-      importProjectJSON(e.target.files[0]);
-    }
-  };
-
-  qs('nextFrameBtn').onclick = nextFrame;
-  qs('prevFrameBtn').onclick = prevFrame;
-  qs('addFrameBtn').onclick = addFrame;
-
-  [
-    'frameDuration',
-    'frameBackground',
-    'frameCamera',
-    'frameEmotion',
-    'frameAction',
-    'frameStyle',
-    'frameNotes'
-  ].forEach(id => {
-    qs(id).oninput = bindFrameEditor;
-  });
-}
-
-/* =========================
-   INIT
-========================= */
 function initTab2() {
-  if (appState.__tab2) return;
-  appState.__tab2 = true;
-
-  qs('tab2_saveLocalBtn').onclick = () => {
-    alert('Save project (TAB 2)');
-  };
-
-  qs('tab2_exportJsonBtn').onclick = () => {
-    console.log(appState.scenes);
-  };
+  qs('tab2_load_local').onclick = tab2_loadFromLocal;
+  qs('tab2_load_remote').onclick = tab2_loadFromRemote;
+  qs('tab2_saveFrame').onclick = tab2_saveFrame;
+  qs('tab2_mergeFrames').onclick = tab2_mergeFrames;
+  qs('tab2_export').onclick = tab2_export;
 
   console.log('[TAB2] READY');
 }
-/*--------------------- cu-------------------------
-function init() {
-  appState.project = createEmptyProject();
-  bindUI();
-  renderFrame();
-  console.log('[XNC] Frame editor ready');
-}
-------------------------------------------------------*/
-document.addEventListener('DOMContentLoaded', initTab2);
-
-
-
-
