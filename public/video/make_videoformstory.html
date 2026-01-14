@@ -88,8 +88,10 @@
 
 <body>
   <!-- TAB BUTTONS -->
-<button onclick="showTab(1)">TAB 1 – Story</button>
-<button onclick="showTab(2)">TAB 2 – Frame</button>
+<div class="tab-buttons">
+  <button id="btnTab1" onclick="showTab(1)">TAB 1 – Story</button>
+  <button id="btnTab2" onclick="showTab(2)">TAB 2 – Frame</button>
+</div>
 
 <!-- TAB 1 -->
 <section id="tab1">
@@ -106,35 +108,36 @@
 </section>
   <!-- click chon tab -->
 <script>
-  function showTab(n) {
-    const tab1 = document.getElementById('tab1');
-    const tab2 = document.getElementById('tab2');
-    const btn1 = document.getElementById('btnTab1');
-    const btn2 = document.getElementById('btnTab2');
+function showTab(n) {
+  const tab1 = document.getElementById('tab1');
+  const tab2 = document.getElementById('tab2');
+  const btn1 = document.getElementById('btnTab1');
+  const btn2 = document.getElementById('btnTab2');
 
-    if (n === 1) {
-      tab1.style.display = 'block';
-      tab2.style.display = 'none';
-      btn1.classList.add('active');
-      btn2.classList.remove('active');
-    } else {
-      tab1.style.display = 'none';
-      tab2.style.display = 'block';
-      btn1.classList.remove('active');
-      btn2.classList.add('active');
-    }
+  if (!tab1 || !tab2) return;
+
+  if (n === 1) {
+    tab1.style.display = 'block';
+    tab2.style.display = 'none';
+    btn1 && btn1.classList.add('active');
+    btn2 && btn2.classList.remove('active');
+  } else {
+    tab1.style.display = 'none';
+    tab2.style.display = 'block';
+    btn1 && btn1.classList.remove('active');
+    btn2 && btn2.classList.add('active');
   }
+}
 
-  // mặc định mở Tab 1
-  window.addEventListener('DOMContentLoaded', () => {
-    showTab(1);
-  });
+window.addEventListener('DOMContentLoaded', () => showTab(1));
 </script>
+
 <script src="tab1.js"></script>
 <script src="tab2.js"></script>
  
 </body>
 </html>
+
 
 
 
