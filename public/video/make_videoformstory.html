@@ -145,23 +145,33 @@
 <script src="tab2.js"></script>
 
 <script>
-  const tab1 = qs('tab1');
-  const tab2 = qs('tab2');
+const qs = id => document.getElementById(id);
 
-  qs('btnTab1').onclick = () => {
-    tab1.classList.add('active');
-    tab2.classList.remove('active');
-  };
+qs('btnTab1').onclick = () => {
+  const t1 = qs('tabStory');
+  const t2 = qs('tabFrame');
+  if (!t1 || !t2) return;
 
-  qs('btnTab2').onclick = () => {
-    tab1.classList.remove('active');
-    tab2.classList.add('active');
-    if (window.initTab2) initTab2();
-  };
+  t1.classList.add('active');
+  t2.classList.remove('active');
+};
+
+qs('btnTab2').onclick = () => {
+  const t1 = qs('tabStory');
+  const t2 = qs('tabFrame');
+  if (!t1 || !t2) return;
+
+  t1.classList.remove('active');
+  t2.classList.add('active');
+
+  if (window.initTab2) initTab2(); // 🔥 chỉ init khi mở tab
+};
 </script>
+
 
 </body>
 </html>
+
 
 
 
