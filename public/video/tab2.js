@@ -237,22 +237,25 @@ function renderPreview() {
 
   // ===== OUTFIT (QUAN TRỌNG NHẤT) =====
   if (outfit) {
-    const gender = char?.gender || 'male';
-    const variant = outfit.variants?.[gender];
+  const gender = char?.gender || 'male';
 
-    if (variant?.base_desc_en) {
-      if (outfit.category === 'uniform' || outfit.allow_signature_color === false) {
-        // 🔒 Uniform → KHÔNG pha màu nhân vật
-        lines.push(`Outfit: ${variant.base_desc_en}`);
-      } else {
-        // 🎨 Outfit thường → dùng màu nhân vật
-        const colors = char?.signature_colors?.join(', ');
-        lines.push(
-          `Outfit: ${variant.base_desc_en}${colors ? ', dominant colors: ' + colors : ''}`
-        );
-      }
-    }
+  // 1️⃣ Lấy variant đúng theo giới tính
+  const variant = outfit.variants?.[gender];
+  if (!variant?.base_desc_en) return;
+
+  // 2️⃣ Uniform → KHÔNG pha màu nhân vật
+  if (outfit.category === 'uniform' || outfit.allow_signature_color === false) {
+    lines.push(`Outfit: ${variant.base_desc_en}`);
+  } 
+  // 3️⃣ Outfit thường → pha màu nhân vật
+  else {
+    const colors = (char?.signature_colors || []).join(', ');
+    lines.push(
+      `Outfit: ${variant.base_desc_en}${colors ? ', dominant colors: ' + colors : ''}`
+    );
   }
+}
+
 
   // ===== BACKGROUND =====
   if (bg?.base_desc_en) {
@@ -321,4 +324,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
   console.log("[TAB2] READY – FIXED");
 });
+
 
