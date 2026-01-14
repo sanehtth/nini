@@ -10,8 +10,6 @@
 /* =========================
    HELPERS
 ========================= */
-const qs = (id) => document.getElementById(id);
-
 function downloadJSON(data, filename) {
   const blob = new Blob([JSON.stringify(data, null, 2)], {
     type: 'application/json'
@@ -227,4 +225,5 @@ function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
 
