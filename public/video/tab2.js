@@ -1,141 +1,81 @@
-// ================= TAB 2 – FRAME EDITOR =================
 console.log("[TAB2] init");
 
-let storyA = null;
 let frames = [];
 let frameIndex = 0;
+let storyA = null;
 
-/* ===== LIB ===== */
-const LIB = {
-  backgrounds: null,
-  actions: null,
-  faces: null,
-  outfits: null,
-  states: null,
-  style: null
+// ===== SELECT ELEMENTS =====
+const selects = {
+  character: fCharacter,
+  expression: fExpression,
+  state: fState,
+  outfit: fOutfit,
+  action: fAction,
+  background: fBackground,
+  camera: fCamera,
+  style: fStyle
 };
 
-/* ===== LOAD LIBRARIES ===== */
-async function loadLibraries() {
-  const base = "/public/adn/xomnganchuyen/";
+// ===== DEMO LIBRARIES =====
+const LIB = {
+  character: ["Tên Trộm Gà", "Túm-La"],
+  expression: ["neutral", "joy_bright"],
+  state: ["walking_curious", "running_fast"],
+  outfit: ["xnc_outfit_thief_chicken_sneaky"],
+  action: ["run", "look_back"],
+  background: ["xnc_bactu_rambutan_garden"],
+  camera: ["closeup", "medium"],
+  style: ["happy", "drama"]
+};
 
-  async function load(name) {
-    const res = await fetch(base + name);
-    return res.json();
-  }
-
-  LIB.backgrounds = await load("XNC_backgrounds.json");
-  LIB.actions     = await load("XNC_actions.json");
-  LIB.faces       = await load("XNC_faces.json");
-  LIB.outfits     = await load("XNC_outfits.json");
-  LIB.states      = await load("XNC_states.json");
-  LIB.style       = await load("XNC_style.json");
-
-  fillSelect("frameBackground", LIB.backgrounds.backgrounds);
-  fillSelect("frameAction", LIB.actions.actions);
-  fillSelect("frameExpression", LIB.faces.faces);
-
-  // ✅ FIX CAMERA
-  fillSelect(
-    "frameCamera",
-    Object.entries(LIB.style.style.camera).map(
-      ([id, label]) => ({ id, label })
-    )
-  );
-
-  // STYLE = emotion tone
-  fillSelect(
-    "frameStyle",
-    Object.entries(LIB.style.style.emotion_tone_map).map(
-      ([id]) => ({ id, label: id })
-    )
-  );
-// STATES
-fillSelect(
-  "frameState",
-  LIB.states.states
-);
-
-// OUTFITS
-fillSelect(
-  "frameOutfit",
-  LIB.outfits.outfits
-);
-
-  console.log("[TAB2] Libraries loaded");
-}
-
-/* ===== SELECT HELPER ===== */
-function fillSelect(id, list) {
-  const el = document.getElementById(id);
-  el.innerHTML = `<option value="">-- chọn --</option>`;
-  list.forEach(i => {
+Object.keys(LIB).forEach(k => {
+  LIB[k].forEach(v => {
     const o = document.createElement("option");
-    o.value = i.id;
-    o.textContent = i.label || i.id;
-    el.appendChild(o);
+    o.value = v;
+    o.textContent = v;
+    selects[k].appendChild(o);
   });
-}
+});
 
-/* ===== LOAD STORY A ===== */
-function loadStoryFromLocal() {
-  const key = Object.keys(localStorage).find(k => k.startsWith("storyA_"));
-  if (!key) {
-    alert("Không có Story A trong local");
-    return;
-  }
+// ===== LOAD STORY A =====
+document.getElementById("btnLoadLocalA").onclick = () => {
+  const keys = Object.keys(localStorage).filter(k => k.startsWith("storyA_"));
+  if (!keys.length) return alert("Không có Story A");
 
-  storyA = JSON.parse(localStorage.getItem(key));
-  frames = buildFrames(storyA);
-  frameIndex = 0;
-  renderFrame();
-}
-
-/* ===== BUILD FRAMES ===== */
-function buildFrames(story) {
-  return story.dialogues.map((d, i) => ({
+  storyA = JSON.parse(localStorage.getItem(keys[0]));
+  frames = storyA.dialogues.map((d, i) => ({
     index: i,
     scene_id: d.scene_id,
     character: d.character,
-    dialogue: d.text,
-
-    expression: "",
-    action: "",
-    background: "",
-    camera: "",
-    style: "",
-
-    state: "",     // ✅ mới
-    outfit: ""     // ✅ mới
+    dialogue: d.dialogue
   }));
-}
 
+  frameIndex = 0;
+  renderFrame();
+  console.log("[TAB2] Loaded Story A", frames.length);
+};
 
-/* ===== RENDER ===== */
+// ===== RENDER FRAME =====
 function renderFrame() {
   const f = frames[frameIndex];
   if (!f) return;
 
-  frameCharacter.value  = f.character || "";
-  frameExpression.value = f.expression || "";
-  frameAction.value     = f.action || "";
-  frameBackground.value = f.background || "";
-  frameCamera.value     = f.camera || "";
-  frameStyle.value      = f.style || "";
-frameState.value  = f.state || "";
-frameOutfit.value = f.outfit || "";
+  Object.keys(selects).forEach(k => {
+    if (f[k]) selects[k].value = f[k];
+  });
 
-  frameJson.textContent = JSON.stringify(f, null, 2);
-  const saved = localStorage.getItem(`storyB_${storyId}`);
-
+  previewFrame.textContent = JSON.stringify(f, null, 2);
 }
 
-/* ===== EVENTS ===== */
-btnLoadStoryA.onclick = async () => {
-  await loadLibraries();
-  loadStoryFromLocal();
-};
+// ===== UPDATE FRAME =====
+Object.keys(selects).forEach(k => {
+  selects[k].onchange = () => {
+    frames[frameIndex][k] = selects[k].value;
+    renderFrame();
+  };
+});
 
+// ===== NAV =====
 btnPrevFrame.onclick = () => {
   if (frameIndex > 0) frameIndex--;
   renderFrame();
@@ -146,93 +86,29 @@ btnNextFrame.onclick = () => {
   renderFrame();
 };
 
-/* ===== BIND ===== */
-["Expression","Action","Background","Camera","Style","State","Outfit"].forEach(k => {
-  const el = document.getElementById("frame" + k);
-  if (!el) return;
-  el.onchange = () => {
-    const f = frames[frameIndex];
-    if (!f) return;
-    f[k.toLowerCase()] = el.value;
-    renderFrame();
-  };
-});
-
-
-/* ===== EXPORT ===== */
-btnExportStoryB.onclick = () => {
-  const blob = new Blob([JSON.stringify(frames, null, 2)], { type:"application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `${storyA.id}_B.json`;
-  a.click();
-};
-
-/* ===== IMPORT ===== */
-inputImportStoryA.onchange = e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const r = new FileReader();
-  r.onload = () => {
-    storyA = JSON.parse(r.result);
-    frames = buildFrames(storyA);
-    frameIndex = 0;
-    renderFrame();
-  };
-  r.readAsText(file);
-};
-/*====== nut save ==========*/
-document.getElementById("btnSaveLocalB").onclick = () => {
-  if (!frames || !frames.length) {
-    alert("Chưa có frame nào để lưu");
-    return;
-  }
-
-  const storyId = window.storyA?.id;
-  if (!storyId) {
-    alert("Chưa load Story A");
-    return;
-  }
-
-  const data = {
-    story_id: storyId,
-    frames: frames
-  };
+// ===== SAVE LOCAL B =====
+btnSaveLocalB.onclick = () => {
+  if (!storyA) return alert("Chưa load Story A");
 
   localStorage.setItem(
-    `storyB_${storyId}`,
-    JSON.stringify(data, null, 2)
+    `storyB_${storyA.id}`,
+    JSON.stringify({ story_id: storyA.id, frames }, null, 2)
   );
 
-  alert("✅ Đã lưu Story B vào local");
+  btnSaveLocalB.textContent = "✅ Đã lưu Story B";
+  setTimeout(() => btnSaveLocalB.textContent = "Lưu tạm Story B (local)", 1200);
 };
-/* ===== nut export ======*/
-document.getElementById("btnExportB").onclick = () => {
-  if (!frames || !frames.length) {
-    alert("Không có frame để export");
-    return;
-  }
 
-  const storyId = window.storyA?.id || "UNKNOWN";
+// ===== EXPORT =====
+btnExportB.onclick = () => {
+  if (!storyA) return;
+  downloadJSON({ story_id: storyA.id, frames }, `${storyA.id}_B.json`);
+};
 
-  const jsonB = {
-    version: "1.0",
-    story_id: storyId,
-    total_frames: frames.length,
-    frames: frames
-  };
-
-  const blob = new Blob(
-    [JSON.stringify(jsonB, null, 2)],
-    { type: "application/json" }
-  );
-
+function downloadJSON(data, name) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `${storyId}_B.json`;
+  a.download = name;
   a.click();
-
-  URL.revokeObjectURL(a.href);
-};
-
-
+}
