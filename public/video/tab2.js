@@ -135,6 +135,7 @@ function initSceneUI() {
 
   sel.onchange = selectScene;
   selectScene();
+renderPreview();
 }
 
 function selectScene() {
@@ -210,6 +211,7 @@ function mergeFrames() {
 
   scene.frames = [base];
   selectScene();
+renderPreview();
 }
 
 /* ================= EXPORT JSON B ================= */
@@ -292,4 +294,5 @@ ${f.note || ''}
 
   qs('tab2_preview').textContent = preview;
 }
+
 
