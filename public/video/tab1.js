@@ -1,4 +1,3 @@
-
 /* =========================
    HELPERS
 ========================= */
@@ -10,16 +9,13 @@ async function fetchJSON(url) {
 }
 
 /* =========================
-   LOAD CHARACTERS (GIỮ NGUYÊN)
+   LOAD CHARACTERS
 ========================= */
 async function loadCharacters() {
-  try {
-    const data = await fetchJSON('/adn/xomnganchuyen/XNC_characters.json');
-    appState.characters = data.characters || data;
-    renderParticipants();
-  } catch (e) {
-    console.warn('[XNC] No characters loaded');
-  }
+  const data = await fetchJSON('/adn/xomnganchuyen/XNC_characters.json');
+  appState.characters = data.characters || data;
+  renderParticipants();
+  console.log('[XNC] Loaded characters:', appState.characters.length);
 }
 
 function renderParticipants() {
@@ -33,91 +29,98 @@ function renderParticipants() {
     div.innerHTML = `
       <label>
         <input type="checkbox" value="${c.id}">
-        <b>${c.name}</b>
+        <b>${c.name}</b> <span class="muted">${c.gender || ''}</span>
       </label>
     `;
     box.appendChild(div);
   });
 
-  box.querySelectorAll('input').forEach(cb => {
+  bindCharacterEvents();
+}
+
+function bindCharacterEvents() {
+  qs('participantsList').querySelectorAll('input[type=checkbox]').forEach(cb => {
     cb.onchange = () => {
-      appState.selectedCharacters = [...box.querySelectorAll('input:checked')]
+      appState.selectedCharacters = [...qs('participantsList')
+        .querySelectorAll('input:checked')]
         .map(i => i.value);
+
       qs('participantsSelectedCount').textContent =
         appState.selectedCharacters.length;
     };
   });
-}
 
-/* =========================
-   MANIFEST → LISTBOX
-========================= */
-async function loadManifest() {
-  const data = await fetchJSON('/substance/manifest.json');
-  appState.manifest = data.items || [];
-  renderStoryListbox();
-}
+  qs('participantsSelectAll').onclick = () => {
+    qs('participantsList').querySelectorAll('input').forEach(i => i.checked = true);
+    bindCharacterEvents();
+  };
 
-function renderStoryListbox() {
-  const list = qs('storyList');
-  if (!list) {
-    console.error('[XNC] storyList not found in HTML');
-    return;
-  }
-
-  list.innerHTML = '<option value="">-- Chọn truyện --</option>';
-
-  appState.manifest.forEach(item => {
-    const opt = document.createElement('option');
-    opt.value = item.file;
-    opt.textContent = `${item.id} – ${item.title}`;
-    list.appendChild(opt);
-  });
-}
-
-/* =========================
-   LOAD STORY FROM LISTBOX
-========================= */
-function bindStoryListbox() {
-  const list = qs('storyList');
-  if (!list) return;
-
-  list.onchange = async () => {
-    if (!list.value) return;
-
-    const data = await fetchJSON(list.value);
-    appState.currentStory = data;
-
-    qs('storyId').value = data.id || '';
-    qs('storyTitle').value = data.title || '';
-    qs('storyText').value = data.story || data.idea || '';
-
-    console.log('[XNC] Story loaded:', data.id);
+  qs('participantsClear').onclick = () => {
+    qs('participantsList').querySelectorAll('input').forEach(i => i.checked = false);
+    appState.selectedCharacters = [];
+    qs('participantsSelectedCount').textContent = 0;
   };
 }
 
 /* =========================
-   SAVE / EXPORT STORY
+   MANIFEST + STORY
+========================= */
+async function loadManifest() {
+  const data = await fetchJSON('/substance/manifest.json');
+  appState.manifest = data.items || [];
+  renderStorySelect();
+  console.log('[XNC] Loaded manifest:', appState.manifest.length);
+}
+
+function renderStorySelect() {
+  const sel = qs('storySelect');
+  sel.innerHTML = '<option value="">-- Chọn truyện --</option>';
+  appState.manifest.forEach(st => {
+    const opt = document.createElement('option');
+    opt.value = st.file;
+    opt.textContent = `${st.id} – ${st.title}`;
+    sel.appendChild(opt);
+  });
+}
+
+async function loadStory(file) {
+  const data = await fetchJSON(file);
+  appState.currentStory = data;
+
+  qs('storyId').value = data.id || '';
+  qs('storyTitle').value = data.title || '';
+  qs('storyText').value = data.story || data.idea || '';
+
+  console.log('[XNC] Story loaded OK:', data.id);
+}
+
+/* =========================
+   SAVE / EXPORT
 ========================= */
 function saveStoryLocal() {
   appState.storyDraft = {
     id: qs('storyId').value,
     title: qs('storyTitle').value,
     story: qs('storyText').value,
-    characters: appState.selectedCharacters
+    characters: [...appState.selectedCharacters]
   };
-  alert('Đã lưu story (local)');
+  console.log('[XNC] Story saved local', appState.storyDraft);
 }
 
 function exportStoryJSON() {
-  if (!appState.storyDraft) return alert('Chưa lưu story');
   downloadJSON(appState.storyDraft, `${appState.storyDraft.id}_story.json`);
 }
 
+function exportDialogueJSON() {
+  downloadJSON(appState.dialogues, `${appState.storyDraft.id}_dialogue.json`);
+}
+
+function copyDialogueJSON() {
+  navigator.clipboard.writeText(JSON.stringify(appState.dialogues, null, 2));
+}
+
 function downloadJSON(data, filename) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: 'application/json'
-  });
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = filename;
@@ -125,11 +128,136 @@ function downloadJSON(data, filename) {
 }
 
 /* =========================
+   SPLIT SCENES (CORE)
+========================= */
+function splitScenesFromStory() {
+  if (!appState.storyDraft) {
+    alert('Chưa lưu story');
+    return;
+  }
+
+  console.log('[XNC] splitScenesFromStory START');
+
+  const lines = appState.storyDraft.story
+    .split('\n')
+    .map(l => l.trim())
+    .filter(Boolean);
+
+  appState.scenes = [];
+  appState.dialogues = [];
+  appState.sfx = [];
+
+  let sceneIndex = 0;
+  let currentScene = null;
+
+  lines.forEach(line => {
+
+    // ❌ TITLE = metadata → bỏ
+    if (line.startsWith('**Title')) return;
+
+    // 🟢 START SCENE
+    if (line.startsWith('**Setting') || line.startsWith('**Scene')) {
+      if (currentScene) appState.scenes.push(currentScene);
+
+      sceneIndex++;
+      currentScene = {
+        id: `S${sceneIndex}`,
+        prompt: line + '\n',
+        characters: [...appState.storyDraft.characters],
+        frames: []
+      };
+      return;
+    }
+
+    // 🔴 END SCENE
+    if (line.includes('[END SCENE]')) {
+      if (currentScene) {
+        currentScene.prompt += line + '\n';
+        appState.scenes.push(currentScene);
+        currentScene = null;
+      }
+      return;
+    }
+
+    // 🔊 SFX
+    if (line.includes('[SFX]')) {
+      if (!currentScene) return;
+      appState.sfx.push({
+        scene_id: currentScene.id,
+        text: line
+      });
+      return;
+    }
+
+    // 💬 DIALOGUE
+    if (line.includes(':')) {
+      if (!currentScene) return;
+      const [char, ...rest] = line.split(':');
+      appState.dialogues.push({
+        scene_id: currentScene.id,
+        character: char.replace(/\*/g, '').trim(),
+        text: rest.join(':').trim()
+      });
+      return;
+    }
+
+    // 📌 SCENE PROMPT
+    if (currentScene) {
+      currentScene.prompt += line + '\n';
+    }
+  });
+
+  if (currentScene) appState.scenes.push(currentScene);
+
+  renderPreviewJSON();
+  renderSceneSelect();
+
+  console.log('[XNC] splitScenesFromStory DONE', {
+    scenes: appState.scenes.length,
+    dialogues: appState.dialogues.length,
+    sfx: appState.sfx.length
+  });
+}
+
+/* =========================
+   SCENE UI
+========================= */
+function renderPreviewJSON() {
+  qs('previewBox').textContent = JSON.stringify({
+    scenes: appState.scenes,
+    dialogues: appState.dialogues,
+    sfx: appState.sfx
+  }, null, 2);
+}
+
+function renderSceneSelect() {
+  const sel = qs('sceneSelect');
+  if (!sel) return;
+
+  sel.innerHTML = '<option value="">-- Chọn Scene --</option>';
+  appState.scenes.forEach(sc => {
+    const opt = document.createElement('option');
+    opt.value = sc.id;
+    opt.textContent = sc.id;
+    sel.appendChild(opt);
+  });
+}
+
+/* =========================
    BIND UI
 ========================= */
 function bindUI() {
-  qs('saveLocalBtn')?.addEventListener('click', saveStoryLocal);
-  qs('exportStoryBtn')?.addEventListener('click', exportStoryJSON);
+  qs('reloadManifestBtn').onclick = loadManifest;
+  qs('loadStoryBtn').onclick = () => {
+    const sel = qs('storySelect');
+    if (sel.value) loadStory(sel.value);
+  };
+
+  qs('saveLocalBtn').onclick = saveStoryLocal;
+  qs('exportStoryBtn').onclick = exportStoryJSON;
+  qs('splitBtn').onclick = splitScenesFromStory;
+  qs('exportDialogueBtn').onclick = exportDialogueJSON;
+  qs('copyDialogueBtn').onclick = copyDialogueJSON;
 }
 
 /* =========================
@@ -138,9 +266,8 @@ function bindUI() {
 async function init() {
   await loadCharacters();
   await loadManifest();
-  bindStoryListbox();
   bindUI();
-  console.log('[XNC] TAB 1 READY');
+  console.log('[XNC] CORE READY');
 }
 
 document.addEventListener('DOMContentLoaded', init);
