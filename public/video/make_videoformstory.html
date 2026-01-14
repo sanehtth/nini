@@ -1,108 +1,266 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <title>XNC – Video From Story</title>
-  <link rel="stylesheet" href="/green-theme.css">
-  <style>
-    .tab-btn { margin-right: 8px; }
-    .tab { display: none; }
-    .tab.active { display: block; }
-    textarea { width: 100%; min-height: 140px; }
-    select, input, button { width: 100%; margin: 4px 0; }
-    pre { background:#111; padding:10px; }
-  </style>
+<meta charset="UTF-8" />
+<title>XNC Story → Frame Editor</title>
+
+<style>
+/* ================== BASIC DARK UI ================== */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: #eee;
+}
+
+h2 {
+  margin-top: 20px;
+}
+
+button {
+  padding: 6px 10px;
+  margin: 4px 4px 4px 0;
+  background: #333;
+  color: #fff;
+  border: 1px solid #555;
+  cursor: pointer;
+}
+button:hover {
+  background: #444;
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 6px;
+  background: #1a1a1a;
+  color: #eee;
+  border: 1px solid #444;
+  box-sizing: border-box;
+}
+
+textarea {
+  min-height: 120px;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #333;
+  margin: 20px 0;
+}
+
+.tab-bar {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  background: #000;
+  border-bottom: 1px solid #333;
+}
+
+.tab-btn {
+  padding: 6px 14px;
+  background: #222;
+  border: 1px solid #444;
+}
+
+.tab-btn.active {
+  background: #555;
+}
+
+.section {
+  display: none;
+  padding: 15px;
+}
+
+.section.active {
+  display: block;
+}
+
+.row {
+  margin-bottom: 10px;
+}
+
+.preview {
+  background: #000;
+  border: 1px solid #333;
+  padding: 10px;
+  white-space: pre-wrap;
+  font-size: 13px;
+}
+</style>
 </head>
+
 <body>
 
-<!-- TAB SWITCH -->
-<div>
-  <button id="btnTab1" class="tab-btn">TAB 1 – Story</button>
-  <button id="btnTab2" class="tab-btn">TAB 2 – Frame</button>
+<!-- ================== TAB BUTTONS ================== -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab(1)">TAB 1 – Story</button>
+  <button class="tab-btn" onclick="showTab(2)">TAB 2 – Frame</button>
 </div>
 
-<!-- ================= TAB 1 ================= -->
-<div id="tab1" class="tab active">
+<!-- ================== TAB 1 ================== -->
+<div id="tab1" class="section active">
   <h2>TAB 1 – Story / Parser</h2>
 
-  <label>Chọn truyện từ manifest</label>
-  <select id="selManifest"></select>
+  <div class="row">
+    <label>Story ID</label>
+    <input id="storyId" placeholder="XNC-xxxx">
+  </div>
 
-  <button id="btnReloadManifest">Reload manifest</button>
-  <button id="btnLoadStory">Load story</button>
+  <div class="row">
+    <label>Story Title</label>
+    <input id="storyTitle">
+  </div>
 
-  <label>Story ID</label>
-  <input id="storyId">
+  <div class="row">
+    <label>Story Text</label>
+    <textarea id="storyText" placeholder="**Tên A:** (vui vẻ) Xin chào!"></textarea>
+  </div>
 
-  <label>Story Title</label>
-  <input id="storyTitle">
-
-  <label>Story Text</label>
-  <textarea id="storyText"></textarea>
-
-  <button id="btnParseStory">Tách Story</button>
-  <button id="btnExportA">Xuất JSON A</button>
-  <button id="btnSaveLocalA">Lưu local (Story A)</button>
+  <button onclick="parseStory()">Tách Story</button>
+  <button onclick="saveStoryA()">Lưu local (Story A)</button>
 
   <h3>Preview JSON A</h3>
-  <pre id="previewA"></pre>
+  <div id="previewA" class="preview"></div>
 </div>
 
-<!-- ================= TAB 2 ================= -->
-<div id="tab2" class="tab">
+<!-- ================== TAB 2 ================== -->
+<div id="tab2" class="section">
   <h2>TAB 2 – Frame Editor</h2>
 
-  <button id="btnLoadLocalA">Load Story A (local)</button>
-  <button id="btnSaveLocalB">Lưu tạm Story B (local)</button>
-  <button id="btnExportB">Export JSON B</button>
+  <button onclick="loadStoryA()">Load Story A (local)</button>
+  <button onclick="exportStoryB()">Export JSON B</button>
 
   <hr>
 
-  <label>Character</label>
-  <select id="fCharacter"></select>
+  <div class="row"><label>Character</label><select id="f_character"></select></div>
+  <div class="row"><label>Expression</label><select id="f_expression"></select></div>
+  <div class="row"><label>State</label><select id="f_state"></select></div>
+  <div class="row"><label>Outfit</label><select id="f_outfit"></select></div>
+  <div class="row"><label>Action</label><select id="f_action"></select></div>
+  <div class="row"><label>Background</label><select id="f_bg"></select></div>
+  <div class="row"><label>Camera</label><select id="f_camera"></select></div>
+  <div class="row"><label>Style</label><select id="f_style"></select></div>
 
-  <label>Expression</label>
-  <select id="fExpression"></select>
+  <button onclick="prevFrame()">← Frame trước</button>
+  <button onclick="nextFrame()">Frame sau →</button>
+  <button onclick="saveFrame()">Lưu frame</button>
 
-  <label>State</label>
-  <select id="fState"></select>
-
-  <label>Outfit</label>
-  <select id="fOutfit"></select>
-
-  <label>Action</label>
-  <select id="fAction"></select>
-
-  <label>Background</label>
-  <select id="fBackground"></select>
-
-  <label>Camera</label>
-  <select id="fCamera"></select>
-
-  <label>Style</label>
-  <select id="fStyle"></select>
-
-  <button id="btnPrevFrame">← Frame trước</button>
-  <button id="btnNextFrame">Frame sau →</button>
-
-  <pre id="previewFrame"></pre>
+  <h3>Frame JSON</h3>
+  <div id="framePreview" class="preview"></div>
 </div>
 
-<script src="/video/tab1.js"></script>
-<script src="/video/tab2.js"></script>
-
 <script>
-  // TAB SWITCH – KHÔNG ĐỤNG JS TAB
-  btnTab1.onclick = () => {
-    tab1.classList.add("active");
-    tab2.classList.remove("active");
+/* ================== TAB SWITCH ================== */
+function showTab(n) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn')[n-1].classList.add('active');
+  document.getElementById('tab'+n).classList.add('active');
+}
+
+/* ================== TAB 1 ================== */
+let storyA = null;
+
+function parseStory() {
+  const text = storyText.value.trim();
+  if (!text) return alert("Story Text đang trống");
+
+  const dialogues = [];
+  text.split("\n").forEach(l=>{
+    const m = l.match(/^\*\*(.+?)\:\*\*\s*(.*)$/);
+    if (m) dialogues.push({ character: m[1], text: m[2] });
+  });
+
+  storyA = {
+    id: storyId.value || "XNC-LOCAL",
+    title: storyTitle.value || "",
+    dialogues
   };
-  btnTab2.onclick = () => {
-    tab2.classList.add("active");
-    tab1.classList.remove("active");
-  };
+
+  previewA.textContent = JSON.stringify(storyA, null, 2);
+}
+
+function saveStoryA() {
+  if (!storyA) return alert("Chưa tách story");
+  localStorage.setItem("storyA", JSON.stringify(storyA));
+  alert("Đã lưu Story A");
+}
+
+/* ================== TAB 2 ================== */
+let frames = [];
+let idx = 0;
+
+const LIB = {
+  expression: ["neutral","joy","angry"],
+  state: ["standing","walking","running"],
+  outfit: ["school_uniform","thief_outfit"],
+  action: ["talk","run","hide"],
+  bg: ["school","garden","night"],
+  camera: ["closeup","medium","wide"],
+  style: ["happy","drama","comedy"]
+};
+
+function fillSelect(id, arr) {
+  const s = document.getElementById(id);
+  s.innerHTML = "";
+  arr.forEach(v=>{
+    const o = document.createElement("option");
+    o.value = v;
+    o.textContent = v;
+    s.appendChild(o);
+  });
+}
+
+Object.entries(LIB).forEach(([k,v])=>{
+  fillSelect("f_"+(k==="bg"?"bg":k), v);
+});
+
+function loadStoryA() {
+  const raw = localStorage.getItem("storyA");
+  if (!raw) return alert("Chưa có Story A");
+
+  const s = JSON.parse(raw);
+  frames = s.dialogues.map((d,i)=>({
+    index:i,
+    character:d.character,
+    dialogue:d.text
+  }));
+  idx = 0;
+  renderFrame();
+}
+
+function renderFrame() {
+  const f = frames[idx];
+  if (!f) return;
+  framePreview.textContent = JSON.stringify(f, null, 2);
+}
+
+function saveFrame() {
+  const f = frames[idx];
+  Object.assign(f,{
+    expression:f_expression.value,
+    state:f_state.value,
+    outfit:f_outfit.value,
+    action:f_action.value,
+    background:f_bg.value,
+    camera:f_camera.value,
+    style:f_style.value
+  });
+  renderFrame();
+  alert("Đã lưu frame "+idx);
+}
+
+function prevFrame(){ if(idx>0){idx--;renderFrame();}}
+function nextFrame(){ if(idx<frames.length-1){idx++;renderFrame();}}
+
+function exportStoryB() {
+  const blob = new Blob([JSON.stringify(frames,null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "story_B.json";
+  a.click();
+}
 </script>
 
 </body>
 </html>
-
