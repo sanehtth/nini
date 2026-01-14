@@ -260,6 +260,20 @@
     currentFrameIndex: 0
   };
 </script>
+<script>
+  window.qs = (id) => document.getElementById(id);
+
+  window.appState = {
+    characters: [],
+    manifest: [],
+    currentStory: null,
+    storyDraft: null,
+    selectedCharacters: [],
+    scenes: [],
+    currentSceneIndex: 0,
+    currentFrameIndex: 0
+  };
+</script>
 
 <script src="tab1.js"></script>
 <script src="tab2.js" defer></script>
@@ -267,6 +281,7 @@
 
 </body>
 </html>
+
 
 
 
