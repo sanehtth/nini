@@ -85,6 +85,21 @@ function buildFrames(scenes) {
     }))
   }));
 }
+/*-------------------------*/
+function tab2_bindActors(scene) {
+  const actorSet = new Set();
+  scene.frames.forEach(f => actorSet.add(f.character));
+
+  const actorSelect = qs('tab2_actor');
+  actorSelect.innerHTML = '';
+
+  [...actorSet].forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    actorSelect.appendChild(opt);
+  });
+}
 
 /* ---------- UI ---------- */
 function tab2_initUI() {
@@ -199,3 +214,4 @@ function initTab2() {
   tab2_loadMasters();
   console.log('[TAB2] READY');
 }
+
