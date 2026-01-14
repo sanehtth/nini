@@ -37,13 +37,13 @@
 <body>
 
 <!-- ================= TAB HEADER ================= -->
-<div class="tab-header">
-  <button id="tabBtnStory" class="active">TAB 1 – Story</button>
-  <button id="tabBtnFrame">TAB 2 – Frame</button>
+<div>
+  <button class="tab-btn active" data-tab="tab1">TAB 1 – Story</button>
+  <button class="tab-btn" data-tab="tab2">TAB 2 – Frame</button>
 </div>
 
 <!-- ================= TAB 1 ================= -->
-<div id="tabStory" class="tab active">
+<div id="tab1" class="tab-panel active">
   <h2>🧩 TAB 1 – Story / Parser</h2>
 
   <div class="box">
@@ -82,68 +82,58 @@
 
 <!-- ================= TAB 2 ================= -->
 <!-- TAB 2 -->
-<div id="tab2" class="tab-content">
-
-  <h2>🧩 TAB 2 – Frame Editor</h2>
+<div id="tab2" class="tab-panel">
+  <h2>TAB 2 – Frame Editor</h2>
 
   <button id="btnLoadStoryA">Load Story A (local)</button>
-  <button id="btnSaveStoryB">Lưu Story B (local)</button>
 
-  <div id="frameInfo"></div>
+  <div id="frameEditor" style="margin-top:12px">
+    <label>Character</label>
+    <input id="frameCharacter" />
 
-  <label>Character</label>
-  <select id="frameCharacter"></select>
+    <label>Expression</label>
+    <select id="frameExpression"></select>
 
-  <label>Expression / Face</label>
-  <select id="frameExpression"></select>
+    <label>Action</label>
+    <select id="frameAction"></select>
 
-  <label>Action</label>
-  <select id="frameAction"></select>
+    <label>Background</label>
+    <select id="frameBackground"></select>
 
-  <label>Background</label>
-  <select id="frameBackground"></select>
+    <label>Camera</label>
+    <select id="frameCamera"></select>
 
-  <label>Camera</label>
-  <select id="frameCamera"></select>
+    <label>Style</label>
+    <select id="frameStyle"></select>
+  </div>
 
-  <label>Style / Emotion</label>
-  <select id="frameStyle"></select>
-
-  <div style="margin-top:10px">
+  <div style="margin-top:12px">
     <button id="btnPrevFrame">← Frame trước</button>
     <button id="btnNextFrame">Frame sau →</button>
   </div>
 
-  <pre id="frameJson"></pre>
-
+  <pre id="frameJson" style="margin-top:12px; background:#111; padding:8px"></pre>
 </div>
 
 
 <!-- ================= JS ================= -->
-<script src="./tab1.js"></script>
-<script src="./tab2.js"></script>
+<!-- JS -->
+<script src="/public/video/tab1.js"></script>
+<script src="/public/video/tab2.js"></script>
 
 <script>
-  const tabBtnStory = document.getElementById("tabBtnStory");
-  const tabBtnFrame = document.getElementById("tabBtnFrame");
-  const tabStory = document.getElementById("tabStory");
-  const tabFrame = document.getElementById("tabFrame");
-
-  tabBtnStory.onclick = () => {
-    tabStory.classList.add("active");
-    tabFrame.classList.remove("active");
-    tabBtnStory.classList.add("active");
-    tabBtnFrame.classList.remove("active");
+/* TAB SWITCH – an toàn, không phụ thuộc id cứng */
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.tab).classList.add("active");
   };
-
-  tabBtnFrame.onclick = () => {
-    tabFrame.classList.add("active");
-    tabStory.classList.remove("active");
-    tabBtnFrame.classList.add("active");
-    tabBtnStory.classList.remove("active");
-  };
+});
 </script>
 
 </body>
 </html>
+
 
