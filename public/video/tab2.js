@@ -118,17 +118,23 @@ function tab2_initUI() {
 function tab2_selectScene() {
   const sceneId = qs('tab2_sceneSelect').value;
   const scene = tab2State.scenes.find(s => s.sceneId === sceneId);
+
+  tab2_bindActors(scene); // ✅ THÊM DÒNG NÀY
+
   const frameSel = qs('tab2_frameSelect');
   frameSel.innerHTML = '';
+
   scene.frames.forEach(f => {
     const o = document.createElement('option');
     o.value = f.frameId;
     o.textContent = f.frameId;
     frameSel.appendChild(o);
   });
+
   frameSel.onchange = tab2_selectFrame;
   tab2_selectFrame();
 }
+
 
 function tab2_selectFrame() {
   const scene = tab2_getScene();
@@ -214,4 +220,5 @@ function initTab2() {
   tab2_loadMasters();
   console.log('[TAB2] READY');
 }
+
 
