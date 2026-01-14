@@ -1,61 +1,85 @@
-/* ================= TAB 2 – FRAME EDITOR ================= */
+/* =====================================================
+   TAB 2 – SCENE → FRAME EDITOR (FINAL, CLEAN ARCH)
+   - Character: lấy từ XNC_characters.json (MASTER)
+   - 1 dialogue = 1 frame
+   - Xuất <STORY_ID>_B.json cho Tab 3
+===================================================== */
 
 const tab2State = {
   storyId: '',
   scenes: [],
-  masters: {}
+  masters: {
+    characters: [],
+    faces: [],
+    states: [],
+    outfits: [],
+    backgrounds: []
+  }
 };
 
 const qs = id => document.getElementById(id);
 
-/* ---------- LOAD MASTER JSON ---------- */
+/* ================= LOAD MASTER DATA ================= */
+
 async function tab2_loadMasters() {
   const base = '/adn/xomnganchuyen/';
+
   const load = f => fetch(base + f).then(r => r.json());
 
   const [
-    faces, states, outfits, actions, backgrounds
+    characters,
+    faces,
+    states,
+    outfits,
+    backgrounds
   ] = await Promise.all([
+    load('XNC_characters.json'),
     load('XNC_faces.json'),
     load('XNC_states.json'),
     load('XNC_outfits.json'),
-    load('XNC_actions.json'),
     load('XNC_backgrounds.json')
   ]);
 
-  tab2State.masters = { faces, states, outfits, actions, backgrounds };
+  tab2State.masters.characters = characters.characters || [];
+  tab2State.masters.faces = faces.faces || [];
+  tab2State.masters.states = states.states || [];
+  tab2State.masters.outfits = outfits.outfits || [];
+  tab2State.masters.backgrounds = backgrounds.backgrounds || [];
 
-  fillSelect('tab2_face', faces.faces);
-  fillSelect('tab2_state', states.states);
-  fillSelect('tab2_outfit', outfits.outfits);
-  fillSelect('tab2_background', backgrounds.backgrounds);
+  bindSelect('tab2_actor', tab2State.masters.characters, 'label');
+  bindSelect('tab2_face', tab2State.masters.faces, 'label');
+  bindSelect('tab2_state', tab2State.masters.states, 'label');
+  bindSelect('tab2_outfit', tab2State.masters.outfits, 'label');
+  bindSelect('tab2_background', tab2State.masters.backgrounds, 'label');
 
   console.log('[TAB2] Master JSON loaded');
 }
 
-function fillSelect(id, arr) {
+function bindSelect(id, list, labelKey = 'label') {
   const el = qs(id);
   el.innerHTML = '';
-  arr.forEach(o => {
+  list.forEach(it => {
     const opt = document.createElement('option');
-    opt.value = o.id || o.label;
-    opt.textContent = o.label || o.id;
+    opt.value = it.id;
+    opt.textContent = it[labelKey] || it.id;
     el.appendChild(opt);
   });
 }
 
-/* ---------- LOAD FROM TAB 1 ---------- */
+/* ================= LOAD STORY DATA ================= */
+
 function tab2_loadFromLocal() {
-  if (!window.appState?.scenes) {
+  if (!window.appState?.scenes || !window.appState.storyDraft) {
     alert('Tab 1 chưa có dữ liệu');
     return;
   }
+
   tab2State.storyId = window.appState.storyDraft.id;
   tab2State.scenes = buildFrames(window.appState.scenes);
-  tab2_initUI();
+
+  initSceneUI();
 }
 
-/* ---------- LOAD FROM GITHUB ---------- */
 async function tab2_loadFromRemote() {
   const id = prompt('Nhập STORY ID (vd: XNC-20260110-0005)');
   if (!id) return;
@@ -65,16 +89,18 @@ async function tab2_loadFromRemote() {
 
   tab2State.storyId = data.storyId;
   tab2State.scenes = buildFrames(data.scenes);
-  tab2_initUI();
+
+  initSceneUI();
 }
 
-/* ---------- BUILD FRAMES ---------- */
+/* ================= BUILD FRAMES ================= */
+
 function buildFrames(scenes) {
-  return scenes.map(s => ({
-    sceneId: s.id,
-    frames: s.dialogues.map((d, i) => ({
-      frameId: `${s.id}_F${i + 1}`,
-      character: d.character,
+  return scenes.map(scene => ({
+    sceneId: scene.id,
+    frames: scene.dialogues.map((d, i) => ({
+      frameId: `${scene.id}_F${String(i + 1).padStart(2, '0')}`,
+      character: guessCharacterId(d.character),
       text: d.text,
       camera: 'Close-up',
       face: '',
@@ -85,60 +111,54 @@ function buildFrames(scenes) {
     }))
   }));
 }
-/*-------------------------*/
-function tab2_bindActors(scene) {
-  const actorSet = new Set();
-  scene.frames.forEach(f => actorSet.add(f.character));
 
-  const actorSelect = qs('tab2_actor');
-  actorSelect.innerHTML = '';
-
-  [...actorSet].forEach(name => {
-    const opt = document.createElement('option');
-    opt.value = name;
-    opt.textContent = name;
-    actorSelect.appendChild(opt);
-  });
+// map tên thoại -> character id (best effort)
+function guessCharacterId(label) {
+  const found = tab2State.masters.characters.find(
+    c => c.label === label
+  );
+  return found ? found.id : tab2State.masters.characters[0]?.id || '';
 }
 
-/* ---------- UI ---------- */
-function tab2_initUI() {
-  const sceneSel = qs('tab2_sceneSelect');
-  sceneSel.innerHTML = '';
+/* ================= UI LOGIC ================= */
+
+function initSceneUI() {
+  const sel = qs('tab2_sceneSelect');
+  sel.innerHTML = '';
+
   tab2State.scenes.forEach(s => {
-    const o = document.createElement('option');
-    o.value = s.sceneId;
-    o.textContent = s.sceneId;
-    sceneSel.appendChild(o);
+    const opt = document.createElement('option');
+    opt.value = s.sceneId;
+    opt.textContent = s.sceneId;
+    sel.appendChild(opt);
   });
-  sceneSel.onchange = tab2_selectScene;
-  tab2_selectScene();
+
+  sel.onchange = selectScene;
+  selectScene();
 }
 
-function tab2_selectScene() {
+function selectScene() {
   const sceneId = qs('tab2_sceneSelect').value;
   const scene = tab2State.scenes.find(s => s.sceneId === sceneId);
-
-  tab2_bindActors(scene); // ✅ THÊM DÒNG NÀY
 
   const frameSel = qs('tab2_frameSelect');
   frameSel.innerHTML = '';
 
   scene.frames.forEach(f => {
-    const o = document.createElement('option');
-    o.value = f.frameId;
-    o.textContent = f.frameId;
-    frameSel.appendChild(o);
+    const opt = document.createElement('option');
+    opt.value = f.frameId;
+    opt.textContent = f.frameId;
+    frameSel.appendChild(opt);
   });
 
-  frameSel.onchange = tab2_selectFrame;
-  tab2_selectFrame();
+  frameSel.onchange = selectFrame;
+  selectFrame();
 }
 
+function selectFrame() {
+  const scene = getCurrentScene();
+  const frame = getCurrentFrame();
 
-function tab2_selectFrame() {
-  const scene = tab2_getScene();
-  const frame = tab2_getFrame();
   qs('tab2_actor').value = frame.character;
   qs('tab2_text').value = frame.text;
   qs('tab2_camera').value = frame.camera;
@@ -149,16 +169,22 @@ function tab2_selectFrame() {
   qs('tab2_note').value = frame.note;
 }
 
-function tab2_getScene() {
-  return tab2State.scenes.find(s => s.sceneId === qs('tab2_sceneSelect').value);
-}
-function tab2_getFrame() {
-  return tab2_getScene().frames.find(f => f.frameId === qs('tab2_frameSelect').value);
+function getCurrentScene() {
+  const id = qs('tab2_sceneSelect').value;
+  return tab2State.scenes.find(s => s.sceneId === id);
 }
 
-/* ---------- SAVE / MERGE ---------- */
-function tab2_saveFrame() {
-  const f = tab2_getFrame();
+function getCurrentFrame() {
+  const scene = getCurrentScene();
+  const id = qs('tab2_frameSelect').value;
+  return scene.frames.find(f => f.frameId === id);
+}
+
+/* ================= SAVE / MERGE ================= */
+
+function saveFrame() {
+  const f = getCurrentFrame();
+
   f.character = qs('tab2_actor').value;
   f.text = qs('tab2_text').value;
   f.camera = qs('tab2_camera').value;
@@ -167,59 +193,70 @@ function tab2_saveFrame() {
   f.outfit = qs('tab2_outfit').value;
   f.background = qs('tab2_background').value;
   f.note = qs('tab2_note').value;
+
   alert('Đã lưu frame');
 }
 
-function tab2_mergeFrames() {
-  const scene = tab2_getScene();
+function mergeFrames() {
+  const scene = getCurrentScene();
   if (scene.frames.length < 2) return;
-  const f1 = scene.frames[0];
-  scene.frames.slice(1).forEach(f => {
-    f1.text += '\n' + f.text;
+
+  const base = scene.frames.shift();
+  scene.frames.forEach(f => {
+    base.text += '\n' + f.text;
   });
-  scene.frames = [f1];
-  tab2_selectScene();
+
+  scene.frames = [base];
+  selectScene();
 }
 
-/* ---------- EXPORT JSON B ---------- */
-function tab2_export() {
+/* ================= EXPORT JSON B ================= */
+
+function exportTab3() {
   const out = {
     type: 'VIDEO_PROMPT_V2',
     storyId: tab2State.storyId,
-    scenes: tab2State.scenes.map(s => ({
-      sceneId: s.sceneId,
-      frames: s.frames.map(f => ({
-        frameId: f.frameId,
-        prompt:
-`Camera: ${f.camera}
-Character: ${f.character}
-Face: ${f.face}
-State: ${f.state}
-Outfit: ${f.outfit}
-Background: ${f.background}
+    scenes: tab2State.scenes.map(scene => ({
+      sceneId: scene.sceneId,
+      frames: scene.frames.map(f => {
+        const char = tab2State.masters.characters.find(c => c.id === f.character);
+        const face = tab2State.masters.faces.find(x => x.id === f.face);
+        const state = tab2State.masters.states.find(x => x.id === f.state);
+        const outfit = tab2State.masters.outfits.find(x => x.id === f.outfit);
+        const bg = tab2State.masters.backgrounds.find(x => x.id === f.background);
+
+        return {
+          frameId: f.frameId,
+          prompt: `
+Close-up of ${char?.label || ''},
+${char?.desc_en || ''},
+${face?.desc_en || ''},
+${state?.desc_en || ''},
+wearing ${outfit?.desc_en || ''},
+background: ${bg?.desc_en || ''}
 Dialogue: ${f.text}
-Note: ${f.note}`
-      }))
+`.trim()
+        };
+      })
     }))
   };
 
   const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `${tab2State.storyId}_B.json`; // ✅ ĐÚNG CHUẨN
+  a.download = `${tab2State.storyId}_B.json`;
   a.click();
 }
 
-/* ---------- INIT ---------- */
+/* ================= INIT ================= */
+
 function initTab2() {
   qs('tab2_load_local').onclick = tab2_loadFromLocal;
   qs('tab2_load_remote').onclick = tab2_loadFromRemote;
-  qs('tab2_export').onclick = tab2_export;
-  qs('tab2_saveFrame').onclick = tab2_saveFrame;
-  qs('tab2_mergeFrames').onclick = tab2_mergeFrames;
+  qs('tab2_saveFrame').onclick = saveFrame;
+  qs('tab2_mergeFrames').onclick = mergeFrames;
+  qs('tab2_export').onclick = exportTab3;
+
   tab2_loadMasters();
   console.log('[TAB2] READY');
 }
-
-
-
