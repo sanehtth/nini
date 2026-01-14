@@ -1,4 +1,56 @@
 // ================== TAB 2 – FRAME ENGINE ==================
+// ========= LOAD MASTER DATA =========
+const TAB2_MASTER = {
+  faces: [],
+  states: [],
+  outfits: [],
+  actions: [],
+  backgrounds: []
+};
+
+async function tab2_loadMasters() {
+  const base = '/adn/xomnganchuyen/';
+
+  const [faces, states, outfits, actions, backgrounds] =
+    await Promise.all([
+      fetch(base + 'XNC_faces.json').then(r => r.json()),
+      fetch(base + 'XNC_states.json').then(r => r.json()),
+      fetch(base + 'XNC_outfits.json').then(r => r.json()),
+      fetch(base + 'XNC_actions.json').then(r => r.json()),
+      fetch(base + 'XNC_background.json').then(r => r.json())
+    ]);
+
+  TAB2_MASTER.faces = faces.faces;
+  TAB2_MASTER.states = states.states;
+  TAB2_MASTER.outfits = outfits.outfits;
+  TAB2_MASTER.actions = actions.actions;
+  TAB2_MASTER.backgrounds = backgrounds.backgrounds;
+
+  tab2_bindSelect('tab2_face', TAB2_MASTER.faces);
+  tab2_bindSelect('tab2_state', TAB2_MASTER.states);
+  tab2_bindSelect('tab2_outfit', TAB2_MASTER.outfits);
+  tab2_bindSelect('tab2_background', TAB2_MASTER.backgrounds);
+
+  // camera simple preset
+  tab2_bindSelect('tab2_camera', [
+    { id: 'closeup', label: 'Close-up' },
+    { id: 'medium', label: 'Medium shot' },
+    { id: 'wide', label: 'Wide shot' }
+  ]);
+
+  console.log('[TAB2] Master data loaded');
+}
+
+function tab2_bindSelect(id, list) {
+  const sel = qs(id);
+  sel.innerHTML = '<option value="">-- chọn --</option>';
+  list.forEach(it => {
+    const o = document.createElement('option');
+    o.value = it.id;
+    o.textContent = it.label || it.id;
+    sel.appendChild(o);
+  });
+}
 
 let tab2Data = {
   scenes: [],
@@ -162,3 +214,4 @@ function initTab2() {
 
   console.log('[TAB2] READY');
 }
+
