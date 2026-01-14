@@ -8,15 +8,6 @@
 ===================================================== */
 
 /* =========================
-   GLOBAL STATE
-========================= */
-const appState = {
-  project: null,
-  currentSceneIndex: 0,
-  currentFrameIndex: 0
-};
-
-/* =========================
    HELPERS
 ========================= */
 const qs = (id) => document.getElementById(id);
@@ -236,3 +227,4 @@ function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
