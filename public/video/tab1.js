@@ -2,8 +2,6 @@
 /* =========================
    HELPERS
 ========================= */
-const qs = (id) => document.getElementById(id);
-
 async function fetchJSON(url) {
   console.log('[XNC] fetchJSON:', url);
   const res = await fetch(url);
