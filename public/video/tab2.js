@@ -126,6 +126,8 @@ frameState.value  = f.state || "";
 frameOutfit.value = f.outfit || "";
 
   frameJson.textContent = JSON.stringify(f, null, 2);
+  const saved = localStorage.getItem(`storyB_${storyId}`);
+
 }
 
 /* ===== EVENTS ===== */
@@ -179,4 +181,58 @@ inputImportStoryA.onchange = e => {
   };
   r.readAsText(file);
 };
+/*====== nut save ==========*/
+document.getElementById("btnSaveLocalB").onclick = () => {
+  if (!frames || !frames.length) {
+    alert("Chưa có frame nào để lưu");
+    return;
+  }
+
+  const storyId = window.storyA?.id;
+  if (!storyId) {
+    alert("Chưa load Story A");
+    return;
+  }
+
+  const data = {
+    story_id: storyId,
+    frames: frames
+  };
+
+  localStorage.setItem(
+    `storyB_${storyId}`,
+    JSON.stringify(data, null, 2)
+  );
+
+  alert("✅ Đã lưu Story B vào local");
+};
+/* ===== nut export ======*/
+document.getElementById("btnExportB").onclick = () => {
+  if (!frames || !frames.length) {
+    alert("Không có frame để export");
+    return;
+  }
+
+  const storyId = window.storyA?.id || "UNKNOWN";
+
+  const jsonB = {
+    version: "1.0",
+    story_id: storyId,
+    total_frames: frames.length,
+    frames: frames
+  };
+
+  const blob = new Blob(
+    [JSON.stringify(jsonB, null, 2)],
+    { type: "application/json" }
+  );
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${storyId}_B.json`;
+  a.click();
+
+  URL.revokeObjectURL(a.href);
+};
+
 
