@@ -62,7 +62,7 @@
 </div>
 
 <!-- ================= TAB 2 ================= -->
-<div id="tabFrame" class="tab">
+<div id="tab2" class="tab">
 
 <h2>🎬 TAB 2 – Scene → Frame Editor</h2>
 
@@ -157,7 +157,7 @@
 <script>
 qs('btnTab1').onclick = () => {
   const t1 = qs('tab1');      // ✅ ĐÚNG ID
-  const t2 = qs('tabFrame');
+  const t2 = qs('tab2');
   if (!t1 || !t2) return;
 
   t1.classList.add('active');
@@ -166,7 +166,7 @@ qs('btnTab1').onclick = () => {
 
 qs('btnTab2').onclick = () => {
   const t1 = qs('tab1');
-  const t2 = qs('tabFrame');
+  const t2 = qs('tab2');
   if (!t1 || !t2) return;
 
   t1.classList.remove('active');
@@ -180,6 +180,7 @@ qs('btnTab2').onclick = () => {
 
 </body>
 </html>
+
 
 
 
