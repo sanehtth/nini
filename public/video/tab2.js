@@ -153,6 +153,8 @@ function selectScene() {
 
   frameSel.onchange = selectFrame;
   selectFrame();
+renderPreview();
+   
 }
 
 function selectFrame() {
@@ -260,3 +262,34 @@ function initTab2() {
   tab2_loadMasters();
   console.log('[TAB2] READY');
 }
+function renderPreview() {
+  const f = getCurrentFrame();
+  if (!f) return;
+
+  const char = tab2State.masters.characters.find(c => c.id === f.character);
+  const face = tab2State.masters.faces.find(x => x.id === f.face);
+  const state = tab2State.masters.states.find(x => x.id === f.state);
+  const outfit = tab2State.masters.outfits.find(x => x.id === f.outfit);
+  const bg = tab2State.masters.backgrounds.find(x => x.id === f.background);
+
+  const preview = `
+FRAME: ${f.frameId}
+
+CHARACTER: ${char?.label || ''}
+CAMERA: ${f.camera}
+
+FACE: ${face?.label || ''}
+STATE: ${state?.label || ''}
+OUTFIT: ${outfit?.label || ''}
+BACKGROUND: ${bg?.label || ''}
+
+DIALOGUE:
+"${f.text}"
+
+NOTE:
+${f.note || ''}
+`.trim();
+
+  qs('tab2_preview').textContent = preview;
+}
+
