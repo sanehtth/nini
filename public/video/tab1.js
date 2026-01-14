@@ -2,7 +2,7 @@
 window.storyA = null;
 
 async function loadManifest() {
-  const res = await fetch('./data/manifest.json');
+  const res = await fetch('/public/substance/manifest.json');
   const manifest = await res.json();
 
   const sel = document.getElementById('manifestSelect');
