@@ -85,12 +85,20 @@ function bindCharacterEvents() {
 /* =========================
    MANIFEST + STORY
 ========================= */
-async function loadManifest() {
+async function loadManifestToListbox() {
   const data = await fetchJSON('/public/substance/manifest.json');
-  appState.manifest = data.items || [];
-  renderStorySelect();
-  console.log('[XNC] Loaded manifest:', appState.manifest.length);
+
+  const list = qs('storyList');
+  list.innerHTML = '<option value="">-- Chọn truyện --</option>';
+
+  (data.items || []).forEach(item => {
+    const opt = document.createElement('option');
+    opt.value = item.file;
+    opt.textContent = `${item.id} – ${item.title}`;
+    list.appendChild(opt);
+  });
 }
+
 
 function renderStorySelect() {
   const sel = qs('storySelect');
