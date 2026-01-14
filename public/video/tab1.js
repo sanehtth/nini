@@ -34,16 +34,67 @@ function tab1_saveLocal() {
 }
 
 function tab1_split() {
-  if (!appState.storyDraft) return alert('Chưa lưu story');
+  if (!appState.storyDraft) {
+    alert('Chưa lưu story');
+    return;
+  }
 
-  appState.scenes = appState.storyDraft.story
+  const lines = appState.storyDraft.story
     .split('\n')
-    .filter(Boolean)
-    .map((t,i)=>({ id:`S${i+1}`, text:t }));
+    .map(l => l.trim())
+    .filter(Boolean);
+
+  const scenes = [];
+  let sceneIndex = 0;
+  let currentScene = null;
+
+  lines.forEach(line => {
+
+    // ===== SCENE / SETTING =====
+    if (line.startsWith('**Setting') || line.startsWith('**Scene')) {
+      sceneIndex++;
+      currentScene = {
+        id: `S${sceneIndex}`,
+        narration: line.replace(/\*\*/g, ''),
+        dialogues: [],
+        sfx: []
+      };
+      scenes.push(currentScene);
+      return;
+    }
+
+    if (!currentScene) return;
+
+    // ===== SFX =====
+    if (line.includes('[SFX]')) {
+      currentScene.sfx.push(
+        line.replace('[SFX]', '').replace(/\*\*/g, '').trim()
+      );
+      return;
+    }
+
+    // ===== DIALOGUE =====
+    if (line.includes(':')) {
+      const [char, ...rest] = line.split(':');
+      currentScene.dialogues.push({
+        character: char.replace(/\*/g, '').trim(),
+        text: rest.join(':').replace(/\*\*/g, '').trim()
+      });
+      return;
+    }
+
+    // ===== NARRATION CONTINUE =====
+    currentScene.narration += ' ' + line.replace(/\*\*/g, '');
+  });
+
+  appState.scenes = scenes;
 
   qs('tab1_previewBox').textContent =
-    JSON.stringify(appState.scenes, null, 2);
+    JSON.stringify(scenes, null, 2);
+
+  console.log('[TAB1] Split OK:', scenes.length);
 }
+
 
 function initTab1() {
   qs('tab1_reloadManifestBtn').onclick = tab1_loadManifest;
