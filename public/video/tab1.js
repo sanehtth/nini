@@ -1,13 +1,3 @@
-/* =========================
-   GLOBAL STATE – TAB 1
-========================= */
-const appState = {
-  characters: [],
-  manifest: [],
-  currentStory: null,
-  storyDraft: null,
-  selectedCharacters: []
-};
 
 /* =========================
    HELPERS
