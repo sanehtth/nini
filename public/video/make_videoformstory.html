@@ -81,43 +81,43 @@
 </div>
 
 <!-- ================= TAB 2 ================= -->
-<div id="tabFrame" class="tab">
-  <h2>🎞 TAB 2 – Frame Editor</h2>
+<!-- TAB 2 -->
+<div id="tab2" class="tab-content">
 
-  <div class="box">
-    <button id="btnLoadStoryA">📥 Load Story A (local)</button>
-    <button id="btnSaveStoryB">💾 Lưu Story B (local)</button>
+  <h2>🧩 TAB 2 – Frame Editor</h2>
+
+  <button id="btnLoadStoryA">Load Story A (local)</button>
+  <button id="btnSaveStoryB">Lưu Story B (local)</button>
+
+  <div id="frameInfo"></div>
+
+  <label>Character</label>
+  <select id="frameCharacter"></select>
+
+  <label>Expression / Face</label>
+  <select id="frameExpression"></select>
+
+  <label>Action</label>
+  <select id="frameAction"></select>
+
+  <label>Background</label>
+  <select id="frameBackground"></select>
+
+  <label>Camera</label>
+  <select id="frameCamera"></select>
+
+  <label>Style / Emotion</label>
+  <select id="frameStyle"></select>
+
+  <div style="margin-top:10px">
+    <button id="btnPrevFrame">← Frame trước</button>
+    <button id="btnNextFrame">Frame sau →</button>
   </div>
 
-  <div class="box" id="frameInfo">Frame: -</div>
+  <pre id="frameJson"></pre>
 
-  <div class="box">
-    <label>Character</label>
-    <input id="frameCharacter">
-
-    <label>Expression</label>
-    <input id="frameExpression">
-
-    <label>Action</label>
-    <input id="frameAction">
-
-    <label>Background</label>
-    <input id="frameBackground">
-
-    <label>Camera</label>
-    <input id="frameCamera">
-
-    <label>Style</label>
-    <input id="frameStyle">
-  </div>
-
-  <div class="box">
-    <button id="btnPrevFrame">⬅ Frame trước</button>
-    <button id="btnNextFrame">Frame sau ➡</button>
-  </div>
-
-  <pre id="previewStoryB"></pre>
 </div>
+
 
 <!-- ================= JS ================= -->
 <script src="./tab1.js"></script>
@@ -146,3 +146,4 @@
 
 </body>
 </html>
+
