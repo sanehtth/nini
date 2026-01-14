@@ -24,7 +24,7 @@
   <button id="btnTab2">TAB 2 – Frame</button>
 </header>
 
-<!-- TAB 1 -->
+<!-- ================= TAB 1 – SCENCE ================= -->
 <div id="tab1" class="tab active">
 
   <h2>📘 TAB 1 – Story</h2>
@@ -61,17 +61,61 @@
 
 </div>
 
-<!-- TAB 2 -->
+<!-- ================= TAB 2 – FRAME ================= -->
 <div id="tab2" class="tab">
 
-  <h2>🎬 TAB 2 – Frame</h2>
+  <h2>🎬 TAB 2 – Scene → Frame Editor</h2>
 
   <div class="box">
-    <button id="tab2_saveLocalBtn">Lưu project</button>
-    <button id="tab2_exportJsonBtn">Xuất JSON</button>
+    <button id="tab2_load_local">Load từ Tab 1 (Local)</button>
+    <button id="tab2_load_remote">Load từ JSON A (GitHub)</button>
+    <button id="tab2_export">Xuất JSON cho Tab 3</button>
+  </div>
+
+  <div class="box">
+    <label>Scene</label>
+    <select id="tab2_sceneSelect"></select>
+  </div>
+
+  <div class="box">
+    <label>Frame (1 thoại = 1 frame)</label>
+    <select id="tab2_frameSelect"></select>
+
+    <button id="tab2_mergeFrames">Gộp frame</button>
+  </div>
+
+  <div class="box">
+    <label>Nhân vật</label>
+    <input id="tab2_actor">
+
+    <label>Thoại / Nội dung</label>
+    <textarea id="tab2_text"></textarea>
+
+    <label>Camera</label>
+    <select id="tab2_camera">
+      <option value="closeup">Close-up</option>
+      <option value="medium">Medium shot</option>
+      <option value="wide">Wide shot</option>
+    </select>
+
+    <label>Emotion</label>
+    <input id="tab2_emotion">
+
+    <label>Outfit</label>
+    <input id="tab2_outfit">
+
+    <label>Note</label>
+    <textarea id="tab2_note"></textarea>
+
+    <button id="tab2_saveFrame">Lưu frame</button>
+  </div>
+
+  <div class="box">
+    <pre id="tab2_debug"></pre>
   </div>
 
 </div>
+<!-- ================= TAB 3 – AI VIDEO RENDER ================= -->
 
 <script>
   window.qs = (id) => document.getElementById(id);
@@ -108,4 +152,5 @@
 
 </body>
 </html>
+
 
