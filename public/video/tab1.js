@@ -26,7 +26,7 @@ async function fetchJSON(url) {
 ========================= */
 async function loadCharacters() {
   try {
-    const data = await fetchJSON('/public/adn/xomnganchuyen/XNC_characters.json');
+    const data = await fetchJSON('/adn/xomnganchuyen/XNC_characters.json');
     appState.characters = data.characters || data;
     renderParticipants();
   } catch (e) {
@@ -65,7 +65,7 @@ function renderParticipants() {
    MANIFEST → LISTBOX
 ========================= */
 async function loadManifest() {
-  const data = await fetchJSON('/public/substance/manifest.json');
+  const data = await fetchJSON('/substance/manifest.json');
   appState.manifest = data.items || [];
   renderStoryListbox();
 }
