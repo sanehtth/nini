@@ -165,20 +165,22 @@ qs('btnTab1').onclick = () => {
 };
 
 qs('btnTab2').onclick = () => {
-  const t1 = qs('tab1');      // ✅ ĐÚNG ID
+  const t1 = qs('tab1');
   const t2 = qs('tabFrame');
   if (!t1 || !t2) return;
 
   t1.classList.remove('active');
   t2.classList.add('active');
 
-  if (window.initTab2) initTab2();
+  if (window.tab2_init) tab2_init();
 };
+
 </script>
 
 
 </body>
 </html>
+
 
 
 
