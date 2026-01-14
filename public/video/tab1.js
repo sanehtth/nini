@@ -248,6 +248,12 @@ function renderSceneSelect() {
 ========================= */
 function bindUI() {
   qs('reloadManifestBtn').onclick = loadManifest;
+
+  qs('storySelect').onchange = () => {
+    const sel = qs('storySelect');
+    if (sel.value) loadStory(sel.value);
+  };
+
   qs('loadStoryBtn').onclick = () => {
     const sel = qs('storySelect');
     if (sel.value) loadStory(sel.value);
@@ -259,6 +265,7 @@ function bindUI() {
   qs('exportDialogueBtn').onclick = exportDialogueJSON;
   qs('copyDialogueBtn').onclick = copyDialogueJSON;
 }
+
 
 /* =========================
    INIT
