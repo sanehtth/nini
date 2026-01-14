@@ -240,11 +240,34 @@
   buttons.tabBtnFrame.onclick = () => showTab('tabFrame');
   buttons.tabBtnExport.onclick = () => showTab('tabExport');
 </script>
+<!-- ===============================================
+     khai bao appState dung chung cho ca 3 tab
+================================================= -->
+  <script>
+  window.appState = {
+    // dùng chung toàn app
+    characters: [],
+    manifest: [],
+    currentStory: null,
+
+    // tab1
+    storyDraft: null,
+    selectedCharacters: [],
+
+    // tab2
+    scenes: [],
+    currentSceneIndex: 0,
+    currentFrameIndex: 0
+  };
+</script>
+
 <script src="tab1.js"></script>
 <script src="tab2.js" defer></script>
 
+
 </body>
 </html>
+
 
 
 
