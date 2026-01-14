@@ -91,9 +91,13 @@
 <div id="tab2" class="tab-panel">
   <h2>TAB 2 – Frame Editor</h2>
 
-  <button id="btnLoadStoryA">Load Story A (local)</button>
+  <div style="margin-bottom:10px">
+    <button id="btnLoadStoryA">Load Story A (local)</button>
+    <button id="btnExportStoryB">Export JSON B</button>
+    <input type="file" id="inputImportStoryA" accept=".json" />
+  </div>
 
-  <div id="frameEditor" style="margin-top:12px">
+  <div id="frameEditor">
     <label>Character</label>
     <input id="frameCharacter" />
 
@@ -118,8 +122,9 @@
     <button id="btnNextFrame">Frame sau →</button>
   </div>
 
-  <pre id="frameJson" style="margin-top:12px; background:#111; padding:8px"></pre>
+  <pre id="frameJson" style="margin-top:12px"></pre>
 </div>
+
 
 
 <!-- ================= JS ================= -->
@@ -141,6 +146,7 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
 
 </body>
 </html>
+
 
 
 
