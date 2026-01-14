@@ -97,30 +97,57 @@
 <!-- =========================
      TAB 1 – STORY PARSER (JSON A)
 ========================= -->
+<!-- =========================
+     TAB 1 – STORY / PARSER
+     (PHÙ HỢP tab1.js CŨ)
+========================= -->
 <div id="tabStory" class="tab active">
 
   <h2>📘 TAB 1 – Story / Parser</h2>
 
+  <!-- ===== LOAD STORY ===== -->
   <div class="box">
- <label>Chọn story từ manifest</label>
-<select id="storyList">
-  <option value="">-- Chọn truyện --</option>
-</select>
-<label>Story ID</label>
-<input id="storyId">
+    <label>Chọn story từ manifest</label>
+    <select id="storySelect">
+      <option value="">-- Chọn truyện --</option>
+    </select>
 
-<label>Story Title</label>
-<input id="storyTitle">
+    <label>Story ID</label>
+    <input id="storyId" placeholder="VD: XNC-20251226-0004">
 
-<label>Story Text</label>
-<textarea id="storyText"></textarea>
+    <label>Story Title</label>
+    <input id="storyTitle" placeholder="VD: Bài kiểm tra cuối kỳ">
 
-   
+    <label>Story Text</label>
+    <textarea id="storyText" placeholder="Nội dung story..."></textarea>
+  </div>
+
+  <!-- ===== ACTION BUTTONS ===== -->
+  <div class="box">
+    <button id="reloadManifestBtn">🔄 Reload manifest</button>
+    <button id="loadStoryBtn">📥 Load story</button>
   </div>
 
   <div class="box">
-    <button id="parseStoryBtn">🔧 Tách Story</button>
-    <button id="exportStoryStructBtn">📤 Xuất JSON A (Story Struct)</button>
+    <button id="saveLocalBtn">💾 Lưu story (local)</button>
+    <button id="splitBtn">🔧 Tách Scene</button>
+    <button id="exportStoryBtn">📤 Xuất JSON story</button>
+    <button id="exportDialogueBtn">📤 Xuất JSON thoại</button>
+    <button id="copyDialogueBtn">📋 Copy JSON thoại</button>
+  </div>
+
+  <!-- ===== PREVIEW ===== -->
+  <div class="box">
+    <label>Preview JSON (Scene / Dialogue / SFX)</label>
+    <pre id="previewBox" style="max-height:300px; overflow:auto;"></pre>
+  </div>
+
+  <!-- ===== SCENE SELECT (SAU KHI TÁCH) ===== -->
+  <div class="box">
+    <label>Danh sách Scene</label>
+    <select id="sceneSelect">
+      <option value="">-- Chọn Scene --</option>
+    </select>
   </div>
 
 </div>
@@ -281,6 +308,7 @@
 
 </body>
 </html>
+
 
 
 
