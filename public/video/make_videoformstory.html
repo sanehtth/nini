@@ -160,7 +160,7 @@ async function loadManifest(){
 
 async function loadStoryFromSelect(){
   const id = document.getElementById("storySelect").value;
-  const res = await fetch(`/public/substance/${id}.json`);
+  const res = await fetch(`/public/substance/${story.file}`);
   const data = await res.json();
 
   document.getElementById("storyId").value = data.id;
@@ -250,4 +250,5 @@ function exportStoryB(){
 </script> 
 </body>
 </html>
+
 
