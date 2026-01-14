@@ -143,19 +143,26 @@ let currentFrame = 0;
   <script>
 let manifest = [];
 
-async function loadManifest(){
-  const res = await fetch("/public/substance/manifest.json");
-  manifest = await res.json();
+async function loadManifest() {
+  const storySelect = document.getElementById('storySelect');
+  storySelect.innerHTML = '<option value="">-- chọn truyện --</option>';
 
-  const sel = document.getElementById("storySelect");
-  sel.innerHTML = "";
+  const res = await fetch('/public/substance/manifest.json');
+  const manifest = await res.json();
 
-  manifest.forEach(s=>{
-    const opt = document.createElement("option");
-    opt.value = s.id;
-    opt.textContent = `${s.id} – ${s.title}`;
-    sel.appendChild(opt);
+  if (!manifest.stories || !Array.isArray(manifest.stories)) {
+    alert('Manifest sai cấu trúc: thiếu stories[]');
+    return;
+  }
+
+  manifest.stories.forEach(story => {
+    const opt = document.createElement('option');
+    opt.value = story.file;
+    opt.textContent = `${story.id} – ${story.title}`;
+    storySelect.appendChild(opt);
   });
+
+  console.log('[TAB1] Manifest OK', manifest.stories.length);
 }
 
 async function loadStoryFromSelect(){
@@ -250,5 +257,6 @@ function exportStoryB(){
 </script> 
 </body>
 </html>
+
 
 
