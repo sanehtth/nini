@@ -156,7 +156,7 @@ function tab2_renderCharacterSelect() {
   tab2State.masters.characters.forEach(c => {
     const opt = document.createElement("option");
     opt.value = c.id;
-    opt.textContent = `${c.label}`;
+    option.textContent = c.label ?? c.title ?? c.code ?? c.id ?? '[unknown]';
     sel.appendChild(opt);
   });
 }
@@ -272,3 +272,4 @@ function tab2_init() {
 }
 
 document.addEventListener("DOMContentLoaded", tab2_init);
+
