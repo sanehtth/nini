@@ -181,20 +181,7 @@ async function loadStory() {
 
   console.log('[TAB1] Story loaded', story.id);
 }
-async function loadStoryFromSelect(){
-  const id = document.getElementById("storySelect").value;
-  const res = await fetch(`/public/substance/${story.file}`);
-  const data = await res.json();
 
-  document.getElementById("storyId").value = data.id;
-  document.getElementById("storyTitle").value = data.title || "";
-
-  let txt = "";
-  (data.dialogues||[]).forEach(d=>{
-    txt += `**${d.character}:** ${d.text}\n`;
-  });
-  document.getElementById("storyText").value = txt;
-}
 
 window.addEventListener("DOMContentLoaded", loadManifest);
 </script>
@@ -273,6 +260,7 @@ function exportStoryB(){
 </script> 
 </body>
 </html>
+
 
 
 
