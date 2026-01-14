@@ -143,6 +143,9 @@ function tab2_selectFrame(frameId) {
   tab2_qs("tab2_outfit").value = safe(frame.outfit);
   tab2_qs("tab2_background").value = safe(frame.background);
   tab2_qs("tab2_note").value = safe(frame.note);
+   
+  tab2_renderPreview(tab2State.currentFrame);
+
 }
 
 /* =======================
@@ -199,6 +202,8 @@ function tab2_saveFrame() {
   frame.note = tab2_qs("tab2_note").value;
 
   alert("Đã lưu frame");
+tab2_renderPreview(frame);
+
 }
 
 /* =======================
@@ -250,6 +255,39 @@ dialogue: "${f.text}"
   a.download = `${appState.currentStory?.storyId || "story"}_B.json`;
   a.click();
 }
+// --------------- HAM RENDER REVIEW JSON --------------------
+function tab2_renderPreview(frame) {
+  const el = qs("tab2_preview");
+  if (!el || !frame) return;
+
+  const lines = [];
+
+  if (frame.camera)
+    lines.push(`Camera: ${frame.camera}`);
+
+  if (frame.character)
+    lines.push(`Character: ${frame.character}`);
+
+  if (frame.face)
+    lines.push(`Facial Expression: ${frame.face}`);
+
+  if (frame.state)
+    lines.push(`State / Action: ${frame.state}`);
+
+  if (frame.outfit)
+    lines.push(`Outfit: ${frame.outfit}`);
+
+  if (frame.background)
+    lines.push(`Background: ${frame.background}`);
+
+  if (frame.text)
+    lines.push(`Dialogue: "${frame.text}"`);
+
+  if (frame.note)
+    lines.push(`Note: ${frame.note}`);
+
+  el.textContent = lines.join("\n");
+}
 
 /* =======================
    INIT
@@ -272,5 +310,6 @@ function tab2_init() {
 }
 
 document.addEventListener("DOMContentLoaded", tab2_init);
+
 
 
