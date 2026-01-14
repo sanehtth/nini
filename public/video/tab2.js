@@ -217,13 +217,29 @@ function bindUI() {
 /* =========================
    INIT
 ========================= */
+function initTab2() {
+  if (appState.__tab2) return;
+  appState.__tab2 = true;
+
+  qs('tab2_saveLocalBtn').onclick = () => {
+    alert('Save project (TAB 2)');
+  };
+
+  qs('tab2_exportJsonBtn').onclick = () => {
+    console.log(appState.scenes);
+  };
+
+  console.log('[TAB2] READY');
+}
+/*--------------------- cu-------------------------
 function init() {
   appState.project = createEmptyProject();
   bindUI();
   renderFrame();
   console.log('[XNC] Frame editor ready');
 }
-
+------------------------------------------------------*/
 document.addEventListener('DOMContentLoaded', init);
+
 
 
