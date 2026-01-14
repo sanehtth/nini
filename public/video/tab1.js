@@ -48,28 +48,51 @@ function tab1_split() {
   let sceneIndex = 0;
   let currentScene = null;
 
+  function startNewScene(narration = '') {
+    sceneIndex++;
+    currentScene = {
+      id: `S${sceneIndex}`,
+      narration,
+      dialogues: [],
+      sfx: []
+    };
+    scenes.push(currentScene);
+  }
+
   lines.forEach(line => {
 
-    // ===== SCENE / SETTING =====
-    if (line.startsWith('**Setting') || line.startsWith('**Scene')) {
-      sceneIndex++;
-      currentScene = {
-        id: `S${sceneIndex}`,
-        narration: line.replace(/\*\*/g, ''),
-        dialogues: [],
-        sfx: []
-      };
-      scenes.push(currentScene);
+    // ===== TITLE → bỏ =====
+    if (line.startsWith('**Title')) return;
+
+    // ===== SCENE BREAK =====
+    if (line === '---') {
+      currentScene = null;
       return;
     }
 
-    if (!currentScene) return;
-
-    // ===== SFX =====
-    if (line.includes('[SFX]')) {
-      currentScene.sfx.push(
-        line.replace('[SFX]', '').replace(/\*\*/g, '').trim()
+    // ===== SETTING / SCENE START =====
+    if (line.startsWith('**Setting') || line.startsWith('**Scene')) {
+      startNewScene(
+        line.replace(/\*\*/g, '').replace(/^Setting:/, '').trim()
       );
+      return;
+    }
+
+    // Nếu chưa có scene thì tạo scene đầu
+    if (!currentScene) {
+      startNewScene('');
+    }
+
+    // ===== SFX (PHẢI CHECK TRƯỚC dialogue) =====
+    if (line.startsWith('[SFX')) {
+      const txt = line
+        .replace('[SFX:', '')
+        .replace('[SFX', '')
+        .replace(']', '')
+        .replace(/\*\*/g, '')
+        .trim();
+
+      currentScene.sfx.push(txt);
       return;
     }
 
@@ -77,14 +100,16 @@ function tab1_split() {
     if (line.includes(':')) {
       const [char, ...rest] = line.split(':');
       currentScene.dialogues.push({
-        character: char.replace(/\*/g, '').trim(),
+        character: char.replace(/\*\*/g, '').trim(),
         text: rest.join(':').replace(/\*\*/g, '').trim()
       });
       return;
     }
 
     // ===== NARRATION CONTINUE =====
-    currentScene.narration += ' ' + line.replace(/\*\*/g, '');
+    currentScene.narration +=
+      (currentScene.narration ? ' ' : '') +
+      line.replace(/\*\*/g, '');
   });
 
   appState.scenes = scenes;
@@ -92,8 +117,9 @@ function tab1_split() {
   qs('tab1_previewBox').textContent =
     JSON.stringify(scenes, null, 2);
 
-  console.log('[TAB1] Split OK:', scenes.length);
+  console.log('[TAB1] Split OK', scenes.length);
 }
+
 
 
 function initTab1() {
